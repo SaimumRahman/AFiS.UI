@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "InvPosWeb\\JM.UI.Client.csproj",
+        "Action": "Start",
+        "DebugTarget": "InvPosWeb"
+      },
+      {
+        "Path": "ReportingAPI\\ReportingAPI.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]

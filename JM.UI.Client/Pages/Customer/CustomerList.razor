@@ -1,0 +1,211 @@
+﻿@page "/CustomerList"
+@using JM.UI.Entities.Model.Customer
+@inherits CustomerListComponent
+
+<PageTitle>Customers</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Customer Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Customer"
+                                  Click="@AddCustomer"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="CustomersGrid"
+                        Data="@Customers"
+                        TItem="CustomerModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CustomerID"
+                                      Title="ID"
+                                      Width="80px"
+                                      TextAlign="TextAlign.Center"
+                                      Frozen="true">
+                    <Template Context="c">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{c.CustomerID}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Customer Code -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CustomerCode"
+                                      Title="Code"
+                                      Width="120px"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="c">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-color-primary-dark">
+                            @(c.CustomerCode ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Customer Name -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CustomerName"
+                                      Title="Customer Name"
+                                      Width="200px">
+                    <Template Context="c">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="person" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @c.CustomerName
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Customer Type -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CustomerType"
+                                      Title="Type"
+                                      Width="120px"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="c">
+                        <RadzenBadge BadgeStyle="@(c.CustomerType == "Corporate" ? BadgeStyle.Info : BadgeStyle.Light)"
+                                     Text="@(c.CustomerType ?? "Individual")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Phone Number -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="PhoneNumber"
+                                      Title="Phone"
+                                      Width="150px">
+                    <Template Context="c">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <RadzenIcon Icon="phone" Style="font-size: 1rem; color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Body2">@(c.PhoneNumber ?? "N/A")</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Email -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="Email"
+                                      Title="Email"
+                                      Width="200px">
+                    <Template Context="c">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <RadzenIcon Icon="email" Style="font-size: 1rem; color: var(--rz-info);" />
+                            <RadzenLink Path="@($"mailto:{c.Email}")" Text="@(c.Email ?? "N/A")" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Address -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="Address"
+                                      Title="Address"
+                                      Width="250px">
+                    <Template Context="c">
+                        <div title="@c.Address">
+                            @(string.IsNullOrWhiteSpace(c.Address) ? "No address" : Truncate(c.Address, 40))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Current Balance -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CurrentBalance"
+                                      Title="Balance"
+                                      Width="130px"
+                                      TextAlign="TextAlign.End">
+                    <Template Context="c">
+                        <RadzenText TextStyle="TextStyle.Body2"
+                                    Style="@(c.CurrentBalance >= 0 ? "color: var(--rz-success); font-weight: 600;" : "color: var(--rz-danger); font-weight: 600;")">
+                            @c.CurrentBalance.ToString("C2")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="IsActive"
+                                      Title="Status"
+                                      Width="120px"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="c">
+                        <RadzenBadge BadgeStyle="@(c.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(c.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Property="CreatedDate"
+                                      Title="Created"
+                                      Width="130px"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="c">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(c.CreatedDate?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="CustomerModelDTO"
+                                      Title="Actions"
+                                      Width="180px"
+                                      TextAlign="TextAlign.Center"
+                                      Filterable="false"
+                                      Sortable="false">
+                    <Template Context="c">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditCustomer(c))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Customer"))" />
+                            <RadzenButton Icon="@(c.IsActive ? "toggle_on" : "toggle_off")"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="@(c.IsActive ? ButtonStyle.Success : ButtonStyle.Warning)"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ToggleStatus(c))"
+                                          MouseEnter="@(args => ShowTooltip(args, c.IsActive ? "Deactivate" : "Activate"))" />
+                            <RadzenButton Icon="delete"
+                                          Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteCustomer(c))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Customer"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

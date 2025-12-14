@@ -1,0 +1,26 @@
+﻿@page "/card"
+
+<RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
+    Card
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
+    Use the Radzen Blazor <strong>Card</strong> component to display a piece of content, like an image and text. Cards often provide a summary of the content they represent, along with a call-to-action to encourage further user engagement.
+</RadzenText>
+
+<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
+    These demos show card containers displaying content like images and text with different variants (filled/outlined) to create visually distinct content blocks.
+</RadzenText>
+
+<RadzenExample ComponentName="Card" Example="CardConfig">
+    <CardConfig />
+</RadzenExample>
+
+<RadzenText Anchor="card#card-variant" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    Card Variant
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    Use the <code>Variant</code> property, e.g. <code>Variant="Variant.Outlined"</code>.
+</RadzenText>
+<RadzenExample ComponentName="Card" Example="CardVariants">
+    <CardVariants />
+</RadzenExample>

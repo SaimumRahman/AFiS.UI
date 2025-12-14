@@ -1,0 +1,40 @@
+﻿@page "/appearance-toggle"
+
+<RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
+    AppearanceToggle
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
+    Radzen Blazor <strong>AppearanceToggle</strong> is a button that allows the end user to toggle the application appearance between two preset themes.
+</RadzenText>
+
+<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
+    This demo shows a toggle button that switches between light and dark themes using <code>RadzenAppearanceToggle</code> with <code>RadzenTheme</code>, providing users with instant appearance customization.
+</RadzenText>
+
+<RadzenText Anchor="appearance-toggle#light-dark-mode" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    Switch between light and dark mode
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    Use RadzenAppearanceToggle to switch between light and dark modes. Requires RadzenTheme (check the <RadzenLink Path="/get-started" Text="getting started instructions" />).
+</RadzenText>
+<RadzenExample ComponentName="AppearanceToggle" Example="AppearanceToggleConfig">
+    <AppearanceToggleConfig />
+</RadzenExample>
+
+<RadzenText Anchor="toggle-button#keyboard-navigation" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    Keyboard Navigation
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    The following keys or key combinations provide a way for users to navigate and interact with Radzen Blazor AppearanceToggle component.
+</RadzenText>
+
+<KeyboardNavigationDataGrid Data="@shortcuts" />
+
+@code {
+    public List<KeyboardShortcut> shortcuts = new()
+    {
+        new KeyboardShortcut { Key = "Tab", Action = "Navigate to the AppearanceToggle." },
+        new KeyboardShortcut { Key = "Enter", Action = "Click and toggle the focused AppearanceToggle." },
+        new KeyboardShortcut { Key = "Space", Action = "Click and toggle the focused AppearanceToggle." }
+    };
+}

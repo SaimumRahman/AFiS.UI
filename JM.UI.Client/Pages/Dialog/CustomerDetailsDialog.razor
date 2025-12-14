@@ -1,0 +1,133 @@
+﻿@using JM.UI.Entities.Model.Customer
+@inherits CustomerDetailsDialogComponent
+
+<RadzenStack Gap="1.5rem" class="p-2">
+    <!-- Customer Information Section -->
+    <RadzenFieldset Text="Customer Information" Icon="person">
+        <RadzenStack Gap="1rem">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Customer Code" Component="CustomerCode" />
+                        <RadzenTextBox @bind-Value="Customer.CustomerCode"
+                                       Name="CustomerCode"
+                                       Placeholder="Enter customer code"
+                                       Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Customer Type" Component="CustomerType" />
+                        <RadzenDropDown @bind-Value="Customer.CustomerType"
+                                        Data="@CustomerTypes"
+                                        Name="CustomerType"
+                                        Placeholder="Select type"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Customer Name *" Component="CustomerName" />
+                        <RadzenTextBox @bind-Value="Customer.CustomerName"
+                                       Name="CustomerName"
+                                       Placeholder="Enter customer name"
+                                       Style="width: 100%;"
+                                       MaxLength="200" />
+                        <RadzenRequiredValidator Component="CustomerName" Text="Customer name is required" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <!-- Contact Information Section -->
+    <RadzenFieldset Text="Contact Information" Icon="contact_phone">
+        <RadzenStack Gap="1rem">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Phone Number" Component="PhoneNumber" />
+                        <RadzenTextBox @bind-Value="Customer.PhoneNumber"
+                                       Name="PhoneNumber"
+                                       Placeholder="Enter phone number"
+                                       Style="width: 100%;"
+                                       MaxLength="20" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Email" Component="Email" />
+                        <RadzenTextBox @bind-Value="Customer.Email"
+                                       Name="Email"
+                                       Placeholder="Enter email address"
+                                       Style="width: 100%;"
+                                       MaxLength="100" />
+                        <RadzenEmailValidator Component="Email" Text="Enter a valid email" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Address" Component="Address" />
+                        <RadzenTextArea @bind-Value="Customer.Address"
+                                        Name="Address"
+                                        Placeholder="Enter full address"
+                                        Rows="3"
+                                        Style="width: 100%;"
+                                        MaxLength="500" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <!-- Financial Information Section -->
+    <RadzenFieldset Text="Financial Information" Icon="account_balance_wallet">
+        <RadzenStack Gap="1rem">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Current Balance" Component="CurrentBalance" />
+                        <RadzenNumeric @bind-Value="Customer.CurrentBalance"
+                                       Name="CurrentBalance"
+                                       Placeholder="0.00"
+                                       Format="C2"
+                                       Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Status" Component="IsActive" />
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenSwitch @bind-Value="Customer.IsActive" Name="IsActive" />
+                            <RadzenText TextStyle="TextStyle.Body2">
+                                @(Customer.IsActive ? "Active" : "Inactive")
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <!-- Dialog Buttons -->
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-2">
+        <RadzenButton Text="Cancel"
+                      Icon="cancel"
+                      ButtonStyle="ButtonStyle.Light"
+                      Variant="Variant.Flat"
+                      Click="@Cancel"
+                      Disabled="@IsProcessing" />
+        <RadzenButton Text="@(IsEditMode ? "Update" : "Save")"
+                      Icon="@(IsEditMode ? "update" : "save")"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@Save"
+                      IsBusy="@IsProcessing"
+                      BusyText="Saving..." />
+    </RadzenStack>
+</RadzenStack>

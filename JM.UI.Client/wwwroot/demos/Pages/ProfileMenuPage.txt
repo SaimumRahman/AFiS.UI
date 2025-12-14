@@ -1,0 +1,38 @@
+﻿@page "/profile-menu"
+@page "/docs/guides/components/profilemenu.html"
+
+<RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
+    ProfileMenu
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
+    Demonstration and configuration of the Radzen Blazor <strong>ProfileMenu</strong> component.
+</RadzenText>
+
+<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
+    In this demo a profile menu uses a <code>RadzenGravatar</code> for "user@example.com" in the <code>Template</code>, with menu items for <strong>Buttons</strong>, <strong>Menu</strong>, <strong>FileInput</strong>, <strong>Dialog</strong>, and <strong>Notification</strong> pages, each with icons and navigation paths.
+</RadzenText>
+
+<RadzenExample ComponentName="ProfileMenu" Example="ProfileMenuConfig">
+    <ProfileMenuConfig />
+</RadzenExample>
+
+<RadzenText Anchor="profile-menu#keyboard-navigation" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    Keyboard Navigation
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    The following keys or key combinations provide a way for users to navigate and interact with Radzen Blazor ProfileMenu component.
+</RadzenText>
+
+<KeyboardNavigationDataGrid Data="@shortcuts" />
+
+@code {
+    public List<KeyboardShortcut> shortcuts = new()
+    {
+        new KeyboardShortcut { Key = "Tab", Action = "Navigate to a ProfileMenu." },
+        new KeyboardShortcut { Key = "Space or Enter", Action = "Open the ProfileMenu." },
+        new KeyboardShortcut { Key = "Space or Enter on a ProfileMenu item", Action = "Navigate." },
+        new KeyboardShortcut { Key = "DownArrow", Action = "Focus next ProfileMenu item." },
+        new KeyboardShortcut { Key = "UpArrow", Action = "Focus previous ProfileMenu item." },
+        new KeyboardShortcut { Key = "Esc", Action = "Close the ProfileMenu." }
+    };
+}
