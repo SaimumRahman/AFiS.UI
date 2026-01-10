@@ -1,5 +1,6 @@
 ﻿using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.Designations;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,6 +20,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IApprovalWorkflowRepository ApprovalWorkflowRepository { get; }
         public IApprovalLevelApproverRepository ApprovalLevelApproverRepository { get; }
         public IPendingApprovalRepository PendingApprovalRepository { get; }
+        public IDesignationRepository DesignationRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,

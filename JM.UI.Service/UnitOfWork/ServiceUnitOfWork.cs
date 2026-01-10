@@ -1,6 +1,7 @@
 ﻿using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Designations;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +15,7 @@ namespace JM.UI.Service.UnitOfWork
         public IApprovalWorkflowService ApprovalWorkflowService { get; }
         public IApprovalLevelApproverService ApprovalLevelApproverService { get; }
         public IPendingApprovalService PendingApprovalService { get; }
+        public IDesignationService DesignationService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
