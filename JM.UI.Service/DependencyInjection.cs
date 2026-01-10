@@ -2,6 +2,7 @@
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Designations;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ namespace JM.UI.Service
             services.AddScoped<IApprovalLevelApproverService, ApprovalLevelApproverService>();
             services.AddScoped<IPendingApprovalService, PendingApprovalService>();
             services.AddScoped<IUserAuthService, UserAuthService>();
+            services.AddScoped<IDesignationService, DesignationService>();
         }
     }
 }

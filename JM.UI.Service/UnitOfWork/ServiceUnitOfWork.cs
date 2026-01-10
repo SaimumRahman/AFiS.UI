@@ -2,6 +2,7 @@
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Company;
+using JM.UI.Service.Designations;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,7 @@ namespace JM.UI.Service.UnitOfWork
         public IApprovalLevelApproverService ApprovalLevelApproverService { get; }
         public IPendingApprovalService PendingApprovalService { get; }
         public ICompanyService CompanyService { get; }
+        public IDesignationService DesignationService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -26,6 +28,7 @@ namespace JM.UI.Service.UnitOfWork
             ApprovalLevelApproverService = new ApprovalLevelApproverService(_repoUow);
             ApprovalLevelApproverService = new ApprovalLevelApproverService(_repoUow);
             PendingApprovalService = new PendingApprovalService(_repoUow);
+            DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
         }
 

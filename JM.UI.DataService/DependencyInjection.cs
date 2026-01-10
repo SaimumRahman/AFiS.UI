@@ -2,6 +2,7 @@
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Company;
+using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ namespace JM.UI.DataService
             services.AddScoped<IApprovalLevelApproverRepository, ApprovalLevelApproverRepository>();
             services.AddScoped<IPendingApprovalRepository, PendingApprovalRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<IDesignationRepository, DesignationRepository>();
             #endregion
 
 
