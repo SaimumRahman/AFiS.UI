@@ -3,7 +3,6 @@
 ################################################################################
 
 /.vs
-/JM.UI..Utility/obj
 /JM.UI.Client/bin
 /JM.UI.Client/obj
 /JM.UI.DataService/bin
