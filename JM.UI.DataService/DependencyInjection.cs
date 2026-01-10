@@ -2,6 +2,7 @@
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.DataService.DAL.Users;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace JM.UI.DataService
 
             #region All Repositories
           
+            services.AddScoped<IUserAuthRepository, UsersAuthRepository>();
             services.AddScoped<IApprovalLevelRepository, ApprovalLevelRepository>();
             services.AddScoped<IApprovalLevelApproverRepository, ApprovalLevelApproverRepository>();
             services.AddScoped<IPendingApprovalRepository, PendingApprovalRepository>();
