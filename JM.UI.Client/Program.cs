@@ -1,7 +1,6 @@
 ﻿using JM.Infrastructure.ExceptionHandler;
 using JM.UI.Client.Services;
 using JM.UI.Entities.Model;
-using JM.UI.Entities.Model.Users;
 using JM.UI.Entities.Services;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -16,10 +15,6 @@ using JM.UI.Client.Services.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Bind configurations
-var authenticationConfig = new AuthenticationConfiguration();
-builder.Configuration.Bind("Authentication", authenticationConfig);
-builder.Services.AddSingleton(authenticationConfig);
-
 var appSettingsSection = builder.Configuration.GetSection("AppSettings");
 var appSettings = appSettingsSection.Get<AppSetting>();
 builder.Services.AddSingleton(appSettings);
@@ -32,13 +27,6 @@ builder.Services.AddRazorComponents()
     {
         o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
     });
-builder.Services.AddSingleton(sp =>
-{
-    var server = sp.GetRequiredService<IServer>();
-    var addressFeature = server.Features.Get<IServerAddressesFeature>();
-    string baseAddress = addressFeature != null ? addressFeature.Addresses.First() : string.Empty;
-    return new HttpClient { BaseAddress = new Uri(baseAddress) };
-});
 
 // Add Radzen.Blazor services
 builder.Services.AddRadzenComponents();
@@ -88,12 +76,15 @@ builder.Services.AddSingleton<ILogger, Logger<ErrorDetails>>();
 builder.Services.AddDataService();
 builder.Services.AddService();
 
-// CORS configuration
+// CORS configuration - UPDATE THESE URLS TO HTTP
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor", policy =>
     {
-        policy.WithOrigins("https://localhost:7143", "http://localhost:5000")
+        policy.WithOrigins(
+              "http://144.79.133.21:1003",
+              "http://localhost:1003",
+              "http://localhost:5000")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -106,11 +97,15 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    // COMMENT OUT HSTS - it forces HTTPS
+    // app.UseHsts();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found");
-app.UseHttpsRedirection();
+
+// COMMENT OUT HTTPS REDIRECTION
+// app.UseHttpsRedirection();
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();

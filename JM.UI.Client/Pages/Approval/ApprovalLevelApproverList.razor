@@ -1,0 +1,154 @@
+﻿@page "/ApprovalLevelApproverList"
+@using JM.UI.Entities.Model.Approval
+@inherits ApprovalLevelApproverListComponent
+<PageTitle>Approval Level Approvers</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Approval Level Approvers Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Approver"
+                                  Click="@AddApprovalLevelApprover"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="ApprovalLevelApproversGrid"
+                        Data="@ApprovalLevelApprovers"
+                        TItem="ApprovalLevelApproverModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="approver">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{approver.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Workflow Name -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="WorkflowName" Title="Workflow" Width="180px">
+                    <Template Context="approver">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="workflow" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @(approver.WorkflowName ?? "N/A")
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Approval Level Name -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="ApprovalLevelName" Title="Approval Level" Width="180px">
+                    <Template Context="approver">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="account_tree" Style="color: var(--rz-info);" />
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                @(approver.ApprovalLevelName ?? "N/A")
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- User Name -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="UserName" Title="Approver" Width="200px">
+                    <Template Context="approver">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="person" Style="color: var(--rz-success);" />
+                            <strong>@(approver.UserName ?? approver.UserName)</strong>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+
+                <!-- Approver Order -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="ApproverOrder" Title="Order" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="approver">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@approver.ApproverOrder.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Assigned Date -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="AssignedDate" Title="Assigned" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="approver">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(approver.AssignedDate?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="IsActive" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="approver">
+                        <RadzenBadge BadgeStyle="@(approver.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(approver.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Property="CreatedDate" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="approver">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(approver.CreatedDate?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="ApprovalLevelApproverModelDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="approver">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditApprovalLevelApprover(approver))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Approver"))" />
+
+                            <RadzenButton Icon="@(approver.IsActive ? "toggle_on" : "toggle_off")"
+                                          ButtonStyle="@(approver.IsActive ? ButtonStyle.Success : ButtonStyle.Warning)"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ToggleStatus(approver))"
+                                          MouseEnter="@(args => ShowTooltip(args, approver.IsActive ? "Deactivate" : "Activate"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteApprovalLevelApprover(approver))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Approver"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

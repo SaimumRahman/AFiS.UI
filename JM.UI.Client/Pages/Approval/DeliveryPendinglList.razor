@@ -1,0 +1,136 @@
+﻿@page "/DeliveryPendinglList"
+@using JM.UI.Entities.Model.Approval
+@inherits DeliveryPendinglListComponent
+
+<PageTitle>Pending Delivery Approvals</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+
+    <!-- Header -->
+    <RadzenCard class="mb-4">
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center"
+                     Gap="0.5rem">
+            <RadzenIcon Icon="pending_actions"
+                        Style="font-size:2rem;color:var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H4" class="mb-0">
+                Pending Delivery Approval List
+            </RadzenText>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Grid -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="PendingApprovalGrid"
+                        Data="@PendingApproval"
+                        TItem="PendingApprovalDTO"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20 })"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+
+                <!-- Workflow -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="WorkflowName"
+                                      Title="Workflow">
+                    <Template Context="item">
+                        <strong>@item.WorkflowName</strong>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Entity -->
+                <RadzenDataGridColumn Visible="false" TItem="PendingApprovalDTO"
+                                      Property="EntityDisplayName"
+                                      Title="Entity">
+                    <Template Context="item">
+                        @item.EntityDisplayName
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Current Level -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="CurrentLevelName"
+                                      Title="Current Level" />
+
+                <!-- Approver -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="ApproverUserName"
+                                      Title="Approver" />
+
+                <!-- Assigned Date -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="AssignedDate"
+                                      Title="Assigned On"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        @(item.AssignedDate?.ToString("dd MMM yyyy") ?? "—")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Due Date -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="DueDate"
+                                      Title="Due Date"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        @(item.DueDate?.ToString("dd MMM yyyy") ?? "—")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Property="IsActive"
+                                      Title="Status"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@(item.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(item.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="PendingApprovalDTO"
+                                      Title="Actions"
+                                      Width="140px"
+                                      Filterable="false"
+                                      Sortable="false"
+                                      TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                     Gap="0.25rem"
+                                     JustifyContent="JustifyContent.Center">
+
+                            @if (item.IsActive)
+                            {
+                                <RadzenButton Icon="check_circle"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => Approve(item))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Approve"))" />
+                            }
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteApprovalLevel(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+
+            </Columns>
+
+        </RadzenDataGrid>
+    </RadzenCard>
+
+</RadzenContent>

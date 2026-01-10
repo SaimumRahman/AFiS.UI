@@ -1,0 +1,150 @@
+﻿@page "/ApprovalWorkflowList"
+@using JM.UI.Entities.Model.Approval
+@inherits ApprovalWorkflowListComponent
+<PageTitle>Approval Workflows</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="workflow" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Approval Workflow Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Workflow"
+                                  Click="@AddApprovalWorkflow"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="ApprovalWorkflowsGrid"
+                        Data="@ApprovalWorkflows"
+                        TItem="ApprovalWorkflowModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{workflow.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Workflow Name -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="WorkflowName" Title="Workflow Name" Width="220px">
+                    <Template Context="workflow">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="assignment" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @workflow.WorkflowName
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Description -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="WorkflowDescription" Title="Description" Width="280px">
+                    <Template Context="workflow">
+                        <div title="@workflow.WorkflowDescription">
+                            @(string.IsNullOrWhiteSpace(workflow.WorkflowDescription) ? "No description" : Truncate(workflow.WorkflowDescription, 60))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Entity Type -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="EntityType" Title="Entity Type" Width="140px" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                     Text="@(workflow.EntityType ?? "N/A")"
+                                     Icon="category" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Total Levels -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="TotalLevels" Title="Total Levels" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary"
+                                     Text="@(workflow.TotalLevels == 1 ? "1 Level" : $"{workflow.TotalLevels} Levels")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="IsActive" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenBadge BadgeStyle="@(workflow.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(workflow.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="CreatedDate" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(workflow.CreatedDate?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Last Modified -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Property="LastModifiedDate" Title="Last Modified" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="workflow">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(workflow.LastModifiedDate?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="ApprovalWorkflowModelDTO" Title="Actions" Width="160px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="workflow">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditApprovalWorkflow(workflow))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Workflow"))" />
+
+                            <RadzenButton Icon="@(workflow.IsActive ? "toggle_on" : "toggle_off")"
+                                          ButtonStyle="@(workflow.IsActive ? ButtonStyle.Success : ButtonStyle.Warning)"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ToggleStatus(workflow))"
+                                          MouseEnter="@(args => ShowTooltip(args, workflow.IsActive ? "Deactivate" : "Activate"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteApprovalWorkflow(workflow))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Workflow"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

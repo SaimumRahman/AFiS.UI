@@ -1,7 +1,8 @@
 ﻿using JM.Infrastructure.Base;
-using JM.UI.Service.Customer;
-
-using JM.UI.Service.Users;
+using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.Service.Approval;
+using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -17,11 +18,14 @@ namespace JM.UI.Service
         public static void AddService(this IServiceCollection services)
         {
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
-            services.AddScoped<IRoleService,RoleService>();
-            services.AddScoped<IDesignationService, DesignationService>();
-            services.AddScoped<IUserAuthService, UserAuthService>();
+        
+            services.AddScoped<IServiceUnitOfWork, ServiceUnitOfWork>();
 
-            services.AddScoped<ICustomerService, CustomerService>();
+    
+            services.AddScoped<IApprovalLevelService, ApprovalLevelService>();
+            services.AddScoped<IApprovalWorkflowService, ApprovalWorkflowService>();
+            services.AddScoped<IApprovalLevelApproverService, ApprovalLevelApproverService>();
+            services.AddScoped<IPendingApprovalService, PendingApprovalService>();
         }
     }
 }

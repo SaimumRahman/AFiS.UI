@@ -1,6 +1,7 @@
 ﻿using JM.Infrastructure.Base;
-using JM.UI.DataService.DAL.Customer;
-using JM.UI.DataService.DAL.Users;
+using JM.UI.DataService.DAL.Approval;
+using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -16,12 +17,13 @@ namespace JM.UI.DataService
         {
 
             services.AddScoped<IBaseDapperRepository, BaseDapperRepository>();
-            services.AddScoped<IRoleRepository, RoleRepository>();
-            services.AddScoped<IDesignationRepository, DesignationRepository>();
-            services.AddScoped<IUserAuthRepository, UsersAuthRepository>();
+            services.AddScoped<IRepositoryUnitOfWork, RepositoryUnitOfWork>();
 
-            #region Customer
-            services.AddScoped<ICustomerRepository, CustomerRepository>();
+            #region All Repositories
+          
+            services.AddScoped<IApprovalLevelRepository, ApprovalLevelRepository>();
+            services.AddScoped<IApprovalLevelApproverRepository, ApprovalLevelApproverRepository>();
+            services.AddScoped<IPendingApprovalRepository, PendingApprovalRepository>();
             #endregion
 
 
