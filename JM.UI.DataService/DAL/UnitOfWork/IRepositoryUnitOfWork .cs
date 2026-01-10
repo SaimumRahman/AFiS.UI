@@ -6,6 +6,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.UserGroup;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,6 +25,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
         IGroupRoleRepository GroupRoleRepository { get; }
+        IUserGroupRepository UserGroupRepository { get; }
     }
 
 }

@@ -9,6 +9,7 @@ using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.Stores;
 using JM.UI.Service.UnitOfWork;
+using JM.UI.Service.UserGroup;
 using JM.UI.Service.Users;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -39,6 +40,7 @@ namespace JM.UI.Service
             services.AddScoped<IStoreService, StoreService>();
             services.AddScoped<IBanksService, BanksService>();
             services.AddScoped<IGroupRoleService, GroupRoleService>();
+            services.AddScoped<IUserGroupService, UserGroupService>();
         }
     }
 }

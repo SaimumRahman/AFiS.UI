@@ -8,6 +8,7 @@ using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.Stores;
+using JM.UI.Service.UserGroup;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -27,8 +28,9 @@ namespace JM.UI.Service.UnitOfWork
         public IStoreService StoreService { get; }
         public IBanksService BanksService { get; }
         public IGroupRoleService GroupRoleService { get; }
+        public IUserGroupService UserGroupService { get; }
 
-        public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
+        public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
             _repoUow = repoUow;
            
@@ -43,6 +45,7 @@ namespace JM.UI.Service.UnitOfWork
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
             GroupRoleService = new GroupRoleService(_repoUow);
+            UserGroupService = new UserGroupService(_repoUow);
         }
 
         public void Dispose()

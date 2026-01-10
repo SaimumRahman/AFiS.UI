@@ -6,6 +6,7 @@ using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.Stores;
+using JM.UI.Service.UserGroup;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,8 @@ namespace JM.UI.Service.UnitOfWork
         ICompanyService CompanyService { get; }
         IEmployeeService EmployeeService { get; }
         IStoreService StoreService { get; }
+        IBanksService BanksService { get; }
         IGroupRoleService GroupRoleService { get; }
+        IUserGroupService UserGroupService { get; }
     }
 }

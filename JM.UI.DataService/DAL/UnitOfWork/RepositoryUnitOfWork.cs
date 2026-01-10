@@ -6,6 +6,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -31,6 +32,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
         public IGroupRoleRepository GroupRoleRepository { get; }
+        public IUserGroupRepository UserGroupRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -52,6 +54,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
             GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());
+            UserGroupRepository = new UserGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<UserGroupRepository>());
 
         }
 
