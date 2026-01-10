@@ -1,0 +1,199 @@
+﻿@page "/EmployeeList"
+@using JM.UI.Entities.Model.Employees
+@inherits EmployeeListComponent
+
+<PageTitle>Employees</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Employee Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Employee"
+                                  Click="@AddEmployee"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="EmployeesGrid"
+                        Data="@Employees"
+                        TItem="EmployeeModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="employee">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{employee.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Employee Code -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="EmployeeCode" Title="Code" Width="120px">
+                    <Template Context="employee">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@employee.EmployeeCode" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Employee Name -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Name" Title="Employee Name" Width="220px">
+                    <Template Context="employee">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="person" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @employee.Name
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Designation -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="DesignationName" Title="Designation" Width="180px">
+                    <Template Context="employee">
+                        @(employee.DesignationName ?? "N/A")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Contact -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Contact" Title="Contact" Width="140px">
+                    <Template Context="employee">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(employee.Contact))
+                            {
+                                <RadzenIcon Icon="phone" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <span>@employee.Contact</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Email -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Email" Title="Email" Width="220px">
+                    <Template Context="employee">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(employee.Email))
+                            {
+                                <RadzenIcon Icon="email" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <a href="mailto:@employee.Email" style="text-decoration: none; color: var(--rz-primary);">
+                                    @_serviceUnitOfWork.EmployeeService.Truncate(employee.Email, 25)
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Gender -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Gender" Title="Gender" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="employee">
+                        @if (!string.IsNullOrWhiteSpace(employee.Gender))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@employee.Gender" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Date Joined -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="DateJoined" Title="Date Joined" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="employee">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(employee.DateJoined?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Basic Salary -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="BasicSalary" Title="Salary" Width="130px" TextAlign="TextAlign.Right">
+                    <Template Context="employee">
+                        @if (employee.BasicSalary.HasValue)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @employee.BasicSalary.Value.ToString("N2")
+                            </RadzenText>
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Status" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="employee">
+                        @{
+                            var statusText = GetStatusText(employee.Status);
+                            var badgeStyle = employee.Status switch
+                            {
+                                1 => BadgeStyle.Success,
+                                0 => BadgeStyle.Danger,
+                                2 => BadgeStyle.Warning,
+                                3 => BadgeStyle.Secondary,
+                                _ => BadgeStyle.Light
+                            };
+                        }
+                        <RadzenBadge BadgeStyle="@badgeStyle" Text="@statusText" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="employee">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditEmployee(employee))"
+                                          MouseEnter="@(args => TooltipService.Open(args, "Edit Employee"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteEmployee(employee))"
+                                          MouseEnter="@(args => TooltipService.Open(args, "Delete Employee"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

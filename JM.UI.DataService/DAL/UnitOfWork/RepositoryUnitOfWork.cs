@@ -3,6 +3,8 @@ using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
+using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IDesignationRepository DesignationRepository { get; }
         public ICompanyRepository CompanyRepository { get; }
         public IBanksRepository BanksRepository { get; }
+        public IEmployeeRepository EmployeeRepository { get; }
+        public IStoreRepository StoreRepository { get; }
         public IShiftRepository ShiftRepository { get; }
 
         public RepositoryUnitOfWork(
@@ -45,6 +49,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CompanyRepository = new CompanyRepository(factory, tokenProvider, loggerFactory.CreateLogger<CompanyRepository>());
             DesignationRepository = new DesignationRepository(factory, tokenProvider, loggerFactory.CreateLogger<DesignationRepository>());
             BanksRepository = new BanksRepository(factory, tokenProvider, loggerFactory.CreateLogger<BanksRepository>());
+            EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
+            StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());
 
         }

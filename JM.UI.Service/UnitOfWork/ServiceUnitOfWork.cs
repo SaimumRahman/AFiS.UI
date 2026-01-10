@@ -5,6 +5,8 @@ using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Employee;
+using JM.UI.Service.Stores;
 using JM.UI.Service.Shift;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,8 @@ namespace JM.UI.Service.UnitOfWork
         public IPendingApprovalService PendingApprovalService { get; }
         public ICompanyService CompanyService { get; }
         public IDesignationService DesignationService { get; }
+        public IEmployeeService EmployeeService { get; }
+        public IStoreService StoreService { get; }
         public IBanksService BanksService { get; }
         public IShiftService ShiftService { get; }
 
@@ -36,6 +40,8 @@ namespace JM.UI.Service.UnitOfWork
             DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
             BanksService = new BanksService(_repoUow);
+            EmployeeService = new EmployeeService(_repoUow);
+            StoreService = new StoreService(_repoUow);
             ShiftService = new ShiftService(_repoUow);
         }
 
