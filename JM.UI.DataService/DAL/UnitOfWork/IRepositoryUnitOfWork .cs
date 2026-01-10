@@ -1,5 +1,6 @@
 ﻿using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IApprovalWorkflowRepository ApprovalWorkflowRepository { get; }
         IApprovalLevelApproverRepository ApprovalLevelApproverRepository { get; }
         IPendingApprovalRepository PendingApprovalRepository { get; }
+        ICompanyRepository CompanyRepository { get; }
         IDesignationRepository DesignationRepository { get; }
     }
 

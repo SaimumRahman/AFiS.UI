@@ -1,0 +1,203 @@
+﻿@page "/CompanyAdd"
+@page "/CompanyAdd/{Id:int}"
+@using JM.UI.Entities.Model.Company
+@inherits CompanyAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    @if (IsLoading)
+    {
+        <RadzenCard class="text-center p-5">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1" class="mt-3">Loading company...</RadzenText>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- Header Card -->
+        <RadzenCard class="mb-4">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="arrow_back"
+                                      Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@Cancel"
+                                      Size="ButtonSize.Medium" />
+                        <RadzenIcon Icon="@PageIcon" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                        @if (IsEditMode)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"#{Company.Id}")" />
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                        <RadzenButton Text="@(IsEditMode ? "Reset Changes" : "Reset")"
+                                      Icon="refresh"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Outlined"
+                                      Click="@Reset"
+                                      Disabled="@IsProcessing" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- Form Card -->
+        <RadzenCard>
+            <RadzenTemplateForm TItem="CompanyDTO" Data="@Company" Submit="@Save">
+                <RadzenStack Gap="1.5rem">
+                    <!-- Company Information Section -->
+                    <RadzenFieldset Text="Company Information" Icon="business">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Company Name *" Component="Name" />
+                                        <RadzenTextBox @bind-Value="Company.Name"
+                                                       Name="Name"
+                                                       Placeholder="Enter company name"
+                                                       Style="width: 100%;"
+                                                       MaxLength="100" />
+                                        <RadzenRequiredValidator Component="Name" Text="Company name is required" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Email" Component="Email" />
+                                        <RadzenTextBox @bind-Value="Company.Email"
+                                                       Name="Email"
+                                                       Placeholder="Enter email address"
+                                                       Style="width: 100%;"
+                                                       MaxLength="100" />
+                                        <RadzenEmailValidator Component="Email" Text="Invalid email format" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Address" Component="Address" />
+                                        <RadzenTextArea @bind-Value="Company.Address"
+                                                        Name="Address"
+                                                        Placeholder="Enter company address"
+                                                        Style="width: 100%;"
+                                                        Rows="3"
+                                                        MaxLength="500" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Contact" Component="Contact" />
+                                        <RadzenTextBox @bind-Value="Company.Contact"
+                                                       Name="Contact"
+                                                       Placeholder="Enter contact number"
+                                                       Style="width: 100%;"
+                                                       MaxLength="50" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="VAT Number" Component="VAT" />
+                                        <RadzenTextBox @bind-Value="Company.VAT"
+                                                       Name="VAT"
+                                                       Placeholder="Enter VAT number"
+                                                       Style="width: 100%;"
+                                                       MaxLength="50" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="TIN Number" Component="TIN" />
+                                        <RadzenTextBox @bind-Value="Company.TIN"
+                                                       Name="TIN"
+                                                       Placeholder="Enter TIN number"
+                                                       Style="width: 100%;"
+                                                       MaxLength="50" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    <!-- Metadata Section (Only in Edit Mode) -->
+                    @if (IsEditMode)
+                    {
+                        <RadzenFieldset Text="Metadata" Icon="info">
+                            <RadzenStack Gap="1rem">
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Created Date" />
+                                            <RadzenTextBox Value="@Company.CreatedOn.ToString("dd MMM yyyy HH:mm")"
+                                                           Disabled="true"
+                                                           Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Created By" />
+                                            <RadzenTextBox Value="@Company.CreatedBy"
+                                                           Disabled="true"
+                                                           Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Modified Date" />
+                                            <RadzenTextBox Value="@(Company.ModifiedOn?.ToString("dd MMM yyyy HH:mm") ?? "N/A")"
+                                                           Disabled="true"
+                                                           Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Modified By" />
+                                            <RadzenTextBox Value="@(Company.ModifiedBy ?? "N/A")"
+                                                           Disabled="true"
+                                                           Style="width: 100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenFieldset>
+                    }
+
+                    <!-- Action Buttons -->
+                    <RadzenCard class="mt-2">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                            <RadzenButton Text="Cancel"
+                                          Icon="cancel"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Variant="Variant.Flat"
+                                          Click="@Cancel"
+                                          Disabled="@IsProcessing" />
+                            @if (!IsEditMode)
+                            {
+                                <RadzenButton Text="Save & Add New"
+                                              Icon="add"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Click="@SaveAndNew"
+                                              IsBusy="@IsProcessing"
+                                              Disabled="@IsProcessing" />
+                            }
+                            <RadzenButton Text="@(IsEditMode ? "Update" : "Save")"
+                                          Icon="@(IsEditMode ? "update" : "save")"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          ButtonType="ButtonType.Submit"
+                                          IsBusy="@IsProcessing"
+                                          BusyText="@(IsEditMode ? "Updating..." : "Saving...")" />
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenStack>
+            </RadzenTemplateForm>
+        </RadzenCard>
+    }
+</RadzenContent>
