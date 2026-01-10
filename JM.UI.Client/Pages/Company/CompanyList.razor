@@ -1,0 +1,183 @@
+﻿@page "/CompanyList"
+@using JM.UI.Entities.Model.Company
+@inherits CompanyListComponent
+
+<PageTitle>Companies</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="business" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Company Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Company"
+                                  Click="@AddCompany"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="CompaniesGrid"
+                        Data="@Companies"
+                        TItem="CompanyDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="company">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{company.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Company Name -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Name" Title="Company Name" Width="250px">
+                    <Template Context="company">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="business_center" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @company.Name
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Address -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Address" Title="Address" Width="280px">
+                    <Template Context="company">
+                        <div title="@company.Address">
+                            @(string.IsNullOrWhiteSpace(company.Address) ? "No address" : Truncate(company.Address, 50))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Contact -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Contact" Title="Contact" Width="150px">
+                    <Template Context="company">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(company.Contact))
+                            {
+                                <RadzenIcon Icon="phone" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <span>@company.Contact</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Email -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Email" Title="Email" Width="220px">
+                    <Template Context="company">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(company.Email))
+                            {
+                                <RadzenIcon Icon="email" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <a href="mailto:@company.Email" style="text-decoration: none; color: var(--rz-primary);">
+                                    @company.Email
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- VAT -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="VAT" Title="VAT Number" Width="140px">
+                    <Template Context="company">
+                        @if (!string.IsNullOrWhiteSpace(company.VAT))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@company.VAT" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- TIN -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="TIN" Title="TIN Number" Width="140px">
+                    <Template Context="company">
+                        @if (!string.IsNullOrWhiteSpace(company.TIN))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@company.TIN" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="CreatedOn" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="company">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @company.CreatedOn.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Modified Date -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="ModifiedOn" Title="Modified" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="company">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(company.ModifiedOn?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="CompanyDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="company">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditCompany(company))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Company"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteCompany(company))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Company"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

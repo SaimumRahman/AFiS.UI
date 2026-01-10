@@ -1,5 +1,6 @@
 ﻿using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.Company;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,6 +20,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IApprovalWorkflowRepository ApprovalWorkflowRepository { get; }
         public IApprovalLevelApproverRepository ApprovalLevelApproverRepository { get; }
         public IPendingApprovalRepository PendingApprovalRepository { get; }
+        public ICompanyRepository CompanyRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -34,6 +36,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ApprovalWorkflowRepository = new ApprovalWorkflowRepository(factory, tokenProvider, loggerFactory.CreateLogger<ApprovalWorkflowRepository>());
             ApprovalLevelApproverRepository = new ApprovalLevelApproverRepository(factory, tokenProvider, loggerFactory.CreateLogger<ApprovalLevelApproverRepository>());
             PendingApprovalRepository = new PendingApprovalRepository(factory, tokenProvider, loggerFactory.CreateLogger<PendingApprovalRepository>());
+            CompanyRepository = new CompanyRepository(factory, tokenProvider, loggerFactory.CreateLogger<CompanyRepository>());
         }
 
         public void Dispose()

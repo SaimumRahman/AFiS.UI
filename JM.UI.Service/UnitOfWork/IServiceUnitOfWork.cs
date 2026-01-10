@@ -1,5 +1,6 @@
 ﻿using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Company;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,5 +13,6 @@ namespace JM.UI.Service.UnitOfWork
         IApprovalWorkflowService ApprovalWorkflowService { get; }
         IApprovalLevelApproverService ApprovalLevelApproverService { get; }
         IPendingApprovalService PendingApprovalService { get; }
+        ICompanyService CompanyService { get; }
     }
 }
