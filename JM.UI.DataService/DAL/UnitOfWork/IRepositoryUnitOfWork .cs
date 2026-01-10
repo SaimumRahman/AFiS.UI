@@ -1,5 +1,6 @@
 ﻿using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
@@ -18,6 +19,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IPendingApprovalRepository PendingApprovalRepository { get; }
         ICompanyRepository CompanyRepository { get; }
         IDesignationRepository DesignationRepository { get; }
+        IBanksRepository BanksRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
     }

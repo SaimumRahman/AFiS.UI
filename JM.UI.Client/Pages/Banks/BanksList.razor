@@ -1,8 +1,8 @@
-﻿@page "/DesignationList"
-@using JM.UI.Entities.Model.Designations 
-@inherits DesignationListComponent
+﻿@page "/BanksList"
+@using JM.UI.Entities.Model.Bank
+@inherits BanksListComponent
 
-<PageTitle>Designations</PageTitle>
+<PageTitle>Banks</PageTitle>
 
 <!-- Header Card -->
 <RadzenCard class="p-3 mb-3">
@@ -11,12 +11,12 @@
                  AlignItems="AlignItems.Center">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
             <RadzenIcon Icon="work" Style="font-size: 32px; color: var(--rz-primary);" />
-            <RadzenText TextStyle="TextStyle.H5"><b>Designations Management</b></RadzenText>
+            <RadzenText TextStyle="TextStyle.H5"><b>Banks Management</b></RadzenText>
         </RadzenStack>
-        <RadzenButton Text="Add New Designation"
+        <RadzenButton Text="Add New Banks"
                       Icon="add"
                       ButtonStyle="ButtonStyle.Primary"
-                      Click="@AddDesignation" />
+                      Click="@AddBanks" />
     </RadzenStack>
 </RadzenCard>
 
@@ -30,9 +30,9 @@
     }
     else
     {
-        <RadzenDataGrid @ref="DesignationsGrid"
-                        Data="@Designations"
-                        TItem="DesignationDTO"
+        <RadzenDataGrid @ref="BankssGrid"
+                        Data="@Bankss"
+                        TItem="BanksDTO"
                         AllowSorting="true"
                         AllowPaging="true"
                         AllowFiltering="true"
@@ -44,25 +44,25 @@
                         FilterMode="FilterMode.Advanced"
                         Style="border-radius: 12px;">
             <Columns>
-                <RadzenDataGridColumn TItem="DesignationDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
-                <RadzenDataGridColumn TItem="DesignationDTO" Property="Name" Title="Designation Name" Width="320px">
+                <RadzenDataGridColumn TItem="BanksDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
+                <RadzenDataGridColumn TItem="BanksDTO" Property="Name" Title="Banks Name" Width="320px">
                     <Template Context="data">
                         <b>@data.Name</b>
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="DesignationDTO" Title="Actions" Width="220px">
+                <RadzenDataGridColumn TItem="BanksDTO" Title="Actions" Width="220px">
                     <Template Context="data">
                         <RadzenButton Icon="edit"
                                       ButtonStyle="ButtonStyle.Info"
                                       Size="ButtonSize.Small"
                                       Class="mr-1"
-                                      Click="@(() => EditDesignation(data))" />
+                                      Click="@(() => EditBanks(data))" />
                         
                         <RadzenButton Icon="delete"
                                       ButtonStyle="ButtonStyle.Danger"
                                       Size="ButtonSize.Small"
                                       Class="mr-1"
-                                      Click="@(() => DeleteDesignation(data))" />
+                                      Click="@(() => DeleteBanks(data))" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>

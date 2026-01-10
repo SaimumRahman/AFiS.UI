@@ -1,6 +1,7 @@
 ﻿using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
+using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
@@ -34,6 +35,7 @@ namespace JM.UI.DataService
             services.AddScoped<IDesignationRepository, DesignationRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<IStoreRepository, StoreRepository>();
+            services.AddScoped<IBanksRepository, BanksRepository>();
             #endregion
 
 
