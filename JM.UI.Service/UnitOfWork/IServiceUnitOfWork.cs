@@ -1,5 +1,6 @@
 ﻿using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Banks;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using System;
@@ -16,5 +17,6 @@ namespace JM.UI.Service.UnitOfWork
         IPendingApprovalService PendingApprovalService { get; }
         IDesignationService DesignationService { get; }
         ICompanyService CompanyService { get; }
+        IBanksService BanksService { get; }
     }
 }

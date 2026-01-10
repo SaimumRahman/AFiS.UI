@@ -2,6 +2,8 @@
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Banks;
+using JM.UI.Service.Bankss;
 using JM.UI.Service.Designations;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.Users;
@@ -30,6 +32,7 @@ namespace JM.UI.Service
             services.AddScoped<IPendingApprovalService, PendingApprovalService>();
             services.AddScoped<IUserAuthService, UserAuthService>();
             services.AddScoped<IDesignationService, DesignationService>();
+            services.AddScoped<IBanksService, BanksService>();
         }
     }
 }

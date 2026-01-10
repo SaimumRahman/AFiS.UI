@@ -1,6 +1,8 @@
 ﻿using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
+using JM.UI.Service.Banks;
+using JM.UI.Service.Bankss;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using System;
@@ -18,6 +20,7 @@ namespace JM.UI.Service.UnitOfWork
         public IPendingApprovalService PendingApprovalService { get; }
         public ICompanyService CompanyService { get; }
         public IDesignationService DesignationService { get; }
+        public IBanksService BanksService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -30,6 +33,7 @@ namespace JM.UI.Service.UnitOfWork
             PendingApprovalService = new PendingApprovalService(_repoUow);
             DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
+            BanksService = new BanksService(_repoUow);
         }
 
         public void Dispose()
