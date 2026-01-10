@@ -312,7 +312,7 @@
                                         <RadzenLabel Text="Designation" Component="DesignationId" />
                                         <RadzenDropDown @bind-Value="Employee.DesignationId"
                                                         Data="@Designations"
-                                                        TextProperty="DesignationName"
+                                                        TextProperty="Name"
                                                         ValueProperty="Id"
                                                         Name="DesignationId"
                                                         Placeholder="Select designation"
@@ -326,7 +326,7 @@
                                         <RadzenLabel Text="Store" Component="StoreId" />
                                         <RadzenDropDown @bind-Value="Employee.StoreId"
                                                         Data="@Stores"
-                                                        TextProperty="StoreName"
+                                                        TextProperty="Name"
                                                         ValueProperty="Id"
                                                         Name="StoreId"
                                                         Placeholder="Select store"
@@ -336,7 +336,7 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="3">
-                                    <RadzenStack Gap="0.25rem">
+                                   @*  <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Shift" Component="ShiftId" />
                                         <RadzenDropDown @bind-Value="Employee.ShiftId"
                                                         Data="@Shifts"
@@ -347,7 +347,7 @@
                                                         Style="width: 100%;"
                                                         AllowClear="true"
                                                         AllowFiltering="true" />
-                                    </RadzenStack>
+                                    </RadzenStack> *@
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="3">
                                     <RadzenStack Gap="0.25rem">
@@ -422,7 +422,7 @@
                                         <RadzenLabel Text="Bank" Component="BankId" />
                                         <RadzenDropDown @bind-Value="Employee.BankId"
                                                         Data="@Banks"
-                                                        TextProperty="BankName"
+                                                        TextProperty="Name"
                                                         ValueProperty="Id"
                                                         Name="BankId"
                                                         Placeholder="Select bank"

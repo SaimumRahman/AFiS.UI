@@ -11,7 +11,7 @@ public partial class GroupUserAssignmentComponent : PosComponentBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-    [Parameter] public int GroupId { get; set; }
+    [Parameter] public int GroupId { get; set; } = 1;
 
     protected GroupUsersDTO GroupUsers { get; set; } = new();
     protected IList<CoreUserDTO> SelectedAvailableUsers { get; set; } = new List<CoreUserDTO>();
