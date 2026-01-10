@@ -38,7 +38,7 @@ public partial class DesignationAddComponent : PosComponentBase
             if (designation == null)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", "Designation not found.");
-                NavigationManager.NavigateTo("/Designations");
+                NavigationManager.NavigateTo("/DesignationList");
                 return;
             }
             Designation = designation;
@@ -46,7 +46,7 @@ public partial class DesignationAddComponent : PosComponentBase
         catch (Exception ex)
         {
             notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load designation: {ex.Message}");
-            NavigationManager.NavigateTo("/Designations");
+            NavigationManager.NavigateTo("/DesignationList");
         }
         finally { IsLoading = false; }
     }
@@ -74,7 +74,7 @@ public partial class DesignationAddComponent : PosComponentBase
             {
                 notificationService.Notify(NotificationSeverity.Success, "Success",
                     IsEditMode ? "Designation updated successfully!" : "Designation created successfully!");
-                NavigationManager.NavigateTo("/Designations");
+                NavigationManager.NavigateTo("/DesignationList");
             }
             else
             {
@@ -122,7 +122,7 @@ public partial class DesignationAddComponent : PosComponentBase
         finally { IsProcessing = false; }
     }
 
-    protected void Cancel() => NavigationManager.NavigateTo("/Designations");
+    protected void Cancel() => NavigationManager.NavigateTo("/DesignationList");
 
     protected async Task Reset()
     {

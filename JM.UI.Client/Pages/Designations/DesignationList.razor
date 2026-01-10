@@ -44,7 +44,7 @@
                         FilterMode="FilterMode.Advanced"
                         Style="border-radius: 12px;">
             <Columns>
-                <RadzenDataGridColumn TItem="DesignationDTO" Property="Id" Title="ID" Width="90px" />
+                <RadzenDataGridColumn TItem="DesignationDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
                 <RadzenDataGridColumn TItem="DesignationDTO" Property="Name" Title="Designation Name" Width="320px">
                     <Template Context="data">
                         <b>@data.Name</b>
