@@ -26,6 +26,7 @@ namespace JM.UI.Service.UnitOfWork
             ApprovalLevelApproverService = new ApprovalLevelApproverService(_repoUow);
             ApprovalLevelApproverService = new ApprovalLevelApproverService(_repoUow);
             PendingApprovalService = new PendingApprovalService(_repoUow);
+            DesignationService = new DesignationService(_repoUow);
         }
 
         public void Dispose()
