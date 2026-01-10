@@ -1,7 +1,9 @@
 ﻿// CompanyListComponent.razor.cs
+using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Designations;
 using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -24,8 +26,8 @@ namespace JM.UI.Client.Pages.Employees
         protected string PageIcon => IsEditMode ? "edit" : "person_add";
 
         // Dropdown Lists
-       // protected List<BankModelDTO> Banks { get; set; } = new();
-      //  protected List<StoreModelDTO> Stores { get; set; } = new();
+        protected List<BanksDTO> Banks { get; set; } = new();
+        protected List<StoreDTO> Stores { get; set; } = new();
         protected List<DesignationDTO> Designations { get; set; } = new();
      //   protected List<ShiftModelDTO> Shifts { get; set; } = new();
 
@@ -70,9 +72,9 @@ namespace JM.UI.Client.Pages.Employees
             try
             {
                 // Load Banks
-               // var banksTask = _serviceUnitOfWork.BankService.GetBanks();
+                var banksTask = _serviceUnitOfWork.BanksService.GetBankss();
                 // Load Stores
-              //  var storesTask = _serviceUnitOfWork.StoreService.GetStores();
+                var storesTask = _serviceUnitOfWork.StoreService.GetStores();
              //   // Load Designations
                var designationsTask = _serviceUnitOfWork.DesignationService.GetDesignations();
                 // Load Shifts
@@ -80,8 +82,8 @@ namespace JM.UI.Client.Pages.Employees
 
                 //await Task.WhenAll(banksTask, storesTask, designationsTask, shiftsTask);
 
-                //Banks = (await banksTask).ToList();
-                //Stores = (await storesTask).ToList();
+                Banks = (await banksTask).ToList();
+                Stores = (await storesTask).ToList();
                 Designations = (await designationsTask).ToList();
                 //Shifts = (await shiftsTask).ToList();
             }
