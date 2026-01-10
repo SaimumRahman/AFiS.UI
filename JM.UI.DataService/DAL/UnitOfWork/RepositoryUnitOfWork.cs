@@ -3,6 +3,7 @@ using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.Stores;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -25,6 +26,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IDesignationRepository DesignationRepository { get; }
         public ICompanyRepository CompanyRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
+        public IStoreRepository StoreRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -43,6 +45,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CompanyRepository = new CompanyRepository(factory, tokenProvider, loggerFactory.CreateLogger<CompanyRepository>());
             DesignationRepository = new DesignationRepository(factory, tokenProvider, loggerFactory.CreateLogger<DesignationRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
+            StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
 
         }
 

@@ -4,6 +4,7 @@ using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
+using JM.UI.Service.Stores;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,6 +21,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICompanyService CompanyService { get; }
         public IDesignationService DesignationService { get; }
         public IEmployeeService EmployeeService { get; }
+        public IStoreService StoreService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -33,6 +35,7 @@ namespace JM.UI.Service.UnitOfWork
             DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
+            StoreService = new StoreService(_repoUow);
         }
 
         public void Dispose()

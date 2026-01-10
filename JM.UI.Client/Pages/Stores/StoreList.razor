@@ -1,0 +1,212 @@
+﻿@page "/StoreList"
+@using JM.UI.Client.Pages.Store
+@using JM.UI.Entities.Model.Stores
+@inherits StoreListComponent
+
+<PageTitle>Stores</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="store" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Store Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Store"
+                                  Click="@AddStore"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="StoresGrid"
+                        Data="@Stores"
+                        TItem="StoreDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="store">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{store.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Store Name -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Name" Title="Store Name" Width="220px">
+                    <Template Context="store">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="storefront" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @store.Name
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Store Code -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Code" Title="Code" Width="120px">
+                    <Template Context="store">
+                        @if (!string.IsNullOrWhiteSpace(store.Code))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@store.Code" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Address -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Address" Title="Address" Width="250px">
+                    <Template Context="store">
+                        <div title="@store.Address">
+                            @(string.IsNullOrWhiteSpace(store.Address) ? "No address" : Truncate(store.Address, 45))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Contact -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Contact" Title="Contact" Width="150px">
+                    <Template Context="store">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(store.Contact))
+                            {
+                                <RadzenIcon Icon="phone" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <span>@store.Contact</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Email -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="Email" Title="Email" Width="220px">
+                    <Template Context="store">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            @if (!string.IsNullOrWhiteSpace(store.Email))
+                            {
+                                <RadzenIcon Icon="email" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
+                                <a href="mailto:@store.Email" style="text-decoration: none; color: var(--rz-primary);">
+                                    @store.Email
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- VAT -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="VAT" Title="VAT Number" Width="140px">
+                    <Template Context="store">
+                        @if (!string.IsNullOrWhiteSpace(store.VAT))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@store.VAT" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- TIN -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="TIN" Title="TIN Number" Width="140px">
+                    <Template Context="store">
+                        @if (!string.IsNullOrWhiteSpace(store.TIN))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@store.TIN" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Use Letterhead -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="UseLetterHead" Title="Letterhead" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="store">
+                        @if (store.UseLetterHead)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Enabled" />
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Disabled" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="CreatedOn" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="store">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @store.CreatedOn.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Modified Date -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="ModifiedOn" Title="Modified" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="store">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(store.ModifiedOn?.ToString("dd MMM yyyy") ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="StoreDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="store">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditStore(store))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Store"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteStore(store))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Store"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

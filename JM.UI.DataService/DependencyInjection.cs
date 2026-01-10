@@ -4,6 +4,7 @@ using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,7 @@ namespace JM.UI.DataService
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<IDesignationRepository, DesignationRepository>();
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            services.AddScoped<IStoreRepository, StoreRepository>();
             #endregion
 
 
