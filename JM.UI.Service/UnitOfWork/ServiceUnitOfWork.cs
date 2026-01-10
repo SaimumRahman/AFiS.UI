@@ -3,6 +3,7 @@ using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,6 +19,7 @@ namespace JM.UI.Service.UnitOfWork
         public IPendingApprovalService PendingApprovalService { get; }
         public ICompanyService CompanyService { get; }
         public IDesignationService DesignationService { get; }
+        public IEmployeeService EmployeeService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -30,6 +32,7 @@ namespace JM.UI.Service.UnitOfWork
             PendingApprovalService = new PendingApprovalService(_repoUow);
             DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
+            EmployeeService = new EmployeeService(_repoUow);
         }
 
         public void Dispose()

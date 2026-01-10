@@ -2,6 +2,7 @@
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
+using JM.UI.DataService.DAL.Employees;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IPendingApprovalRepository PendingApprovalRepository { get; }
         ICompanyRepository CompanyRepository { get; }
         IDesignationRepository DesignationRepository { get; }
+        IEmployeeRepository EmployeeRepository { get; }
     }
 
 }

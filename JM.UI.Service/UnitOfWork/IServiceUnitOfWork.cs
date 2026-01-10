@@ -2,6 +2,7 @@
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Employee;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,5 +17,6 @@ namespace JM.UI.Service.UnitOfWork
         IPendingApprovalService PendingApprovalService { get; }
         IDesignationService DesignationService { get; }
         ICompanyService CompanyService { get; }
+        IEmployeeService EmployeeService { get; }
     }
 }
