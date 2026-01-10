@@ -1,0 +1,124 @@
+﻿@page "/ShiftList"
+@using JM.UI.Entities.Model.Shift
+@inherits ShiftListComponent
+
+<PageTitle>Shifts</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Shift Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Shift"
+                                  Click="@AddShift"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="ShiftGrid"
+                        Data="@Shift"
+                        TItem="ShiftDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="ShiftDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="s">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{s.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Shift Code -->
+                <RadzenDataGridColumn Property="ShiftCode" Title="Shift Code" Width="130px" />
+
+                <!-- Shift Name -->
+                <RadzenDataGridColumn Property="Name" Title="Shift Name" Width="220px">
+                    <Template Context="s">
+                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                            @s.Name
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Duty Type -->
+                <RadzenDataGridColumn Property="DutyType" Title="Duty Type" Width="140px" />
+
+                <!-- Start Time -->
+                <RadzenDataGridColumn Property="Start" Title="Start Time" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="s">
+                        @s.Start.ToString("HH:mm")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- End Time -->
+                <RadzenDataGridColumn Property="End" Title="End Time" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="s">
+                        @s.End.ToString("HH:mm")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Total Hours -->
+                <RadzenDataGridColumn Property="TotalHours" Title="Total Hours" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="s">
+                        @(s.TotalHours?.ToString("0.##") ?? "-")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Late Count From (minutes) -->
+                <RadzenDataGridColumn Property="LateCountFrom" Title="Late From (min)" Width="130px" TextAlign="TextAlign.Center" />
+
+                <!-- Created / Modified -->
+                <RadzenDataGridColumn Property="CreatedOn" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="s">
+                        @s.CreatedOn.ToString("dd MMM yy")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="s">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditShift(s))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Shift"))" />
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteShift(s))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Shift"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

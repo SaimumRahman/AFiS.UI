@@ -55,6 +55,35 @@ namespace JM.UI.Client.Services.Services
       new Example
         {
             Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
+            Name = "Shift",
+            Icon = "\ue749",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "ShiftList",
+                    Updated = true,
+                    Title = "Blazor Themes | Free UI Components by Radzen",
+                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
+                    Icon = "\ue40a",
+                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
+                },
+                new Example
+                {
+                    Name = "Add",
+                    Path = "ShiftAdd",
+                    Updated = true,
+                    Title = "Blazor Themes | Free UI Components by Radzen",
+                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
+                    Icon = "\ue40a",
+                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
+                },
+            }
+        },
+     
+      new Example
+        {
+            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
             Name = "Banks",
             Icon = "\ue749",
             Children = new [] {

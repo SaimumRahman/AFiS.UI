@@ -5,6 +5,7 @@ using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Shift;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,7 @@ namespace JM.UI.Service
             services.AddScoped<IUserAuthService, UserAuthService>();
             services.AddScoped<IDesignationService, DesignationService>();
             services.AddScoped<IBanksService, BanksService>();
+            services.AddScoped<IShiftService, ShiftService>();
         }
     }
 }

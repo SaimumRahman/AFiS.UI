@@ -3,6 +3,7 @@ using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Shift;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,5 +19,6 @@ namespace JM.UI.Service.UnitOfWork
         IDesignationService DesignationService { get; }
         ICompanyService CompanyService { get; }
         IBanksService BanksService { get; }
+        IShiftService ShiftService { get; }
     }
 }

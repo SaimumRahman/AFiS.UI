@@ -5,6 +5,7 @@ using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
+using JM.UI.Service.Shift;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,6 +22,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICompanyService CompanyService { get; }
         public IDesignationService DesignationService { get; }
         public IBanksService BanksService { get; }
+        public IShiftService ShiftService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -34,6 +36,7 @@ namespace JM.UI.Service.UnitOfWork
             DesignationService = new DesignationService(_repoUow);
             CompanyService = new CompanyService(_repoUow);
             BanksService = new BanksService(_repoUow);
+            ShiftService = new ShiftService(_repoUow);
         }
 
         public void Dispose()
