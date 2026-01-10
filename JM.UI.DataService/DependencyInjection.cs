@@ -7,6 +7,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
@@ -40,6 +41,7 @@ namespace JM.UI.DataService
             services.AddScoped<IBanksRepository, BanksRepository>();
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
+            services.AddScoped<IShiftRepository, ShiftRepository>();
             #endregion
 
 
