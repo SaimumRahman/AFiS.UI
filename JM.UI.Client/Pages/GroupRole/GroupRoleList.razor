@@ -1,0 +1,125 @@
+﻿@page "/GroupRoleList"
+@using JM.UI.Entities.Model.GroupRole
+@inherits GroupRoleListComponent
+
+<PageTitle>Group Roles</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="group" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Group Role Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Group Role"
+                                  Click="@AddGroupRole"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="GroupRolesGrid"
+                        Data="@GroupRoles"
+                        TItem="GroupRoleDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="GroupId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="groupRole">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{groupRole.GroupId}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Group Name -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="GroupName" Title="Group Name" Width="250px">
+                    <Template Context="groupRole">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="groups" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @groupRole.GroupName
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Description -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="Description" Title="Description" Width="350px">
+                    <Template Context="groupRole">
+                        <div title="@groupRole.Description">
+                            @(string.IsNullOrWhiteSpace(groupRole.Description) ? "No description" : Truncate(groupRole.Description, 60))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Is System -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="IsSystem" Title="Type" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="groupRole">
+                        @if (groupRole.IsSystem)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="System" />
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="User-Defined" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="CreatedAt" Title="Created" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="groupRole">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @groupRole.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="groupRole">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditGroupRole(groupRole))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Group Role"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteGroupRole(groupRole))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Group Role"))"
+                                          Disabled="@groupRole.IsSystem" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

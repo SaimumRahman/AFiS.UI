@@ -4,6 +4,7 @@ using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.Stores;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IBanksRepository BanksRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
+        IGroupRoleRepository GroupRoleRepository { get; }
     }
 
 }

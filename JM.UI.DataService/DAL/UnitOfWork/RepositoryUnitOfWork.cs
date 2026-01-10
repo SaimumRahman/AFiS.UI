@@ -4,6 +4,7 @@ using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IBanksRepository BanksRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
+        public IGroupRoleRepository GroupRoleRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -49,6 +51,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             BanksRepository = new BanksRepository(factory, tokenProvider, loggerFactory.CreateLogger<BanksRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
+            GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());
 
         }
 

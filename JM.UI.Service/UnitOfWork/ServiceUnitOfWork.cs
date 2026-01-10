@@ -6,6 +6,7 @@ using JM.UI.Service.Bankss;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
+using JM.UI.Service.GroupRole;
 using JM.UI.Service.Stores;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace JM.UI.Service.UnitOfWork
         public IEmployeeService EmployeeService { get; }
         public IStoreService StoreService { get; }
         public IBanksService BanksService { get; }
+        public IGroupRoleService GroupRoleService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow)
         {
@@ -40,6 +42,7 @@ namespace JM.UI.Service.UnitOfWork
             BanksService = new BanksService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
+            GroupRoleService = new GroupRoleService(_repoUow);
         }
 
         public void Dispose()
