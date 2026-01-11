@@ -11,6 +11,7 @@ using JM.UI.DataService.DAL.Shift;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -28,6 +29,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IGroupRoleRepository GroupRoleRepository { get; }
         IUserGroupRepository UserGroupRepository { get; }
         IShiftRepository ShiftRepository { get; }
+        IColorsRepository ColorsRepository { get; }
     }
 
 }

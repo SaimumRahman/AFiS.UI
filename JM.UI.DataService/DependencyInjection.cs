@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService
 {
@@ -42,6 +43,7 @@ namespace JM.UI.DataService
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();
+            services.AddScoped<IColorsRepository, ColorsRepository>();
             #endregion
 
 

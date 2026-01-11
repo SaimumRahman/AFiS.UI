@@ -19,6 +19,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using JM.UI.Service.Colors;
 
 namespace JM.UI.Service
 {
@@ -43,6 +44,7 @@ namespace JM.UI.Service
             services.AddScoped<IGroupRoleService, GroupRoleService>();
             services.AddScoped<IUserGroupService, UserGroupService>();
             services.AddScoped<IShiftService, ShiftService>();
+            services.AddScoped<IColorsService, ColorsService>();
         }
     }
 }

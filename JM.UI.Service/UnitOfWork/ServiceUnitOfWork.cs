@@ -13,6 +13,7 @@ using JM.UI.Service.Shift;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.Service.Colors;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -32,6 +33,8 @@ namespace JM.UI.Service.UnitOfWork
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
 
+        public IColorsService ColorsService { get; }
+
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
             _repoUow = repoUow;
@@ -49,6 +52,7 @@ namespace JM.UI.Service.UnitOfWork
             ShiftService = new ShiftService(_repoUow);
             GroupRoleService = new GroupRoleService(_repoUow);
             UserGroupService = new UserGroupService(_repoUow);
+            ColorsService = new ColorsService(_repoUow);
         }
 
         public void Dispose()

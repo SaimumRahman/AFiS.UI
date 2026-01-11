@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -35,6 +36,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IGroupRoleRepository GroupRoleRepository { get; }
         public IUserGroupRepository UserGroupRepository { get; }
         public IShiftRepository ShiftRepository { get; }
+        public IColorsRepository ColorsRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -58,6 +60,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());
             UserGroupRepository = new UserGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<UserGroupRepository>());
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());
+            ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
 
         }
 

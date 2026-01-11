@@ -11,6 +11,7 @@ using JM.UI.Service.UserGroup;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.Service.Colors;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -28,5 +29,7 @@ namespace JM.UI.Service.UnitOfWork
         IGroupRoleService GroupRoleService { get; }
         IUserGroupService UserGroupService { get; }
         IShiftService ShiftService { get; }
+        IColorsService ColorsService { get;}
+
     }
 }
