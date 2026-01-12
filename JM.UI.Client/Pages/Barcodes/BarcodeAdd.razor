@@ -1,0 +1,94 @@
+@page "/BarcodeAdd"
+@page "/BarcodeAdd/{Id:int}"
+@using JM.UI.Entities.Model.Barcodes
+@inherits BarcodeAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="@PageIcon" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="BarcodeModelDTO" Data="@Barcode" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <!-- Prefix -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Prefix" Component="Prefix" />
+                            <RadzenTextBox Name="Prefix" @bind-Value="@Barcode.Prefix" MaxLength="50" class="w-100" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Last Barcode -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Last Barcode Number" Component="LastBarcode" />
+                            <RadzenNumeric Name="LastBarcode" @bind-Value="@Barcode.LastBarcode" class="w-100" TValue="int?" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Purchase Price Encoder -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Purchase Price Encoder" Component="PurchasePriceEncoder" />
+                            <RadzenTextBox Name="PurchasePriceEncoder" @bind-Value="@Barcode.PurchasePriceEncoder" MaxLength="100" class="w-100" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Barcode Note -->
+                    <RadzenColumn Size="12">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Barcode Note" Component="BarcodeNote" />
+                            <RadzenTextArea Name="BarcodeNote" @bind-Value="@Barcode.BarcodeNote" MaxLength="500" class="w-100" Rows="3" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Checkboxes -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" class="mt-4">
+                            <RadzenCheckBox @bind-Value="@Barcode.ShowEncodedPurchasePrice" Name="ShowEncodedPurchasePrice" TValue="bool?" />
+                            <RadzenLabel Text="Show Encoded Purchase Price" Component="ShowEncodedPurchasePrice" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" class="mt-4">
+                            <RadzenCheckBox @bind-Value="@Barcode.HideSalePrice" Name="HideSalePrice" TValue="bool?" />
+                            <RadzenLabel Text="Hide Sale Price on Barcode" Component="HideSalePrice" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Save")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>

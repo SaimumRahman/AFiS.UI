@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Barcodes;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -31,5 +32,6 @@ namespace JM.UI.Service.UnitOfWork
         IShiftService ShiftService { get; }
 
         ISizesService SizesService { get; }
+        IBarcodeService BarcodeService { get; }
     }
 }

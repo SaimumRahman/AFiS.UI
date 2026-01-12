@@ -12,6 +12,7 @@ using JM.UI.Service.Shift;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.Users;
+using JM.UI.Service.Barcodes;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,7 @@ namespace JM.UI.Service
             services.AddScoped<IUserGroupService, UserGroupService>();
             services.AddScoped<IShiftService, ShiftService>();
             services.AddScoped<ISizesService, Sizeservice>();
+            services.AddScoped<IBarcodeService, BarcodeService>();
         }
     }
 }

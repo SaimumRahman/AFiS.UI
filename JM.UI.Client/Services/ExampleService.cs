@@ -235,6 +235,25 @@ namespace JM.UI.Client.Services.Services
             
             }
         },
+          new Example
+        {
+            Toc = [ new () { Text = "BarcodesList", Anchor = "#text-tag-name" } ],
+            Name = "Barcode",
+            Icon = "\ue749",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/BarcodeList",
+                    Updated = false,
+                    Title = "BarcodesList Title",
+                    Description = "BarcodesList Description",
+                    Icon = "\ue40a",
+                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
+                }
+            
+            }
+        },
 
             new Example
         {

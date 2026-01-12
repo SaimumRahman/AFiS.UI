@@ -1,0 +1,96 @@
+@page "/BarcodeList"
+@using JM.UI.Entities.Model.Barcodes
+@inherits BarcodeListComponent
+
+<PageTitle>Barcodes</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="qr_code" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Barcode Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Barcode"
+                                  Click="@AddBarcode"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="BarcodesGrid"
+                        Data="@Barcodes"
+                        TItem="BarcodeModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="Prefix" Title="Prefix" Width="120px" />
+                
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="LastBarcode" Title="Last Barcode" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="barcode">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@barcode.LastBarcode?.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="BarcodeNote" Title="Note" Width="250px" />
+
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="ShowEncodedPurchasePrice" Title="Show Encoded Price" Width="180px" TextAlign="TextAlign.Center">
+                    <Template Context="barcode">
+                        <RadzenIcon Icon="@(barcode.ShowEncodedPurchasePrice == true ? "check_circle" : "cancel")" 
+                                    Style="@(barcode.ShowEncodedPurchasePrice == true ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Property="HideSalePrice" Title="Hide Sale Price" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="barcode">
+                        <RadzenIcon Icon="@(barcode.HideSalePrice == true ? "visibility_off" : "visibility")" 
+                                    Style="@(barcode.HideSalePrice == true ? "color: var(--rz-warning);" : "color: var(--rz-info);")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="BarcodeModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="barcode">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditBarcode(barcode))"
+                                          MouseEnter="@(args => TooltipService.Open(args, "Edit Barcode"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteBarcode(barcode))"
+                                          MouseEnter="@(args => TooltipService.Open(args, "Delete Barcode"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

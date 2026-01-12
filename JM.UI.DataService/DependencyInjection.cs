@@ -11,6 +11,7 @@ using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
+using JM.UI.DataService.DAL.Barcodes;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -42,6 +43,7 @@ namespace JM.UI.DataService
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();
+            services.AddScoped<IBarcodeRepository, BarcodeRepository>();
             #endregion
 
 

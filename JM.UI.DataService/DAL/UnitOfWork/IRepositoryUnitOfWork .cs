@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Barcodes;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -30,6 +31,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IUserGroupRepository UserGroupRepository { get; }
         IShiftRepository ShiftRepository { get; }
         ISizesRepository SizesRepository { get; }
+        IBarcodeRepository BarcodeRepository { get; }
     }
 
 }

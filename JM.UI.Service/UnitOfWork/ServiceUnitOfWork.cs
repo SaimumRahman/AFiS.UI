@@ -11,6 +11,7 @@ using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
 using JM.UI.Service.UserGroup;
+using JM.UI.Service.Barcodes;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,6 +34,7 @@ namespace JM.UI.Service.UnitOfWork
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
         public ISizesService SizesService { get; }
+        public IBarcodeService BarcodeService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -52,6 +54,7 @@ namespace JM.UI.Service.UnitOfWork
             GroupRoleService = new GroupRoleService(_repoUow);
             UserGroupService = new UserGroupService(_repoUow);
             SizesService = new Sizeservice(_repoUow);
+            BarcodeService = new BarcodeService(_repoUow);
         }
 
         public void Dispose()
