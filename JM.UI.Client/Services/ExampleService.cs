@@ -216,6 +216,26 @@ namespace JM.UI.Client.Services.Services
                 },
             }
         },
+             new Example
+        {
+            Toc = [ new () { Text = "SizesList", Anchor = "#text-tag-name" } ],
+            Name = "Size",
+            Icon = "\ue749",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/SizesList",
+                    Updated = false,
+                    Title = "SizesList Title",
+                    Description = "SizesList Description",
+                    Icon = "\ue40a",
+                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
+                }
+            
+            }
+        },
+
             new Example
         {
             Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],

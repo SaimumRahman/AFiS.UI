@@ -7,9 +7,10 @@ using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
+using JM.UI.Service.Shift;
+using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.Shift;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,6 +32,7 @@ namespace JM.UI.Service.UnitOfWork
         public IGroupRoleService GroupRoleService { get; }
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
+        public ISizesService SizesService { get; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -49,6 +51,7 @@ namespace JM.UI.Service.UnitOfWork
             ShiftService = new ShiftService(_repoUow);
             GroupRoleService = new GroupRoleService(_repoUow);
             UserGroupService = new UserGroupService(_repoUow);
+            SizesService = new Sizeservice(_repoUow);
         }
 
         public void Dispose()
