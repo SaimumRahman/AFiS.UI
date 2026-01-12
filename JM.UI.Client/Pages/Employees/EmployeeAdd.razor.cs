@@ -3,6 +3,7 @@ using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Designations;
 using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.Shift;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -29,7 +30,7 @@ namespace JM.UI.Client.Pages.Employees
         protected List<BanksDTO> Banks { get; set; } = new();
         protected List<StoreDTO> Stores { get; set; } = new();
         protected List<DesignationDTO> Designations { get; set; } = new();
-     //   protected List<ShiftModelDTO> Shifts { get; set; } = new();
+       protected List<ShiftDTO> Shifts { get; set; } = new();
 
         // Gender Options
         protected List<string> GenderOptions { get; set; } = new() { "Male", "Female", "Other" };
@@ -78,14 +79,14 @@ namespace JM.UI.Client.Pages.Employees
              //   // Load Designations
                var designationsTask = _serviceUnitOfWork.DesignationService.GetDesignations();
                 // Load Shifts
-            //    var shiftsTask = _serviceUnitOfWork.ShiftService.GetShifts();
+                var shiftsTask = _serviceUnitOfWork.ShiftService.GetShift();
 
-                //await Task.WhenAll(banksTask, storesTask, designationsTask, shiftsTask);
+                await Task.WhenAll(banksTask, storesTask, designationsTask, shiftsTask);
 
                 Banks = (await banksTask).ToList();
                 Stores = (await storesTask).ToList();
                 Designations = (await designationsTask).ToList();
-                //Shifts = (await shiftsTask).ToList();
+                Shifts = (await shiftsTask).ToList();
             }
             catch (Exception ex)
             {

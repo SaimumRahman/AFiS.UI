@@ -27,11 +27,24 @@ namespace JM.UI.Client.Pages.Shift
             try
             {
                 IsLoading = true;
+                StateHasChanged();
+
                 Shift = await _serviceUnitOfWork.ShiftService.GetShift();
+
+                if (Shift == null || !Shift.Any())
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "No Data", "No shifts found");
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success", $"Loaded {Shift.Count()} shifts");
+                }
             }
             catch (Exception ex)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load Shift: {ex.Message}");
+                Console.WriteLine($"UI Error: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
             }
             finally
             {

@@ -71,14 +71,14 @@
                 <!-- Start Time -->
                 <RadzenDataGridColumn Property="Start" Title="Start Time" Width="110px" TextAlign="TextAlign.Center">
                     <Template Context="s">
-                        @s.Start.ToString("HH:mm")
+                        @s.Start?.ToString("HH:mm")
                     </Template>
                 </RadzenDataGridColumn>
 
                 <!-- End Time -->
                 <RadzenDataGridColumn Property="End" Title="End Time" Width="110px" TextAlign="TextAlign.Center">
                     <Template Context="s">
-                        @s.End.ToString("HH:mm")
+                        @s.End?.ToString("HH:mm")
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -95,7 +95,7 @@
                 <!-- Created / Modified -->
                 <RadzenDataGridColumn Property="CreatedOn" Title="Created" Width="130px" TextAlign="TextAlign.Center">
                     <Template Context="s">
-                        @s.CreatedOn.ToString("dd MMM yy")
+                        @s.CreatedOn?.ToString("dd MMM yy")
                     </Template>
                 </RadzenDataGridColumn>
 

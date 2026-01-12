@@ -260,7 +260,7 @@
                                 <RadzenColumn SizeMD="3">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Created On" />
-                                        <RadzenTextBox Value="@Shift.CreatedOn.ToString("dd MMM yyyy HH:mm")" Disabled="true" />
+                                        <RadzenTextBox Value="@Shift.CreatedOn?.ToString("dd MMM yyyy HH:mm")" Disabled="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
                                 <RadzenColumn SizeMD="3">
