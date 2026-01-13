@@ -14,15 +14,15 @@ namespace JM.UI.Entities.Model.Shift;
 public class ShiftDTO
 {
     public int Id { get; set; }
-    public string? DutyType { get; set; }
+    public int? DutyType { get; set; }
     public string? Name { get; set; }
     public string? ShiftCode { get; set; }
     public DateTime? Start { get; set; }  // Changed to nullable
     public DateTime? End { get; set; }    // Changed to nullable
-    public int? LateCountFrom { get; set; }
+    public DateTime? LateCountFrom { get; set; }
     public DateTime? CheckStart { get; set; }
     public DateTime? CheckEnd { get; set; }
-    public DateTime? LastLoginTime { get; set; }
+    public string? LastLoginTime { get; set; }
     public decimal? TotalHours { get; set; }
     public DateTime? CheckStartFinish { get; set; }
     public DateTime? CheckEndFinish { get; set; }
@@ -36,4 +36,5 @@ public class ShiftDTO
     public DateTime? ModifiedOn { get; set; }
     public string? ModifiedBy { get; set; }
 }
+
 
