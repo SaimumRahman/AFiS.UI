@@ -1,0 +1,24 @@
+﻿@page "/Logout"
+@using JM.UI.Client.Services
+@inherits LogoutUserComponent
+
+<div class="rz-text-align-center rz-p-12">
+    <div class="rz-mt-12">
+        @if (isLoggingOut)
+        {
+            <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px; color: var(--rz-primary);"></i>
+            <div class="rz-mt-4">
+                <RadzenText TextStyle="TextStyle.H6">Logging out...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="rz-mt-2">Please wait</RadzenText>
+            </div>
+        }
+        else
+        {
+            <i class="rzi rzi-check-circle" style="font-size: 48px; color: var(--rz-success);"></i>
+            <div class="rz-mt-4">
+                <RadzenText TextStyle="TextStyle.H6">Logged out successfully</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="rz-mt-2">Redirecting to login...</RadzenText>
+            </div>
+        }
+    </div>
+</div>
