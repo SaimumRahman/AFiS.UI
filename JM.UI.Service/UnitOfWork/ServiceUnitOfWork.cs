@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using JM.UI.Service.Colors;
+using JM.UI.Service.AccountsGroups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -38,6 +39,8 @@ namespace JM.UI.Service.UnitOfWork
         public IBarcodeService BarcodeService { get; }
 
         public IColorsService ColorsService { get; }
+        public IAccountsGroupsService AccountsGroupsService { get; }
+
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -59,6 +62,7 @@ namespace JM.UI.Service.UnitOfWork
             SizesService = new Sizeservice(_repoUow);
             BarcodeService = new BarcodeService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
+            AccountsGroupsService = new AccountsGroupsService(_repoUow);
         }
 
         public void Dispose()

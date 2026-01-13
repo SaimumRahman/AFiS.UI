@@ -76,7 +76,7 @@ namespace JM.UI.Client.Pages.Employees
                 var banksTask = _serviceUnitOfWork.BanksService.GetBankss();
                 // Load Stores
                 var storesTask = _serviceUnitOfWork.StoreService.GetStores();
-             //   // Load Designations
+               // Load Designations
                var designationsTask = _serviceUnitOfWork.DesignationService.GetDesignations();
                 // Load Shifts
                 var shiftsTask = _serviceUnitOfWork.ShiftService.GetShift();
