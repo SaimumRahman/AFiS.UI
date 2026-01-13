@@ -14,6 +14,7 @@ using System.Text;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.AccountsGroups;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -34,6 +35,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IColorsRepository ColorsRepository { get; }
         ISizesRepository SizesRepository { get; }
         IBarcodeRepository BarcodeRepository { get; }
+        IAccountsGroupsRepository AccountsGroupsRepository { get; }
     }
 
 }

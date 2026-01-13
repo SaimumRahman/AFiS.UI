@@ -19,6 +19,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.AccountsGroups;
 
 namespace JM.UI.DataService
 {
@@ -46,6 +47,7 @@ namespace JM.UI.DataService
             services.AddScoped<IShiftRepository, ShiftRepository>();
             services.AddScoped<IBarcodeRepository, BarcodeRepository>();
             services.AddScoped<IColorsRepository, ColorsRepository>();
+            services.AddScoped<IAccountsGroupsRepository, AccountsGroupsRepository>();
             #endregion
 
 

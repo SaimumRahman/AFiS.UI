@@ -14,6 +14,7 @@ using System.Text;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Barcodes;
 using JM.UI.Service.Colors;
+using JM.UI.Service.AccountsGroups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -35,6 +36,8 @@ namespace JM.UI.Service.UnitOfWork
         ISizesService SizesService { get; }
         IBarcodeService BarcodeService { get; }
         IColorsService ColorsService { get;}
+        IAccountsGroupsService AccountsGroupsService { get;}
+
 
     }
 }

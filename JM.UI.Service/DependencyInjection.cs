@@ -22,6 +22,7 @@ using System.Text;
 using System.Threading.Tasks;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Colors;
+using JM.UI.Service.AccountsGroups;
 
 namespace JM.UI.Service
 {
@@ -49,6 +50,7 @@ namespace JM.UI.Service
             services.AddScoped<IColorsService, ColorsService>();
             services.AddScoped<ISizesService, Sizeservice>();
             services.AddScoped<IBarcodeService, BarcodeService>();
+            services.AddScoped<IAccountsGroupsService, AccountsGroupsService>();
         }
     }
 }
