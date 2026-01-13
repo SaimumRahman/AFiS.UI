@@ -2,6 +2,7 @@
 using JM.UI.Entities.Model.Users;
 using JM.UI.Service.Users;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
@@ -10,20 +11,12 @@ namespace JM.UI.Client.Pages.Users
 {
     public partial class LoginUserComponent : ComponentBase
     {
-        [Inject]
-        IUserAuthService userAuthService { get; set; }
-
-        [Inject]
-        ITokenService tokenService { get; set; }
-
-        [Inject]
-        ProtectedSessionStorage sessionStorage { get; set; }
-
-        [Inject]
-        NavigationManager navigationManager { get; set; }
-
-        [Inject]
-        IJSRuntime jsRuntimes { get; set; }
+        [Inject] IUserAuthService userAuthService { get; set; }
+        [Inject] ITokenService tokenService { get; set; }
+        [Inject] ProtectedSessionStorage sessionStorage { get; set; }
+        [Inject] NavigationManager navigationManager { get; set; }
+        [Inject] IJSRuntime jsRuntimes { get; set; }
+        [Inject] AuthenticationStateProvider AuthStateProvider { get; set; } // ✅ Add this
 
         public LoginRequest loginRequestDAO { get; set; }
         private AuthenticatedUserResponse response { get; set; }
@@ -64,16 +57,18 @@ namespace JM.UI.Client.Pages.Users
                         // Save token using TokenService
                         await tokenService.SetTokenAsync(response.Token);
                         await sessionStorage.SetAsync("UserId", response.UserId.ToString());
-                        // Save other user info
                         await sessionStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
 
                         if (response.CompanyId > 0)
                         {
                             await sessionStorage.SetAsync("CompanyId", response.CompanyId.ToString());
-                            
                         }
 
                         Console.WriteLine("✅ All credentials saved successfully");
+
+                        // 🔐 Notify authentication state changed - THIS IS CRITICAL!
+                        ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication();
+
                         Console.WriteLine("🚀 Navigating to dashboard...");
 
                         // Navigate to dashboard
@@ -99,9 +94,9 @@ namespace JM.UI.Client.Pages.Users
             {
                 try
                 {
-                    // Check if user is already logged in
-                    var tokenResult = await sessionStorage.GetAsync<string>("Credentials");
-                    if (tokenResult.Success && !string.IsNullOrEmpty(tokenResult.Value))
+                    // ✅ Check authentication state properly
+                    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                    if (authState.User.Identity?.IsAuthenticated == true)
                     {
                         Console.WriteLine("✅ User already logged in, redirecting to dashboard");
                         navigationManager.NavigateTo("/dashboard", true);

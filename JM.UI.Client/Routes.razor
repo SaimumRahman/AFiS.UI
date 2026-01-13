@@ -1,13 +1,38 @@
 ﻿@using JM.UI.Client.Pages
-@using JM.UI.Client.Shared  @* Add this line *@
+@using JM.UI.Client.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 
-<Router AppAssembly="typeof(Routes).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="typeof(MainLayout)">
-            <NotFound />
-        </LayoutView>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Routes).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <div class="rz-text-align-center rz-p-12">
+                            <h3>Access Denied</h3>
+                            <p>You are not authorized to access this page.</p>
+                        </div>
+                    }
+                </NotAuthorized>
+                <Authorizing>
+                    <div class="rz-text-align-center rz-p-12">
+                        <div class="rz-mt-12">
+                            <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+                            <div class="rz-mt-4">Checking authorization...</div>
+                        </div>
+                    </div>
+                </Authorizing>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <LayoutView Layout="typeof(MainLayout)">
+                <NotFound />
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

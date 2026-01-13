@@ -11,6 +11,7 @@ using RadzenBlazorDemos.Server.Data;
 using JM.UI.Service;
 using JM.UI.DataService;
 using JM.UI.Client.Services.Services;
+using Microsoft.AspNetCore.Components.Authorization;  // ✅ Add this
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,22 +29,24 @@ builder.Services.AddRazorComponents()
         o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
     });
 
+// 🔐 Add Authentication & Authorization (ADD BEFORE OTHER SERVICES)
+builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
 // Add Radzen.Blazor services
 builder.Services.AddRadzenComponents();
 builder.Services.AddRadzenQueryStringThemeService();
-
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<TooltipService>();
-
 builder.Services.AddScoped<ExampleService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
-builder.Services.AddLocalization();
 
+builder.Services.AddLocalization();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
@@ -63,6 +66,7 @@ builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
     client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
 builder.Services.AddHttpClient("AuthApi", (serviceProvider, client) =>
 {
     var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
@@ -72,11 +76,10 @@ builder.Services.AddHttpClient("AuthApi", (serviceProvider, client) =>
 });
 
 builder.Services.AddSingleton<ILogger, Logger<ErrorDetails>>();
-
 builder.Services.AddDataService();
 builder.Services.AddService();
 
-// CORS configuration - UPDATE THESE URLS TO HTTP
+// CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor", policy =>
@@ -97,21 +100,16 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // COMMENT OUT HSTS - it forces HTTPS
-    // app.UseHsts();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found");
-
-// COMMENT OUT HTTPS REDIRECTION
-// app.UseHttpsRedirection();
-
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowBlazor");
 app.UseAntiforgery();
 
+// 🔐 Authentication & Authorization middleware (ORDER MATTERS!)
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -11,6 +11,7 @@ namespace JM.UI.Client.Services
         Task<bool> IsTokenValidAsync();
         Task ClearTokenAsync();
         Task InitializeTokenAsync();
+        Task<bool> ValidateTokenAsync(string token); // ✅ Add this
     }
 
     public class TokenService : ITokenService
@@ -124,6 +125,33 @@ namespace JM.UI.Client.Services
             }
         }
 
+        // ✅ Add this new method
+        public async Task<bool> ValidateTokenAsync(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+
+                // Check if token is expired
+                if (jwtToken.ValidTo < DateTime.UtcNow)
+                {
+                    Console.WriteLine("❌ Token expired");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Token validation failed: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task ClearTokenAsync()
         {
             try
@@ -132,6 +160,7 @@ namespace JM.UI.Client.Services
                 await _sessionStorage.DeleteAsync("Credentials");
                 await _sessionStorage.DeleteAsync("CompanyId");
                 await _sessionStorage.DeleteAsync("UserInfo");
+                await _sessionStorage.DeleteAsync("UserId"); // ✅ Add this
 
                 Console.WriteLine("✅ Token cleared");
             }
