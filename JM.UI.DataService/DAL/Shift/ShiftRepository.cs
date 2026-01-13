@@ -23,28 +23,33 @@ namespace JM.UI.DataService.DAL.Shift
         {
             try
             {
-                _logger.LogInformation("Starting to fetch all Shift");
-
+                _logger.LogInformation("Service: Starting to fetch all Shift");
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.GetAsync("Shift/getall");
-                response.EnsureSuccessStatusCode();
 
-                var Shift = await response.Content.ReadFromJsonAsync<List<ShiftDTO>>();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Service: API returned {response.StatusCode}: {errorContent}");
+                    throw new HttpRequestException($"API returned {response.StatusCode}");
+                }
 
-                return Shift ?? new List<ShiftDTO>();
+                var shifts = await response.Content.ReadFromJsonAsync<List<ShiftDTO>>();
+                _logger.LogInformation($"Service: Retrieved {shifts?.Count ?? 0} shifts");
+
+                return shifts ?? new List<ShiftDTO>();
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "HTTP request failed during get Shift");
+                _logger.LogError(ex, "Service: HTTP request failed during get Shift");
                 throw new Exception("Failed to fetch Shift: " + ex.Message, ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during get Shift");
+                _logger.LogError(ex, "Service: Unexpected error during get Shift");
                 throw new Exception("Unexpected error fetching Shift: " + ex.Message, ex);
             }
         }
-
         public async Task<ShiftDTO?> GetShiftById(int id)
         {
             try

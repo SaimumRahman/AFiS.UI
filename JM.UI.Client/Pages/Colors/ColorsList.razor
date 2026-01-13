@@ -1,0 +1,72 @@
+﻿@page "/ColorsList"
+@using JM.UI.Entities.Model.Bank
+@using JM.UI.Entities.Model.Colors
+@inherits ColorsListComponent
+
+<PageTitle>Colors</PageTitle>
+
+<!-- Header Card -->
+<RadzenCard class="p-3 mb-3">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
+            <RadzenIcon Icon="work" Style="font-size: 32px; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H5"><b>Colors Management</b></RadzenText>
+        </RadzenStack>
+        <RadzenButton Text="Add New Colors"
+                      Icon="add"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@AddColors" />
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Grid Card -->
+<RadzenCard class="p-3">
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
+    }
+    else
+    {
+        <RadzenDataGrid @ref="ColorssGrid"
+                        Data="@Colorss"
+                        TItem="ColorsDTO"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        Style="border-radius: 12px;">
+            <Columns>
+                <RadzenDataGridColumn TItem="ColorsDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
+                <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Colors Name" Width="320px">
+                    <Template Context="data">
+                        <b>@data.Name</b>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="220px">
+                    <Template Context="data">
+                        <RadzenButton Icon="edit"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      Size="ButtonSize.Small"
+                                      Class="mr-1"
+                                      Click="@(() => EditColors(data))" />
+                        
+                        <RadzenButton Icon="delete"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Size="ButtonSize.Small"
+                                      Class="mr-1"
+                                      Click="@(() => DeleteColors(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>

@@ -33,19 +33,28 @@ namespace JM.UI.Client.Services.Services
                     Icon = "\ue40a",
                     Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
                 },
+            }
+        },
+      new Example
+        {
+            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
+            Name = "Colors",
+            Icon = "\ue749",
+            Children = new [] {
                 new Example
                 {
-                    Name = "Add",
-                    Path = "DesignationAdd",
-                    Updated = true,
+                    Name = "List",
+                    Path = "ColorsList",
+                    Updated = false,
                     Title = "Blazor Themes | Free UI Components by Radzen",
                     Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
                     Icon = "\ue40a",
                     Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
                 },
+              
             }
         },
-     
+
       new Example
         {
             Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
@@ -62,16 +71,7 @@ namespace JM.UI.Client.Services.Services
                     Icon = "\ue40a",
                     Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
                 },
-                new Example
-                {
-                    Name = "Add",
-                    Path = "ShiftAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+              
             }
         },
      
@@ -91,16 +91,7 @@ namespace JM.UI.Client.Services.Services
                     Icon = "\ue40a",
                     Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
                 },
-                new Example
-                {
-                    Name = "Add",
-                    Path = "BanksAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+               
             }
         },
      
@@ -110,16 +101,7 @@ namespace JM.UI.Client.Services.Services
             Name = "Company",
             Icon = "\ue749",
             Children = new [] {
-                new Example
-                {
-                    Name = "Add",
-                    Path = "CompanyAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+               
                 new Example
                 {
                     Name = "List",
@@ -138,16 +120,7 @@ namespace JM.UI.Client.Services.Services
             Name = "Employee",
             Icon = "\ue749",
             Children = new [] {
-                new Example
-                {
-                    Name = "Add",
-                    Path = "EmployeeAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+              
                 new Example
                 {
                     Name = "List",
@@ -166,16 +139,7 @@ namespace JM.UI.Client.Services.Services
             Name = "Group Role",
             Icon = "\ue749",
             Children = new [] {
-                new Example
-                {
-                    Name = "Add",
-                    Path = "GroupRoleAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+               
                 new Example
                 {
                     Name = "List",
@@ -194,16 +158,7 @@ namespace JM.UI.Client.Services.Services
             Name = "Branch",
             Icon = "\ue749",
             Children = new [] {
-                new Example
-                {
-                    Name = "Add",
-                    Path = "StoreAdd",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
+                
                 new Example
                 {
                     Name = "List",

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -30,6 +31,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IGroupRoleRepository GroupRoleRepository { get; }
         IUserGroupRepository UserGroupRepository { get; }
         IShiftRepository ShiftRepository { get; }
+        IColorsRepository ColorsRepository { get; }
         ISizesRepository SizesRepository { get; }
         IBarcodeRepository BarcodeRepository { get; }
     }

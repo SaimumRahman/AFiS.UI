@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Text;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -37,6 +38,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IGroupRoleRepository GroupRoleRepository { get; }
         public IUserGroupRepository UserGroupRepository { get; }
         public IShiftRepository ShiftRepository { get; }
+        public IColorsRepository ColorsRepository { get; }
         public ISizesRepository SizesRepository { get; }
         public IBarcodeRepository BarcodeRepository { get; }
 
@@ -64,6 +66,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());
             SizesRepository = new SizesRepository(factory, tokenProvider, loggerFactory.CreateLogger<SizesRepository>());
             BarcodeRepository = new BarcodeRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodeRepository>());
+            ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
 
         }
 
