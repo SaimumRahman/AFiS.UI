@@ -17,7 +17,7 @@ namespace JM.UI.Service.AccountsGroups
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups()
+        public async Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups()
         {
             try
             {
@@ -27,12 +27,9 @@ namespace JM.UI.Service.AccountsGroups
             {
                 throw;
             }
-
-
-            return await _repositoryUnitOfWork.AccountsGroupsRepository.SaveUpdateAccountsGroups(AccountsGroups);
         }
 
-        public async Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id)
+        public async Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id)
         {
             try
             {
@@ -42,6 +39,7 @@ namespace JM.UI.Service.AccountsGroups
             {
                 throw;
             }
+        }
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateAccountsGroups(AccountsGroupsDTO AccountsGroups)
         {
@@ -54,7 +52,7 @@ namespace JM.UI.Service.AccountsGroups
             return Task.FromResult((true, string.Empty));
         }
 
-        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups)
+        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO accountsGroups)
         {
             try
             {
@@ -77,6 +75,16 @@ namespace JM.UI.Service.AccountsGroups
             {
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
+        }
+
+        public AccountsGroupsDTO CreateNewAccountsGroups()
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Truncate(string? value, int maxChars)
+        {
+            throw new NotImplementedException();
         }
     }
 }

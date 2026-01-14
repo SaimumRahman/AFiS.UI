@@ -14,10 +14,9 @@ namespace JM.UI.DataService.DAL.AccountsGroups
 {
     public interface IAccountsGroupsRepository
     {
-        Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups();
-        Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id);
-        Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups);
+        Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups();
+        Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id);
+        Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO accountsGroups);
         Task DeleteAccountsGroups(int id);
-        Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO AccountsGroups);
     }
 }

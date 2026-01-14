@@ -18,6 +18,7 @@ using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {

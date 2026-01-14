@@ -8,9 +8,9 @@ namespace JM.UI.Service.AccountsGroups
 {
     public interface IAccountsGroupsService
     {
-        Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups();
-        Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id);
-        Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups);
+        Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups();
+        Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id);
+        Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO accountsGroups);
         Task<ResponseResult> DeleteAccountsGroups(int id);
         Task<(bool IsValid, string ErrorMessage)> ValidateAccountsGroups(AccountsGroupsDTO AccountsGroups);
         AccountsGroupsDTO CreateNewAccountsGroups();

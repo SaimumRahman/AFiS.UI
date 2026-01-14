@@ -19,7 +19,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
         {
         }
 
-        public async Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups()
+        public async Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups()
         {
             try
             {
@@ -28,20 +28,10 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                 var response = await httpClient.GetAsync("AccountsGroups/GetAllAccountsGroups");
                 response.EnsureSuccessStatusCode();
 
-                var groups = await response.Content.ReadFromJsonAsync<List<AccountsGroupsModelDTO>>();
-                return groups ?? new List<AccountsGroupsModelDTO>();
+                var groups = await response.Content.ReadFromJsonAsync<List<AccountsGroupsDTO>>();
+                return groups ?? new List<AccountsGroupsDTO>();
             }
-
-                var AccountsGroupss = await response.Content.ReadFromJsonAsync<List<AccountsGroupsDTO>>();
-                _logger.LogInformation($"Service: Retrieved {AccountsGroupss?.Count ?? 0} AccountsGroupss");
-
-                return AccountsGroupss ?? new List<AccountsGroupsDTO>();
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "Service: HTTP request failed during get AccountsGroups");
-                throw new Exception("Failed to fetch AccountsGroups: " + ex.Message, ex);
-            }
+           
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching all accounts groups");
@@ -49,7 +39,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             }
         }
 
-        public async Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id)
+        public async Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id)
         {
             try
             {
@@ -64,7 +54,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                     return null;
                 }
 
-                return await response.Content.ReadFromJsonAsync<AccountsGroupsModelDTO>();
+                return await response.Content.ReadFromJsonAsync<AccountsGroupsDTO>();
             }
             catch (HttpRequestException ex)
             {
@@ -78,11 +68,10 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             }
         }
 
-        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups)
+        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO accountsGroups)
         {
             try
             {
-                _logger.LogInformation("Starting to delete AccountsGroups: {Id}", id);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var requestBody = new { AccountsGroupsDTO = accountsGroups };
@@ -110,13 +99,6 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
-
-                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed during save AccountsGroups");
-                throw new Exception("Failed to save AccountsGroups: " + ex.Message, ex);
             }
             catch (Exception ex)
             {
@@ -124,6 +106,5 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                 throw;
             }
         }
-
     }
 }

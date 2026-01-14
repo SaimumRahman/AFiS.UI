@@ -5,25 +5,17 @@ using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace JM.UI.Client.Pages.AccountsGroups
+namespace JM.UI.Client.Pages.AccountsGroups;
+
+public partial class AccountsGroupsAddComponent : PosComponentBase
 {
-    public partial class AccountsGroupsAddComponent : PosComponentBase
-    {
-        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+    [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? AccountsGroupsID { get; set; }
 
-        [Parameter] public int? Id { get; set; }
-
-        protected AccountsGroupsModelDTO AccountsGroup { get; set; } = new();
-        protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
-        protected bool IsProcessing { get; set; } = false;
-        protected bool IsLoading { get; set; } = false;
-        protected bool IsEditMode => Id.HasValue && Id.Value > 0;
-        protected string PageTitle => IsEditMode ? "Edit Accounts Group" : "Add Accounts Group";
+    protected AccountsGroupsDTO AccountsGroups { get; set; } = new();
+    protected bool IsProcessing { get; set; } = false;
+    protected bool IsLoading { get; set; } = false;
 
 
     protected List<StoreDTO> Stores { get; set; } = new();
@@ -31,54 +23,45 @@ namespace JM.UI.Client.Pages.AccountsGroups
     protected string PageTitle => IsEditMode ? "Edit AccountsGroups" : "Add New AccountsGroups";
     protected string PageIcon => IsEditMode ? "edit" : "work";
 
-        protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        await TokenService.InitializeTokenAsync();
+        await LoadDropdowns();
+
+        if (IsEditMode)
+            await LoadAccountsGroups();
+        //else
+        //    InitializeAccountsGroups();
+    }
+
+    private async Task LoadAccountsGroups()
+    {
+        try
         {
-            await TokenService.InitializeTokenAsync();
-            await LoadStores();
+            IsLoading = true;
 
-            if (IsEditMode)
-            {
-                await LoadAccountsGroup();
-            }
-        }
+            var data = await _serviceUnitOfWork.AccountsGroupsService
+                .GetAccountsGroupsById(AccountsGroupsID!.Value);
 
-        private async Task LoadStores()
-        {
-            try
+            if (data == null)
             {
-                Stores = await _serviceUnitOfWork.StoreService.GetStores();
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load stores: {ex.Message}");
-            }
-        }
-
-        private async Task LoadAccountsGroup()
-        {
-            try
-            {
-                IsLoading = true;
-                var result = await _serviceUnitOfWork.AccountsGroupsService.GetAccountsGroupsById(Id!.Value);
-
-                if (result == null)
-                {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", "Accounts Group not found.");
-                    NavigationManager.NavigateTo("/AccountsGroupsList");
-                    return;
-                }
-
-                AccountsGroup = result;
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load accounts group: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error", "AccountsGroups not found.");
                 NavigationManager.NavigateTo("/AccountsGroupsList");
+                return;
             }
-            finally
-            {
-                IsLoading = false;
-            }
+
+            AccountsGroups = data;
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to load AccountsGroups: {ex.Message}");
+            NavigationManager.NavigateTo("/AccountsGroupsList");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadDropdowns()
@@ -87,12 +70,12 @@ namespace JM.UI.Client.Pages.AccountsGroups
         {
             // Load Stores
             var storesTask = _serviceUnitOfWork.StoreService.GetStores();
-           
 
-            await Task.WhenAll( storesTask);
+
+            await Task.WhenAll(storesTask);
 
             Stores = (await storesTask).ToList();
-           
+
         }
         catch (Exception ex)
         {
@@ -105,8 +88,8 @@ namespace JM.UI.Client.Pages.AccountsGroups
     //    AccountsGroups = _serviceUnitOfWork.AccountsGroupsService.CreateNewAccountsGroups();
     //}
 
-        protected async Task Save()
-        {
+    protected async Task Save()
+    {
         var validation = await _serviceUnitOfWork.AccountsGroupsService.ValidateAccountsGroups(AccountsGroups);
         if (!validation.IsValid)
         {
@@ -114,36 +97,69 @@ namespace JM.UI.Client.Pages.AccountsGroups
             return;
         }
 
-            try
-            {
-                IsProcessing = true;
-                var result = await _serviceUnitOfWork.AccountsGroupsService.SaveUpdateAccountsGroups(AccountsGroup);
-
-                if (result.IsSuccessStatus)
-                {
-                    notificationService.Notify(NotificationSeverity.Success, "Success",
-                        IsEditMode ? "Accounts Group updated successfully!" : "Accounts Group saved successfully!");
-                    NavigationManager.NavigateTo("/AccountsGroupsList");
-                }
-                else
-                {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
-                }
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save accounts group: {ex.Message}");
-            }
-            finally
-            {
-                IsProcessing = false;
-            }
-        finally { IsProcessing = false; }
-        }
-
-        protected void Cancel()
+        try
         {
-            NavigationManager.NavigateTo("/AccountsGroupsList");
+            IsProcessing = true;
+            var result = await _serviceUnitOfWork.AccountsGroupsService.SaveUpdateAccountsGroups(AccountsGroups);
+
+            if (result.IsSuccessStatus)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Success",
+                    IsEditMode ? "AccountsGroups updated successfully!" : "AccountsGroups created successfully!");
+                NavigationManager.NavigateTo("/AccountsGroupsList");
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+            }
         }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save AccountsGroups: {ex.Message}");
+        }
+        finally { IsProcessing = false; }
+    }
+
+    protected async Task SaveAndNew()
+    {
+        if (IsEditMode) { await Save(); return; }
+
+        var validation = await _serviceUnitOfWork.AccountsGroupsService.ValidateAccountsGroups(AccountsGroups);
+        if (!validation.IsValid)
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
+            return;
+        }
+
+        try
+        {
+            IsProcessing = true;
+            var result = await _serviceUnitOfWork.AccountsGroupsService.SaveUpdateAccountsGroups(AccountsGroups);
+
+            if (result.IsSuccessStatus)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Success", "AccountsGroups created successfully!");
+                //InitializeAccountsGroups();
+                StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save AccountsGroups: {ex.Message}");
+        }
+        finally { IsProcessing = false; }
+    }
+
+    protected void Cancel() => NavigationManager.NavigateTo("/AccountsGroupsList");
+
+    protected async Task Reset()
+    {
+        if (IsEditMode) await LoadAccountsGroups();
+        //else InitializeAccountsGroups();
+        StateHasChanged();
     }
 }

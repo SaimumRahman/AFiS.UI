@@ -18,7 +18,7 @@ namespace JM.UI.Client.Pages.Accounts
         [Parameter] public int? Id { get; set; }
 
         protected AccountModelDTO Account { get; set; } = new();
-        protected IEnumerable<AccountsGroupsModelDTO> AccountsGroups { get; set; } = new List<AccountsGroupsModelDTO>();
+        protected IEnumerable<AccountsGroupsDTO> AccountsGroups { get; set; } = new List<AccountsGroupsDTO>();
         protected IEnumerable<AccountModelDTO> ParentAccounts { get; set; } = new List<AccountModelDTO>();
         
         protected bool IsProcessing { get; set; } = false;
