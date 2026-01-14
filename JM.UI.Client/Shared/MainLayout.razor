@@ -1,7 +1,9 @@
+﻿@using JM.UI.Client.Services
 @using JM.UI.Client.Services.Services
 @using JM.UI.Entities.Models
 @using Microsoft.AspNetCore.Components
 
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Radzen.Blazor
 @inherits LayoutComponentBase
 @inject ThemeService ThemeService
@@ -11,7 +13,9 @@
 @inject IJSRuntime JSRuntime
 @inject TooltipService TooltipService
 @inject DialogService DialogService
-
+@inject ITokenService tokenService
+@inject ProtectedSessionStorage sessionStorage
+@inject AuthenticationStateProvider AuthStateProvider
 <Canonical />
 
 <RadzenComponents />
@@ -35,6 +39,7 @@
                     </div> *@
                     <RadzenAppearanceToggle class="rz-mx-2" />
                     <RadzenSidebarToggle Icon="settings" Click="@(() => configSidebarExpanded = !configSidebarExpanded)" class="rz-m-0" />
+                        <RadzenSidebarToggle Icon="logout" Click="@(() => Logout())" class="rz-m-0" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -190,7 +195,60 @@
                   Resizable = true
               });
     }
+private async Task Logout()
+{
+    await PerformLogout();
+}
+private async Task PerformLogout()
+{
+    try
+    {
+        StateHasChanged();
 
+        Console.WriteLine("═══════════════════════════════════");
+        Console.WriteLine("🔓 Attempting logout...");
+
+        // Clear token using TokenService
+        await tokenService.ClearTokenAsync();
+
+        Console.WriteLine("✅ Token cleared successfully");
+
+        // Clear all session storage
+        await sessionStorage.DeleteAsync("UserId");
+        await sessionStorage.DeleteAsync("UserInfo");
+        await sessionStorage.DeleteAsync("CompanyId");
+
+        Console.WriteLine("✅ All session data cleared");
+
+        // Notify authentication state changed
+        if (AuthStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            customAuthProvider.NotifyUserLogout();
+            Console.WriteLine("✅ Authentication state updated");
+        }
+
+        Console.WriteLine("✅ Logout successful!");
+        Console.WriteLine("🚀 Redirecting to login page...");
+        Console.WriteLine("═══════════════════════════════════");
+
+        // Navigate to login page
+        UriHelper.NavigateTo("/", true);
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine("═══════════════════════════════════");
+        Console.WriteLine($"❌ Logout error: {e.Message}");
+        Console.WriteLine($"Stack trace: {e.StackTrace}");
+        Console.WriteLine("═══════════════════════════════════");
+
+        // Even if error, redirect to login
+        UriHelper.NavigateTo("/", true);
+    }
+    finally
+    {
+
+    }
+}
     internal static RenderFragment RenderTheme(Theme theme, bool showTitle = true)
     {
         return __builder =>

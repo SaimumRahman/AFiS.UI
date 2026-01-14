@@ -1,7 +1,8 @@
-﻿@using JM.UI.Client.Services.Services
+﻿@using JM.UI.Client.Services
+@using JM.UI.Client.Services.Services
 @using JM.UI.Entities.Models
 @using Microsoft.AspNetCore.Components
-
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Radzen.Blazor
 @inherits LayoutComponentBase
 @inject ThemeService ThemeService
@@ -11,7 +12,9 @@
 @inject IJSRuntime JSRuntime
 @inject TooltipService TooltipService
 @inject DialogService DialogService
-
+@inject ITokenService tokenService  
+@inject ProtectedSessionStorage sessionStorage
+@inject AuthenticationStateProvider AuthStateProvider
 <Canonical />
 
 <RadzenComponents />
@@ -29,12 +32,18 @@
             </RadzenColumn>
             <RadzenColumn Size="7">
                 <RadzenStack  Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
-                    @* <div class="rz-display-none rz-display-sm-inline-flex align-items-center">
+                    <div class="rz-display-none rz-display-sm-inline-flex align-items-center">
                         <RadzenLink Path="/docs/api" Text="API Reference" title="Radzen Blazor Components API Reference" class="rz-mx-2 rz-mx-lg-4" target="_blank" />
                         <RadzenLink Path="https://github.com/radzenhq/radzen-blazor" Text="GitHub" title="Star Radzen Blazor Components on GitHub" class="rz-text-nowrap rz-mx-2 rz-mx-lg-4" target="_blank" />
-                    </div> *@
+                    </div>
                     <RadzenAppearanceToggle class="rz-mx-2" />
                     <RadzenSidebarToggle Icon="settings" Click="@(() => configSidebarExpanded = !configSidebarExpanded)" class="rz-m-0" />
+                        <!-- Logout Button -->
+                        <RadzenButton Text="Logout"
+                                      Icon="logout"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@Logout"
+                                      class="rz-ml-2" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -171,7 +180,60 @@
     {
         ThemeService.SetTheme($"{value}");
     }
+    private async Task Logout()
+    {
+        await PerformLogout();
+    }
+    private async Task PerformLogout()
+    {
+        try
+        {
+            StateHasChanged();
 
+            Console.WriteLine("═══════════════════════════════════");
+            Console.WriteLine("🔓 Attempting logout...");
+
+            // Clear token using TokenService
+            await tokenService.ClearTokenAsync();
+
+            Console.WriteLine("✅ Token cleared successfully");
+
+            // Clear all session storage
+            await sessionStorage.DeleteAsync("UserId");
+            await sessionStorage.DeleteAsync("UserInfo");
+            await sessionStorage.DeleteAsync("CompanyId");
+
+            Console.WriteLine("✅ All session data cleared");
+
+            // Notify authentication state changed
+            if (AuthStateProvider is CustomAuthenticationStateProvider customAuthProvider)
+            {
+                customAuthProvider.NotifyUserLogout();
+                Console.WriteLine("✅ Authentication state updated");
+            }
+
+            Console.WriteLine("✅ Logout successful!");
+            Console.WriteLine("🚀 Redirecting to login page...");
+            Console.WriteLine("═══════════════════════════════════");
+
+            // Navigate to login page
+            UriHelper.NavigateTo("/LoginUser", true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("═══════════════════════════════════");
+            Console.WriteLine($"❌ Logout error: {e.Message}");
+            Console.WriteLine($"Stack trace: {e.StackTrace}");
+            Console.WriteLine("═══════════════════════════════════");
+
+            // Even if error, redirect to login
+            UriHelper.NavigateTo("/LoginUser", true);
+        }
+        finally
+        {
+
+        }
+    }
     void WcagColorsTooltip(ElementReference elementReference, TooltipOptions options = null) => TooltipService.Open(elementReference, ds =>
 @<div Style="width: 280px; white-space: normal; padding: 20px;">
     <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H4" Style="color: currentColor;">WCAG Compliant Colors</RadzenText>
@@ -285,5 +347,8 @@
                 </svg>
             </text>
         };
+
     }
 }
+
+ 
