@@ -13,6 +13,11 @@ using System.Collections.Generic;
 using System.Text;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.Suppliers;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -32,6 +37,11 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IShiftRepository ShiftRepository { get; }
         ISizesRepository SizesRepository { get; }
         IBarcodeRepository BarcodeRepository { get; }
+        IVoucherDetailsRepository VoucherDetailsRepository { get; }
+        IVoucherRepository VoucherRepository { get; }
+        IAccountsGroupsRepository AccountsGroupsRepository { get; }
+        IAccountsRepository AccountsRepository { get; }
+        ISupplierRepository SupplierRepository { get; }
     }
 
 }

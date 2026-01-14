@@ -13,6 +13,11 @@ using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.Users;
 using JM.UI.Service.Barcodes;
+using JM.UI.Service.VoucherDetails;
+using JM.UI.Service.Vouchers;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Accounts;
+using JM.UI.Service.Suppliers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -47,6 +52,11 @@ namespace JM.UI.Service
             services.AddScoped<IShiftService, ShiftService>();
             services.AddScoped<ISizesService, Sizeservice>();
             services.AddScoped<IBarcodeService, BarcodeService>();
+            services.AddScoped<IVoucherDetailsService, VoucherDetailsService>();
+            services.AddScoped<IVoucherService, VoucherService>();
+            services.AddScoped<IAccountsGroupsService, AccountsGroupsService>();
+            services.AddScoped<IAccountsService, AccountsService>();
+            services.AddScoped<ISupplierService, SupplierService>();
         }
     }
 }

@@ -12,6 +12,11 @@ using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.Suppliers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -44,6 +49,11 @@ namespace JM.UI.DataService
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();
             services.AddScoped<IBarcodeRepository, BarcodeRepository>();
+            services.AddScoped<IVoucherDetailsRepository, VoucherDetailsRepository>();
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
+            services.AddScoped<IAccountsGroupsRepository, AccountsGroupsRepository>();
+            services.AddScoped<IAccountsRepository, AccountsRepository>();
+            services.AddScoped<ISupplierRepository, SupplierRepository>();
             #endregion
 
 

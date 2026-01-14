@@ -1,0 +1,67 @@
+@page "/AccountsGroupsAdd"
+@page "/AccountsGroupsAdd/{Id:int}"
+@using JM.UI.Entities.Model.AccountsGroups
+@inherits AccountsGroupsAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="account_tree" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="AccountsGroupsModelDTO" Data="@AccountsGroup" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <!-- Group Name -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Accounts Group Name" Component="Name" />
+                            <RadzenTextBox Name="Name" @bind-Value="@AccountsGroup.Name" MaxLength="20" class="w-100" />
+                            <RadzenRequiredValidator Component="Name" Text="Name is required" style="position: absolute" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Store Selection -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Store" Component="StoreId" />
+                            <RadzenDropDown TValue="int" @bind-Value="@AccountsGroup.StoreId" 
+                                            Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                            Placeholder="Select Store..." class="w-100" Name="StoreId" />
+                            <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" style="position: absolute" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Save")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>
