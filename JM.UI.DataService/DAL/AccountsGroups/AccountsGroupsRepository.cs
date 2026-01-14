@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.AccountsGroups
 {
@@ -19,20 +19,18 @@ namespace JM.UI.DataService.DAL.AccountsGroups
         {
         }
 
-        public async Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups()
+        public async Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups()
         {
             try
             {
                 _logger.LogInformation("Service: Starting to fetch all AccountsGroups");
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("AccountsGroups/getall");
+                var response = await httpClient.GetAsync("AccountsGroups/GetAllAccountsGroups");
+                response.EnsureSuccessStatusCode();
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Service: API returned {response.StatusCode}: {errorContent}");
-                    throw new HttpRequestException($"API returned {response.StatusCode}");
-                }
+                var groups = await response.Content.ReadFromJsonAsync<List<AccountsGroupsModelDTO>>();
+                return groups ?? new List<AccountsGroupsModelDTO>();
+            }
 
                 var AccountsGroupss = await response.Content.ReadFromJsonAsync<List<AccountsGroupsDTO>>();
                 _logger.LogInformation($"Service: Retrieved {AccountsGroupss?.Count ?? 0} AccountsGroupss");
@@ -46,18 +44,19 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Service: Unexpected error during get AccountsGroups");
-                throw new Exception("Unexpected error fetching AccountsGroups: " + ex.Message, ex);
+                _logger.LogError(ex, "Error fetching all accounts groups");
+                throw;
             }
         }
-        public async Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id)
+
+        public async Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id)
         {
             try
             {
                 _logger.LogInformation("Starting to fetch AccountsGroups: {Id}", id);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"AccountsGroups/get/{id}");
+                var response = await httpClient.GetAsync($"AccountsGroups/GetAccountsGroupsById/{id}");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -65,8 +64,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                     return null;
                 }
 
-                var AccountsGroups = await response.Content.ReadFromJsonAsync<AccountsGroupsDTO>();
-                return AccountsGroups;
+                return await response.Content.ReadFromJsonAsync<AccountsGroupsModelDTO>();
             }
             catch (HttpRequestException ex)
             {
@@ -75,8 +73,29 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during get AccountsGroups by ID: {Id}", id);
-                throw new Exception($"Unexpected error fetching AccountsGroups: {ex.Message}", ex);
+                _logger.LogError(ex, "Error fetching accounts group by ID: {Id}", id);
+                throw;
+            }
+        }
+
+        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to delete AccountsGroups: {Id}", id);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var requestBody = new { AccountsGroupsDTO = accountsGroups };
+                var response = await httpClient.PostAsJsonAsync("AccountsGroups/InsertUpdateAccountsGroups", requestBody);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving accounts group");
+                throw;
             }
         }
 
@@ -84,39 +103,10 @@ namespace JM.UI.DataService.DAL.AccountsGroups
         {
             try
             {
-                _logger.LogInformation("Starting to delete AccountsGroups: {Id}", id);
-
-                var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.DeleteAsync($"AccountsGroups/delete/{id}");
-                response.EnsureSuccessStatusCode();
-
-                _logger.LogInformation("AccountsGroups deleted successfully: {Id}", id);
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request exception during delete AccountsGroups: {Id}", id);
-                throw new Exception($"Failed to delete AccountsGroups: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error during delete AccountsGroups: {Id}", id);
-                throw new Exception($"Unexpected error deleting AccountsGroups: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO AccountsGroups)
-        {
-            try
-            {
                 _logger.LogInformation("Starting to save AccountsGroups");
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var requestBody = new
-                {
-                    AccountsGroupsDTO = AccountsGroups
-                };
-                var content = JsonContent.Create(requestBody);
-                var response = await httpClient.PostAsync("AccountsGroups/insert-update", content);
+                var response = await httpClient.DeleteAsync($"AccountsGroups/DeleteAccountsGroups/{id}");
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
@@ -130,8 +120,8 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during save AccountsGroups");
-                throw new Exception("Unexpected error saving AccountsGroups: " + ex.Message, ex);
+                _logger.LogError(ex, "Error deleting accounts group: {Id}", id);
+                throw;
             }
         }
 

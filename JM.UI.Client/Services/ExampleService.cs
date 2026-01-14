@@ -229,6 +229,96 @@ namespace JM.UI.Client.Services.Services
             
             }
         },
+        new Example
+        {
+            Toc = [ new () { Text = "AccountsGroupsList", Anchor = "#text-tag-name" } ],
+            Name = "Accounts Groups",
+            Icon = "\ue8b0",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/AccountsGroupsList",
+                    Updated = false,
+                    Title = "Accounts Group List",
+                    Description = "Manage group categorizations for accounts",
+                    Icon = "\ue40a",
+                    Tags = new[] { "accounts", "group", "finance" }
+                }
+            }
+        },
+        new Example
+        {
+            Toc = [ new () { Text = "AccountsList", Anchor = "#text-tag-name" } ],
+            Name = "Accounts",
+            Icon = "\ue85d",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/AccountsList",
+                    Updated = false,
+                    Title = "Chart of Accounts",
+                    Description = "Manage your chart of accounts",
+                    Icon = "\ue40a",
+                    Tags = new[] { "accounts", "chart", "finance" }
+                }
+            }
+        },
+        new Example
+        {
+            Toc = [ new () { Text = "SuppliersList", Anchor = "#text-tag-name" } ],
+            Name = "Suppliers",
+            Icon = "\ue558",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/SuppliersList",
+                    Updated = false,
+                    Title = "Suppliers List",
+                    Description = "Manage supplier records",
+                    Icon = "\ue40a",
+                    Tags = new[] { "suppliers", "master", "finance" }
+                }
+            }
+        },
+        new Example
+        {
+            Toc = [ new () { Text = "VoucherList", Anchor = "#text-tag-name" } ],
+            Name = "Vouchers",
+            Icon = "\ue8b0",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/VoucherList",
+                    Updated = false,
+                    Title = "Voucher List",
+                    Description = "Manage master voucher records",
+                    Icon = "\ue40a",
+                    Tags = new[] { "voucher", "master", "finance" }
+                }
+            }
+        },
+        new Example
+        {
+            Toc = [ new () { Text = "VoucherDetailsList", Anchor = "#text-tag-name" } ],
+            Name = "Voucher Detail",
+            Icon = "\ue85d",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/VoucherDetailsList",
+                    Updated = false,
+                    Title = "Voucher Detail List",
+                    Description = "Manage individual voucher line items",
+                    Icon = "\ue40a",
+                    Tags = new[] { "voucher", "account", "debit", "credit" }
+                }
+            }
+        },
 
             new Example
         {

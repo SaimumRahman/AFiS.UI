@@ -1,0 +1,79 @@
+@page "/SuppliersList"
+@using JM.UI.Entities.Model.Suppliers
+@inherits SuppliersListComponent
+
+<PageTitle>Suppliers</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="local_shipping" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Suppliers</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Supplier"
+                                  Click="@AddSupplier"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="SuppliersGrid"
+                        Data="@SuppliersList"
+                        TItem="SupplierModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="15"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="Id" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="Name" Title="Supplier Name" />
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="ShortCode" Title="Short Code" Width="100px" />
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="ContactNo" Title="Contact No" Width="120px" />
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="AccountName" Title="Account" Width="150px" />
+                
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Property="BlockDue" Title="Blocked" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="supplier">
+                        <RadzenBadge BadgeStyle="@(supplier.BlockDue ? BadgeStyle.Danger : BadgeStyle.Success)" 
+                                     Text="@(supplier.BlockDue ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+                
+                <RadzenDataGridColumn TItem="SupplierModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="supplier">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditSupplier(supplier))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteSupplier(supplier))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

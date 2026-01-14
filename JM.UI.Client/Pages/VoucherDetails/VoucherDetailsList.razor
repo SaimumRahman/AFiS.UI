@@ -1,0 +1,73 @@
+@page "/VoucherDetailsList"
+@using JM.UI.Entities.Model.VoucherDetails
+@inherits VoucherDetailsListComponent
+
+<PageTitle>Voucher Details</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Voucher Details Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Entry"
+                                  Click="@AddVoucherDetail"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="VoucherDetailsGrid"
+                        Data="@VoucherDetailsList"
+                        TItem="VoucherDetailsModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="VoucherId" Title="Voucher ID" Width="100px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="AccountId" Title="Account ID" Width="100px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Debit" Title="Debit" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Credit" Title="Credit" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Description" Title="Description" />
+                
+                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="detail">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditVoucherDetail(detail))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteVoucherDetail(detail))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

@@ -12,6 +12,11 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.Barcodes;
+using JM.UI.Service.VoucherDetails;
+using JM.UI.Service.Vouchers;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Accounts;
+using JM.UI.Service.Suppliers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,9 +42,13 @@ namespace JM.UI.Service.UnitOfWork
         public IShiftService ShiftService { get; }
         public ISizesService SizesService { get; }
         public IBarcodeService BarcodeService { get; }
+        public IVoucherDetailsService VoucherDetailsService { get; }
+        public IVoucherService VoucherService { get; }
+        public IAccountsGroupsService AccountsGroupsService { get; }
+        public IAccountsService AccountsService { get; }
+        public ISupplierService SupplierService { get; }
 
         public IColorsService ColorsService { get; }
-        public IAccountsGroupsService AccountsGroupsService { get; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -61,8 +70,12 @@ namespace JM.UI.Service.UnitOfWork
             UserGroupService = new UserGroupService(_repoUow);
             SizesService = new Sizeservice(_repoUow);
             BarcodeService = new BarcodeService(_repoUow);
-            ColorsService = new ColorsService(_repoUow);
+            VoucherDetailsService = new VoucherDetailsService(_repoUow);
+            VoucherService = new VoucherService(_repoUow);
             AccountsGroupsService = new AccountsGroupsService(_repoUow);
+            AccountsService = new AccountsService(_repoUow);
+            SupplierService = new SupplierService(_repoUow);
+            ColorsService = new ColorsService(_repoUow);
         }
 
         public void Dispose()

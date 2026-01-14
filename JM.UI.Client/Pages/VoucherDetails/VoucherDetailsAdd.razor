@@ -1,0 +1,87 @@
+@page "/VoucherDetailsAdd"
+@page "/VoucherDetailsAdd/{Id:int}"
+@using JM.UI.Entities.Model.VoucherDetails
+@inherits VoucherDetailsAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="@PageIcon" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="VoucherDetailsModelDTO" Data="@VoucherDetail" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <!-- Voucher Id -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Voucher ID" Component="VoucherId" />
+                            <RadzenNumeric Name="VoucherId" @bind-Value="@VoucherDetail.VoucherId" class="w-100" TValue="int" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Account Id -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Account ID" Component="AccountId" />
+                            <RadzenNumeric Name="AccountId" @bind-Value="@VoucherDetail.AccountId" class="w-100" TValue="int" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Debit -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Debit" Component="Debit" />
+                            <RadzenNumeric Name="Debit" @bind-Value="@VoucherDetail.Debit" class="w-100" TValue="decimal" Format="0.00" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Credit -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Credit" Component="Credit" />
+                            <RadzenNumeric Name="Credit" @bind-Value="@VoucherDetail.Credit" class="w-100" TValue="decimal" Format="0.00" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Description -->
+                    <RadzenColumn Size="12">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Description" Component="Description" />
+                            <RadzenTextArea Name="Description" @bind-Value="@VoucherDetail.Description" MaxLength="1000" class="w-100" Rows="3" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Save")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>
