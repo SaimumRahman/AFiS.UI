@@ -10,12 +10,13 @@ namespace JM.UI.Service.Employee
     {
         Task<IEnumerable<EmployeeModelDTO>> GetEmployees();
         Task<EmployeeModelDTO?> GetEmployeeById(int id);
+        Task<EmployeeModelDTO?> GetEmployeeCode();
         Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee);
         Task<ResponseResult> DeleteEmployee(int id);
 
         Task<(bool IsValid, string ErrorMessage)> ValidateEmployee(EmployeeModelDTO employee);
 
-        EmployeeModelDTO CreateNewEmployee();
+        Task<EmployeeModelDTO> CreateNewEmployee();
 
         string Truncate(string? value, int maxChars);
         string GetStatusText(int status);

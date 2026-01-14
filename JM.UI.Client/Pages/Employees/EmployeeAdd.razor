@@ -62,7 +62,8 @@
                                                        Name="EmployeeCode"
                                                        Placeholder="Enter employee code"
                                                        Style="width: 100%;"
-                                                       MaxLength="50" />
+                                                       MaxLength="50" 
+                                                       ReadOnly="true" />
                                         <RadzenRequiredValidator Component="EmployeeCode" Text="Employee code is required" />
                                     </RadzenStack>
                                 </RadzenColumn>
@@ -335,9 +336,9 @@
                                                         AllowFiltering="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
-                                   @*  <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Shift" Component="ShiftId" />
+                              @*   <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="DutyType" Component="DutyType" />
                                         <RadzenDropDown @bind-Value="Employee.ShiftId"
                                                         Data="@Shifts"
                                                         TextProperty="ShiftName"
@@ -347,7 +348,22 @@
                                                         Style="width: 100%;"
                                                         AllowClear="true"
                                                         AllowFiltering="true" />
-                                    </RadzenStack> *@
+                                    </RadzenStack>
+                                </RadzenColumn> *@
+
+                                <RadzenColumn Size="12" SizeMD="3">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Shift" Component="ShiftId" />
+                                        <RadzenDropDown @bind-Value="Employee.ShiftId"
+                                                        Data="@Shifts"
+                                                        TextProperty="Name"
+                                                        ValueProperty="Id"
+                                                        Name="ShiftId"
+                                                        Placeholder="Select shift"
+                                                        Style="width: 100%;"
+                                                        AllowClear="true"
+                                                        AllowFiltering="true" />
+                                    </RadzenStack>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="3">
                                     <RadzenStack Gap="0.25rem">
@@ -426,6 +442,20 @@
                                                         ValueProperty="Id"
                                                         Name="BankId"
                                                         Placeholder="Select bank"
+                                                        Style="width: 100%;"
+                                                        AllowClear="true"
+                                                        AllowFiltering="true" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Account" Component="AccountId" />
+                                        <RadzenDropDown @bind-Value="Employee.AccountId"
+                                                        Data="@Accounts"
+                                                        TextProperty="Name"
+                                                        ValueProperty="Id"
+                                                        Name="AccountId"
+                                                        Placeholder="Select Account"
                                                         Style="width: 100%;"
                                                         AllowClear="true"
                                                         AllowFiltering="true" />

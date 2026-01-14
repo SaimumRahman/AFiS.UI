@@ -1,4 +1,5 @@
 ﻿// CompanyListComponent.razor.cs
+using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Designations;
@@ -31,6 +32,7 @@ namespace JM.UI.Client.Pages.Employees
         protected List<StoreDTO> Stores { get; set; } = new();
         protected List<DesignationDTO> Designations { get; set; } = new();
        protected List<ShiftDTO> Shifts { get; set; } = new();
+       protected List<AccountModelDTO> Accounts { get; set; } = new();
 
         // Gender Options
         protected List<string> GenderOptions { get; set; } = new() { "Male", "Female", "Other" };
@@ -64,7 +66,8 @@ namespace JM.UI.Client.Pages.Employees
             }
             else
             {
-                InitializeEmployee();
+                await InitializeEmployee();
+                StateHasChanged();
             }
         }
 
@@ -73,26 +76,29 @@ namespace JM.UI.Client.Pages.Employees
             try
             {
                 // Load Banks
-                var banksTask = _serviceUnitOfWork.BanksService.GetBankss();
+                Banks = (await _serviceUnitOfWork.BanksService.GetBankss()).ToList();
+
                 // Load Stores
-                var storesTask = _serviceUnitOfWork.StoreService.GetStores();
-               // Load Designations
-               var designationsTask = _serviceUnitOfWork.DesignationService.GetDesignations();
+                Stores = (await _serviceUnitOfWork.StoreService.GetStores()).ToList();
+
+                // Load Designations
+                Designations = (await _serviceUnitOfWork.DesignationService.GetDesignations()).ToList();
+
                 // Load Shifts
-                var shiftsTask = _serviceUnitOfWork.ShiftService.GetShift();
+                Shifts = (await _serviceUnitOfWork.ShiftService.GetShift()).ToList();
 
-                await Task.WhenAll(banksTask, storesTask, designationsTask, shiftsTask);
-
-                Banks = (await banksTask).ToList();
-                Stores = (await storesTask).ToList();
-                Designations = (await designationsTask).ToList();
-                Shifts = (await shiftsTask).ToList();
+                Accounts = (await _serviceUnitOfWork.AccountsService.GetAccounts()).ToList();
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load dropdown data: {ex.Message}");
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
+                    $"Failed to load dropdown data: {ex.Message}"
+                );
             }
         }
+
 
         private async Task LoadEmployee()
         {
@@ -121,9 +127,9 @@ namespace JM.UI.Client.Pages.Employees
             }
         }
 
-        private void InitializeEmployee()
+        private async Task InitializeEmployee()
         {
-            Employee = _serviceUnitOfWork.EmployeeService.CreateNewEmployee();
+            Employee = await _serviceUnitOfWork.EmployeeService.CreateNewEmployee();
         }
 
         protected async Task Save()
@@ -211,7 +217,7 @@ namespace JM.UI.Client.Pages.Employees
                 if (result.IsSuccessStatus)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success", "Employee created successfully!");
-                    InitializeEmployee();
+                    await InitializeEmployee();
                     StateHasChanged();
                 }
                 else
@@ -242,7 +248,7 @@ namespace JM.UI.Client.Pages.Employees
             }
             else
             {
-                InitializeEmployee();
+                await InitializeEmployee();
             }
             StateHasChanged();
         }

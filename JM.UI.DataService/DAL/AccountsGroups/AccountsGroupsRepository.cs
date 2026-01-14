@@ -25,7 +25,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
             {
                 _logger.LogInformation("Service: Starting to fetch all AccountsGroups");
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("AccountsGroups/GetAllAccountsGroups");
+                var response = await httpClient.GetAsync("AccountsGroups/getall");
                 response.EnsureSuccessStatusCode();
 
                 var groups = await response.Content.ReadFromJsonAsync<List<AccountsGroupsDTO>>();

@@ -10,6 +10,7 @@ namespace JM.UI.DataService.DAL.Employees
     {
         Task<IEnumerable<EmployeeModelDTO>> GetEmployees();
         Task<EmployeeModelDTO?> GetEmployeeById(int id);
+        Task<EmployeeModelDTO?> GetEmployeeCode();
         Task DeleteEmployee(int id);
         Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee);
     }

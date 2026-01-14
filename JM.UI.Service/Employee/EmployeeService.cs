@@ -4,6 +4,7 @@ using JM.UI.Entities.Model.Employees;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JM.UI.Service.Employee
 {
@@ -173,13 +174,15 @@ namespace JM.UI.Service.Employee
             }
         }
 
-        public EmployeeModelDTO CreateNewEmployee()
+        public async Task<EmployeeModelDTO> CreateNewEmployee()
         {
+            var code = await GetEmployeeCode();
             return new EmployeeModelDTO
             {
                 CreatedOn = DateTime.Now,
                 Status = 1,
-                DateJoined = DateTime.Now
+                DateJoined = DateTime.Now,
+                EmployeeCode = code?.EmployeeCode ?? string.Empty
             };
         }
 
@@ -209,5 +212,12 @@ namespace JM.UI.Service.Employee
                 3 => "background-color:#9e9e9e;color:white;",
                 _ => "background-color:#607d8b;color:white;"
             };
+
+        public async Task<EmployeeModelDTO?> GetEmployeeCode()
+        {
+            return await _repositoryUnitOfWork
+                 .EmployeeRepository
+                 .GetEmployeeCode();
+        }
     }
 }

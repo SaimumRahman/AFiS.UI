@@ -36,7 +36,7 @@ namespace JM.UI.Entities.Model.Employees
         public int? StoreId { get; set; }
         public int? DesignationId { get; set; }
         public decimal? BasicSalary { get; set; }
-        public int? DutyType { get; set; }
+        public int? DutyType { get; set; } = 1;
         public int? ShiftId { get; set; }
         public int Status { get; set; }
         public string CreatedBy { get; set; } = string.Empty;

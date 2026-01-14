@@ -128,5 +128,31 @@ namespace JM.UI.DataService.DAL.Employees
                 throw new Exception("Unexpected error saving employee: " + ex.Message, ex);
             }
         }
+
+        public async Task<EmployeeModelDTO?> GetEmployeeCode()
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch employee code");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("Employees/get-employee-code");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Employee code not found");
+                    return null;
+                }
+
+                var employee = await response.Content.ReadFromJsonAsync<EmployeeModelDTO>();
+                return employee;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during fetching employee code");
+                throw;
+            }
+        }
+
     }
 }

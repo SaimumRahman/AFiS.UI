@@ -36,35 +36,43 @@ namespace JM.UI.Client.Pages.Accounts
                 await LoadAccount();
             }
         }
-
         private async Task LoadInitialData()
         {
             try
             {
                 IsLoading = true;
-                var groupsTask = _serviceUnitOfWork.AccountsGroupsService.GetAccountsGroups();
-                var accountsTask = _serviceUnitOfWork.AccountsService.GetAccounts();
 
-                await Task.WhenAll(groupsTask, accountsTask);
+                AccountsGroups = await _serviceUnitOfWork
+                    .AccountsGroupsService
+                    .GetAccountsGroups();
 
-                AccountsGroups = await groupsTask;
-                ParentAccounts = await accountsTask;
-                
+                ParentAccounts = await _serviceUnitOfWork
+                    .AccountsService
+                    .GetAccounts();
+
                 // If editing, filter out self from parent selection to avoid circular reference
                 if (IsEditMode)
                 {
-                    ParentAccounts = ParentAccounts.Where(a => a.Id != Id).ToList();
+                    ParentAccounts = ParentAccounts
+                        .Where(a => a.Id != Id)
+                        .ToList();
                 }
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load lookup data: {ex.Message}");
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
+                    $"Failed to load lookup data: {ex.Message}"
+                );
             }
             finally
             {
                 IsLoading = false;
             }
         }
+
+
 
         private async Task LoadAccount()
         {
