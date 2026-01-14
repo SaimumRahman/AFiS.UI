@@ -1,6 +1,5 @@
 ﻿@page "/AccountsGroupsAdd"
-@page "/AccountsGroupsAdd/{AccountsGroupsID:int}"
-@attribute [Authorize]
+@page "/AccountsGroupsAdd/{Id:int}"
 @using JM.UI.Entities.Model.AccountsGroups
 @using JM.UI.Entities.Model.Bank
 @inherits AccountsGroupsAddComponent
@@ -18,23 +17,18 @@
     else
     {
         <!-- Header Card -->
-        <RadzenCard class="mb-4">
-            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                <RadzenColumn Size="12" SizeMD="6">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenButton Icon="arrow_back"
-                                      Variant="Variant.Text"
-                                      ButtonStyle="ButtonStyle.Secondary"
-                                      Click="@Cancel"
-                                      Size="ButtonSize.Medium" />
-                        <RadzenIcon Icon="work" Style="font-size: 2rem; color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="account_tree" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
                         @if (IsEditMode)
                         {
                             <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"#{AccountsGroups.Id}")" />
                         }
-                    </RadzenStack>
-                </RadzenColumn>
+                </RadzenStack>
+            </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                         <RadzenButton Text="@(IsEditMode ? "Reset Changes" : "Reset")"
@@ -45,75 +39,63 @@
                                       Disabled="@IsProcessing" />
                     </RadzenStack>
                 </RadzenColumn>
-            </RadzenRow>
-        </RadzenCard>
+        </RadzenRow>
+    </RadzenCard>
 
-        <!-- Form Card -->
-        <RadzenCard>
+    <RadzenTemplateForm TItem="AccountsGroupsModelDTO" Data="@AccountsGroup" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
             <RadzenTemplateForm TItem="AccountsGroupsDTO" Data="@AccountsGroups" Submit="@Save">
                 <RadzenStack Gap="1.5rem">
                     <RadzenFieldset Text="AccountsGroups Information" Icon="work">
                         <RadzenStack Gap="1rem">
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Accounts Groups *" Component="Name" />
-                                        <RadzenTextBox @bind-Value="@AccountsGroups.Name"
-                                                       Name="Name"
-                                                       Placeholder=""
-                                                       Style="width: 100%;"
-                                                       MaxLength="100" />
-                                        <RadzenRequiredValidator Component="Name" Text="AccountsGroups Name is required" />
-                                    </RadzenStack>
-                                </RadzenColumn>
+                <RadzenRow Gap="1rem">
+                    <!-- Group Name -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Accounts Group Name" Component="Name" />
+                            <RadzenTextBox Name="Name" @bind-Value="@AccountsGroup.Name" MaxLength="20" class="w-100" />
+                            <RadzenRequiredValidator Component="Name" Text="Name is required" style="position: absolute" />
+                        </RadzenStack>
+                    </RadzenColumn>
 
-                                <RadzenColumn Size="12" SizeMD="3">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Store" Component="StoreId" />
-                                        <RadzenDropDown @bind-Value="AccountsGroups.StoreId"
-                                                        Data="@Stores"
-                                                        TextProperty="Name"
-                                                        ValueProperty="Id"
-                                                        Name="StoreId"
-                                                        Placeholder="Select store"
-                                                        Style="width: 100%;"
-                                                        AllowClear="true"
-                                                        AllowFiltering="true" />
-                                    </RadzenStack>
-                                </RadzenColumn>
+                    <!-- Store Selection -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Store" Component="StoreId" />
+                            <RadzenDropDown TValue="int" @bind-Value="@AccountsGroup.StoreId" 
+                                            Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                            Placeholder="Select Store..." class="w-100" Name="StoreId" />
+                            <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" style="position: absolute" />
+                        </RadzenStack>
+                    </RadzenColumn>
                                
-                            </RadzenRow>
+                </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
 
-                    <!-- Action Buttons -->
-                    <RadzenCard class="mt-2">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-                            <RadzenButton Text="Cancel"
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
                                           Icon="cancel"
-                                          ButtonStyle="ButtonStyle.Light"
+                                  ButtonStyle="ButtonStyle.Light" 
                                           Variant="Variant.Flat"
-                                          Click="@Cancel"
-                                          Disabled="@IsProcessing" />
-                            @if (!IsEditMode)
-                            {
-                                <RadzenButton Text="Save & Add New"
-                                              Icon="add"
-                                              ButtonStyle="ButtonStyle.Secondary"
-                                              Click="@SaveAndNew"
-                                              IsBusy="@IsProcessing"
-                                              Disabled="@IsProcessing" />
-                            }
-                            <RadzenButton Text="@(IsEditMode ? "Update" : "Save")"
-                                          Icon="@(IsEditMode ? "update" : "save")"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          ButtonType="ButtonType.Submit"
-                                          IsBusy="@IsProcessing"
-                                          BusyText="@(IsEditMode ? "Updating..." : "Saving...")" />
-                        </RadzenStack>
-                    </RadzenCard>
-                </RadzenStack>
-            </RadzenTemplateForm>
-        </RadzenCard>
-    }
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Save")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
 </RadzenContent>

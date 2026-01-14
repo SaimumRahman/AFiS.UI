@@ -1,0 +1,91 @@
+@page "/AccountsList"
+@using JM.UI.Entities.Model.Accounts
+@inherits AccountsListComponent
+
+<PageTitle>Accounts</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="account_balance" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Chart of Accounts</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Account"
+                                  Click="@AddAccount"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="AccountsGrid"
+                        Data="@AccountsList"
+                        TItem="AccountModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="15"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="Id" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="Name" Title="Account Name" />
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="AccountsGroupName" Title="Group" Width="150px" />
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="ParentName" Title="Parent" Width="150px" />
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="LevelNo" Title="Level" Width="70px" TextAlign="TextAlign.Center" />
+                
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="OpeningBalanceDebit" Title="OB Debit" Width="120px" TextAlign="TextAlign.Right">
+                    <Template Context="account">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", account.OpeningBalanceDebit)
+                    </Template>
+                </RadzenDataGridColumn>
+                
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="OpeningBalanceCredit" Title="OB Credit" Width="120px" TextAlign="TextAlign.Right">
+                    <Template Context="account">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", account.OpeningBalanceCredit)
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="IsActive" Title="Active" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="account">
+                        <RadzenBadge BadgeStyle="@(account.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)" 
+                                     Text="@(account.IsActive ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+                
+                <RadzenDataGridColumn TItem="AccountModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="account">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditAccount(account))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteAccount(account))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

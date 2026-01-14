@@ -13,8 +13,12 @@ using System.Collections.Generic;
 using System.Text;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Barcodes;
-using JM.UI.Service.Colors;
+using JM.UI.Service.VoucherDetails;
+using JM.UI.Service.Vouchers;
 using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Accounts;
+using JM.UI.Service.Suppliers;
+using JM.UI.Service.Colors;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -35,8 +39,12 @@ namespace JM.UI.Service.UnitOfWork
 
         ISizesService SizesService { get; }
         IBarcodeService BarcodeService { get; }
+        IVoucherDetailsService VoucherDetailsService { get; }
+        IVoucherService VoucherService { get; }
+        IAccountsGroupsService AccountsGroupsService { get; }
+        IAccountsService AccountsService { get; }
+        ISupplierService SupplierService { get; }
         IColorsService ColorsService { get;}
-        IAccountsGroupsService AccountsGroupsService { get;}
 
 
     }

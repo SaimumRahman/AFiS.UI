@@ -3,71 +3,45 @@ using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.AccountsGroups;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Text;
 
 namespace JM.UI.Service.AccountsGroups
 {
     public class AccountsGroupsService : IAccountsGroupsService
     {
-        private readonly IRepositoryUnitOfWork _repositoryUnitOfWork;
+        private readonly IRepositoryUnitOfWork _unitOfWork;
 
-        public AccountsGroupsService(IRepositoryUnitOfWork repositoryUnitOfWork)
-            => _repositoryUnitOfWork = repositoryUnitOfWork;
-
-        public async Task<IEnumerable<AccountsGroupsDTO>> GetAccountsGroups()
+        public AccountsGroupsService(IRepositoryUnitOfWork unitOfWork)
         {
-            var companies = await _repositoryUnitOfWork.AccountsGroupsRepository.GetAccountsGroups();
-            return companies.Select(c => new AccountsGroupsDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-                StoreId = c.StoreId,
-                StoreName = c.StoreName
-
-            }).ToList();
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<AccountsGroupsDTO?> GetAccountsGroupsById(int id)
+        public async Task<IEnumerable<AccountsGroupsModelDTO>> GetAccountsGroups()
         {
-            return await _repositoryUnitOfWork.AccountsGroupsRepository.GetAccountsGroupsById(id);
-        }
-
-        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsDTO AccountsGroups)
-        {
-            var validation = await ValidateAccountsGroups(AccountsGroups);
-            if (!validation.IsValid)
+            try
             {
-                return new ResponseResult
-                {
-                    IsSuccessStatus = false,
-                    Message = validation.ErrorMessage
-                };
+                return await _unitOfWork.AccountsGroupsRepository.GetAccountsGroups();
+            }
+            catch (Exception)
+            {
+                throw;
             }
 
 
             return await _repositoryUnitOfWork.AccountsGroupsRepository.SaveUpdateAccountsGroups(AccountsGroups);
         }
 
-        public async Task<ResponseResult> DeleteAccountsGroups(int id)
+        public async Task<AccountsGroupsModelDTO?> GetAccountsGroupsById(int id)
         {
             try
             {
-                await _repositoryUnitOfWork.AccountsGroupsRepository.DeleteAccountsGroups(id);
-                return new ResponseResult
-                {
-                    IsSuccessStatus = true,
-                    Message = "AccountsGroups deleted successfully!"
-                };
+                return await _unitOfWork.AccountsGroupsRepository.GetAccountsGroupsById(id);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return new ResponseResult
-                {
-                    IsSuccessStatus = false,
-                    Message = $"Failed to delete AccountsGroups: {ex.Message}"
-                };
+                throw;
             }
-        }
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateAccountsGroups(AccountsGroupsDTO AccountsGroups)
         {
@@ -80,30 +54,29 @@ namespace JM.UI.Service.AccountsGroups
             return Task.FromResult((true, string.Empty));
         }
 
-        private bool IsValidEmail(string email)
+        public async Task<ResponseResult> SaveUpdateAccountsGroups(AccountsGroupsModelDTO accountsGroups)
         {
             try
             {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
+                return await _unitOfWork.AccountsGroupsRepository.SaveUpdateAccountsGroups(accountsGroups);
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
         }
 
-        public AccountsGroupsDTO CreateNewAccountsGroups()
+        public async Task<ResponseResult> DeleteAccountsGroups(int id)
         {
-            return new AccountsGroupsDTO
+            try
             {
-                //CreatedOn = DateTime.Now
-            };
-        }
-
-        public string Truncate(string? value, int maxChars)
-        {
-            return value?.Length > maxChars ? value.Substring(0, maxChars) + "..." : value ?? string.Empty;
+                await _unitOfWork.AccountsGroupsRepository.DeleteAccountsGroups(id);
+                return new ResponseResult { IsSuccessStatus = true, Message = "Accounts Group deleted successfully." };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+            }
         }
     }
 }
