@@ -1,23 +1,23 @@
-@page "/VoucherDetailsList"
-@using JM.UI.Entities.Model.VoucherDetails
-@inherits VoucherDetailsListComponent
+@page "/PurchaseOrdersList"
+@using JM.UI.Entities.Model.PurchaseOrders
+@inherits PurchaseOrdersListComponent
 
-<PageTitle>Voucher Details</PageTitle>
+<PageTitle>Purchase Orders</PageTitle>
 
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Voucher Details Management</RadzenText>
+                    <RadzenIcon Icon="shopping_cart" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Orders</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Entry"
-                                  Click="@AddVoucherDetail"
+                                  Text="New Purchase Order"
+                                  Click="@AddPurchaseOrder"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Medium" />
                 </RadzenStack>
@@ -26,16 +26,16 @@
     </RadzenCard>
 
     <RadzenCard>
-        <RadzenDataGrid @ref="VoucherDetailsGrid"
-                        Data="@VoucherDetailsList"
-                        TItem="VoucherDetailsModelDTO"
+        <RadzenDataGrid @ref="PurchaseOrdersGrid"
+                        Data="@PurchaseOrdersList"
+                        TItem="PurchaseOrderModelDTO"
                         AllowFiltering="true"
                         AllowColumnResize="true"
                         AllowAlternatingRows="true"
                         AllowPaging="true"
                         AllowSorting="true"
                         PagerHorizontalAlign="HorizontalAlign.Center"
-                        PageSize="10"
+                        PageSize="15"
                         FilterMode="FilterMode.Advanced"
                         ShowPagingSummary="true"
                         IsLoading="@IsLoading"
@@ -43,27 +43,33 @@
                         Density="Density.Compact">
 
             <Columns>
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="VoucherNo" Title="Voucher Name" Width="100px" TextAlign="TextAlign.Center" />
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="AccountName" Title="Account Name" Width="100px" TextAlign="TextAlign.Center" />
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Debit" Title="Debit" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Credit" Title="Credit" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Property="Description" Title="Description" />
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="Id" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="PurchaseOrderDate" Title="Date" Width="120px" FormatString="{0:d}" />
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="SupplierName" Title="Supplier" Width="150px" />
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="StoreName" Title="Store" Width="150px" />
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="UserName" Title="Requester" Width="120px" />
                 
-                <RadzenDataGridColumn TItem="VoucherDetailsModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
-                    <Template Context="detail">
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Property="PurchaseOrderStatus" Title="Status" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="order">
+                        <RadzenBadge BadgeStyle="@(order.PurchaseOrderStatus == 1 ? BadgeStyle.Success : BadgeStyle.Info)" 
+                                     Text="@(order.PurchaseOrderStatus.ToString())" /> 
+                    </Template>
+                </RadzenDataGridColumn>
+                
+                <RadzenDataGridColumn TItem="PurchaseOrderModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="order">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                             <RadzenButton Icon="edit"
                                           ButtonStyle="ButtonStyle.Info"
                                           Size="ButtonSize.Small"
                                           Variant="Variant.Flat"
-                                          Click="@(() => EditVoucherDetail(detail))" />
+                                          Click="@(() => EditPurchaseOrder(order))" />
 
                             <RadzenButton Icon="delete"
                                           ButtonStyle="ButtonStyle.Danger"
                                           Size="ButtonSize.Small"
                                           Variant="Variant.Flat"
-                                          Click="@(() => DeleteVoucherDetail(detail))" />
+                                          Click="@(() => DeletePurchaseOrder(order))" />
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>

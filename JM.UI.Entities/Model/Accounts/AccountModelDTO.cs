@@ -21,7 +21,7 @@ namespace JM.UI.Entities.Model.Accounts
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedOn { get; set; }
 
-        // UI Helpers
+        // Dorpdown related
         public string? AccountsGroupName { get; set; }
         public string? ParentName { get; set; }
     }

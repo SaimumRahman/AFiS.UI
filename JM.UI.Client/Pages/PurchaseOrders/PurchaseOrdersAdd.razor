@@ -1,0 +1,133 @@
+@page "/PurchaseOrdersAdd"
+@page "/PurchaseOrdersAdd/{Id:int}"
+@using JM.UI.Entities.Model.PurchaseOrders
+@inherits PurchaseOrdersAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="shopping_cart" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="PurchaseOrderModelDTO" Data="@PurchaseOrder" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <!-- Header Information -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFieldset Text="Header Information">
+                            <RadzenStack Gap="1rem">
+                                
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Date" Component="PurchaseOrderDate" />
+                                    <RadzenDatePicker Name="PurchaseOrderDate" @bind-Value="@PurchaseOrder.PurchaseOrderDate" DateFormat="d" class="w-100" />
+                                    <RadzenRequiredValidator Component="PurchaseOrderDate" Text="Date is required" />
+                                </RadzenStack>
+
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Supplier" Component="SupplierId" />
+                                    <RadzenDropDown TValue="int" @bind-Value="@PurchaseOrder.SupplierId" 
+                                                    Data="@Suppliers" TextProperty="Name" ValueProperty="Id"
+                                                    Placeholder="Select Supplier..." class="w-100" Name="SupplierId"
+                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                                    <RadzenRequiredValidator Component="SupplierId" Text="Supplier is required" DefaultValue="0" />
+                                </RadzenStack>
+
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Store" Component="StoreId" />
+                                    <RadzenDropDown TValue="int" @bind-Value="@PurchaseOrder.StoreId" 
+                                                    Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                                    Placeholder="Select Store..." class="w-100" Name="StoreId" />
+                                    <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" />
+                                </RadzenStack>
+
+                                 <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="User Name" Component="UserName" />
+                                    <RadzenTextBox Name="UserName" @bind-Value="@PurchaseOrder.UserName" class="w-100" />
+                                </RadzenStack>
+
+                            </RadzenStack>
+                        </RadzenFieldset>
+                    </RadzenColumn>
+
+                    <!-- Financials & Status -->
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFieldset Text="Financials & Remarks">
+                            <RadzenStack Gap="1rem">
+                                
+                                <RadzenRow>
+                                    <RadzenColumn Size="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenLabel Text="Discount %" Component="DiscountPercentage" />
+                                            <RadzenNumeric Name="DiscountPercentage" @bind-Value="@PurchaseOrder.DiscountPercentage" TValue="decimal" class="w-100" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenLabel Text="Discount Amt" Component="Discount" />
+                                            <RadzenNumeric Name="Discount" @bind-Value="@PurchaseOrder.Discount" TValue="decimal" class="w-100" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                <RadzenRow>
+                                    <RadzenColumn Size="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenLabel Text="VAT %" Component="VATPercentage" />
+                                            <RadzenNumeric Name="VATPercentage" @bind-Value="@PurchaseOrder.VATPercentage" TValue="decimal" class="w-100" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenStack Gap="0.5rem">
+                                            <RadzenLabel Text="VAT Amt" Component="VAT" />
+                                            <RadzenNumeric Name="VAT" @bind-Value="@PurchaseOrder.VAT" TValue="decimal" class="w-100" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Status" Component="PurchaseOrderStatus" />
+                                    <RadzenNumeric Name="PurchaseOrderStatus" @bind-Value="@PurchaseOrder.PurchaseOrderStatus" TValue="int" class="w-100" />
+                                </RadzenStack>
+
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Remarks" Component="Remarks" />
+                                    <RadzenTextArea Name="Remarks" @bind-Value="@PurchaseOrder.Remarks" Rows="3" class="w-100" />
+                                </RadzenStack>
+
+                            </RadzenStack>
+                        </RadzenFieldset>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Create")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>

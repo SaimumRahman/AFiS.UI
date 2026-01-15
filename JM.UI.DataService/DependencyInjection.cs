@@ -17,6 +17,8 @@ using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.Purchases;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -55,7 +57,8 @@ namespace JM.UI.DataService
             services.AddScoped<IVoucherRepository, VoucherRepository>();
             services.AddScoped<IAccountsGroupsRepository, AccountsGroupsRepository>();
             services.AddScoped<IAccountsRepository, AccountsRepository>();
-            services.AddScoped<ISupplierRepository, SupplierRepository>();
+            services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+            services.AddScoped<IPurchaseRepository, PurchaseRepository>();
             services.AddScoped<IColorsRepository, ColorsRepository>();
             #endregion
 

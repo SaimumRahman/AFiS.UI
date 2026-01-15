@@ -285,6 +285,42 @@ namespace JM.UI.Client.Services.Services
         },
         new Example
         {
+            Toc = [ new () { Text = "PurchasesList", Anchor = "#text-tag-name" } ],
+            Name = "Purchases",
+            Icon = "\ue8cc",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/PurchasesList",
+                    Updated = false,
+                    Title = "Purchases List",
+                    Description = "Manage purchases",
+                    Icon = "\ue40a",
+                    Tags = new[] { "purchase", "buying", "finance" }
+                }
+            }
+        },
+        new Example
+        {
+            Toc = [ new () { Text = "PurchaseOrdersList", Anchor = "#text-tag-name" } ],
+            Name = "Purchase Orders",
+            Icon = "\ue8cc",
+            Children = new [] {
+                new Example
+                {
+                    Name = "List",
+                    Path = "/PurchaseOrdersList",
+                    Updated = false,
+                    Title = "Purchase Orders List",
+                    Description = "Manage purchase orders",
+                    Icon = "\ue40a",
+                    Tags = new[] { "purchase", "order", "finance" }
+                }
+            }
+        },
+        new Example
+        {
             Toc = [ new () { Text = "VoucherList", Anchor = "#text-tag-name" } ],
             Name = "Vouchers",
             Icon = "\ue8b0",

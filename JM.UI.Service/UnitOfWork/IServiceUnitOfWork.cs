@@ -18,6 +18,8 @@ using JM.UI.Service.Vouchers;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
+using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.Purchases;
 using JM.UI.Service.Colors;
 
 namespace JM.UI.Service.UnitOfWork
@@ -44,6 +46,8 @@ namespace JM.UI.Service.UnitOfWork
         IAccountsGroupsService AccountsGroupsService { get; }
         IAccountsService AccountsService { get; }
         ISupplierService SupplierService { get; }
+        IPurchaseOrderService PurchaseOrderService { get; }
+        IPurchaseService PurchaseService { get; }
         IColorsService ColorsService { get;}
 
 

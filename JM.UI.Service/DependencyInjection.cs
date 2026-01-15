@@ -18,6 +18,8 @@ using JM.UI.Service.Vouchers;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
+using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.Purchases;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -60,6 +62,8 @@ namespace JM.UI.Service
             services.AddScoped<IAccountsGroupsService, AccountsGroupsService>();
             services.AddScoped<IAccountsService, AccountsService>();
             services.AddScoped<ISupplierService, SupplierService>();
+            services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+            services.AddScoped<IPurchaseService, PurchaseService>();
         }
     }
 }

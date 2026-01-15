@@ -26,19 +26,27 @@
         {
             <RadzenCard>
                 <RadzenRow Gap="1rem">
-                    <!-- Voucher Id -->
+                    <!-- Voucher Id (Dropdown) -->
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Voucher ID" Component="VoucherId" />
-                            <RadzenNumeric Name="VoucherId" @bind-Value="@VoucherDetail.VoucherId" class="w-100" TValue="int" />
+                            <RadzenLabel Text="Voucher No" Component="VoucherId" />
+                            <RadzenDropDown Name="VoucherId" @bind-Value="@VoucherDetail.VoucherId" 
+                                            Data="@VouchersList" TextProperty="VoucherNo" ValueProperty="Id"
+                                            Placeholder="Select Voucher..." class="w-100" 
+                                            AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                            <RadzenRequiredValidator Component="VoucherId" Text="Voucher is required" DefaultValue="0" />
                         </RadzenStack>
                     </RadzenColumn>
 
-                    <!-- Account Id -->
+                    <!-- Account Id (Dropdown) -->
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Account ID" Component="AccountId" />
-                            <RadzenNumeric Name="AccountId" @bind-Value="@VoucherDetail.AccountId" class="w-100" TValue="int" />
+                            <RadzenLabel Text="Account Name" Component="AccountId" />
+                            <RadzenDropDown Name="AccountId" @bind-Value="@VoucherDetail.AccountId" 
+                                            Data="@AccountsList" TextProperty="Name" ValueProperty="Id"
+                                            Placeholder="Select Account..." class="w-100"
+                                            AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                            <RadzenRequiredValidator Component="AccountId" Text="Account is required" DefaultValue="0" />
                         </RadzenStack>
                     </RadzenColumn>
 

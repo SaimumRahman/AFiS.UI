@@ -11,6 +11,7 @@ namespace JM.UI.Entities.Model.VoucherDetails
         public decimal Credit { get; set; }
         public string? Description { get; set; }
         // for dropdowns
+        public int? VoucherNo { get; set; }
         public string? AccountName { get; set; }
     }
 }

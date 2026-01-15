@@ -1,10 +1,11 @@
+
+using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.VoucherDetails;
+using JM.UI.Entities.Model.Vouchers;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using System;
-using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.VoucherDetails
 {
@@ -15,19 +16,46 @@ namespace JM.UI.Client.Pages.VoucherDetails
         [Parameter] public int? Id { get; set; }
 
         protected VoucherDetailsModelDTO VoucherDetail { get; set; } = new();
+        protected IEnumerable<VoucherModelDTO> VouchersList { get; set; } = new List<VoucherModelDTO>();
+        protected IEnumerable<AccountModelDTO> AccountsList { get; set; } = new List<AccountModelDTO>();
+
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
-        protected string PageTitle => IsEditMode ? "Edit Voucher Entry" : "Add Voucher Entry";
-        protected string PageIcon => IsEditMode ? "edit" : "post_add";
+        protected string PageTitle => IsEditMode ? "Edit Voucher Detail" : "New Voucher Detail";
+        protected string PageIcon => IsEditMode ? "edit" : "add_circle";
 
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
+            await LoadInitialData();
 
             if (IsEditMode)
             {
                 await LoadVoucherDetail();
+            }
+        }
+
+        private async Task LoadInitialData()
+        {
+            try
+            {
+                IsLoading = true;
+                var vouchersTask = _serviceUnitOfWork.VoucherService.GetVouchers();
+                var accountsTask = _serviceUnitOfWork.AccountsService.GetAccounts();
+
+                await Task.WhenAll(vouchersTask, accountsTask);
+
+                VouchersList = await vouchersTask;
+                AccountsList = await accountsTask;
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load lookup data: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -36,20 +64,21 @@ namespace JM.UI.Client.Pages.VoucherDetails
             try
             {
                 IsLoading = true;
-                var detail = await _serviceUnitOfWork.VoucherDetailsService.GetVoucherDetailsById(Id!.Value);
+                // Assuming GetVoucherDetailsById exists in service
+                var result = await _serviceUnitOfWork.VoucherDetailsService.GetVoucherDetailsById(Id!.Value);
 
-                if (detail == null)
+                if (result == null)
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", "Entry not found.");
+                    notificationService.Notify(NotificationSeverity.Error, "Error", "Voucher Detail not found.");
                     NavigationManager.NavigateTo("/VoucherDetailsList");
                     return;
                 }
 
-                VoucherDetail = detail;
+                VoucherDetail = result;
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load entry: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load voucher detail: {ex.Message}");
                 NavigationManager.NavigateTo("/VoucherDetailsList");
             }
             finally
@@ -63,12 +92,13 @@ namespace JM.UI.Client.Pages.VoucherDetails
             try
             {
                 IsProcessing = true;
+                
                 var result = await _serviceUnitOfWork.VoucherDetailsService.SaveUpdateVoucherDetails(VoucherDetail);
 
                 if (result.IsSuccessStatus)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
-                        IsEditMode ? "Entry updated successfully!" : "Entry saved successfully!");
+                        IsEditMode ? "Voucher Detail updated successfully!" : "Voucher Detail created successfully!");
                     NavigationManager.NavigateTo("/VoucherDetailsList");
                 }
                 else
@@ -78,7 +108,7 @@ namespace JM.UI.Client.Pages.VoucherDetails
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save entry: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save voucher detail: {ex.Message}");
             }
             finally
             {

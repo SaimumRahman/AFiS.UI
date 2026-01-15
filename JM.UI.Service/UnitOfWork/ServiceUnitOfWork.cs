@@ -17,6 +17,8 @@ using JM.UI.Service.Vouchers;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
+using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.Purchases;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -47,6 +49,8 @@ namespace JM.UI.Service.UnitOfWork
         public IAccountsGroupsService AccountsGroupsService { get; }
         public IAccountsService AccountsService { get; }
         public ISupplierService SupplierService { get; }
+        public IPurchaseOrderService PurchaseOrderService { get; }
+        public IPurchaseService PurchaseService { get; }
 
         public IColorsService ColorsService { get; }
 
@@ -75,6 +79,8 @@ namespace JM.UI.Service.UnitOfWork
             AccountsGroupsService = new AccountsGroupsService(_repoUow);
             AccountsService = new AccountsService(_repoUow);
             SupplierService = new SupplierService(_repoUow);
+            PurchaseOrderService = new PurchaseOrderService(_repoUow);
+            PurchaseService = new PurchaseService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
         }
 

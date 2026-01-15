@@ -18,6 +18,8 @@ using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Colors;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
@@ -44,6 +46,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IAccountsGroupsRepository AccountsGroupsRepository { get; }
         IAccountsRepository AccountsRepository { get; }
         ISupplierRepository SupplierRepository { get; }
+        IPurchaseOrderRepository PurchaseOrderRepository { get; }
+        IPurchaseRepository PurchaseRepository { get; }
     }
 
 }
