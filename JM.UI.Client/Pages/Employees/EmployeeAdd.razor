@@ -1,6 +1,7 @@
 ﻿@page "/EmployeeAdd"
 @page "/EmployeeAdd/{Id:int}"
 @using JM.UI.Entities.Model.Employees
+@attribute [Authorize]
 @inherits EmployeeAddComponent
 
 <PageTitle>@PageTitle</PageTitle>

@@ -1,6 +1,7 @@
 @page "/PurchaseOrdersAdd"
 @page "/PurchaseOrdersAdd/{Id:int}"
 @using JM.UI.Entities.Model.PurchaseOrders
+@attribute [Authorize]
 @inherits PurchaseOrdersAddComponent
 
 <PageTitle>@PageTitle</PageTitle>

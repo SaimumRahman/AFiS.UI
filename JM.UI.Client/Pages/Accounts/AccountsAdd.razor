@@ -1,6 +1,7 @@
 @page "/AccountsAdd"
 @page "/AccountsAdd/{Id:int}"
 @using JM.UI.Entities.Model.Accounts
+@attribute [Authorize]
 @inherits AccountsAddComponent
 
 <PageTitle>@PageTitle</PageTitle>

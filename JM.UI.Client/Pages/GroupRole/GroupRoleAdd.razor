@@ -1,6 +1,7 @@
 ﻿@page "/GroupRoleAdd"
 @page "/GroupRoleAdd/{Id:int}"
 @using JM.UI.Entities.Model.GroupRole
+@attribute [Authorize]
 @inherits GroupRoleAddComponent
 
 <PageTitle>@PageTitle</PageTitle>
