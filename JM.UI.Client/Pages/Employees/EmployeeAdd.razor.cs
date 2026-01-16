@@ -6,17 +6,21 @@ using JM.UI.Entities.Model.Designations;
 using JM.UI.Entities.Model.Employees;
 using JM.UI.Entities.Model.Shift;
 using JM.UI.Entities.Model.Stores;
+using JM.UI.Entities.Model.Users;
 using JM.UI.Service.UnitOfWork;
+using JM.UI.Service.Users;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
+using RadzenBlazorDemos.Server.Models.Northwind;
 
 namespace JM.UI.Client.Pages.Employees
 {
     public partial class EmployeeAddComponent : PosComponentBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public IUserAuthService _userAuthService { get; set; } = default!;
 
         [Parameter] public int? Id { get; set; }
 
@@ -163,6 +167,19 @@ namespace JM.UI.Client.Pages.Employees
                 IsProcessing = true;
                 var result = await _serviceUnitOfWork.EmployeeService.SaveUpdateEmployee(Employee);
 
+                if (Employee.IsUserCreate)
+                {
+                    RegisterRequest loginRequest = new RegisterRequest
+                    {
+                        Email = Employee.Email,
+                        Username = Employee.Username,
+                        Password = Employee.Password,
+                        PhoneNumber = Employee.Contact,
+                        ConfirmPassword = Employee.ConfirmPassword,
+                    };
+                    await _userAuthService.Register(loginRequest);
+                }
+
                 if (result.IsSuccessStatus)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
@@ -234,7 +251,17 @@ namespace JM.UI.Client.Pages.Employees
                 IsProcessing = false;
             }
         }
+        protected void OnIsUserCreateChanged(bool value)
+        {
+            Employee.IsUserCreate = value;
 
+            if (!value)
+            {
+                Employee.Username = string.Empty;
+                Employee.Password = string.Empty;
+                Employee.ConfirmPassword = string.Empty;
+            }
+        }
         protected void Cancel()
         {
             NavigationManager.NavigateTo("/EmployeeList");

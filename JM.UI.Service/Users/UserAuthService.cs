@@ -22,9 +22,9 @@ namespace JM.UI.Service.Users
           return  await _UserauthRepo.Login(loginRequest);
         }
 
-        public async Task<string> Register(UserAuthDetailsDAO detailsDAO)
+        public async Task<string> Register(RegisterRequest registerRequest)
         {
-          return await _UserauthRepo.Register(detailsDAO);    
+          return await _UserauthRepo.Register(registerRequest);    
         }
         public async Task<LoggedInfo> GetCompanyIdByUserId(int Userid)
         {

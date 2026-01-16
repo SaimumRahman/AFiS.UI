@@ -474,6 +474,67 @@
                             </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
+                    <RadzenFieldset Text="User Settings" Icon="person">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Is User" Component="IsUserCreate" />
+                                        <RadzenCheckBox @bind-Value="Employee.IsUserCreate"
+                                                        Name="IsUserCreate"
+                                                        TValue="bool"
+                                                        Change="@OnIsUserCreateChanged" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+
+                    @if (Employee.IsUserCreate)
+                    {
+                        <RadzenFieldset Text="User Create" Icon="manage_accounts">
+                            <RadzenStack Gap="1rem">
+                                <RadzenRow Gap="1rem">
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Username" Component="Username" />
+                                            <RadzenTextBox @bind-Value="Employee.Username"
+                                                           Name="Username"
+                                                           Placeholder="Enter Username"
+                                                           Style="width: 100%;"
+                                                           MaxLength="50" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Password" Component="Password" />
+                                            <RadzenTextBox @bind-Value="Employee.Password"
+                                                           Name="Password"
+                                                           Type="password"
+                                                           Placeholder="Enter Password"
+                                                           Style="width: 100%;"
+                                                           MaxLength="50" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Confirm Password" Component="ConfirmPassword" />
+                                            <RadzenTextBox @bind-Value="Employee.ConfirmPassword"
+                                                           Name="ConfirmPassword"
+                                                           Type="password"
+                                                           Placeholder="Enter Confirm Password"
+                                                           Style="width: 100%;"
+                                                           MaxLength="50" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenFieldset>
+                    }
 
                     <!-- Metadata Section (Only in Edit Mode) -->
                     @if (IsEditMode)

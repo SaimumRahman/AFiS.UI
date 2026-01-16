@@ -16,11 +16,15 @@ namespace JM.UI.Client.Pages.Users
         [Inject] ProtectedSessionStorage sessionStorage { get; set; }
         [Inject] NavigationManager navigationManager { get; set; }
         [Inject] IJSRuntime jsRuntimes { get; set; }
-        [Inject] AuthenticationStateProvider AuthStateProvider { get; set; } // ✅ Add this
+        [Inject] AuthenticationStateProvider AuthStateProvider { get; set; }
 
         public LoginRequest loginRequestDAO { get; set; }
         private AuthenticatedUserResponse response { get; set; }
-        private bool isLoading = false;
+        protected bool isLoading = false;
+
+        // ✅ Add error message properties
+        protected string errorMessage { get; set; }
+        protected bool showError { get; set; } = false;
 
         protected async Task OnClick(string buttonName)
         {
@@ -32,6 +36,8 @@ namespace JM.UI.Client.Pages.Users
                 try
                 {
                     isLoading = true;
+                    showError = false; // ✅ Reset error state
+                    errorMessage = string.Empty;
                     StateHasChanged();
 
                     Console.WriteLine("🔐 Attempting login...");
@@ -41,6 +47,11 @@ namespace JM.UI.Client.Pages.Users
                     if (response == null || string.IsNullOrEmpty(response.Token))
                     {
                         Console.WriteLine("❌ Login failed - no token received");
+
+                        // ✅ Show error message
+                        errorMessage = "Invalid username or password. Please try again.";
+                        showError = true;
+
                         await jsRuntimes.InvokeVoidAsync("credentialAlert");
                         isLoading = false;
                         StateHasChanged();
@@ -66,7 +77,7 @@ namespace JM.UI.Client.Pages.Users
 
                         Console.WriteLine("✅ All credentials saved successfully");
 
-                        // 🔐 Notify authentication state changed - THIS IS CRITICAL!
+                        // 🔐 Notify authentication state changed
                         ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication();
 
                         Console.WriteLine("🚀 Navigating to dashboard...");
@@ -75,13 +86,36 @@ namespace JM.UI.Client.Pages.Users
                         navigationManager.NavigateTo("/Dashboard", true);
                     }
                 }
+                catch (HttpRequestException httpEx)
+                {
+                    // ✅ Handle network/HTTP errors
+                    Console.WriteLine("═══════════════════════════════════");
+                    Console.WriteLine($"❌ Network error: {httpEx.Message}");
+                    Console.WriteLine("═══════════════════════════════════");
+
+                    errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+                    showError = true;
+                    isLoading = false;
+                    StateHasChanged();
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // ✅ Handle unauthorized access
+                    errorMessage = "Invalid username or password. Please try again.";
+                    showError = true;
+                    isLoading = false;
+                    StateHasChanged();
+                }
                 catch (Exception e)
                 {
+                    // ✅ Handle general errors
                     Console.WriteLine("═══════════════════════════════════");
                     Console.WriteLine($"❌ Login error: {e.Message}");
                     Console.WriteLine($"Stack trace: {e.StackTrace}");
                     Console.WriteLine("═══════════════════════════════════");
 
+                    errorMessage = "An unexpected error occurred. Please try again later.";
+                    showError = true;
                     isLoading = false;
                     StateHasChanged();
                 }
@@ -94,7 +128,6 @@ namespace JM.UI.Client.Pages.Users
             {
                 try
                 {
-                    // ✅ Check authentication state properly
                     var authState = await AuthStateProvider.GetAuthenticationStateAsync();
                     if (authState.User.Identity?.IsAuthenticated == true)
                     {
@@ -121,6 +154,8 @@ namespace JM.UI.Client.Pages.Users
         {
             loginRequestDAO = new LoginRequest();
             response = new AuthenticatedUserResponse();
+            errorMessage = string.Empty;
+            showError = false;
         }
     }
 }

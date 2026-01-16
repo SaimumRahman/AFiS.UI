@@ -26,47 +26,57 @@ namespace JM.UI.DataService.DAL.Users
             _logger = logger;
             _httpClient = httpClientFactory.CreateClient("AuthApi");
         }
-        public async Task<string> Register(UserAuthDetailsDAO detailsDAO)
+        public async Task<string> Register(RegisterRequest registerRequests)
         {
             try
             {
-                _logger.LogInformation("Starting user registration for Email: {Email}", detailsDAO.Email);
-             
+                _logger.LogInformation("Starting user registration for Email: {Email}", registerRequests.Email);
+
                 var registerRequest = new
                 {
-                    Email = detailsDAO.Email,
-                    Username = detailsDAO.UserName,
-                    PhoneNumber = detailsDAO.Mobile,
-                    Password = detailsDAO.Password,
-                    ConfirmPassword = detailsDAO.ConfirmPassword,
-                    EmpId = 1
+                    Email = registerRequests.Email,
+                    Username = registerRequests.Username,
+                    PhoneNumber = registerRequests.PhoneNumber,
+                    Password = registerRequests.Password,
+                    ConfirmPassword = registerRequests.ConfirmPassword
+                    // Removed EmpId since it's commented out in the controller
                 };
+
                 // Make POST request with JSON serialization
                 var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerRequest);
 
-                // Read response content
+                // Read response content first
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                // Ensure success status code
-                response.EnsureSuccessStatusCode();
+                // Check if request was successful
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "Registration failed for Email: {Email}. Status: {StatusCode}, Response: {Response}",
+                        registerRequests.Email,
+                        response.StatusCode,
+                        responseContent);
 
-                _logger.LogInformation("User registration successful for Email: {Email}", detailsDAO.Email);
+                    throw new Exception($"Registration failed with status {response.StatusCode}: {responseContent}");
+                }
 
+                _logger.LogInformation("User registration successful for Email: {Email}", registerRequests.Email);
                 return responseContent;
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request exception during user registration for Email: {Email}",
-                    detailsDAO.Email);
+                    registerRequests.Email);
                 throw new Exception($"Failed to register user: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during user registration for Email: {Email}",
-                    detailsDAO.Email);
-                throw new Exception($"Unexpected error during registration: {ex.Message}", ex);
+                    registerRequests.Email);
+                throw;
             }
         }
+
 
         public async Task<AuthenticatedUserResponse> Login(LoginRequest loginRequest)
         {

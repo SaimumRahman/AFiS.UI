@@ -1,6 +1,8 @@
 ﻿using JM.Infrastructure.Models;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.Users;
+using JM.UI.Service.Users;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -75,7 +77,6 @@ namespace JM.UI.Service.Employee
                 .EmployeeRepository
                 .GetEmployeeById(id);
         }
-
         public async Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee)
         {
             var validation = await ValidateEmployee(employee);

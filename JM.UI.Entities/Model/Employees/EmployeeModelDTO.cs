@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace JM.UI.Entities.Model.Employees
@@ -49,5 +50,14 @@ namespace JM.UI.Entities.Model.Employees
         public string StoreName { get; set; } = string.Empty;
         public string DesignationName { get; set; } = string.Empty;
         public string ShiftName { get; set; } = string.Empty;
+
+        // user create
+      
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
+        public int EmpId { get; set; }
+
+        public bool IsUserCreate { get; set; }
     }
 }

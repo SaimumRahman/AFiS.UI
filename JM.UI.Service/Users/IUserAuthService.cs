@@ -7,7 +7,7 @@ namespace JM.UI.Service.Users
 {
     public interface IUserAuthService
     {
-        public Task<string> Register(UserAuthDetailsDAO detailsDAO);
+        public Task<string> Register(RegisterRequest registerRequest);
         public Task<AuthenticatedUserResponse> Login(LoginRequest loginRequest);
         Task<LoggedInfo> GetCompanyIdByUserId(int Userid);
     }

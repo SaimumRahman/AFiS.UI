@@ -11,7 +11,7 @@ namespace JM.UI.DataService.DAL.Users
 {
     public interface IUserAuthRepository
     {
-        public  Task<string> Register(UserAuthDetailsDAO detailsDAO);
+        public  Task<string> Register(RegisterRequest registerRequest);
         public Task<AuthenticatedUserResponse> Login(LoginRequest loginRequest);
         Task<LoggedInfo> GetCompanyIdByUserId(int Userid);
     }
