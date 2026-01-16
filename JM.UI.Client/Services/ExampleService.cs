@@ -1,443 +1,369 @@
-using JM.UI.Entities.Models;
+﻿using JM.UI.Entities.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace JM.UI.Client.Services.Services
+namespace JM.UI.Client.Services
 {
-    public class KeyboardShortcut
-    {
-        public string Key { get; set; }
-        public string Action { get; set; }
-    }
     public class ExampleService
     {
-        Example[] allExamples = new[] {
-        new Example
+        private readonly Example[] allExamples = new[]
         {
-            Name = "Overview",
-            Path = "/",
-            Icon = "\ue88a"
-        },
-       
-      new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Designations",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "DesignationList",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-      new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Colors",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "ColorsList",
-                    Updated = false,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-              
-            }
-        },
-
-      new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Shift",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "ShiftList",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-              
-            }
-        },
-     
-      new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Accounts Groups",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "AccountsGroupsList",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-              
-            }
-        },
-     
-      new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Banks",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "BanksList",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-               
-            }
-        },
-     
+            // ────────────────────────────────────────────────
+            // 1. Dashboard / Home
+            // ────────────────────────────────────────────────
             new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Company",
-            Icon = "\ue749",
-            Children = new [] {
-               
-                new Example
-                {
-                    Name = "List",
-                    Path = "CompanyList",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-            new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Employee",
-            Icon = "\ue749",
-            Children = new [] {
-              
-                new Example
-                {
-                    Name = "List",
-                    Path = "EmployeeList ",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-            new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Group Role",
-            Icon = "\ue749",
-            Children = new [] {
-               
-                new Example
-                {
-                    Name = "List",
-                    Path = "GroupRoleList ",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-            new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "Branch",
-            Icon = "\ue749",
-            Children = new [] {
-                
-                new Example
-                {
-                    Name = "List",
-                    Path = "StoreList ",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-             new Example
-        {
-            Toc = [ new () { Text = "SizesList", Anchor = "#text-tag-name" } ],
-            Name = "Size",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/SizesList",
-                    Updated = false,
-                    Title = "SizesList Title",
-                    Description = "SizesList Description",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                }
-            
-            }
-        },
-          new Example
-        {
-            Toc = [ new () { Text = "BarcodesList", Anchor = "#text-tag-name" } ],
-            Name = "Barcode",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/BarcodeList",
-                    Updated = false,
-                    Title = "BarcodesList Title",
-                    Description = "BarcodesList Description",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                }
-            
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "AccountsGroupsList", Anchor = "#text-tag-name" } ],
-            Name = "Accounts Groups",
-            Icon = "\ue8b0",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/AccountsGroupsList",
-                    Updated = false,
-                    Title = "Accounts Group List",
-                    Description = "Manage group categorizations for accounts",
-                    Icon = "\ue40a",
-                    Tags = new[] { "accounts", "group", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "AccountsList", Anchor = "#text-tag-name" } ],
-            Name = "Accounts",
-            Icon = "\ue85d",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/AccountsList",
-                    Updated = false,
-                    Title = "Chart of Accounts",
-                    Description = "Manage your chart of accounts",
-                    Icon = "\ue40a",
-                    Tags = new[] { "accounts", "chart", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "SuppliersList", Anchor = "#text-tag-name" } ],
-            Name = "Suppliers",
-            Icon = "\ue558",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/SuppliersList",
-                    Updated = false,
-                    Title = "Suppliers List",
-                    Description = "Manage supplier records",
-                    Icon = "\ue40a",
-                    Tags = new[] { "suppliers", "master", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "PurchasesList", Anchor = "#text-tag-name" } ],
-            Name = "Purchases",
-            Icon = "\ue8cc",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/PurchasesList",
-                    Updated = false,
-                    Title = "Purchases List",
-                    Description = "Manage purchases",
-                    Icon = "\ue40a",
-                    Tags = new[] { "purchase", "buying", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "PurchaseOrdersList", Anchor = "#text-tag-name" } ],
-            Name = "Purchase Orders",
-            Icon = "\ue8cc",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/PurchaseOrdersList",
-                    Updated = false,
-                    Title = "Purchase Orders List",
-                    Description = "Manage purchase orders",
-                    Icon = "\ue40a",
-                    Tags = new[] { "purchase", "order", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "VoucherList", Anchor = "#text-tag-name" } ],
-            Name = "Vouchers",
-            Icon = "\ue8b0",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/VoucherList",
-                    Updated = false,
-                    Title = "Voucher List",
-                    Description = "Manage master voucher records",
-                    Icon = "\ue40a",
-                    Tags = new[] { "voucher", "master", "finance" }
-                }
-            }
-        },
-        new Example
-        {
-            Toc = [ new () { Text = "VoucherDetailsList", Anchor = "#text-tag-name" } ],
-            Name = "Voucher Detail",
-            Icon = "\ue85d",
-            Children = new [] {
-                new Example
-                {
-                    Name = "List",
-                    Path = "/VoucherDetailsList",
-                    Updated = false,
-                    Title = "Voucher Detail List",
-                    Description = "Manage individual voucher line items",
-                    Icon = "\ue40a",
-                    Tags = new[] { "voucher", "account", "debit", "credit" }
-                }
-            }
-        },
-
-            new Example
-        {
-            Toc = [ new () { Text = "Customize themes in Radzen Blazor Studio", Anchor = "#text-tag-name" } ],
-            Name = "User Group Assign",
-            Icon = "\ue749",
-            Children = new [] {
-                new Example
-                {
-                    Name = "Add",
-                    Path = "GroupUserAssignment",
-                    Updated = true,
-                    Title = "Blazor Themes | Free UI Components by Radzen",
-                    Description = "The Radzen Blazor Components package features an array of both free and premium themes, allowing you to choose the style that best suits your project's requirements.",
-                    Icon = "\ue40a",
-                    Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var" }
-                },
-            }
-        },
-    };
-
-        public IEnumerable<Example> Examples
-        {
-            get
             {
-                return allExamples;
+                Name = "Dashboard",
+                Path = "/",
+                Icon = "\ue88a"  // home
+            },
+
+            // ────────────────────────────────────────────────
+            // 2. Company & Organization Setup
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Company Setup",
+                Icon = "\ue7f1",  // business / domain
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Companies",
+                        Path = "/CompanyList",
+                        Icon = "\ue7f1",
+                        Title = "Companies",
+                        Description = "Manage company profiles and basic settings",
+                        Tags = new[] { "company", "setup", "organization" }
+                    },
+                    new Example
+                    {
+                        Name = "Branches / Stores",
+                        Path = "/StoreList",
+                        Icon = "\ue8f4",  // store
+                        Title = "Branches",
+                        Description = "Manage branches, stores or locations",
+                        Tags = new[] { "branch", "store", "location" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 3. Human Resources
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Human Resources",
+                Icon = "\ue7fd",  // people / group
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Employees",
+                        Path = "/EmployeeList",
+                        Icon = "\ue7fd",
+                        Title = "Employees",
+                        Description = "Manage employee records, profiles and assignments",
+                        Tags = new[] { "employee", "hr", "staff" }
+                    },
+                    new Example
+                    {
+                        Name = "Designations",
+                        Path = "/DesignationList",
+                        Icon = "\ue749",
+                        Title = "Designations",
+                        Description = "Define job titles and designations",
+                        Tags = new[] { "designation", "job title", "role" }
+                    },
+                    new Example
+                    {
+                        Name = "Shifts",
+                        Path = "/ShiftList",
+                        Icon = "\ue8d6",  // schedule
+                        Title = "Work Shifts",
+                        Description = "Manage shift patterns and schedules",
+                        Tags = new[] { "shift", "schedule", "roster" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 4. Chart of Accounts & Finance Setup
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Accounting Setup",
+                Icon = "\ue8b0",  // account balance
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Account Groups",
+                        Path = "/AccountsGroupsList",
+                        Icon = "\ue8b0",
+                        Title = "Account Groups",
+                        Description = "Organize accounts into categories and groups",
+                        Tags = new[] { "account", "group", "finance", "coa" }
+                    },
+                    new Example
+                    {
+                        Name = "Chart of Accounts",
+                        Path = "/AccountsList",
+                        Icon = "\ue85d",
+                        Title = "Chart of Accounts",
+                        Description = "Manage ledger accounts and structure",
+                        Tags = new[] { "account", "ledger", "chart", "finance" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 5. Purchases / Suppliers / Payables
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Purchases",
+                Icon = "\ue8cc",  // shopping cart
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Suppliers",
+                        Path = "/SuppliersList",
+                        Icon = "\ue558",  // business / handshake
+                        Title = "Suppliers",
+                        Description = "Manage vendor and supplier records",
+                        Tags = new[] { "supplier", "vendor", "purchase" }
+                    },
+                    new Example
+                    {
+                        Name = "Purchase Orders",
+                        Path = "/PurchaseOrdersList",
+                        Icon = "\ue8cc",
+                        Title = "Purchase Orders",
+                        Description = "Create and track purchase orders",
+                        Tags = new[] { "po", "order", "purchase" }
+                    },
+                    new Example
+                    {
+                        Name = "Purchase Invoices",
+                        Path = "/PurchasesList",
+                        Icon = "\ue873",  // receipt
+                        Title = "Purchase Invoices",
+                        Description = "Record and manage received invoices",
+                        Tags = new[] { "invoice", "bill", "purchase" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 6. Vouchers & Journal Entries
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Vouchers",
+                Icon = "\ue873",  // receipt_long
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Voucher List",
+                        Path = "/VoucherList",
+                        Icon = "\ue873",
+                        Title = "Vouchers",
+                        Description = "Create and manage accounting vouchers",
+                        Tags = new[] { "voucher", "journal", "entry" }
+                    },
+                    new Example
+                    {
+                        Name = "Voucher Details",
+                        Path = "/VoucherDetailsList",
+                        Icon = "\ue85d",
+                        Title = "Voucher Lines",
+                        Description = "View and edit individual voucher transactions",
+                        Tags = new[] { "voucher", "detail", "line", "debit", "credit" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 7. Security & Access Control
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Security",
+                Icon = "\ue897",  // shield
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Group Roles",
+                        Path = "/GroupRoleList",
+                        Icon = "\ue8d3",  // verified user
+                        Title = "Group Roles",
+                        Description = "Define roles and permissions",
+                        Tags = new[] { "role", "permission", "security" }
+                    },
+                    new Example
+                    {
+                        Name = "User Groups",
+                        Path = "/GroupUserAssignment",
+                        Icon = "\ue7fd",
+                        Title = "User Group Assignment",
+                        Description = "Assign users to security groups",
+                        Tags = new[] { "user", "group", "assignment", "access" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 8. Product / Inventory Master (optional / partial)
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Products & Inventory",
+                Icon = "\ue8d2",  // layers / inventory
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Sizes",
+                        Path = "/SizesList",
+                        Icon = "\ue8d2",
+                        Title = "Sizes",
+                        Description = "Manage product size variants",
+                        Tags = new[] { "size", "variant", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name = "Barcodes",
+                        Path = "/BarcodeList",
+                        Icon = "\ue6b8",  // qr_code_scanner
+                        Title = "Barcodes",
+                        Description = "Manage barcode assignments",
+                        Tags = new[] { "barcode", "sku", "inventory" }
+                    }
+                }
+            },
+
+            // ────────────────────────────────────────────────
+            // 9. Appearance (only if your app actually has theme customization)
+            // ────────────────────────────────────────────────
+            new Example
+            {
+                Name = "Appearance",
+                Icon = "\ue3e8",  // palette
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Colors",
+                        Path = "/ColorsList",
+                        Icon = "\ue3e8",
+                        Title = "Color Settings",
+                        Description = "Customize application color theme",
+                        Tags = new[] { "theme", "color", "appearance" }
+                    }
+                }
             }
-        }
+        };
+
+        public IEnumerable<Example> Examples => allExamples;
 
         public IEnumerable<Example> Filter(string term)
         {
-            if (string.IsNullOrEmpty(term))
+            if (string.IsNullOrWhiteSpace(term))
                 return allExamples;
 
-            bool contains(string value) => value != null && value.Contains(term, StringComparison.OrdinalIgnoreCase);
+            term = term.Trim();
 
-            bool filter(Example example) => contains(example.Name) || (example.Tags != null && example.Tags.Any(contains));
+            bool contains(string? value)
+                => !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
 
-            bool deepFilter(Example example) => filter(example) || example.Children?.Any(filter) == true;
+            bool matchesItem(Example item)
+                => contains(item.Name) ||
+                   contains(item.Title) ||
+                   contains(item.Description) ||
+                   (item.Tags?.Any(contains) ?? false);
 
-            return Examples.Where(category => category.Children?.Any(deepFilter) == true || filter(category))
-                           .Select(category => new Example
-                           {
-                               Name = category.Name,
-                               Path = category.Path,
-                               Icon = category.Icon,
-                               Expanded = true,
-                               Children = category.Children?.Where(deepFilter).Select(example => new Example
-                               {
-                                   Name = example.Name,
-                                   Path = example.Path,
-                                   Icon = example.Icon,
-                                   Expanded = true,
-                                   Children = example.Children
-                               }
-                               ).ToArray()
-                           }).ToList();
-        }
-
-        public Example FindCurrent(Uri uri)
-        {
-            IEnumerable<Example> Flatten(IEnumerable<Example> e)
+            bool matchesCategoryOrChildren(Example category)
             {
-                return e.SelectMany(c => c.Children != null ? Flatten(c.Children) : new[] { c });
+                if (matchesItem(category))
+                    return true;
+
+                if (category.Children == null)
+                    return false;
+
+                return category.Children.Any(matchesItem);
             }
 
-            return Flatten(Examples)
-                        .FirstOrDefault(example => example.Path == uri.AbsolutePath || $"/{example.Path}" == uri.AbsolutePath);
+            return allExamples
+                .Where(matchesCategoryOrChildren)
+                .Select(cat => new Example
+                {
+                    Name = cat.Name,
+                    Path = cat.Path,
+                    Icon = cat.Icon,
+                    Title = cat.Title,
+                    Description = cat.Description,
+                    Tags = cat.Tags,
+                    Expanded = true,
+                    Children = cat.Children?
+                        .Where(matchesItem)
+                        .Select(child => new Example
+                        {
+                            Name = child.Name,
+                            Path = child.Path,
+                            Icon = child.Icon,
+                            Title = child.Title,
+                            Description = child.Description,
+                            Tags = child.Tags,
+                            Expanded = true
+                        })
+                        .ToArray()
+                })
+                .ToList();
         }
 
-        public string TitleFor(Example example)
+        public Example? FindCurrent(Uri uri)
         {
-            if (example != null && example.Name != "Overview")
+            string path = uri.AbsolutePath.TrimEnd('/');
+
+            IEnumerable<Example> Flatten(IEnumerable<Example> items)
             {
-                return example.Title ?? $"Blazor {example.Name} Component | Free UI Components by Radzen";
+                foreach (var item in items)
+                {
+                    yield return item;
+                    if (item.Children != null)
+                    {
+                        foreach (var child in Flatten(item.Children))
+                            yield return child;
+                    }
+                }
             }
 
-            return "Free Blazor Components | 100+ UI controls by Radzen";
+            return Flatten(allExamples)
+                .FirstOrDefault(e =>
+                    e.Path != null &&
+                    (string.Equals(e.Path.TrimStart('/'), path, StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals("/" + e.Path.TrimStart('/'), path, StringComparison.OrdinalIgnoreCase)));
         }
 
-        public string DescriptionFor(Example example)
+        public string TitleFor(Example? example)
         {
-            return example?.Description ?? "The Radzen Blazor component library provides more than 100 UI controls for building rich ASP.NET Core web applications.";
+            if (example == null || example.Name == "Dashboard")
+            {
+                return "ERP System | Dashboard";
+            }
+
+            return example.Title ?? $"{example.Name} | ERP System";
+        }
+
+        public string DescriptionFor(Example? example)
+        {
+            return example?.Description
+                ?? "Modern ERP application built with Blazor – manage company, employees, accounts, purchases, vouchers and more.";
         }
     }
 }
