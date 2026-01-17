@@ -1,0 +1,108 @@
+@page "/PurchaseReturnsAdd"
+@page "/PurchaseReturnsAdd/{Id:int}"
+@using JM.UI.Entities.Model.PurchaseReturns
+@attribute [Authorize]
+@inherits PurchaseReturnsAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="assignment_return" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="PurchaseReturnModelDTO" Data="@PurchaseReturn" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Return Date" Component="ReturnDate" />
+                                <RadzenDatePicker Name="ReturnDate" @bind-Value="@PurchaseReturn.ReturnDate" DateFormat="d" class="w-100" />
+                                <RadzenRequiredValidator Component="ReturnDate" Text="Return Date is required" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Supplier" Component="SupplierId" />
+                                <RadzenDropDown TValue="int" @bind-Value="@PurchaseReturn.SupplierId" 
+                                                Data="@Suppliers" TextProperty="Name" ValueProperty="Id"
+                                                Placeholder="Select Supplier..." class="w-100" Name="SupplierId"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                                <RadzenRequiredValidator Component="SupplierId" Text="Supplier is required" DefaultValue="0" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Store" Component="StoreId" />
+                                <RadzenDropDown TValue="int" @bind-Value="@PurchaseReturn.StoreId" 
+                                                Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                                Placeholder="Select Store..." class="w-100" Name="StoreId" />
+                                <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Store Purchase Return ID" Component="StorePurchaseReturnId" />
+                                <RadzenNumeric Name="StorePurchaseReturnId" @bind-Value="@PurchaseReturn.StorePurchaseReturnId" TValue="int" class="w-100" />
+                                <RadzenRequiredValidator Component="StorePurchaseReturnId" Text="Store Purchase Return ID is required" />
+                            </RadzenStack>
+
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Voucher" Component="VoucherId" />
+                                <RadzenDropDown TValue="int" @bind-Value="@PurchaseReturn.VoucherId" 
+                                                Data="@Vouchers" TextProperty="VoucherNo" ValueProperty="Id"
+                                                Placeholder="Select Voucher..." class="w-100" Name="VoucherId"
+                                                AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                                <RadzenRequiredValidator Component="VoucherId" Text="Voucher is required" DefaultValue="0" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="User Name" Component="UserName" />
+                                <RadzenTextBox Name="UserName" @bind-Value="@PurchaseReturn.UserName" class="w-100" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Remarks" Component="Remarks" />
+                                <RadzenTextArea Name="Remarks" @bind-Value="@PurchaseReturn.Remarks" Rows="3" class="w-100" />
+                            </RadzenStack>
+
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Action Buttons -->
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Create")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>

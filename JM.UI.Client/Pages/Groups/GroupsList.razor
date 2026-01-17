@@ -1,0 +1,43 @@
+@page "/GroupsList"
+@using JM.UI.Entities.Model.Groups
+@attribute [Authorize]
+@inherits GroupsListComponent
+
+<PageTitle>Groups</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="group" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Groups</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" class="text-md-end text-start mt-3 mt-md-0">
+                <RadzenButton Text="Add New Group" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@AddGroup" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenDataGrid @ref="GroupsGrid" Data="@GroupsList" TItem="GroupModelDTO" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="GroupModelDTO" Property="Id" Title="ID" Width="80px" />
+                <RadzenDataGridColumn TItem="GroupModelDTO" Property="Name" Title="Name" />
+                
+                <RadzenDataGridColumn TItem="GroupModelDTO" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px">
+                    <Template Context="group">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" Click="@(args => EditGroup(group))" class="me-1" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Medium" Click="@(args => DeleteGroup(group))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenContent>

@@ -1,0 +1,74 @@
+@page "/PurchaseReturnsList"
+@using JM.UI.Entities.Model.PurchaseReturns
+@attribute [Authorize]
+@inherits PurchaseReturnsListComponent
+
+<PageTitle>Purchase Returns</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="assignment_return" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Returns</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="New Return"
+                                  Click="@AddPurchaseReturn"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="PurchaseReturnsGrid"
+                        Data="@PurchaseReturnsList"
+                        TItem="PurchaseReturnModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="15"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="Id" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="ReturnDate" Title="Date" Width="100px" FormatString="{0:d}" />
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="SupplierName" Title="Supplier" Width="150px" />
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="StoreName" Title="Store" Width="150px" />
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="VoucherNo" Title="Voucher No" Width="100px" />
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Property="Remarks" Title="Remarks" Width="200px" />
+                
+                <RadzenDataGridColumn TItem="PurchaseReturnModelDTO" Title="Actions" Width="100px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="purchaseReturn">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditPurchaseReturn(purchaseReturn))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeletePurchaseReturn(purchaseReturn))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

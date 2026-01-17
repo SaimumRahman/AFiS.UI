@@ -138,6 +138,17 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Toc = [ new () { Text = "PurchaseReturnsList", Anchor = "#text-tag-name" } ],
+                        Name = "Purchase Returns",
+                        Path = "/PurchaseReturnsList",
+                        Updated = false,
+                        Title = "Purchase Returns List",
+                        Description = "Manage purchase returns",
+                        Icon = "\ue40a",
+                        Tags = new[] { "purchase", "return", "finance" }
+                    },
+                    new Example
+                    {
                         Name = "Purchase Orders",
                         Path = "/PurchaseOrdersList",
                         Icon = "\ue8cc",
@@ -226,6 +237,28 @@ namespace JM.UI.Client.Services
                 Icon = "\ue8d2",  // layers / inventory
                 Children = new[]
                 {
+                    new Example
+                    {
+                        Name = "Product Suppliers",
+                        Path = "/ProductSuppliersList",
+                        Icon = "\ue558", // business / handshake
+                        Title = "Product Suppliers",
+                        Description = "Manage suppliers for products",
+                        Tags = new[] { "supplier", "product", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name = "Item Attributes",
+                        Icon = "\ue8d2", // category
+                        Title = "Item Attributes",
+                        Description = "Manage product attributes like colors and groups",
+                        Tags = new[] { "attribute", "product", "inventory" },
+                        Children = new[]
+                        {
+                            new Example { Name = "Colors", Path = "/ColorsList", Icon = "\ue3e8", Title = "Colors", Description = "Manage product colors", Tags = new[] { "color", "attribute" } },
+                            new Example { Name = "Groups", Path = "/GroupsList", Icon = "\ue7fd", Title = "Groups", Description = "Manage product groups", Tags = new[] { "group", "attribute" } },
+                        }
+                    },
                     new Example
                     {
                         Name = "Sizes",

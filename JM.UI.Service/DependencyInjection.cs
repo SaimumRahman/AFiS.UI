@@ -20,6 +20,7 @@ using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.Purchases;
+using JM.UI.Service.PurchaseReturns;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ using System.Threading.Tasks;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Colors;
 using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Groups;
 
 namespace JM.UI.Service
 {
@@ -63,7 +65,11 @@ namespace JM.UI.Service
             services.AddScoped<IAccountsService, AccountsService>();
             services.AddScoped<ISupplierService, SupplierService>();
             services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
-            services.AddScoped<IPurchaseService, PurchaseService>();
+            services.AddTransient<IPurchaseService, PurchaseService>();
+            services.AddTransient<IPurchaseReturnService, PurchaseReturnService>();
+            services.AddTransient<IGroupService, GroupService>();
+            services.AddTransient<IColorsService, ColorsService>();
+
         }
     }
 }

@@ -22,7 +22,9 @@ using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.Groups;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -55,6 +57,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ISupplierRepository SupplierRepository { get; }
         public IPurchaseOrderRepository PurchaseOrderRepository { get; }
         public IPurchaseRepository PurchaseRepository { get; }
+        public IPurchaseReturnRepository PurchaseReturnRepository { get; }
+        public IGroupRepository GroupRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -87,8 +91,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             SupplierRepository = new SupplierRepository(factory, tokenProvider, loggerFactory.CreateLogger<SupplierRepository>());
             PurchaseOrderRepository = new PurchaseOrderRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseOrderRepository>());
             PurchaseRepository = new PurchaseRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseRepository>());
+            PurchaseReturnRepository = new PurchaseReturnRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnRepository>());
             ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
-
+            GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
         }
 
         public void Dispose()

@@ -27,6 +27,8 @@ using System.Text;
 using System.Threading.Tasks;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Groups;
 
 namespace JM.UI.DataService
 {
@@ -59,7 +61,9 @@ namespace JM.UI.DataService
             services.AddScoped<IAccountsRepository, AccountsRepository>();
             services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
             services.AddScoped<IPurchaseRepository, PurchaseRepository>();
+            services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
             services.AddScoped<IColorsRepository, ColorsRepository>();
+            services.AddScoped<IGroupRepository, GroupRepository>();
             #endregion
 
 

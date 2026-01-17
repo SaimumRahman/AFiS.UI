@@ -20,7 +20,9 @@ using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.Purchases;
+using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Colors;
+using JM.UI.Service.Groups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -48,6 +50,8 @@ namespace JM.UI.Service.UnitOfWork
         ISupplierService SupplierService { get; }
         IPurchaseOrderService PurchaseOrderService { get; }
         IPurchaseService PurchaseService { get; }
+        IPurchaseReturnService PurchaseReturnService { get; }
+        IGroupService GroupService { get; }
         IColorsService ColorsService { get;}
 
 

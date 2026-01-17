@@ -19,11 +19,13 @@ using JM.UI.Service.Accounts;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.Purchases;
+using JM.UI.Service.PurchaseReturns;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using JM.UI.Service.Colors;
 using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Groups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -50,9 +52,10 @@ namespace JM.UI.Service.UnitOfWork
         public IAccountsService AccountsService { get; }
         public ISupplierService SupplierService { get; }
         public IPurchaseOrderService PurchaseOrderService { get; }
-        public IPurchaseService PurchaseService { get; }
-
-        public IColorsService ColorsService { get; }
+        public IPurchaseService PurchaseService { get; private set; }
+        public IPurchaseReturnService PurchaseReturnService { get; private set; }
+        public IGroupService GroupService { get; private set; }
+        public IColorsService ColorsService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -81,6 +84,8 @@ namespace JM.UI.Service.UnitOfWork
             SupplierService = new SupplierService(_repoUow);
             PurchaseOrderService = new PurchaseOrderService(_repoUow);
             PurchaseService = new PurchaseService(_repoUow);
+            PurchaseReturnService = new PurchaseReturnService(_repoUow);
+            GroupService = new GroupService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
         }
 
