@@ -1,8 +1,19 @@
 ﻿@inject NavigationManager Navigation
 
+<div class="rz-text-align-center rz-p-12">
+    <div class="rz-mt-12">
+        <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+        <div class="rz-mt-4">Redirecting to login...</div>
+    </div>
+</div>
+
 @code {
-    protected override void OnInitialized()
+    protected override void OnAfterRender(bool firstRender)
     {
-        Navigation.NavigateTo("/", true);
+        if (firstRender)
+        {
+            // Navigate after the component has been rendered
+            Navigation.NavigateTo("/", true);
+        }
     }
 }

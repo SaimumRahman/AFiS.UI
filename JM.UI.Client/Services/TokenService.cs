@@ -11,19 +11,19 @@ namespace JM.UI.Client.Services
         Task<bool> IsTokenValidAsync();
         Task ClearTokenAsync();
         Task InitializeTokenAsync();
-        Task<bool> ValidateTokenAsync(string token); // ✅ Add this
+        Task<bool> ValidateTokenAsync(string token);
     }
 
     public class TokenService : ITokenService
     {
-        private readonly ProtectedSessionStorage _sessionStorage;
+        private readonly ProtectedLocalStorage _localStorage; // Changed to LocalStorage
         private readonly ITokenProvider _tokenProvider;
 
         public TokenService(
-            ProtectedSessionStorage sessionStorage,
+            ProtectedLocalStorage localStorage, // Changed to LocalStorage
             ITokenProvider tokenProvider)
         {
-            _sessionStorage = sessionStorage;
+            _localStorage = localStorage;
             _tokenProvider = tokenProvider;
         }
 
@@ -35,15 +35,15 @@ namespace JM.UI.Client.Services
 
                 if (string.IsNullOrEmpty(currentToken))
                 {
-                    var tokenResult = await _sessionStorage.GetAsync<string>("Credentials");
+                    var tokenResult = await _localStorage.GetAsync<string>("Credentials");
                     if (tokenResult.Success && !string.IsNullOrEmpty(tokenResult.Value))
                     {
                         _tokenProvider.SetToken(tokenResult.Value);
-                        Console.WriteLine($"✅ Token initialized from storage");
+                        Console.WriteLine($"✅ Token initialized from local storage");
                     }
                     else
                     {
-                        Console.WriteLine("❌ No token found in storage");
+                        Console.WriteLine("❌ No token found in local storage");
                     }
                 }
                 else
@@ -66,7 +66,7 @@ namespace JM.UI.Client.Services
 
             try
             {
-                var tokenResult = await _sessionStorage.GetAsync<string>("Credentials");
+                var tokenResult = await _localStorage.GetAsync<string>("Credentials");
                 if (tokenResult.Success && !string.IsNullOrEmpty(tokenResult.Value))
                 {
                     _tokenProvider.SetToken(tokenResult.Value);
@@ -85,12 +85,12 @@ namespace JM.UI.Client.Services
         {
             try
             {
-                Console.WriteLine($"💾 Saving token...");
+                Console.WriteLine($"💾 Saving token to local storage...");
 
                 _tokenProvider.SetToken(token);
-                await _sessionStorage.SetAsync("Credentials", token);
+                await _localStorage.SetAsync("Credentials", token);
 
-                Console.WriteLine($"✅ Token saved successfully");
+                Console.WriteLine($"✅ Token saved successfully to local storage");
             }
             catch (Exception ex)
             {
@@ -125,7 +125,6 @@ namespace JM.UI.Client.Services
             }
         }
 
-        // ✅ Add this new method
         public async Task<bool> ValidateTokenAsync(string token)
         {
             if (string.IsNullOrEmpty(token))
@@ -157,12 +156,12 @@ namespace JM.UI.Client.Services
             try
             {
                 _tokenProvider.ClearToken();
-                await _sessionStorage.DeleteAsync("Credentials");
-                await _sessionStorage.DeleteAsync("CompanyId");
-                await _sessionStorage.DeleteAsync("UserInfo");
-                await _sessionStorage.DeleteAsync("UserId"); // ✅ Add this
+                await _localStorage.DeleteAsync("Credentials");
+                await _localStorage.DeleteAsync("CompanyId");
+                await _localStorage.DeleteAsync("UserInfo");
+                await _localStorage.DeleteAsync("UserId");
 
-                Console.WriteLine("✅ Token cleared");
+                Console.WriteLine("✅ Token cleared from local storage");
             }
             catch (Exception ex)
             {
