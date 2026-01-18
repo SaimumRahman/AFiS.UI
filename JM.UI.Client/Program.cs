@@ -3,8 +3,6 @@ using JM.UI.Client.Services;
 using JM.UI.Entities.Model;
 using JM.UI.Entities.Services;
 using Microsoft.AspNetCore.Components.Server.Circuits;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Options;
 using Radzen;
 using RadzenBlazorDemos.Server.Data;

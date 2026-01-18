@@ -1,0 +1,295 @@
+﻿@page "/UserGroupList"
+@using JM.UI.Entities.Model.UserGroup
+@attribute [Authorize]
+@inherits UserGroupListComponent
+
+<PageTitle>User Group Assignments</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="groups" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">User Group Assignments</RadzenText>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"{TotalRecords} Records")" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Refresh"
+                                  Icon="refresh"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Variant="Variant.Outlined"
+                                  Click="@RefreshData"
+                                  Disabled="@IsLoading" />
+                    <RadzenButton Text="Export"
+                                  Icon="download"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Variant="Variant.Outlined"
+                                  Click="@ExportToExcel"
+                                  Disabled="@IsLoading" />
+                    <RadzenButton Text="Assign Users"
+                                  Icon="group_add"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="@AddNew" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Filters Card -->
+    <RadzenCard class="mb-4">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.Subtitle2" class="mb-0">
+                <RadzenIcon Icon="filter_list" Style="vertical-align: middle;" /> Filters
+            </RadzenText>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Search" />
+                        <RadzenTextBox @bind-Value="@SearchText"
+                                       Placeholder="Search by user, group, email..."
+                                       Style="width: 100%;"
+                                       @oninput="@((args) => OnSearchChanged(args.Value?.ToString() ?? string.Empty))"
+                                       aria-label="Search users and groups" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Filter by Group" />
+                        <RadzenDropDown @bind-Value="@SelectedGroupFilter"
+                                        Data="@Groups"
+                                        TextProperty="GroupName"
+                                        ValueProperty="GroupId"
+                                        Placeholder="All Groups"
+                                        Style="width: 100%;"
+                                        AllowClear="true"
+                                        AllowFiltering="true"
+                                        Change="@OnGroupFilterChanged"
+                                        aria-label="Filter by group" />
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="12" SizeLG="4">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="&nbsp;" />
+                        <RadzenButton Text="Clear Filters"
+                                      Icon="clear"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Flat"
+                                      Click="@ClearFilters"
+                                      Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText TextStyle="TextStyle.Body1" class="mt-3">Loading user group assignments...</RadzenText>
+            </div>
+        }
+        else if (!FilteredUserGroups.Any())
+        {
+            <div class="text-center p-5">
+                <RadzenIcon Icon="info" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.H6" class="mt-3">No user group assignments found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">
+                    @if (!string.IsNullOrWhiteSpace(SearchText) || SelectedGroupFilter.HasValue)
+                    {
+                        <text>Try adjusting your filters or </text>
+                        <RadzenLink Text="clear filters" Click="@ClearFilters" />
+                    }
+                    else
+                    {
+                        <text>Start by assigning users to groups</text>
+                    }
+                </RadzenText>
+                <RadzenButton Text="Assign Users"
+                              Icon="group_add"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@AddNew"
+                              class="mt-3" />
+            </div>
+        }
+        else
+        {
+            <RadzenDataGrid @ref="grid"
+                            Data="@FilteredUserGroups"
+                            TItem="UserGroupDTO"
+                            AllowFiltering="false"
+                            AllowColumnResize="true"
+                            AllowSorting="true"
+                            AllowPaging="true"
+                            PageSize="10"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            PagingSummaryFormat="Displaying {0} to {1} of {2} assignments"
+                            class="rz-datatable-hoverable">
+                <Columns>
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Property="UserGroupId"
+                                          Title="ID"
+                                          Width="80px"
+                                          TextAlign="TextAlign.Center">
+                        <Template Context="data">
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@data.UserGroupId.ToString()" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Property="UserName"
+                                          Title="User"
+                                          Width="200px"
+                                          Sortable="true">
+                        <Template Context="data">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="person" Style="color: var(--rz-primary);" />
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <strong>@data.UserName</strong>
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(data.FullName))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">
+                                            @data.FullName
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Property="Email"
+                                          Title="Email"
+                                          Width="250px"
+                                          Sortable="true">
+                        <Template Context="data">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="email" Style="font-size: 1rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2">@data.Email</RadzenText>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Property="GroupName"
+                                          Title="Group"
+                                          Width="200px"
+                                          Sortable="true">
+                        <Template Context="data">
+                            <RadzenStack Gap="0.25rem">
+
+                                <RadzenBadge BadgeStyle="@GetGroupBadgeColor(data.GroupName)"
+                                             Text="@data.GroupName"
+                                             IsPill="true" />
+
+                                @if (data.IsSystem)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                                 Text="System"
+                                                 Variant="Variant.Outlined"
+                                                 IsPill="true"
+                                                 Style="font-size: 0.7rem;" />
+                                }
+
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Property="Description"
+                                          Title="Description"
+                                          Width="250px">
+                        <Template Context="data">
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">
+                                @(string.IsNullOrEmpty(data.Description) ? "-" : data.Description)
+                            </RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="UserGroupDTO"
+                                          Title="Actions"
+                                          Width="150px"
+                                          TextAlign="TextAlign.Center"
+                                          Sortable="false"
+                                          Filterable="false">
+                        <Template Context="data">
+                            <RadzenStack Orientation="Orientation.Horizontal"
+                                         JustifyContent="JustifyContent.Center"
+                                         Gap="0.5rem">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Flat"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => EditUserGroup(data.GroupId))"
+                                              title="Edit assignment"
+                                              aria-label="Edit" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Variant="Variant.Flat"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => DeleteUserGroup(data))"
+                                              Disabled="@IsDeleting"
+                                              title="Remove from group"
+                                              aria-label="Delete" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        }
+    </RadzenCard>
+
+    @if (FilteredUserGroups.Any())
+    {
+        <!-- Summary Card -->
+        <RadzenCard class="mt-4">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Gap="0.25rem" class="text-center">
+                        <RadzenIcon Icon="group" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6">@UserGroups.Select(x => x.GroupId).Distinct().Count()</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">Total Groups</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Gap="0.25rem" class="text-center">
+                        <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-success);" />
+                        <RadzenText TextStyle="TextStyle.H6">@UserGroups.Select(x => x.UserId).Distinct().Count()</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">Unique Users</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Gap="0.25rem" class="text-center">
+                        <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-info);" />
+                        <RadzenText TextStyle="TextStyle.H6">@UserGroups.Count</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">Total Assignments</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Gap="0.25rem" class="text-center">
+                        <RadzenIcon Icon="filter_alt" Style="font-size: 2rem; color: var(--rz-warning);" />
+                        <RadzenText TextStyle="TextStyle.H6">@FilteredUserGroups.Count</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">Filtered Results</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+    }
+</RadzenContent>
+
+<style>
+    .rz-datatable-hoverable .rz-datatable-data tr:hover {
+        background-color: var(--rz-grid-row-hover-background-color, rgba(0, 0, 0, 0.04));
+        cursor: pointer;
+    }
+</style>

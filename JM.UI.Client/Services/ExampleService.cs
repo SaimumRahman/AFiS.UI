@@ -219,7 +219,7 @@ namespace JM.UI.Client.Services
                     new Example
                     {
                         Name = "User Groups",
-                        Path = "/GroupUserAssignment",
+                        Path = "/UserGroupList",
                         Icon = "\ue7fd",
                         Title = "User Group Assignment",
                         Description = "Assign users to security groups",

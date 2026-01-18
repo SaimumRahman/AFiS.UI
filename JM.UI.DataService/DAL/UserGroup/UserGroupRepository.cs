@@ -9,6 +9,7 @@ using System.Text;
 
 namespace JM.UI.DataService.DAL.UserGroup
 {
+
     public class UserGroupRepository : BaseRepository, IUserGroupRepository
     {
         public UserGroupRepository(
@@ -166,6 +167,38 @@ namespace JM.UI.DataService.DAL.UserGroup
             {
                 _logger.LogError(ex, "Unexpected error during remove user from group");
                 throw new Exception("Unexpected error removing user from group: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<ResponseResult> UpdateGroupUsers(int groupId, List<int> userIds)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to update group users");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var requestBody = new
+                {
+                    GroupId = groupId,
+                    UserIds = userIds
+                };
+                var content = JsonContent.Create(requestBody);
+                var response = await httpClient.PutAsync("UserGroups/update-group-users", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during update group users");
+                throw new Exception("Failed to update group users: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during update group users");
+                throw new Exception("Unexpected error updating group users: " + ex.Message, ex);
             }
         }
     }

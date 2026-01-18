@@ -14,7 +14,7 @@ namespace JM.UI.Entities.Model.Users
     {
         public int UserId { get; set; }
        // public Microsoft.AspNet.Identity.EntityFramework.IdentityUser  UserName { get; set; }
-       // public string UserName { get; set; }
+        public string UserName { get; set; }
         public string FullName { get; set; }
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }

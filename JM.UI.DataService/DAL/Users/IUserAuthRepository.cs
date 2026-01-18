@@ -14,5 +14,6 @@ namespace JM.UI.DataService.DAL.Users
         public  Task<string> Register(RegisterRequest registerRequest);
         public Task<AuthenticatedUserResponse> Login(LoginRequest loginRequest);
         Task<LoggedInfo> GetCompanyIdByUserId(int Userid);
+        Task<List<User>> GetAllUsers();
     }
 }
