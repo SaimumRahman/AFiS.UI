@@ -78,6 +78,19 @@
                                                        MaxLength="200" />
                                         <RadzenRequiredValidator Component="Name" Text="Name is required" />
                                     </RadzenStack>
+
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Surname *" Component="Surname" />
+                                        <RadzenTextBox @bind-Value="Employee.Surname"
+                                                       Name="Surname"
+                                                       Placeholder="Enter Surname"
+                                                       Style="width: 100%;"
+                                                       MaxLength="200" />
+                                        <RadzenRequiredValidator Component="Surname" Text="Surname is required" />
+                                    </RadzenStack>
+
                                 </RadzenColumn>
                             </RadzenRow>
 
@@ -496,18 +509,6 @@
                         <RadzenFieldset Text="User Create" Icon="manage_accounts">
                             <RadzenStack Gap="1rem">
                                 <RadzenRow Gap="1rem">
-
-                                    <RadzenColumn Size="12" SizeMD="6">
-                                        <RadzenStack Gap="0.25rem">
-                                            <RadzenLabel Text="Username" Component="Username" />
-                                            <RadzenTextBox @bind-Value="Employee.Username"
-                                                           Name="Username"
-                                                           Placeholder="Enter Username"
-                                                           Style="width: 100%;"
-                                                           MaxLength="50" />
-                                        </RadzenStack>
-                                    </RadzenColumn>
-
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenStack Gap="0.25rem">
                                             <RadzenLabel Text="Password" Component="Password" />
