@@ -14,6 +14,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Stores;
@@ -61,6 +62,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IPurchaseReturnRepository PurchaseReturnRepository { get; }
         public IGroupRepository GroupRepository { get; }
         public IActionRepository ActionRepository { get; }
+        public IRouteRepository RouteRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -97,6 +99,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
             GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
             ActionRepository = new ActionRepository(factory, tokenProvider, loggerFactory.CreateLogger<ActionRepository>());
+            RouteRepository = new RouteRepository(factory, tokenProvider, loggerFactory.CreateLogger<RouteRepository>());
         }
 
         public void Dispose()

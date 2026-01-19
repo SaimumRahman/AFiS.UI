@@ -14,6 +14,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Purchases;
+using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
@@ -55,6 +56,7 @@ namespace JM.UI.Service.UnitOfWork
         IGroupService GroupService { get; }
         IColorsService ColorsService { get;}
         IActionService ActionService { get;}
+        IRouteService RouteService { get;}
 
 
     }

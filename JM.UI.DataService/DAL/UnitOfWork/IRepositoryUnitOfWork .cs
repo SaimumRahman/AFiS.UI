@@ -14,6 +14,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Stores;
@@ -54,6 +55,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IPurchaseReturnRepository PurchaseReturnRepository { get; }
         IGroupRepository GroupRepository { get; }
         IActionRepository ActionRepository { get; }
+        IRouteRepository RouteRepository { get; }
     }
 
 }

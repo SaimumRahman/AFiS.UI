@@ -32,6 +32,10 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Colors;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Groups;
+using JM.UI.DataService.DAL.Actions;
+using JM.UI.DataService.DAL.Routes;
+using JM.UI.Service.Action;
+using JM.UI.Service.Routes;
 
 namespace JM.UI.Service
 {
@@ -69,7 +73,8 @@ namespace JM.UI.Service
             services.AddTransient<IPurchaseReturnService, PurchaseReturnService>();
             services.AddTransient<IGroupService, GroupService>();
             services.AddTransient<IColorsService, ColorsService>();
-
+            services.AddTransient<IActionService, ActionService>();
+            services.AddTransient<IRouteService, RouteService>();
         }
     }
 }

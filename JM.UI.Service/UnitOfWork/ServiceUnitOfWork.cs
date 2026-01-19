@@ -17,6 +17,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Purchases;
+using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
@@ -58,6 +59,7 @@ namespace JM.UI.Service.UnitOfWork
         public IGroupService GroupService { get; private set; }
         public IColorsService ColorsService { get; private set; }
         public IActionService ActionService { get; private set; }
+        public IRouteService RouteService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -90,6 +92,7 @@ namespace JM.UI.Service.UnitOfWork
             GroupService = new GroupService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
             ActionService = new ActionService(_repoUow);
+            RouteService = new RouteService(_repoUow);
         }
 
         public void Dispose()

@@ -16,6 +16,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.Suppliers;
@@ -66,6 +67,7 @@ namespace JM.UI.DataService
             services.AddScoped<IColorsRepository, ColorsRepository>();
             services.AddScoped<IGroupRepository, GroupRepository>();
             services.AddScoped<IActionRepository, ActionRepository>();
+            services.AddScoped<IRouteRepository, RouteRepository>();
             #endregion
 
 
