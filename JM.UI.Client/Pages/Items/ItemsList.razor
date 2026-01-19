@@ -1,24 +1,24 @@
-﻿@page "/ColorsList"
-@using JM.UI.Entities.Model.Colors
+@page "/ItemsList"
+@using JM.UI.Entities.Model.Items
 @attribute [Authorize]
-@inherits ColorsListComponent
+@inherits ItemsListComponent
 
-<PageTitle>Colors</PageTitle>
+<PageTitle>Items</PageTitle>
 
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="palette" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Colors Management</RadzenText>
+                    <RadzenIcon Icon="inventory_2" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Items Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Color"
-                                  Click="@AddColors"
+                                  Text="Add New Item"
+                                  Click="@AddItem"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Medium" />
                 </RadzenStack>
@@ -33,9 +33,9 @@
     else
     {
         <RadzenCard>
-            <RadzenDataGrid @ref="ColorssGrid" 
-                            Data="@Colorss" 
-                            TItem="ColorsDTO" 
+            <RadzenDataGrid @ref="ItemsGrid" 
+                            Data="@ItemsList" 
+                            TItem="ItemModelDTO" 
                             AllowFiltering="true" 
                             AllowColumnResize="true"
                             AllowAlternatingRows="true"
@@ -49,26 +49,34 @@
                             PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
                             IsLoading="@IsLoading"
                             GridLines="DataGridGridLines.Both"
-                            Density="Density.Compact">
+                            Density="Density.Compact"
+                            Responsive="true">
                 <Columns>
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Name" Title="Name" Width="200px" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SubGroupName" Title="SubGroup" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="MesurementUnitName" Title="Unit" Width="100px" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SupplierName" Title="Supplier" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Barcode" Title="Barcode" Width="150px" />
                     
-                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
-                        <Template Context="color">
+                    <RadzenDataGridColumn TItem="ItemModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                        <Template Context="item">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                 <RadzenButton Icon="edit" 
                                               ButtonStyle="ButtonStyle.Info" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => EditColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Color"))" />
+                                              Click="@(args => EditItem(item))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Item"))" />
                                 <RadzenButton Icon="delete" 
                                               ButtonStyle="ButtonStyle.Danger" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => DeleteColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Color"))" />
+                                              Click="@(args => DeleteItem(item))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Item"))" />
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>

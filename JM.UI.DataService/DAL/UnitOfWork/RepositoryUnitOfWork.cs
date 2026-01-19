@@ -25,6 +25,9 @@ using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.MesurementUnits;
+using JM.UI.DataService.DAL.Items;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -59,7 +62,10 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IPurchaseRepository PurchaseRepository { get; }
         public IPurchaseReturnRepository PurchaseReturnRepository { get; }
         public IGroupRepository GroupRepository { get; }
-
+        public ISubGroupRepository SubGroupRepository { get; }
+        public IMesurementUnitRepository MesurementUnitRepository { get; }
+        public IItemRepository ItemRepository { get; }
+        
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
             ITokenProvider tokenProvider,
@@ -94,6 +100,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             PurchaseReturnRepository = new PurchaseReturnRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnRepository>());
             ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
             GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
+            SubGroupRepository = new SubGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<SubGroupRepository>());
+            MesurementUnitRepository = new MesurementUnitRepository(factory, tokenProvider, loggerFactory.CreateLogger<MesurementUnitRepository>());
+            ItemRepository = new ItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemRepository>());
         }
 
         public void Dispose()

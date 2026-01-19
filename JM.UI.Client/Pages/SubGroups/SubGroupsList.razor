@@ -1,24 +1,24 @@
-﻿@page "/ColorsList"
-@using JM.UI.Entities.Model.Colors
+@page "/SubGroupsList"
+@using JM.UI.Entities.Model.SubGroups
 @attribute [Authorize]
-@inherits ColorsListComponent
+@inherits SubGroupsListComponent
 
-<PageTitle>Colors</PageTitle>
+<PageTitle>SubGroups</PageTitle>
 
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="palette" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Colors Management</RadzenText>
+                    <RadzenIcon Icon="subdirectory_arrow_right" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">SubGroups Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Color"
-                                  Click="@AddColors"
+                                  Text="Add New SubGroup"
+                                  Click="@AddSubGroup"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Medium" />
                 </RadzenStack>
@@ -33,9 +33,9 @@
     else
     {
         <RadzenCard>
-            <RadzenDataGrid @ref="ColorssGrid" 
-                            Data="@Colorss" 
-                            TItem="ColorsDTO" 
+            <RadzenDataGrid @ref="SubGroupsGrid" 
+                            Data="@SubGroupsList" 
+                            TItem="SubGroupModelDTO" 
                             AllowFiltering="true" 
                             AllowColumnResize="true"
                             AllowAlternatingRows="true"
@@ -51,24 +51,25 @@
                             GridLines="DataGridGridLines.Both"
                             Density="Density.Compact">
                 <Columns>
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="SubGroupModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="SubGroupModelDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="SubGroupModelDTO" Property="GroupName" Title="Group Name" />
                     
-                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
-                        <Template Context="color">
+                    <RadzenDataGridColumn TItem="SubGroupModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                        <Template Context="subGroup">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                 <RadzenButton Icon="edit" 
                                               ButtonStyle="ButtonStyle.Info" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => EditColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Color"))" />
+                                              Click="@(args => EditSubGroup(subGroup))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Edit SubGroup"))" />
                                 <RadzenButton Icon="delete" 
                                               ButtonStyle="ButtonStyle.Danger" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => DeleteColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Color"))" />
+                                              Click="@(args => DeleteSubGroup(subGroup))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Delete SubGroup"))" />
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>

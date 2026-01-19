@@ -1,24 +1,24 @@
-﻿@page "/ColorsList"
-@using JM.UI.Entities.Model.Colors
+@page "/MesurementUnitsList"
+@using JM.UI.Entities.Model.MesurementUnits
 @attribute [Authorize]
-@inherits ColorsListComponent
+@inherits MesurementUnitsListComponent
 
-<PageTitle>Colors</PageTitle>
+<PageTitle>Measurement Units</PageTitle>
 
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="palette" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Colors Management</RadzenText>
+                    <RadzenIcon Icon="straighten" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Measurement Units Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Color"
-                                  Click="@AddColors"
+                                  Text="Add New Unit"
+                                  Click="@AddMesurementUnit"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Medium" />
                 </RadzenStack>
@@ -33,9 +33,9 @@
     else
     {
         <RadzenCard>
-            <RadzenDataGrid @ref="ColorssGrid" 
-                            Data="@Colorss" 
-                            TItem="ColorsDTO" 
+            <RadzenDataGrid @ref="MesurementUnitsGrid" 
+                            Data="@MesurementUnitsList" 
+                            TItem="MesurementUnitModelDTO" 
                             AllowFiltering="true" 
                             AllowColumnResize="true"
                             AllowAlternatingRows="true"
@@ -51,24 +51,24 @@
                             GridLines="DataGridGridLines.Both"
                             Density="Density.Compact">
                 <Columns>
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="MesurementUnitModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="MesurementUnitModelDTO" Property="Name" Title="Name" />
                     
-                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
-                        <Template Context="color">
+                    <RadzenDataGridColumn TItem="MesurementUnitModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                        <Template Context="unit">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                 <RadzenButton Icon="edit" 
                                               ButtonStyle="ButtonStyle.Info" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => EditColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Color"))" />
+                                              Click="@(args => EditMesurementUnit(unit))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Unit"))" />
                                 <RadzenButton Icon="delete" 
                                               ButtonStyle="ButtonStyle.Danger" 
                                               Size="ButtonSize.Small" 
                                               Variant="Variant.Flat"
-                                              Click="@(args => DeleteColors(color))" 
-                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Color"))" />
+                                              Click="@(args => DeleteMesurementUnit(unit))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Unit"))" />
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>

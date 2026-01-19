@@ -1,5 +1,4 @@
-﻿using JM.UI.Entities.Model.Bank;
-using JM.UI.Entities.Model.Colors;
+﻿using JM.UI.Entities.Model.Colors;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -128,7 +127,6 @@ public partial class ColorsAddComponent : PosComponentBase
     protected async Task Reset()
     {
         if (IsEditMode) await LoadColors();
-        //else InitializeColors();
         StateHasChanged();
     }
 }

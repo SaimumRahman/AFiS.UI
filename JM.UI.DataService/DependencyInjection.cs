@@ -29,6 +29,9 @@ using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.MesurementUnits;
+using JM.UI.DataService.DAL.Items;
 
 namespace JM.UI.DataService
 {
@@ -64,6 +67,9 @@ namespace JM.UI.DataService
             services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
             services.AddScoped<IColorsRepository, ColorsRepository>();
             services.AddScoped<IGroupRepository, GroupRepository>();
+            services.AddScoped<ISubGroupRepository, SubGroupRepository>();
+            services.AddScoped<IMesurementUnitRepository, MesurementUnitRepository>();
+            services.AddScoped<IItemRepository, ItemRepository>();
             #endregion
 
 

@@ -1,0 +1,167 @@
+@page "/ItemsAdd"
+@page "/ItemsAdd/{Id:int}"
+@using JM.UI.Entities.Model.Items
+@attribute [Authorize]
+@inherits ItemsAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="inventory_2" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="ItemModelDTO" Data="@Item" Submit="@Save">
+        @if (IsLoadingByComponent)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1.5rem">
+                    @* Left Column - Basic Info *@
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Item Name" Component="Name" class="fw-bold" />
+                                <RadzenTextBox Name="Name" @bind-Value="@Item.Name" class="w-100" />
+                                <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Sub Group" Component="SubGroupId" class="fw-bold" />
+                                <RadzenDropDown @bind-Value="@Item.SubGroupId" 
+                                                Data="@SubGroupsList" 
+                                                TextProperty="Name" 
+                                                ValueProperty="Id" 
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                AllowFiltering="true"
+                                                Placeholder="Select Sub Group" 
+                                                class="w-100" 
+                                                Name="SubGroupId" />
+                                <RadzenNumericRangeValidator Component="SubGroupId" Min="1" Text="Please select a Sub Group" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Measurement Unit" Component="MesurementUnitId" class="fw-bold" />
+                                <RadzenDropDown @bind-Value="@Item.MesurementUnitId" 
+                                                Data="@MeasurementUnitsList" 
+                                                TextProperty="Name" 
+                                                ValueProperty="Id" 
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                AllowFiltering="true"
+                                                Placeholder="Select Unit" 
+                                                class="w-100"
+                                                Name="MesurementUnitId" />
+                                <RadzenNumericRangeValidator Component="MesurementUnitId" Min="1" Text="Please select a Unit" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Supplier" Component="SupplierId" class="fw-bold" />
+                                <RadzenDropDown @bind-Value="@Item.SupplierId" 
+                                                Data="@SuppliersList" 
+                                                TextProperty="Name" 
+                                                ValueProperty="Id" 
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                AllowFiltering="true"
+                                                Placeholder="Select Supplier" 
+                                                class="w-100"
+                                                Name="SupplierId" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Barcode" Component="Barcode" class="fw-bold" />
+                                <RadzenTextBox Name="Barcode" @bind-Value="@Item.Barcode" class="w-100" />
+                            </RadzenStack>
+
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenLabel Text="Item Image" class="fw-bold" />
+                                <RadzenFileInput @bind-Value="@Item.Image" TValue="byte[]" ChooseText="Choose Image" style="width: 100%;" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    @* Right Column - Pricing & Levels *@
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Sale Price" Component="SalePrice" class="fw-bold" />
+                                        <RadzenNumeric Name="SalePrice" @bind-Value="@Item.SalePrice" class="w-100" ShowStep="false" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Wholesale Price" Component="WholeSalePrice" class="fw-bold" />
+                                        <RadzenNumeric Name="WholeSalePrice" @bind-Value="@Item.WholeSalePrice" class="w-100" ShowStep="false" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Alarm Level" Component="AlarmLevel" class="fw-bold" />
+                                        <RadzenNumeric Name="AlarmLevel" @bind-Value="@Item.AlarmLevel" class="w-100" ShowStep="false" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Last Cost Price" Component="LastCostPrice" class="fw-bold" />
+                                        <RadzenNumeric Name="LastCostPrice" @bind-Value="@Item.LastCostPrice" class="w-100" ShowStep="false" Disabled="true" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenStack Gap="0.5rem" Orientation="Orientation.Vertical">
+                                <RadzenLabel Text="Stock & Material Types" class="fw-bold" />
+                                <RadzenRow>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCheckBox @bind-Value="@Item.CountStockByColor" Name="ByColor" />
+                                        <RadzenLabel Text="Stock By Color" Component="ByColor" class="ms-2" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCheckBox @bind-Value="@Item.CountStockBySize" Name="BySize" />
+                                        <RadzenLabel Text="Stock By Size" Component="BySize" class="ms-2" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                <RadzenRow>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCheckBox @bind-Value="@Item.RawMaterial" Name="Raw" />
+                                        <RadzenLabel Text="Raw Material" Component="Raw" class="ms-2" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6">
+                                        <RadzenCheckBox @bind-Value="@Item.FinishedGood" Name="Finished" />
+                                        <RadzenLabel Text="Finished Good" Component="Finished" class="ms-2" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" 
+                                  ButtonStyle="ButtonStyle.Light" 
+                                  Click="@Cancel" 
+                                  Icon="cancel" 
+                                  Disabled="@IsProcessing" />
+                    <RadzenButton ButtonType="ButtonType.Submit" 
+                                  Text="@(IsEditMode ? "Update" : "Save")" 
+                                  ButtonStyle="ButtonStyle.Primary" 
+                                  Icon="save" 
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>

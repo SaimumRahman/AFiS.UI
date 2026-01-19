@@ -23,6 +23,9 @@ using JM.UI.Service.Purchases;
 using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Groups;
+using JM.UI.Service.SubGroups;
+using JM.UI.Service.MesurementUnits;
+using JM.UI.Service.Items;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -52,7 +55,10 @@ namespace JM.UI.Service.UnitOfWork
         IPurchaseService PurchaseService { get; }
         IPurchaseReturnService PurchaseReturnService { get; }
         IGroupService GroupService { get; }
+        ISubGroupService SubGroupService { get; }
+        IMesurementUnitService MesurementUnitService { get; }
         IColorsService ColorsService { get;}
+       IItemService ItemService { get; }
 
 
     }
