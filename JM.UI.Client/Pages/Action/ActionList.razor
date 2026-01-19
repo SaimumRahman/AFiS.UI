@@ -1,0 +1,103 @@
+﻿@page "/ActionList"
+@using JM.UI.Entities.Model.Actions
+@attribute [Authorize]
+@inherits ActionListComponent
+
+<PageTitle>Actions</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="play_circle" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Action Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Action"
+                                  Click="@AddAction"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="ActionsGrid"
+                        Data="@Actions"
+                        TItem="ActionDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="ActionDTO" Property="ActionId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="action">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{action.ActionId}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Action Key -->
+                <RadzenDataGridColumn TItem="ActionDTO" Property="ActionKey" Title="Action Key" Width="200px">
+                    <Template Context="action">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="@GetActionIcon(action.ActionKey)"
+                                        Style=@($"color: {GetActionColor(action.ActionKey)};") />
+                            <RadzenBadge BadgeStyle="@GetActionBadgeStyle(action.ActionKey)" 
+                                         Text="@action.ActionKey" 
+                                         Style="font-weight: 600;" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Description -->
+                <RadzenDataGridColumn TItem="ActionDTO" Property="Description" Title="Description" Width="400px">
+                    <Template Context="action">
+                        <div title="@action.Description">
+                            @(string.IsNullOrWhiteSpace(action.Description) ? "No description" : Truncate(action.Description, 80))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="ActionDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="action">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditAction(action))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Action"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteAction(action))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Action"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

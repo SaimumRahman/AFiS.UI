@@ -1,30 +1,31 @@
-﻿using JM.UI.DataService.DAL.Approval;
+﻿using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Actions;
+using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
-using JM.UI.DataService.DAL.Stores;
-using JM.UI.DataService.DAL.UserGroup;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Shift;
+using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.UserGroup;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using JM.UI.DataService.DAL.Sizes;
-using JM.UI.DataService.DAL.Barcodes;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Suppliers;
-using JM.UI.DataService.DAL.PurchaseOrders;
-using JM.UI.DataService.DAL.Purchases;
-using JM.UI.DataService.DAL.PurchaseReturns;
-using JM.UI.DataService.DAL.Colors;
-using JM.UI.DataService.DAL.Groups;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -59,6 +60,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IPurchaseRepository PurchaseRepository { get; }
         public IPurchaseReturnRepository PurchaseReturnRepository { get; }
         public IGroupRepository GroupRepository { get; }
+        public IActionRepository ActionRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -94,6 +96,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             PurchaseReturnRepository = new PurchaseReturnRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnRepository>());
             ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
             GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
+            ActionRepository = new ActionRepository(factory, tokenProvider, loggerFactory.CreateLogger<ActionRepository>());
         }
 
         public void Dispose()

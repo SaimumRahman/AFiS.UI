@@ -1,28 +1,29 @@
-﻿using JM.UI.Service.Approval;
+﻿using JM.UI.Service.Accounts;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Action;
+using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
+using JM.UI.Service.Barcodes;
+using JM.UI.Service.Colors;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
-using JM.UI.Service.Shift;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
+using JM.UI.Service.Groups;
+using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.PurchaseReturns;
+using JM.UI.Service.Purchases;
+using JM.UI.Service.Shift;
+using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
+using JM.UI.Service.Suppliers;
 using JM.UI.Service.UserGroup;
+using JM.UI.Service.VoucherDetails;
+using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using JM.UI.Service.Sizes;
-using JM.UI.Service.Barcodes;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.Vouchers;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Suppliers;
-using JM.UI.Service.PurchaseOrders;
-using JM.UI.Service.Purchases;
-using JM.UI.Service.PurchaseReturns;
-using JM.UI.Service.Colors;
-using JM.UI.Service.Groups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -53,6 +54,7 @@ namespace JM.UI.Service.UnitOfWork
         IPurchaseReturnService PurchaseReturnService { get; }
         IGroupService GroupService { get; }
         IColorsService ColorsService { get;}
+        IActionService ActionService { get;}
 
 
     }

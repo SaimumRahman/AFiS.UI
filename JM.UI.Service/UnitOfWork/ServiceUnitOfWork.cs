@@ -1,31 +1,32 @@
 ﻿using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.Service.Accounts;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
+using JM.UI.Service.Barcodes;
+using JM.UI.Service.Colors;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
+using JM.UI.Service.Groups;
+using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.PurchaseReturns;
+using JM.UI.Service.Purchases;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
+using JM.UI.Service.Suppliers;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.Barcodes;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.Vouchers;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Suppliers;
-using JM.UI.Service.PurchaseOrders;
-using JM.UI.Service.Purchases;
-using JM.UI.Service.PurchaseReturns;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using JM.UI.Service.Colors;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.Groups;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -56,6 +57,7 @@ namespace JM.UI.Service.UnitOfWork
         public IPurchaseReturnService PurchaseReturnService { get; private set; }
         public IGroupService GroupService { get; private set; }
         public IColorsService ColorsService { get; private set; }
+        public IActionService ActionService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -87,6 +89,7 @@ namespace JM.UI.Service.UnitOfWork
             PurchaseReturnService = new PurchaseReturnService(_repoUow);
             GroupService = new GroupService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
+            ActionService = new ActionService(_repoUow);
         }
 
         public void Dispose()

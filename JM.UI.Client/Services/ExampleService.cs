@@ -224,6 +224,15 @@ namespace JM.UI.Client.Services
                         Title = "User Group Assignment",
                         Description = "Assign users to security groups",
                         Tags = new[] { "user", "group", "assignment", "access" }
+                    },
+                    new Example
+                    {
+                        Name = "Action",
+                        Path = "/ActionList",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
                     }
                 }
             },

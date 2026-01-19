@@ -1,34 +1,35 @@
 ﻿using JM.Infrastructure.Base;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
-using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Shift;
+using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
-using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Suppliers;
-using JM.UI.DataService.DAL.PurchaseOrders;
-using JM.UI.DataService.DAL.Purchases;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using JM.UI.DataService.DAL.Colors;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.PurchaseReturns;
-using JM.UI.DataService.DAL.Groups;
 
 namespace JM.UI.DataService
 {
@@ -64,6 +65,7 @@ namespace JM.UI.DataService
             services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
             services.AddScoped<IColorsRepository, ColorsRepository>();
             services.AddScoped<IGroupRepository, GroupRepository>();
+            services.AddScoped<IActionRepository, ActionRepository>();
             #endregion
 
 
