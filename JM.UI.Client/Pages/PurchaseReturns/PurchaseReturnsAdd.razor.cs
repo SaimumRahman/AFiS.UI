@@ -1,14 +1,17 @@
 using JM.UI.Entities.Model.PurchaseReturns;
+using JM.UI.Entities.Model.PurchaseReturnItems;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Suppliers;
 using JM.UI.Entities.Model.Vouchers;
+using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.Users;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using JM.UI.Entities.Model.Colors;
+using JM.UI.Entities.Model.Sizes;
+using Newtonsoft.Json;
 
 namespace JM.UI.Client.Pages.PurchaseReturns
 {
@@ -22,6 +25,13 @@ namespace JM.UI.Client.Pages.PurchaseReturns
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<VoucherModelDTO> Vouchers { get; set; } = new List<VoucherModelDTO>();
+        
+        // Line Item Lookups
+        protected IEnumerable<ItemModelDTO> ItemsList = new List<ItemModelDTO>();
+        protected IEnumerable<ColorsDTO> ColorsList = new List<ColorsDTO>();
+        protected IEnumerable<SizesDTO> SizesList = new List<SizesDTO>();
+
+        protected PurchaseReturnItemModelDTO NewItem { get; set; } = new();
 
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
@@ -32,10 +42,32 @@ namespace JM.UI.Client.Pages.PurchaseReturns
         {
             await TokenService.InitializeTokenAsync();
             await LoadInitialData();
+            await SetUserInfo();
 
             if (IsEditMode)
             {
                 await LoadPurchaseReturn();
+            }
+        }
+
+        private async Task SetUserInfo()
+        {
+            try
+            {
+                var userInfoResult = await sessionStorage.GetAsync<string>("UserInfo");
+                if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
+                {
+                    var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
+                    if (userInfo != null)
+                    {
+                        PurchaseReturn.UserName = userInfo.Username;
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading user info: {ex.Message}");
             }
         }
 
@@ -47,12 +79,18 @@ namespace JM.UI.Client.Pages.PurchaseReturns
                 var suppliersTask = _serviceUnitOfWork.SupplierService.GetSuppliers();
                 var storesTask = _serviceUnitOfWork.StoreService.GetStores();
                 var vouchersTask = _serviceUnitOfWork.VoucherService.GetVouchers();
+                var itemsTask = _serviceUnitOfWork.ItemService.GetItems();
+                var colorsTask = _serviceUnitOfWork.ColorsService.GetColorss();
+                var sizesTask = _serviceUnitOfWork.SizesService.GetSizess();
 
-                await Task.WhenAll(suppliersTask, storesTask, vouchersTask);
+                await Task.WhenAll(suppliersTask, storesTask, vouchersTask, itemsTask, colorsTask, sizesTask);
 
                 Suppliers = await suppliersTask;
                 Stores = await storesTask;
                 Vouchers = await vouchersTask;
+                ItemsList = await itemsTask;
+                ColorsList = await colorsTask;
+                SizesList = await sizesTask;
             }
             catch (Exception ex)
             {
@@ -79,6 +117,10 @@ namespace JM.UI.Client.Pages.PurchaseReturns
                 }
 
                 PurchaseReturn = result;
+                
+                // Load line items
+                var items = await _serviceUnitOfWork.PurchaseReturnItemService.GetItemsByReturnId(Id.Value);
+                PurchaseReturn.Items = items.ToList();
             }
             catch (Exception ex)
             {
@@ -91,12 +133,62 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             }
         }
 
+        protected void AddLineItem()
+        {
+            if (NewItem.ItemId == 0 || NewItem.Quantity <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please select an item and enter quantity.");
+                return;
+            }
+
+            var item = ItemsList.FirstOrDefault(i => i.Id == NewItem.ItemId);
+            if (item != null)
+            {
+                NewItem.ItemName = item.Name;
+            }
+
+            if (NewItem.ColorId.HasValue)
+            {
+                NewItem.ColorName = ColorsList.FirstOrDefault(c => c.Id == NewItem.ColorId.Value)?.Name;
+            }
+
+            if (NewItem.SizeId.HasValue)
+            {
+                NewItem.SizeName = SizesList.FirstOrDefault(s => s.Id == NewItem.SizeId.Value)?.Name;
+            }
+
+            PurchaseReturn.Items.Add(NewItem);
+            NewItem = new PurchaseReturnItemModelDTO(); // Reset for next item
+        }
+
+        protected void RemoveLineItem(PurchaseReturnItemModelDTO item)
+        {
+            PurchaseReturn.Items.Remove(item);
+        }
+
         protected async Task Save()
         {
+            if (!PurchaseReturn.Items.Any())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Empty Items", "Please add at least one item to return.");
+                return;
+            }
+
             try
             {
                 IsProcessing = true;
                 
+                // Populate UserName from session storage before saving
+                var userInfoResult = await sessionStorage.GetAsync<string>("UserInfo");
+                if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
+                {
+                    var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
+                    if (userInfo != null)
+                    {
+                        PurchaseReturn.UserName = userInfo.Username;
+                    }
+                }
+
                 var result = await _serviceUnitOfWork.PurchaseReturnService.SaveUpdatePurchaseReturn(PurchaseReturn);
 
                 if (result.IsSuccessStatus)

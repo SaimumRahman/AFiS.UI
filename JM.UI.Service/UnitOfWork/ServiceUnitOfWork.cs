@@ -29,6 +29,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
+using JM.UI.Service.PurchaseReturnItems;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -62,6 +63,7 @@ namespace JM.UI.Service.UnitOfWork
         public IMesurementUnitService MesurementUnitService { get; private set; }
         public IColorsService ColorsService { get; private set; }
         public IItemService ItemService { get; private set; }
+        public IPurchaseReturnItemService PurchaseReturnItemService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -96,6 +98,7 @@ namespace JM.UI.Service.UnitOfWork
             MesurementUnitService = new MesurementUnitService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
             ItemService = new ItemService(_repoUow);
+            PurchaseReturnItemService = new PurchaseReturnItemService(_repoUow);
         }
 
         public void Dispose()

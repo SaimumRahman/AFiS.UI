@@ -1,4 +1,5 @@
-using System;
+using System.Collections.Generic;
+using JM.UI.Entities.Model.PurchaseReturnItems;
 
 namespace JM.UI.Entities.Model.PurchaseReturns
 {
@@ -17,5 +18,7 @@ namespace JM.UI.Entities.Model.PurchaseReturns
         public string? SupplierName { get; set; }
         public string? StoreName { get; set; }
         public int? VoucherNo { get; set; }
+
+        public List<PurchaseReturnItemModelDTO> Items { get; set; } = new();
     }
 }

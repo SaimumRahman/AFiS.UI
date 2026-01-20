@@ -28,6 +28,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -65,6 +66,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ISubGroupRepository SubGroupRepository { get; }
         public IMesurementUnitRepository MesurementUnitRepository { get; }
         public IItemRepository ItemRepository { get; }
+        public IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
         
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -103,6 +105,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             SubGroupRepository = new SubGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<SubGroupRepository>());
             MesurementUnitRepository = new MesurementUnitRepository(factory, tokenProvider, loggerFactory.CreateLogger<MesurementUnitRepository>());
             ItemRepository = new ItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemRepository>());
+            PurchaseReturnItemRepository = new PurchaseReturnItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnItemRepository>());
         }
 
         public void Dispose()

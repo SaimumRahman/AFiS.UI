@@ -26,6 +26,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
+using JM.UI.Service.PurchaseReturnItems;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -58,8 +59,7 @@ namespace JM.UI.Service.UnitOfWork
         ISubGroupService SubGroupService { get; }
         IMesurementUnitService MesurementUnitService { get; }
         IColorsService ColorsService { get;}
-       IItemService ItemService { get; }
-
-
+        IItemService ItemService { get; }
+        IPurchaseReturnItemService PurchaseReturnItemService { get; }
     }
 }

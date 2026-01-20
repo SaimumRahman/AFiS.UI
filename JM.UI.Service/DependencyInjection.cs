@@ -35,6 +35,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
+using JM.UI.Service.PurchaseReturnItems;
 
 namespace JM.UI.Service
 {
@@ -75,6 +76,7 @@ namespace JM.UI.Service
             services.AddTransient<IMesurementUnitService, MesurementUnitService>();
             services.AddTransient<IColorsService, ColorsService>();
             services.AddTransient<IItemService, ItemService>();
+            services.AddTransient<IPurchaseReturnItemService, PurchaseReturnItemService>();
         }
     }
 }

@@ -26,6 +26,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -58,5 +59,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ISubGroupRepository SubGroupRepository { get; }
         IMesurementUnitRepository MesurementUnitRepository { get; }
         IItemRepository ItemRepository { get; }
+        IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
     }
 }

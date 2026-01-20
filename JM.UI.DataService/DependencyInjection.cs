@@ -32,6 +32,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService
 {
@@ -70,6 +71,7 @@ namespace JM.UI.DataService
             services.AddScoped<ISubGroupRepository, SubGroupRepository>();
             services.AddScoped<IMesurementUnitRepository, MesurementUnitRepository>();
             services.AddScoped<IItemRepository, ItemRepository>();
+            services.AddScoped<IPurchaseReturnItemRepository, PurchaseReturnItemRepository>();
             #endregion
 
 
