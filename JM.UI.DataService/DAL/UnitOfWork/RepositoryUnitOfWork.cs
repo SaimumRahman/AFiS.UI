@@ -10,6 +10,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
+using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
@@ -63,6 +64,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IGroupRepository GroupRepository { get; }
         public IActionRepository ActionRepository { get; }
         public IRouteRepository RouteRepository { get; }
+        public IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -100,6 +102,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
             ActionRepository = new ActionRepository(factory, tokenProvider, loggerFactory.CreateLogger<ActionRepository>());
             RouteRepository = new RouteRepository(factory, tokenProvider, loggerFactory.CreateLogger<RouteRepository>());
+            GroupRoutePermissionRepository = new GroupRoutePermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoutePermissionRepository>());
         }
 
         public void Dispose()

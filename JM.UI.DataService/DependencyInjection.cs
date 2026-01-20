@@ -12,6 +12,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
+using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
@@ -68,6 +69,7 @@ namespace JM.UI.DataService
             services.AddScoped<IGroupRepository, GroupRepository>();
             services.AddScoped<IActionRepository, ActionRepository>();
             services.AddScoped<IRouteRepository, RouteRepository>();
+            services.AddScoped<IGroupRoutePermissionRepository, GroupRoutePermissionRepository>();
             #endregion
 
 

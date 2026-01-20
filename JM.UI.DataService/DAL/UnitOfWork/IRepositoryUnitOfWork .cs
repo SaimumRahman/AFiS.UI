@@ -10,6 +10,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupRole;
+using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseReturns;
@@ -56,6 +57,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IGroupRepository GroupRepository { get; }
         IActionRepository ActionRepository { get; }
         IRouteRepository RouteRepository { get; }
+        IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
     }
 
 }

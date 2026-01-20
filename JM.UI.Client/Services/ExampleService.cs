@@ -242,6 +242,15 @@ namespace JM.UI.Client.Services
                         Title = "User Action List",
                         Description = "Create Action for Groups",
                         Tags = new[] { "user", "group", "assignment", "action" }
+                    },
+                    new Example
+                    {
+                        Name = "Route Permission",
+                        Path = "/GroupRoutePermissionList",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
                     }
                 }
             },

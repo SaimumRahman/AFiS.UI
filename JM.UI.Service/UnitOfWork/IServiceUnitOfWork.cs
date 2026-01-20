@@ -10,6 +10,7 @@ using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
+using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.PurchaseReturns;
@@ -57,6 +58,7 @@ namespace JM.UI.Service.UnitOfWork
         IColorsService ColorsService { get;}
         IActionService ActionService { get;}
         IRouteService RouteService { get;}
+        IGroupRoutePermissionService GroupRoutePermissionService { get;}
 
 
     }

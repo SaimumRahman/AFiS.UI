@@ -13,6 +13,7 @@ using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
 using JM.UI.Service.GroupRole;
+using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.PurchaseReturns;
@@ -60,6 +61,7 @@ namespace JM.UI.Service.UnitOfWork
         public IColorsService ColorsService { get; private set; }
         public IActionService ActionService { get; private set; }
         public IRouteService RouteService { get; private set; }
+        public IGroupRoutePermissionService GroupRoutePermissionService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -93,6 +95,7 @@ namespace JM.UI.Service.UnitOfWork
             ColorsService = new ColorsService(_repoUow);
             ActionService = new ActionService(_repoUow);
             RouteService = new RouteService(_repoUow);
+            GroupRoutePermissionService = new GroupRoutePermissionService(_repoUow);
         }
 
         public void Dispose()
