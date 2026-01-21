@@ -1,4 +1,5 @@
-﻿using JM.UI.DataService.DAL.UnitOfWork;
+﻿using JM.UI.DataService.DAL.GroupActionPermission;
+using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
@@ -12,6 +13,7 @@ using JM.UI.Service.Colors;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
+using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
@@ -62,6 +64,7 @@ namespace JM.UI.Service.UnitOfWork
         public IActionService ActionService { get; private set; }
         public IRouteService RouteService { get; private set; }
         public IGroupRoutePermissionService GroupRoutePermissionService { get; private set; }
+        public IGroupActionPermissionService GroupActionPermissionService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -96,6 +99,7 @@ namespace JM.UI.Service.UnitOfWork
             ActionService = new ActionService(_repoUow);
             RouteService = new RouteService(_repoUow);
             GroupRoutePermissionService = new GroupRoutePermissionService(_repoUow);
+            GroupActionPermissionService = new GroupActionPermissionService(_repoUow);
         }
 
         public void Dispose()

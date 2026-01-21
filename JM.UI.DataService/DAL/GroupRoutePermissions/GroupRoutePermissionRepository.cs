@@ -103,6 +103,35 @@ namespace JM.UI.DataService.DAL.GroupRoutePermissions
                 throw new Exception($"Unexpected error fetching group route permission: {ex.Message}", ex);
             }
         }
+        public async Task<List<GroupRoutePermissionModelDTO?>> GetRouteListByGroupId(int groupId)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch group route permission: {groupId}", groupId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"GroupRoutePermissions/GetRouteListByGroupId/{groupId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Group route permission not found: {groupId}", groupId);
+                    return null;
+                }
+
+                var permission = await response.Content.ReadFromJsonAsync<List<GroupRoutePermissionModelDTO>>();
+                return permission;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get group route permission by groupId: {groupId}", groupId);
+                throw new Exception($"Failed to fetch group route permission: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get group route permission by ID: {groupId}", groupId);
+                throw new Exception($"Unexpected error fetching group route permission: {ex.Message}", ex);
+            }
+        }
 
         public async Task DeleteGroupRoutePermission(int id)
         {

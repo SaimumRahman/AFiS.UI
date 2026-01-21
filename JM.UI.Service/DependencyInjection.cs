@@ -14,6 +14,7 @@ using JM.UI.Service.Barcodes;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
+using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
@@ -77,6 +78,7 @@ namespace JM.UI.Service
             services.AddTransient<IActionService, ActionService>();
             services.AddTransient<IRouteService, RouteService>();
             services.AddTransient<IGroupRoutePermissionService, GroupRoutePermissionService>();
+            services.AddTransient<IGroupActionPermissionService, GroupActionPermissionService>();
         }
     }
 }

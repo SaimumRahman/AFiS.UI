@@ -9,6 +9,7 @@ using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
@@ -65,6 +66,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IActionRepository ActionRepository { get; }
         public IRouteRepository RouteRepository { get; }
         public IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
+        public IGroupActionPermissionRepository GroupActionPermissionRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -103,6 +105,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ActionRepository = new ActionRepository(factory, tokenProvider, loggerFactory.CreateLogger<ActionRepository>());
             RouteRepository = new RouteRepository(factory, tokenProvider, loggerFactory.CreateLogger<RouteRepository>());
             GroupRoutePermissionRepository = new GroupRoutePermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoutePermissionRepository>());
+            GroupActionPermissionRepository = new GroupActionPermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupActionPermissionRepository>());
         }
 
         public void Dispose()

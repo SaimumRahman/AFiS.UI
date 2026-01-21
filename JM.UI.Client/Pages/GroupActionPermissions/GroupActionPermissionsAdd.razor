@@ -1,0 +1,279 @@
+﻿@page "/GroupActionPermissionsAdd"
+@page "/GroupActionPermissionsAdd/{GroupId:int}"
+@using JM.UI.Client.Pages.Permission
+@using JM.UI.Entities.Model.GroupActionPermission
+@inherits GroupActionPermissionsAddComponent
+@attribute [Authorize]
+<PageTitle>@(GroupId > 0 ? "Edit Group Permissions" : "Add Group Permissions")</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenButton Icon="arrow_back"
+                          ButtonStyle="ButtonStyle.Light"
+                          Size="ButtonSize.Medium"
+                          Click="@Cancel" />
+            <RadzenIcon Icon="security" Style="font-size: 2rem; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H4" class="mb-0">
+                @(GroupId > 0 ? "Edit Group Permissions" : "Assign Group Permissions")
+            </RadzenText>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Group Selection Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Select Group" Variant="Variant.Outlined" Style="width: 100%;">
+                    <ChildContent>
+                        <RadzenDropDown @bind-Value="@SelectedGroupId"
+                                        Data="@Groups"
+                                        TextProperty="GroupName"
+                                        ValueProperty="GroupId"
+                                        Change="@OnGroupChanged"
+                                        Placeholder="Select a group to assign permissions"
+                                        Style="width: 100%;"
+                                        Disabled="@(GroupId > 0)"
+                                        Name="GroupId" />
+                    </ChildContent>
+                    <Helper>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                            Select the user group to configure permissions
+                        </RadzenText>
+                    </Helper>
+                </RadzenFormField>
+                @if (SelectedGroupId == 0)
+                {
+                    <RadzenRequiredValidator Component="GroupId" Text="Group is required" Style="display: block;" />
+                }
+            </RadzenColumn>
+
+            @if (!string.IsNullOrEmpty(SelectedGroupName))
+            {
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenCard Style="background-color: var(--rz-primary-lighter); border-left: 4px solid var(--rz-primary);">
+                        <RadzenStack Gap="0.25rem">
+                            <RadzenText TextStyle="TextStyle.Subtitle2">
+                                <RadzenIcon Icon="group" /> Selected Group
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary);">
+                                @SelectedGroupName
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Routes and Permissions Grid Card -->
+    @if (SelectedGroupId > 0)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <!-- Header with Summary -->
+                <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            <RadzenIcon Icon="route" /> Configure Route Permissions
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                            Check the boxes to grant permissions for each route
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenButton Text="Select All"
+                                          Icon="check_box"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@SelectAllPermissions" />
+                            <RadzenButton Text="Clear All"
+                                          Icon="check_box_outline_blank"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@ClearAllPermissions" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Permissions Grid -->
+                <RadzenDataGrid @ref="PermissionsGrid"
+                                Data="@RoutePermissions"
+                                TItem="GroupActionPermissionDTO"
+                                AllowFiltering="true"
+                                AllowColumnResize="true"
+                                AllowSorting="true"
+                                FilterMode="FilterMode.Simple"
+                                IsLoading="@IsLoading"
+                                GridLines="DataGridGridLines.Both"
+                                Density="Density.Compact"
+                                AllowPaging="false"
+                                Style="height: 500px; overflow: auto;">
+
+                    <Columns>
+                        <!-- Route Name -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Property="RouteName" Title="Route Name" Width="200px" Frozen="true">
+                            <Template Context="route">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenIcon Icon="folder" Style="color: var(--rz-primary);" />
+                                    <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                        @route.RouteName
+                                    </RadzenText>
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Route Path -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Property="RoutePath" Title="Route Path" Width="250px">
+                            <Template Context="route">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary); font-family: monospace;">
+                                    @route.RoutePath
+                                </RadzenText>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- View Permission -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Title="View" Width="100px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                            <Template Context="route">
+                                <RadzenCheckBox @bind-Value="@route.CanView"
+                                                Name="@($"view_{route.RouteId}")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Create Permission -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Title="Create" Width="100px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                            <Template Context="route">
+                                <RadzenCheckBox @bind-Value="@route.CanCreate"
+                                                Name="@($"view_{route.RouteId}")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Edit Permission -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Title="Edit" Width="100px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                            <Template Context="route">
+                                <RadzenCheckBox @bind-Value="@route.CanEdit"
+                                                Name="@($"view_{route.RouteId}")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Delete Permission -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Title="Delete" Width="100px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                            <Template Context="route">
+                                <RadzenCheckBox @bind-Value="@route.CanDelete"
+                                                Name="@($"view_{route.RouteId}")" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Permission Summary -->
+                        <RadzenDataGridColumn TItem="GroupActionPermissionDTO" Title="Permissions" Width="180px" Sortable="false" Filterable="false">
+                            <Template Context="route">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" Wrap="FlexWrap.Wrap">
+                                    @if (route.CanView)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="View" Style="font-size: 0.7rem;" />
+                                    }
+                                    @if (route.CanCreate)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Create" Style="font-size: 0.7rem;" />
+                                    }
+                                    @if (route.CanEdit)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Edit" Style="font-size: 0.7rem;" />
+                                    }
+                                    @if (route.CanDelete)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Delete" Style="font-size: 0.7rem;" />
+                                    }
+                                    @if (!route.CanView && !route.CanCreate && !route.CanEdit && !route.CanDelete)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                                            None
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+
+                <!-- Summary Card -->
+                <RadzenCard Style="background-color: var(--rz-base-100); border-left: 4px solid var(--rz-info);">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                                    Total Routes
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary);">
+                                    @RoutePermissions.Count()
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                                    View Permissions
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary);">
+                                    @RoutePermissions.Count(r => r.CanView)
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                                    Create Permissions
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-success);">
+                                    @RoutePermissions.Count(r => r.CanCreate)
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-tertiary);">
+                                    Total Permissions
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info);">
+                                    @GetTotalPermissionsCount()
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
+
+                <!-- Action Buttons -->
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Cancel"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@Cancel"
+                                  Size="ButtonSize.Medium" />
+                    <RadzenButton Text="@(GroupId > 0 ? "Update Permissions" : "Save Permissions")"
+                                  ButtonType="ButtonType.Button"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Icon="save"
+                                  Click="@OnSubmit"
+                                  Size="ButtonSize.Medium"
+                                  IsBusy="@IsSaving" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenCard>
+            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="info" />
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        Please select a group to configure permissions.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+        </RadzenCard>
+    }
+</RadzenContent>
