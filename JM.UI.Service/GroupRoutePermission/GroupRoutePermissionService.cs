@@ -32,6 +32,22 @@ namespace JM.UI.Service.GroupRoutePermission
         {
             return await _repositoryUnitOfWork.GroupRoutePermissionRepository.GetRouteListByGroupId(groupId);
         }
+        public async Task<List<GroupRoutePermissionModelDTO?>> GetRouteListByUserId(int userId)
+        {
+            return await _repositoryUnitOfWork.GroupRoutePermissionRepository.GetRouteListByUserId(userId);
+        }
+        public async Task<bool> GetRoutePermittedForUser(int userId, string routePath)
+        {
+            var dt = await _repositoryUnitOfWork
+                .GroupRoutePermissionRepository
+                .GetRoutePermittedForUser(userId, routePath);
+
+            if (dt != null && dt.IsPermitted == 1)
+                return true;
+
+            return false;
+        }
+
 
         public async Task<ResponseResult> SaveUpdateGroupRoutePermission(GroupRoutePermissionModelDTO permission)
         {

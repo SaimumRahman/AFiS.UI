@@ -15,5 +15,7 @@ namespace JM.UI.Service.GroupRoutePermission
         Task<ResponseResult> SaveUpdateGroupRoutePermission(GroupRoutePermissionModelDTO permission);
         Task<(bool IsValid, string ErrorMessage)> ValidateGroupRoutePermission(GroupRoutePermissionModelDTO permission);
         Task<List<GroupRoutePermissionModelDTO?>> GetRouteListByGroupId(int groupId);
+        Task<List<GroupRoutePermissionModelDTO?>> GetRouteListByUserId(int userId);
+        Task<bool> GetRoutePermittedForUser(int userId, string routePath);
     }
 }

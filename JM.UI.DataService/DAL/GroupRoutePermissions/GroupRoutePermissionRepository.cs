@@ -74,6 +74,69 @@ namespace JM.UI.DataService.DAL.GroupRoutePermissions
                 throw new Exception($"Unexpected error fetching group route permission: {ex.Message}", ex);
             }
         }
+        public async Task<GroupRoutePermissionModelDTO?> GetRoutePermittedForUser(int userId, string routePath)
+        {
+            // Optional: add basic input validation (helps debugging & prevents bad requests)
+            if (userId <= 0)
+            {
+                _logger.LogWarning("Invalid userId provided: {UserId}", userId);
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(routePath))
+            {
+                _logger.LogWarning("Route path cannot be empty for user {UserId}", userId);
+                return null;
+            }
+
+            try
+            {
+                _logger.LogInformation(
+                    "Fetching route permission for UserId = {UserId}, RoutePath = {RoutePath}",
+                    userId, routePath);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+
+                // Consider using Uri.EscapeDataString for safety if routePath can contain special chars
+                var encodedRoute = Uri.EscapeDataString(routePath);
+                var url = $"GroupRoutePermissions/GetRoutePermittedForUser?userId={userId}&routePath={encodedRoute}";
+
+                var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Route permission not found or request failed → UserId: {UserId}, Route: {RoutePath}, Status: {StatusCode}",
+                        userId, routePath, response.StatusCode);
+
+                    return null;
+                }
+
+                var permission = await response.Content.ReadFromJsonAsync<GroupRoutePermissionModelDTO>();
+
+                _logger.LogInformation(
+                    "Successfully retrieved route permission for UserId = {UserId}, RoutePath = {RoutePath}",
+                    userId, routePath);
+
+                return permission;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex,
+                    "HTTP request failed while fetching route permission → UserId: {UserId}, Route: {RoutePath}",
+                    userId, routePath);
+
+                throw new Exception($"Failed to fetch route permission (HTTP error): {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Unexpected error while fetching route permission → UserId: {UserId}, Route: {RoutePath}",
+                    userId, routePath);
+
+                throw new Exception($"Unexpected error fetching route permission: {ex.Message}", ex);
+            }
+        }
         public async Task<List<GroupRoutePermissionModelDTO?>> GetGroupRoutePermissionByGroupId(int groupId)
         {
             try
@@ -129,6 +192,35 @@ namespace JM.UI.DataService.DAL.GroupRoutePermissions
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during get group route permission by ID: {groupId}", groupId);
+                throw new Exception($"Unexpected error fetching group route permission: {ex.Message}", ex);
+            }
+        }
+        public async Task<List<GroupRoutePermissionModelDTO?>> GetRouteListByUserId(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch group route permission: {userId}", userId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"GroupRoutePermissions/GetRouteListByUserId/{userId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Group route permission not found: {userId}", userId);
+                    return null;
+                }
+
+                var permission = await response.Content.ReadFromJsonAsync<List<GroupRoutePermissionModelDTO>>();
+                return permission;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get group route permission by userId: {userId}", userId);
+                throw new Exception($"Failed to fetch group route permission: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get group route permission by ID: {userId}", userId);
                 throw new Exception($"Unexpected error fetching group route permission: {ex.Message}", ex);
             }
         }

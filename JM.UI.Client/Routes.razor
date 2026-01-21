@@ -1,30 +1,44 @@
 ﻿@using JM.UI.Client.Pages
+@using JM.UI.Client.Services
 @using JM.UI.Client.Shared
+@using JM.UI.Service.UnitOfWork
 @using Microsoft.AspNetCore.Components.Authorization
+@inject IPermissionService permissionService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager navigationManager
+@implements IDisposable
 
 <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Routes).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
+                <NotAuthorized Context="authContext">
+                    @if (authContext.User.Identity?.IsAuthenticated != true)
                     {
                         <RedirectToLogin />
                     }
                     else
                     {
-                        <div class="rz-text-align-center rz-p-12">
-                            <h3>Access Denied</h3>
-                            <p>You are not authorized to access this page.</p>
-                        </div>
+                        @if (_isCheckingPermission)
+                        {
+                            <div class="rz-text-align-center rz-p-12">
+                                <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+                                <div class="rz-mt-4">Checking permissions...</div>
+                            </div>
+                        }
+                        else if (!_hasRoutePermission)
+                        {
+                            <div class="rz-text-align-center rz-p-12">
+                                <h3>Access Denied</h3>
+                                <p>You do not have permission to access this page.</p>
+                            </div>
+                        }
                     }
                 </NotAuthorized>
                 <Authorizing>
                     <div class="rz-text-align-center rz-p-12">
-                        <div class="rz-mt-12">
-                            <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
-                            <div class="rz-mt-4">Checking authorization...</div>
-                        </div>
+                        <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+                        <div class="rz-mt-4">Checking authorization...</div>
                     </div>
                 </Authorizing>
             </AuthorizeRouteView>
@@ -36,3 +50,55 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    private bool _hasRoutePermission = true;
+    private bool _isCheckingPermission = false;
+
+    protected override void OnInitialized()
+    {
+        navigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckRoutePermission();
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await CheckRoutePermission();
+        StateHasChanged();
+    }
+
+    private async Task CheckRoutePermission()
+    {
+        _isCheckingPermission = true;
+        _hasRoutePermission = true;
+        
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            _isCheckingPermission = false;
+            return;
+        }
+
+        var routePath = GetRoutePath(
+            navigationManager.ToBaseRelativePath(navigationManager.Uri));
+        
+        _hasRoutePermission = await permissionService.CanAccessRoute(routePath);
+        _isCheckingPermission = false;
+    }
+
+    private string GetRoutePath(string relativePath)
+    {
+        return "/" + relativePath.Split('?')[0];
+    }
+
+    public void Dispose()
+    {
+        navigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

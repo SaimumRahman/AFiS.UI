@@ -63,6 +63,8 @@ builder.Services.AddScoped<CircuitHandlerService>();
 builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHandlerService>());
 builder.Services.AddScoped<ITokenProvider, CircuitTokenProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
 
 builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
 {
