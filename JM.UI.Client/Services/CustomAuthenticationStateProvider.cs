@@ -49,27 +49,16 @@ namespace JM.UI.Client.Services
                 }
 
                 // Get user info from local storage
-                var userInfoResult = await _localStorage.GetAsync<string>("UserInfo");
+                var userIdResult = await _localStorage.GetAsync<string>("UserId");
                 var claims = new List<Claim>();
-
-                if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
+                if (userIdResult.Success && !string.IsNullOrEmpty(userIdResult.Value))
                 {
-                    var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
-
-                    claims.Add(new Claim(ClaimTypes.Name, userInfo.Username ?? ""));
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, userInfo.UserId.ToString()));
-                    claims.Add(new Claim("UserId", userInfo.UserId.ToString()));
-
-                    if (userInfo.CompanyId > 0)
-                    {
-                        claims.Add(new Claim("CompanyId", userInfo.CompanyId.ToString()));
-                    }
-
-                    Console.WriteLine($"✅ User authenticated: {userInfo.Username} (UserId: {userInfo.UserId})");
+                    claims.Add(new Claim("UserId", userIdResult.Value));
+                    Console.WriteLine($"✅ User authenticated (UserId: {userIdResult.Value})");
                 }
                 else
                 {
-                    Console.WriteLine("⚠️ Token found but UserInfo missing - User still authenticated");
+                    Console.WriteLine("⚠️ Token found but UserId missing - User still authenticated");
                 }
 
                 var identity = new ClaimsIdentity(claims, "JwtAuth");
