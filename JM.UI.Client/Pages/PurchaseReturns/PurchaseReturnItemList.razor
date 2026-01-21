@@ -1,0 +1,60 @@
+@page "/PurchaseReturnItemList"
+@using JM.UI.Entities.Model.PurchaseReturnItems
+@attribute [Authorize]
+@inherits PurchaseReturnItemListBase
+
+<PageTitle>Purchase Return Items</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="list_alt" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Return Items</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="ItemsGrid"
+                        Data="@ReturnItems"
+                        TItem="PurchaseReturnItemModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="20"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="Id" Title="Line ID" Width="80px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="PurchaseReturnId" Title="Return ID" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenLink Text="@item.PurchaseReturnId.ToString()" Path="@($"/PurchaseReturnsEdit/{item.PurchaseReturnId}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="ItemName" Title="Item" Width="200px" />
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="Quantity" Title="Qty" Width="100px">
+                    <Template Context="item">
+                        <RadzenText Style="font-weight: bold;">@item.Quantity</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="TradePrice" Title="Price" Width="120px">
+                    <Template Context="item">
+                        @string.Format("{0:N2}", item.TradePrice)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="ColorName" Title="Color" Width="120px" />
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="SizeName" Title="Size" Width="120px" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

@@ -31,6 +31,13 @@ using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.Service.Colors;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Groups;
+using JM.UI.Service.SubGroups;
+using JM.UI.Service.MesurementUnits;
+using JM.UI.Service.Items;
+using JM.UI.Service.PurchaseReturnItems;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -60,11 +67,15 @@ namespace JM.UI.Service.UnitOfWork
         public IPurchaseService PurchaseService { get; private set; }
         public IPurchaseReturnService PurchaseReturnService { get; private set; }
         public IGroupService GroupService { get; private set; }
+        public ISubGroupService SubGroupService { get; private set; }
+        public IMesurementUnitService MesurementUnitService { get; private set; }
         public IColorsService ColorsService { get; private set; }
         public IActionService ActionService { get; private set; }
         public IRouteService RouteService { get; private set; }
         public IGroupRoutePermissionService GroupRoutePermissionService { get; private set; }
         public IGroupActionPermissionService GroupActionPermissionService { get; private set; }
+        public IItemService ItemService { get; private set; }
+        public IPurchaseReturnItemService PurchaseReturnItemService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -95,7 +106,11 @@ namespace JM.UI.Service.UnitOfWork
             PurchaseService = new PurchaseService(_repoUow);
             PurchaseReturnService = new PurchaseReturnService(_repoUow);
             GroupService = new GroupService(_repoUow);
+            SubGroupService = new SubGroupService(_repoUow);
+            MesurementUnitService = new MesurementUnitService(_repoUow);
             ColorsService = new ColorsService(_repoUow);
+            ItemService = new ItemService(_repoUow);
+            PurchaseReturnItemService = new PurchaseReturnItemService(_repoUow);
             ActionService = new ActionService(_repoUow);
             RouteService = new RouteService(_repoUow);
             GroupRoutePermissionService = new GroupRoutePermissionService(_repoUow);

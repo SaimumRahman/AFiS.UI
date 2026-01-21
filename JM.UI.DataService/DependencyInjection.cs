@@ -33,6 +33,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.MesurementUnits;
+using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService
 {
@@ -72,6 +80,10 @@ namespace JM.UI.DataService
             services.AddScoped<IRouteRepository, RouteRepository>();
             services.AddScoped<IGroupRoutePermissionRepository, GroupRoutePermissionRepository>();
             services.AddScoped<IGroupActionPermissionRepository, GroupActionPermissionRepository>();
+            services.AddScoped<ISubGroupRepository, SubGroupRepository>();
+            services.AddScoped<IMesurementUnitRepository, MesurementUnitRepository>();
+            services.AddScoped<IItemRepository, ItemRepository>();
+            services.AddScoped<IPurchaseReturnItemRepository, PurchaseReturnItemRepository>();
             #endregion
 
 

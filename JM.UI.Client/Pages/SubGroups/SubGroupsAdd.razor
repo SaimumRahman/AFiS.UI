@@ -1,8 +1,8 @@
-@page "/GroupsAdd"
-@page "/GroupsAdd/{Id:int}"
-@using JM.UI.Entities.Model.Groups
+@page "/SubGroupsAdd"
+@page "/SubGroupsAdd/{Id:int}"
+@using JM.UI.Entities.Model.SubGroups
 @attribute [Authorize]
-@inherits GroupsAddComponent
+@inherits SubGroupsAddComponent
 
 <PageTitle>@PageTitle</PageTitle>
 
@@ -11,14 +11,14 @@
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="12">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="group" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenIcon Icon="subdirectory_arrow_right" Style="font-size: 2rem; color: var(--rz-primary);" />
                     <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
     </RadzenCard>
 
-    <RadzenTemplateForm TItem="GroupModelDTO" Data="@Group" Submit="@Save">
+    <RadzenTemplateForm TItem="SubGroupModelDTO" Data="@SubGroup" Submit="@Save">
         @if (IsLoading)
         {
             <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -29,8 +29,19 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Parent Group" Component="GroupId" />
+                            <RadzenDropDown TValue="int" @bind-Value="@SubGroup.GroupId" 
+                                            Data="@Groups" TextProperty="Name" ValueProperty="Id"
+                                            Placeholder="Select Parent Group..." class="w-100" Name="GroupId"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                            <RadzenRequiredValidator Component="GroupId" Text="Parent Group is required" DefaultValue="0" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
                             <RadzenLabel Text="Name" Component="Name" />
-                            <RadzenTextBox Name="Name" @bind-Value="@Group.Name" class="w-100" />
+                            <RadzenTextBox Name="Name" @bind-Value="@SubGroup.Name" class="w-100" />
                             <RadzenRequiredValidator Component="Name" Text="Name is required" />
                         </RadzenStack>
                     </RadzenColumn>

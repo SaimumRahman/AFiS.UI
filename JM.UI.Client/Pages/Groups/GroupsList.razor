@@ -7,15 +7,21 @@
 
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
-        <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="group" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Groups</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Groups Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6" class="text-md-end text-start mt-3 mt-md-0">
-                <RadzenButton Text="Add New Group" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@AddGroup" />
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Group"
+                                  Click="@AddGroup"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
     </RadzenCard>
@@ -26,18 +32,48 @@
     }
     else
     {
-        <RadzenDataGrid @ref="GroupsGrid" Data="@GroupsList" TItem="GroupModelDTO" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn TItem="GroupModelDTO" Property="Id" Title="ID" Width="80px" />
-                <RadzenDataGridColumn TItem="GroupModelDTO" Property="Name" Title="Name" />
-                
-                <RadzenDataGridColumn TItem="GroupModelDTO" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="100px">
-                    <Template Context="group">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" Click="@(args => EditGroup(group))" class="me-1" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Medium" Click="@(args => DeleteGroup(group))" />
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
+        <RadzenCard>
+            <RadzenDataGrid @ref="GroupsGrid" 
+                            Data="@GroupsList" 
+                            TItem="GroupModelDTO" 
+                            AllowFiltering="true" 
+                            AllowColumnResize="true"
+                            AllowAlternatingRows="true"
+                            AllowPaging="true" 
+                            AllowSorting="true"
+                            PagerHorizontalAlign="HorizontalAlign.Center"
+                            PageSize="10"
+                            PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                            FilterMode="FilterMode.Advanced"
+                            ShowPagingSummary="true"
+                            PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                            IsLoading="@IsLoading"
+                            GridLines="DataGridGridLines.Both"
+                            Density="Density.Compact">
+                <Columns>
+                    <RadzenDataGridColumn TItem="GroupModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="GroupModelDTO" Property="Name" Title="Name" />
+                    
+                    <RadzenDataGridColumn TItem="GroupModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                        <Template Context="group">
+                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                <RadzenButton Icon="edit" 
+                                              ButtonStyle="ButtonStyle.Info" 
+                                              Size="ButtonSize.Small" 
+                                              Variant="Variant.Flat"
+                                              Click="@(args => EditGroup(group))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Group"))" />
+                                <RadzenButton Icon="delete" 
+                                              ButtonStyle="ButtonStyle.Danger" 
+                                              Size="ButtonSize.Small" 
+                                              Variant="Variant.Flat"
+                                              Click="@(args => DeleteGroup(group))" 
+                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Group"))" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
     }
 </RadzenContent>

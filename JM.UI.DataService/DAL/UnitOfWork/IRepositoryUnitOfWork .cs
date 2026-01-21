@@ -27,6 +27,22 @@ using JM.UI.DataService.DAL.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.MesurementUnits;
+using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -60,6 +76,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IRouteRepository RouteRepository { get; }
         IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
         IGroupActionPermissionRepository GroupActionPermissionRepository { get; }
+        ISubGroupRepository SubGroupRepository { get; }
+        IMesurementUnitRepository MesurementUnitRepository { get; }
+        IItemRepository ItemRepository { get; }
+        IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
     }
-
 }

@@ -29,6 +29,22 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.MesurementUnits;
+using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -63,6 +79,11 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IPurchaseRepository PurchaseRepository { get; }
         public IPurchaseReturnRepository PurchaseReturnRepository { get; }
         public IGroupRepository GroupRepository { get; }
+        public ISubGroupRepository SubGroupRepository { get; }
+        public IMesurementUnitRepository MesurementUnitRepository { get; }
+        public IItemRepository ItemRepository { get; }
+        public IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
+        
         public IActionRepository ActionRepository { get; }
         public IRouteRepository RouteRepository { get; }
         public IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
@@ -106,6 +127,10 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             RouteRepository = new RouteRepository(factory, tokenProvider, loggerFactory.CreateLogger<RouteRepository>());
             GroupRoutePermissionRepository = new GroupRoutePermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoutePermissionRepository>());
             GroupActionPermissionRepository = new GroupActionPermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupActionPermissionRepository>());
+            SubGroupRepository = new SubGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<SubGroupRepository>());
+            MesurementUnitRepository = new MesurementUnitRepository(factory, tokenProvider, loggerFactory.CreateLogger<MesurementUnitRepository>());
+            ItemRepository = new ItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemRepository>());
+            PurchaseReturnItemRepository = new PurchaseReturnItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnItemRepository>());
         }
 
         public void Dispose()

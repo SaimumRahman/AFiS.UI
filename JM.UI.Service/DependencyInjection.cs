@@ -38,6 +38,14 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using JM.UI.Service.Sizes;
+using JM.UI.Service.Colors;
+using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Groups;
+using JM.UI.Service.SubGroups;
+using JM.UI.Service.MesurementUnits;
+using JM.UI.Service.Items;
+using JM.UI.Service.PurchaseReturnItems;
 
 namespace JM.UI.Service
 {
@@ -74,11 +82,15 @@ namespace JM.UI.Service
             services.AddTransient<IPurchaseService, PurchaseService>();
             services.AddTransient<IPurchaseReturnService, PurchaseReturnService>();
             services.AddTransient<IGroupService, GroupService>();
+            services.AddTransient<ISubGroupService, SubGroupService>();
+            services.AddTransient<IMesurementUnitService, MesurementUnitService>();
             services.AddTransient<IColorsService, ColorsService>();
             services.AddTransient<IActionService, ActionService>();
             services.AddTransient<IRouteService, RouteService>();
             services.AddTransient<IGroupRoutePermissionService, GroupRoutePermissionService>();
             services.AddTransient<IGroupActionPermissionService, GroupActionPermissionService>();
+            services.AddTransient<IItemService, ItemService>();
+            services.AddTransient<IPurchaseReturnItemService, PurchaseReturnItemService>();
         }
     }
 }
