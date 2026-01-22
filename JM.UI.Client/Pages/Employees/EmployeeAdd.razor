@@ -56,21 +56,32 @@
                     <RadzenFieldset Text="Basic Information" Icon="person">
                         <RadzenStack Gap="1rem">
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Employee Code *" Component="EmployeeCode" />
+                                        <RadzenLabel Component="EmployeeCode">
+                                            Employee Code <span style="color:red">*</span>
+                                        </RadzenLabel>
+
                                         <RadzenTextBox @bind-Value="Employee.EmployeeCode"
                                                        Name="EmployeeCode"
                                                        Placeholder="Enter employee code"
                                                        Style="width: 100%;"
-                                                       MaxLength="50" 
+                                                       MaxLength="50"
                                                        ReadOnly="true" />
-                                        <RadzenRequiredValidator Component="EmployeeCode" Text="Employee code is required" />
+
+                                        <RadzenRequiredValidator Component="EmployeeCode"
+                                                                 Text="Employee code is required"
+                                                                 Popup="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="8">
+
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Full Name *" Component="Name" />
+                                       
+                                        <RadzenLabel Component="Name">
+                                            Full Name <span style="color:red">*</span>
+                                        </RadzenLabel>
+
                                         <RadzenTextBox @bind-Value="Employee.Name"
                                                        Name="Name"
                                                        Placeholder="Enter full name"
@@ -80,9 +91,12 @@
                                     </RadzenStack>
 
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Surname *" Component="Surname" />
+                                        <RadzenLabel Component="Surname">
+                                            Surname <span style="color:red">*</span>
+                                        </RadzenLabel>
+
                                         <RadzenTextBox @bind-Value="Employee.Surname"
                                                        Name="Surname"
                                                        Placeholder="Enter Surname"
@@ -92,20 +106,20 @@
                                     </RadzenStack>
 
                                 </RadzenColumn>
-                            </RadzenRow>
-
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Date of Birth" Component="DateOfBirth" />
+                                        <RadzenLabel Component="DateOfBirth">
+                                            Date of Birth <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDatePicker @bind-Value="Employee.DateOfBirth"
                                                           Name="DateOfBirth"
                                                           DateFormat="dd MMM yyyy"
                                                           Style="width: 100%;"
                                                           ShowTime="false" />
+                                        <RadzenRequiredValidator Component="DateOfBirth" Text="Date Of Birth is reuired">*</RadzenRequiredValidator>
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Gender" Component="Gender" />
                                         <RadzenDropDown @bind-Value="Employee.Gender"
@@ -116,7 +130,7 @@
                                                         AllowClear="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Blood Group" Component="BloodGroup" />
                                         <RadzenDropDown @bind-Value="Employee.BloodGroup"
@@ -127,7 +141,7 @@
                                                         AllowClear="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Religion" Component="Religion" />
                                         <RadzenDropDown @bind-Value="Employee.Religion"
@@ -138,10 +152,7 @@
                                                         AllowClear="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                            </RadzenRow>
-
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="NID" Component="NID" />
                                         <RadzenTextBox @bind-Value="Employee.NID"
@@ -151,7 +162,7 @@
                                                        MaxLength="50" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Contact" Component="Contact" />
                                         <RadzenTextBox @bind-Value="Employee.Contact"
@@ -161,7 +172,7 @@
                                                        MaxLength="50" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Email" Component="Email" />
                                         <RadzenTextBox @bind-Value="Employee.Email"
@@ -232,7 +243,7 @@
                     <RadzenFieldset Text="Address Information" Icon="location_on">
                         <RadzenStack Gap="1rem">
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Present Address" Component="PresentAddress" />
                                         <RadzenTextArea @bind-Value="Employee.PresentAddress"
@@ -243,10 +254,7 @@
                                                         MaxLength="500" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                            </RadzenRow>
-
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                         <RadzenLabel Text="Permanent Address" Component="PermanentAddress" />
                                         <RadzenButton Text="Same as Present"
@@ -270,7 +278,7 @@
                     <RadzenFieldset Text="Emergency Contact" Icon="emergency">
                         <RadzenStack Gap="1rem">
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Emergency Contact Person" Component="EmergencyContactPerson" />
                                         <RadzenTextBox @bind-Value="Employee.EmergencyContactPerson"
@@ -280,7 +288,7 @@
                                                        MaxLength="200" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Emergency Contact" Component="EmergencyContact" />
                                         <RadzenTextBox @bind-Value="Employee.EmergencyContact"
@@ -290,7 +298,7 @@
                                                        MaxLength="50" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Relation" Component="Relation" />
                                         <RadzenTextBox @bind-Value="Employee.Relation"
@@ -300,10 +308,7 @@
                                                        MaxLength="100" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                            </RadzenRow>
-
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Emergency Contact Address" Component="EmergencyContactPersonAddress" />
                                         <RadzenTextArea @bind-Value="Employee.EmergencyContactPersonAddress"
@@ -315,6 +320,7 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
+
                         </RadzenStack>
                     </RadzenFieldset>
 
@@ -322,9 +328,11 @@
                     <RadzenFieldset Text="Employment Information" Icon="work">
                         <RadzenStack Gap="1rem">
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Designation" Component="DesignationId" />
+                                        <RadzenLabel Component="DesignationId">
+                                            Designation <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.DesignationId"
                                                         Data="@Designations"
                                                         TextProperty="Name"
@@ -336,9 +344,11 @@
                                                         AllowFiltering="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Store" Component="StoreId" />
+                                        <RadzenLabel Component="StoreId">
+                                            Store <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.StoreId"
                                                         Data="@Stores"
                                                         TextProperty="Name"
@@ -365,9 +375,11 @@
                                     </RadzenStack>
                                 </RadzenColumn> *@
 
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Shift" Component="ShiftId" />
+                                        <RadzenLabel Component="ShiftId">
+                                            Shift <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.ShiftId"
                                                         Data="@Shifts"
                                                         TextProperty="Name"
@@ -379,7 +391,7 @@
                                                         AllowFiltering="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Status" Component="Status" />
                                         <RadzenDropDown @bind-Value="Employee.Status"
@@ -394,7 +406,7 @@
                             </RadzenRow>
 
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Date Joined" Component="DateJoined" />
                                         <RadzenDatePicker @bind-Value="Employee.DateJoined"
@@ -404,7 +416,7 @@
                                                           ShowTime="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Date Released" Component="DateReleased" />
                                         <RadzenDatePicker @bind-Value="Employee.DateReleased"
@@ -414,9 +426,11 @@
                                                           ShowTime="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Basic Salary" Component="BasicSalary" />
+                                        <RadzenLabel Component="BasicSalary">
+                                            Basic Salary <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenNumeric @bind-Value="Employee.BasicSalary"
                                                        Name="BasicSalary"
                                                        Placeholder="Enter basic salary"
@@ -424,22 +438,25 @@
                                                        Format="n2"
                                                        Min="0"
                                                        ShowUpDown="false" />
+
+                                        <RadzenRequiredValidator Component="BasicSalary"
+                                                                 Text="Basic salary is required"
+                                                                 Popup="false" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Referred By" Component="ReferredBy" />
+                                        <RadzenNumeric @bind-Value="Employee.ReferredBy"
+                                                       Name="ReferredBy"
+                                                       Placeholder="Enter referrer name"
+                                                       Style="width: 100%;"
+                                                       MaxLength="200"/>
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
 
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Referred By" Component="ReferredBy" />
-                                        <RadzenTextBox @bind-Value="Employee.ReferredBy"
-                                                       Name="ReferredBy"
-                                                       Placeholder="Enter referrer name"
-                                                       Style="width: 100%;"
-                                                       MaxLength="200" />
-                                    </RadzenStack>
-                                </RadzenColumn>
-                            </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
 
@@ -449,7 +466,9 @@
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Bank" Component="BankId" />
+                                        <RadzenLabel Component="BankId">
+                                            Bank <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.BankId"
                                                         Data="@Banks"
                                                         TextProperty="Name"
@@ -463,7 +482,9 @@
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Account" Component="AccountId" />
+                                        <RadzenLabel Component="AccountId">
+                                            Account <span style="color:red">*</span>
+                                        </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.AccountId"
                                                         Data="@Accounts"
                                                         TextProperty="Name"
@@ -473,8 +494,13 @@
                                                         Style="width: 100%;"
                                                         AllowClear="true"
                                                         AllowFiltering="true" />
+
+                                        <RadzenRequiredValidator Component="AccountId"
+                                                                 Text="Account is required"
+                                                                 Popup="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
+
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Bank Account Number" Component="BankAccountNumber" />
@@ -590,7 +616,7 @@
                                           Click="@Cancel"
                                           Disabled="@IsProcessing" />
                             @if (!IsEditMode)
-                            {
+                            { 
                                 <RadzenButton Text="Save & Add New"
                                               Icon="add"
                                               ButtonStyle="ButtonStyle.Secondary"

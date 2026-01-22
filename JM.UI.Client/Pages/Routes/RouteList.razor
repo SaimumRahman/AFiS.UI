@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="RouteModelDTO" Property="RouteId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="RouteModelDTO" Visible="false" Property="RouteId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="route">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{route.RouteId}")" />
                     </Template>

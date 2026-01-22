@@ -48,7 +48,7 @@
                         Density="Density.Compact">
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="ShiftDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="ShiftDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="s">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{s.Id}")" />
                     </Template>

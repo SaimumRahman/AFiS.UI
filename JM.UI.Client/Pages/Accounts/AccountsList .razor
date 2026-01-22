@@ -44,23 +44,40 @@
                         Density="Density.Compact">
 
             <Columns>
-                <RadzenDataGridColumn TItem="AccountModelDTO" Property="Id" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="AccountModelDTO" Property="Id" Title="ID" Width="70px" Visible="false" TextAlign="TextAlign.Center" />
                 <RadzenDataGridColumn TItem="AccountModelDTO" Property="Name" Title="Account Name" />
                 <RadzenDataGridColumn TItem="AccountModelDTO" Property="AccountsGroupName" Title="Group" Width="150px" />
                 <RadzenDataGridColumn TItem="AccountModelDTO" Property="ParentName" Title="Parent" Width="150px" />
                 <RadzenDataGridColumn TItem="AccountModelDTO" Property="LevelNo" Title="Level" Width="70px" TextAlign="TextAlign.Center" />
                 
-                <RadzenDataGridColumn TItem="AccountModelDTO" Property="OpeningBalanceDebit" Title="OB Debit" Width="120px" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="AccountModelDTO"
+                                      Property="OpeningBalanceDebit"
+                                      Title="OB Debit"
+                                      Width="120px"
+                                      TextAlign="TextAlign.Right">
                     <Template Context="account">
-                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", account.OpeningBalanceDebit)
+                        @String.Format(
+                        new System.Globalization.CultureInfo("en-BD"),
+                                                "{0:N2}",
+                                                account.OpeningBalanceDebit
+                                                )
                     </Template>
                 </RadzenDataGridColumn>
-                
-                <RadzenDataGridColumn TItem="AccountModelDTO" Property="OpeningBalanceCredit" Title="OB Credit" Width="120px" TextAlign="TextAlign.Right">
+
+                <RadzenDataGridColumn TItem="AccountModelDTO"
+                                      Property="OpeningBalanceCredit"
+                                      Title="OB Credit"
+                                      Width="120px"
+                                      TextAlign="TextAlign.Right">
                     <Template Context="account">
-                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", account.OpeningBalanceCredit)
+                        @String.Format(
+                                                new System.Globalization.CultureInfo("en-BD"),
+                                                "{0:N2}",
+                                                account.OpeningBalanceCredit
+                                                )
                     </Template>
                 </RadzenDataGridColumn>
+
 
                 <RadzenDataGridColumn TItem="AccountModelDTO" Property="IsActive" Title="Active" Width="80px" TextAlign="TextAlign.Center">
                     <Template Context="account">

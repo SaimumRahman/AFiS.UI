@@ -9,9 +9,9 @@ namespace JM.UI.Client.Services
     {
         private readonly Example[] allExamples = new[]
         {
-            // ────────────────────────────────────────────────
+           
             // 1. Dashboard / Home
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Dashboard",
@@ -19,9 +19,9 @@ namespace JM.UI.Client.Services
                 Icon = "\ue88a"  // home
             },
 
-            // ────────────────────────────────────────────────
+           
             // 2. Company & Organization Setup
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Company Setup",
@@ -49,9 +49,9 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 3. Human Resources
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Human Resources",
@@ -88,9 +88,9 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 4. Chart of Accounts & Finance Setup
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Accounting Setup",
@@ -108,7 +108,7 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name = "Chart of Accounts",
+                        Name = "Accounts",
                         Path = "/AccountsList",
                         Icon = "\ue85d",
                         Title = "Chart of Accounts",
@@ -118,9 +118,7 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
             // 5. Purchases / Suppliers / Payables
-            // ────────────────────────────────────────────────
             new Example
             {
                 Name = "Purchases",
@@ -168,9 +166,9 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 6. Vouchers & Journal Entries
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Vouchers",
@@ -198,9 +196,9 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 7. Security & Access Control
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Security",
@@ -264,24 +262,24 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 8. Product / Inventory Master (optional / partial)
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Products & Inventory",
                 Icon = "\ue8d2",  // layers / inventory
                 Children = new[]
                 {
-                    new Example
-                    {
-                        Name = "Product Suppliers",
-                        Path = "/ProductSuppliersList",
-                        Icon = "\ue558", // business / handshake
-                        Title = "Product Suppliers",
-                        Description = "Manage suppliers for products",
-                        Tags = new[] { "supplier", "product", "inventory" }
-                    },
+                    //new Example
+                    //{
+                    //    Name = "Product Suppliers",
+                    //    Path = "/ProductSuppliersList",
+                    //    Icon = "\ue558", // business / handshake
+                    //    Title = "Product Suppliers",
+                    //    Description = "Manage suppliers for products",
+                    //    Tags = new[] { "supplier", "product", "inventory" }
+                    //},
                     new Example
                     {
                         Name = "Item Attributes",
@@ -319,9 +317,9 @@ namespace JM.UI.Client.Services
                 }
             },
 
-            // ────────────────────────────────────────────────
+           
             // 9. Appearance (only if your app actually has theme customization)
-            // ────────────────────────────────────────────────
+           
             new Example
             {
                 Name = "Appearance",

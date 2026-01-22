@@ -1,4 +1,13 @@
-﻿using JM.Infrastructure.Base;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text;
+using System.Threading.Tasks;
+using JM.Infrastructure.Base;
 using JM.Infrastructure.Common;
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Bank;
@@ -8,14 +17,6 @@ using JM.UI.Entities.ViewModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.Users
 {
@@ -66,8 +67,14 @@ namespace JM.UI.DataService.DAL.Users
                         response.StatusCode,
                         responseContent);
 
-                    throw new Exception($"Registration failed with status {response.StatusCode}: {responseContent}");
+                    if (response.StatusCode == HttpStatusCode.Conflict)
+                    {
+                        throw new Exception("This email address is already registered.");
+                    }
+
+                    throw new Exception($"Registration failed. {responseContent}");
                 }
+
 
                 _logger.LogInformation("User registration successful for Email: {Email}", registerRequests.Email);
                 return responseContent;

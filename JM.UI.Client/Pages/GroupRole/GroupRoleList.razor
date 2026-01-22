@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="GroupId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Visible="false" Property="GroupId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="groupRole">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{groupRole.GroupId}")" />
                     </Template>
