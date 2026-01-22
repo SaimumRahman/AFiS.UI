@@ -271,15 +271,15 @@ namespace JM.UI.Client.Services
                 Icon = "\ue8d2",  // layers / inventory
                 Children = new[]
                 {
-                    new Example
-                    {
-                        Name = "Product Suppliers",
-                        Path = "/ProductSuppliersList",
-                        Icon = "\ue558", // business / handshake
-                        Title = "Product Suppliers",
-                        Description = "Manage suppliers for products",
-                        Tags = new[] { "supplier", "product", "inventory" }
-                    },
+                    //new Example
+                    //{
+                    //    Name = "Product Suppliers",
+                    //    Path = "/ProductSuppliersList",
+                    //    Icon = "\ue558", // business / handshake
+                    //    Title = "Product Suppliers",
+                    //    Description = "Manage suppliers for products",
+                    //    Tags = new[] { "supplier", "product", "inventory" }
+                    //},
                     new Example
                     {
                         Name = "Item Attributes",
