@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="CompanyDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="company">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{company.Id}")" />
                     </Template>
@@ -141,7 +141,7 @@
                 </RadzenDataGridColumn>
 
                 <!-- Created Date -->
-                <RadzenDataGridColumn TItem="CompanyDTO" Property="CreatedOn" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="CreatedOn" Visible="false" Title="Created" Width="130px" TextAlign="TextAlign.Center">
                     <Template Context="company">
                         <RadzenText TextStyle="TextStyle.Caption">
                             @company.CreatedOn.ToString("dd MMM yyyy")
@@ -150,7 +150,7 @@
                 </RadzenDataGridColumn>
 
                 <!-- Modified Date -->
-                <RadzenDataGridColumn TItem="CompanyDTO" Property="ModifiedOn" Title="Modified" Width="130px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="CompanyDTO" Property="ModifiedOn" Visible="false" Title="Modified" Width="130px" TextAlign="TextAlign.Center">
                     <Template Context="company">
                         <RadzenText TextStyle="TextStyle.Caption">
                             @(company.ModifiedOn?.ToString("dd MMM yyyy") ?? "N/A")

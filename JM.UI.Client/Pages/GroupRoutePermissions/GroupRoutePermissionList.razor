@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="Id" Title="ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Visible="false" Property="Id" Title="ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="permission">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{permission.Id}")" />
                     </Template>

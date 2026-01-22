@@ -35,7 +35,7 @@
                         Density="Density.Compact">
 
             <Columns>
-                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="Id" Title="Line ID" Width="80px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="Id" Visible="false" Title="Line ID" Width="80px" TextAlign="TextAlign.Center" />
                 <RadzenDataGridColumn TItem="PurchaseReturnItemModelDTO" Property="PurchaseReturnId" Title="Return ID" Width="100px" TextAlign="TextAlign.Center">
                     <Template Context="item">
                         <RadzenLink Text="@item.PurchaseReturnId.ToString()" Path="@($"/PurchaseReturnsEdit/{item.PurchaseReturnId}")" />

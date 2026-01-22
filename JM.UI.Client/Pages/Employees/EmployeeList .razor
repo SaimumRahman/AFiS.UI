@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="employee">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{employee.Id}")" />
                     </Template>

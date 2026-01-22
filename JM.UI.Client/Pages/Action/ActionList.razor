@@ -49,7 +49,7 @@
 
             <Columns>
                 <!-- ID -->
-                <RadzenDataGridColumn TItem="ActionDTO" Property="ActionId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="ActionDTO" Visible="false" Property="ActionId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="action">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{action.ActionId}")" />
                     </Template>
