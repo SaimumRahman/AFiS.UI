@@ -26,6 +26,13 @@ namespace JM.UI.Client.Pages.Purchases
         protected IEnumerable<PurchaseOrderModelDTO> PurchaseOrders { get; set; } = new List<PurchaseOrderModelDTO>();
         protected IEnumerable<VoucherModelDTO> Vouchers { get; set; } = new List<VoucherModelDTO>();
 
+        // Line Item Lookups
+        protected IEnumerable<JM.UI.Entities.Model.Items.ItemModelDTO> ItemsList = new List<JM.UI.Entities.Model.Items.ItemModelDTO>();
+        protected IEnumerable<JM.UI.Entities.Model.Colors.ColorsDTO> ColorsList = new List<JM.UI.Entities.Model.Colors.ColorsDTO>();
+        protected IEnumerable<JM.UI.Entities.Model.Sizes.SizesDTO> SizesList = new List<JM.UI.Entities.Model.Sizes.SizesDTO>();
+
+        protected JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO NewItem { get; set; } = new();
+
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -51,13 +58,19 @@ namespace JM.UI.Client.Pages.Purchases
                 var storesTask = _serviceUnitOfWork.StoreService.GetStores();
                 var poTask = _serviceUnitOfWork.PurchaseOrderService.GetPurchaseOrders();
                 var vouchersTask = _serviceUnitOfWork.VoucherService.GetVouchers();
+                var itemsTask = _serviceUnitOfWork.ItemService.GetItems();
+                var colorsTask = _serviceUnitOfWork.ColorsService.GetColorss();
+                var sizesTask = _serviceUnitOfWork.SizesService.GetSizess();
 
-                await Task.WhenAll(suppliersTask, storesTask, poTask, vouchersTask);
+                await Task.WhenAll(suppliersTask, storesTask, poTask, vouchersTask, itemsTask, colorsTask, sizesTask);
 
                 Suppliers = await suppliersTask;
                 Stores = await storesTask;
                 PurchaseOrders = await poTask;
                 Vouchers = await vouchersTask;
+                ItemsList = await itemsTask;
+                ColorsList = await colorsTask;
+                SizesList = await sizesTask;
             }
             catch (Exception ex)
             {
@@ -98,28 +111,72 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void CalculateTotals()
         {
-            // Example calculation logic
-            // Assuming Total is manually entered (sum of items) or we calculate NetTotal from Total + charges - discounts
+            // Auto-calculate Total (Sub Total) from items
+            Purchase.Total = Purchase.PurchaseItems.Sum(i => i.Quantity * i.TradePrice);
             
-            // If discount percentage is updated, calculate discount amount
-            if (Purchase.DiscountPercentage > 0 && Purchase.Total > 0)
+            // Calculate Discount Amount from Discount Percentage
+            if (Purchase.DiscountPercentage > 0)
             {
                 Purchase.Discount = (Purchase.Total * Purchase.DiscountPercentage) / 100;
             }
             
-            // If VAT percentage is updated, calculate VAT amount
-            if (Purchase.VATPercentage > 0 && Purchase.Total > 0)
+            // Calculate VAT Amount from VAT Percentage (applied to Total)
+            if (Purchase.VATPercentage > 0)
             {
-                 // VAT usually on amount after discount? or before? assuming after for now or on gross total.
-                 // Simple VAT on Total for standard implementations unless specified otherwise
-                 Purchase.VAT = (Purchase.Total * Purchase.VATPercentage) / 100;
+                Purchase.VAT = (Purchase.Total * Purchase.VATPercentage) / 100;
             }
 
+            // Calculate Net Total = SubTotal + VAT + Labour + Transport - Discount
             Purchase.NetTotal = (Purchase.Total + Purchase.LabourCharge + Purchase.TransportCost + Purchase.VAT) - Purchase.Discount;
+        }
+
+        protected void AddLineItem()
+        {
+            if (NewItem.ItemId == 0 || NewItem.Quantity <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please select an item and enter quantity.");
+                return;
+            }
+
+            var item = ItemsList.FirstOrDefault(i => i.Id == NewItem.ItemId);
+            if (item != null)
+            {
+                NewItem.ItemName = item.Name;
+            }
+
+            if (NewItem.ColorId.HasValue)
+            {
+                NewItem.ColorName = ColorsList.FirstOrDefault(c => c.Id == NewItem.ColorId.Value)?.Name;
+            }
+
+            if (NewItem.SizeId.HasValue)
+            {
+                NewItem.SizeName = SizesList.FirstOrDefault(s => s.Id == NewItem.SizeId.Value)?.Name;
+            }
+
+            Purchase.PurchaseItems.Add(NewItem);
+            NewItem = new JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO(); // Reset for next item
+            
+            // Recalculate totals after adding item
+            CalculateTotals();
+        }
+
+        protected void RemoveLineItem(JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO item)
+        {
+            Purchase.PurchaseItems.Remove(item);
+            
+            // Recalculate totals after removing item
+            CalculateTotals();
         }
 
         protected async Task Save()
         {
+            if (!Purchase.PurchaseItems.Any())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Empty Items", "Please add at least one item to the purchase.");
+                return;
+            }
+
             try
             {
                 IsProcessing = true;

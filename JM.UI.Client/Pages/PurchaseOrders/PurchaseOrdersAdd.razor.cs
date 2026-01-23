@@ -18,6 +18,13 @@ namespace JM.UI.Client.Pages.PurchaseOrders
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         
+        // Line Item Lookups
+        protected IEnumerable<JM.UI.Entities.Model.Items.ItemModelDTO> ItemsList = new List<JM.UI.Entities.Model.Items.ItemModelDTO>();
+        protected IEnumerable<JM.UI.Entities.Model.Colors.ColorsDTO> ColorsList = new List<JM.UI.Entities.Model.Colors.ColorsDTO>();
+        protected IEnumerable<JM.UI.Entities.Model.Sizes.SizesDTO> SizesList = new List<JM.UI.Entities.Model.Sizes.SizesDTO>();
+
+        protected JM.UI.Entities.Model.PurchaseOrderItems.PurchaseOrderItemsDTO NewItem { get; set; } = new();
+        
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -42,11 +49,17 @@ namespace JM.UI.Client.Pages.PurchaseOrders
                 // Fetch Suppliers and Stores in parallel
                 var suppliersTask = _serviceUnitOfWork.SupplierService.GetSuppliers();
                 var storesTask = _serviceUnitOfWork.StoreService.GetStores();
+                var itemsTask = _serviceUnitOfWork.ItemService.GetItems();
+                var colorsTask = _serviceUnitOfWork.ColorsService.GetColorss();
+                var sizesTask = _serviceUnitOfWork.SizesService.GetSizess();
 
-                await Task.WhenAll(suppliersTask, storesTask);
+                await Task.WhenAll(suppliersTask, storesTask, itemsTask, colorsTask, sizesTask);
 
                 Suppliers = await suppliersTask;
                 Stores = await storesTask;
+                ItemsList = await itemsTask;
+                ColorsList = await colorsTask;
+                SizesList = await sizesTask;
             }
             catch (Exception ex)
             {
@@ -85,8 +98,75 @@ namespace JM.UI.Client.Pages.PurchaseOrders
             }
         }
 
+        protected void CalculateTotals()
+        {
+            // Auto-calculate total from items (not stored in PurchaseOrder table, but useful for UI display)
+            var itemsTotal = PurchaseOrder.PurchaseOrderItems.Sum(i => i.Quantity * i.TradePrice);
+            
+            // Calculate Discount Amount from Discount Percentage
+            decimal discountAmount = 0;
+            if (PurchaseOrder.DiscountPercentage > 0)
+            {
+                discountAmount = (itemsTotal * PurchaseOrder.DiscountPercentage) / 100;
+                PurchaseOrder.Discount = discountAmount;
+            }
+            
+            // Calculate VAT Amount from VAT Percentage
+            if (PurchaseOrder.VATPercentage > 0)
+            {
+                PurchaseOrder.VAT = (itemsTotal * PurchaseOrder.VATPercentage) / 100;
+            }
+            
+            // Note: PurchaseOrder doesn't have NetTotal field, but calculations are ready for items
+        }
+
+        protected void AddLineItem()
+        {
+            if (NewItem.ItemId == 0 || NewItem.Quantity <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please select an item and enter quantity.");
+                return;
+            }
+
+            var item = ItemsList.FirstOrDefault(i => i.Id == NewItem.ItemId);
+            if (item != null)
+            {
+                NewItem.ItemName = item.Name;
+            }
+
+            if (NewItem.ColorId.HasValue)
+            {
+                NewItem.ColorName = ColorsList.FirstOrDefault(c => c.Id == NewItem.ColorId.Value)?.Name;
+            }
+
+            if (NewItem.SizeId.HasValue)
+            {
+                NewItem.SizeName = SizesList.FirstOrDefault(s => s.Id == NewItem.SizeId.Value)?.Name;
+            }
+
+            PurchaseOrder.PurchaseOrderItems.Add(NewItem);
+            NewItem = new JM.UI.Entities.Model.PurchaseOrderItems.PurchaseOrderItemsDTO(); // Reset for next item
+            
+            // Recalculate totals after adding item
+            CalculateTotals();
+        }
+
+        protected void RemoveLineItem(JM.UI.Entities.Model.PurchaseOrderItems.PurchaseOrderItemsDTO item)
+        {
+            PurchaseOrder.PurchaseOrderItems.Remove(item);
+            
+            // Recalculate totals after removing item
+            CalculateTotals();
+        }
+
         protected async Task Save()
         {
+            if (!PurchaseOrder.PurchaseOrderItems.Any())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Empty Items", "Please add at least one item to the purchase order.");
+                return;
+            }
+
             try
             {
                 IsProcessing = true;

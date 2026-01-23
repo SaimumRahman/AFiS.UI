@@ -98,7 +98,7 @@
                                 
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenLabel Text="Sub Total" Component="Total" />
-                                    <RadzenNumeric Name="Total" @bind-Value="@Purchase.Total" TValue="decimal" class="w-100" Change="@CalculateTotals" />
+                                    <RadzenNumeric Name="Total" @bind-Value="@Purchase.Total" TValue="decimal" class="w-100" Disabled="true" Style="background-color: #f8f9fa;" />
                                 </RadzenStack>
 
                                 <RadzenRow>
@@ -153,6 +153,93 @@
 
                             </RadzenStack>
                         </RadzenFieldset>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <!-- Purchase Items Section -->
+                <RadzenRow Gap="1rem" class="mt-4">
+                    <RadzenColumn Size="12">
+                        <RadzenCard>
+                            <RadzenText TextStyle="TextStyle.H6" class="mb-4">Purchase Items</RadzenText>
+                            
+                            <!-- Add Item Row -->
+                            <div class="mb-4 p-3 border rounded">
+                                <RadzenRow AlignItems="AlignItems.End" Gap="0.5rem">
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenLabel Text="Item" class="fw-bold small" />
+                                        <RadzenDropDown @bind-Value="@NewItem.ItemId" 
+                                                        Data="@ItemsList" 
+                                                        TextProperty="Name" 
+                                                        ValueProperty="Id" 
+                                                        Placeholder="Search Item..." 
+                                                        class="w-100" 
+                                                        AllowFiltering="true" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6" SizeMD="2">
+                                        <RadzenLabel Text="Color" class="fw-bold small" />
+                                        <RadzenDropDown @bind-Value="@NewItem.ColorId" 
+                                                        Data="@ColorsList" 
+                                                        TextProperty="Name" 
+                                                        ValueProperty="Id" 
+                                                        Placeholder="Color" 
+                                                        class="w-100" 
+                                                        AllowFiltering="true"
+                                                        AllowClear="true" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6" SizeMD="2">
+                                        <RadzenLabel Text="Size" class="fw-bold small" />
+                                        <RadzenDropDown @bind-Value="@NewItem.SizeId" 
+                                                        Data="@SizesList" 
+                                                        TextProperty="Name" 
+                                                        ValueProperty="Id" 
+                                                        Placeholder="Size" 
+                                                        class="w-100" 
+                                                        AllowFiltering="true"
+                                                        AllowClear="true" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6" SizeMD="2">
+                                        <RadzenLabel Text="Qty" class="fw-bold small" />
+                                        <RadzenNumeric @bind-Value="@NewItem.Quantity" class="w-100" ShowStep="false" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="6" SizeMD="2">
+                                        <RadzenLabel Text="Price" class="fw-bold small" />
+                                        <RadzenNumeric @bind-Value="@NewItem.TradePrice" class="w-100" ShowStep="false" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="1">
+                                        <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Success" Click="@AddLineItem" class="w-100" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </div>
+
+                            <RadzenDataGrid TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Data="@Purchase.PurchaseItems" AllowPaging="false" AllowSorting="false" Density="Density.Compact" GridLines="DataGridGridLines.Both">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Property="ItemName" Title="Item" />
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Property="ColorName" Title="Color" Width="100px" />
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Property="SizeName" Title="Size" Width="80px" />
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Property="Quantity" Title="Qty" Width="80px" TextAlign="TextAlign.Right" />
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Property="TradePrice" Title="Price" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Title="Total" Width="100px" TextAlign="TextAlign.Right">
+                                        <Template Context="item">
+                                            @((item.Quantity * item.TradePrice).ToString("N2"))
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.PurchaseItems.PurchaseItemsDTO" Title="Action" Width="60px" TextAlign="TextAlign.Center">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Click="@(args => RemoveLineItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+
+                            <RadzenRow JustifyContent="JustifyContent.End" class="mt-4">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Items Total:</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H5" class="mb-0 fw-bold" Style="color: var(--rz-primary);">
+                                        @(Purchase.PurchaseItems.Sum(i => i.Quantity * i.TradePrice).ToString("N2"))
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenRow>
+                        </RadzenCard>
                     </RadzenColumn>
                 </RadzenRow>
 

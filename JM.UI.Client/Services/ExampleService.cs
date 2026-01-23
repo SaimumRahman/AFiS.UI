@@ -246,22 +246,12 @@ namespace JM.UI.Client.Services
                         Description = "Manage suppliers for products",
                         Tags = new[] { "supplier", "product", "inventory" }
                     },
-                    new Example
-                    {
-                        Name = "Item Attributes",
-                        Icon = "\ue8d2", // category
-                        Title = "Item Attributes",
-                        Description = "Manage product attributes like colors and groups",
-                        Tags = new[] { "attribute", "product", "inventory" },
-                        Children = new[]
-                        {
-                            new Example { Name = "Colors", Path = "/ColorsList", Icon = "\ue3e8", Title = "Colors", Description = "Manage product colors", Tags = new[] { "color", "attribute" } },
-                            new Example { Name = "Groups", Path = "/GroupsList", Icon = "\ue7fd", Title = "Groups", Description = "Manage product groups", Tags = new[] { "group", "attribute" } },
-                            new Example { Name = "SubGroups", Path = "/SubGroupsList", Icon = "\ue5db", Title = "SubGroups", Description = "Manage product sub-groups", Tags = new[] { "subgroup", "attribute" } },
-                            new Example { Name = "MesurementUnits", Path = "/MesurementUnitsList", Icon = "\ue41c", Title = "Measurement Units", Description = "Manage measurement units", Tags = new[] { "unit", "attribute" } },
-                            new Example { Name = "Items", Path = "/ItemsList", Icon = "\ue1bd", Title = "Items", Description = "Manage inventory items", Tags = new[] { "item", "inventory", "product" } },
-                        }
-                    },
+                    new Example{ Name = "Colors", Path = "/ColorsList", Icon = "\ue3e8", Title = "Colors", Description = "Manage product colors", Tags = new[] { "color", "attribute" } },
+                    new Example{ Name = "Groups", Path = "/GroupsList", Icon = "\ue7fd", Title = "Groups", Description = "Manage product groups", Tags = new[] { "group", "attribute" } },
+                    new Example { Name = "SubGroups", Path = "/SubGroupsList", Icon = "\ue5db", Title = "SubGroups", Description = "Manage product sub-groups", Tags = new[] { "subgroup", "attribute" } },
+                    new Example { Name = "MesurementUnits", Path = "/MesurementUnitsList", Icon = "\ue41c", Title = "Measurement Units", Description = "Manage measurement units", Tags = new[] { "unit", "attribute" } },
+                    new Example { Name = "Items", Path = "/ItemsList", Icon = "\ue1bd", Title = "Items", Description = "Manage inventory items", Tags = new[] { "item", "inventory", "product" } },
+
                     new Example
                     {
                         Name = "Sizes",
