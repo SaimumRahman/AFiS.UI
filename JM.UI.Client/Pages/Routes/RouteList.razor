@@ -1,0 +1,119 @@
+﻿@page "/RouteList"
+@using JM.UI.Components.Pages.Route
+@using JM.UI.Entities.Model.Routes;
+@inherits RouteListComponent
+@attribute [Authorize]
+<PageTitle>Routes</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="route" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Route Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Route"
+                                  Click="@AddRoute"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="RoutesGrid"
+                        Data="@Routes"
+                        TItem="RouteModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="RouteModelDTO" Property="RouteId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="route">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{route.RouteId}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Route Name -->
+                <RadzenDataGridColumn TItem="RouteModelDTO" Property="RouteName" Title="Route Name" Width="220px">
+                    <Template Context="route">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="label" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @route.RouteName
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Route Path -->
+                <RadzenDataGridColumn TItem="RouteModelDTO" Property="RoutePath" Title="Route Path" Width="280px">
+                    <Template Context="route">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="link" Style="color: var(--rz-info);" />
+                            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">
+                                @route.RoutePath
+                            </code>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="RouteModelDTO" Property="IsActive" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="route">
+                        <RadzenBadge BadgeStyle="@(route.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(route.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="RouteModelDTO" Title="Actions" Width="160px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="route">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditRoute(route))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Route"))" />
+
+                            <RadzenButton Icon="@(route.IsActive ? "toggle_on" : "toggle_off")"
+                                          ButtonStyle="@(route.IsActive ? ButtonStyle.Success : ButtonStyle.Warning)"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ToggleStatus(route))"
+                                          MouseEnter="@(args => ShowTooltip(args, route.IsActive ? "Deactivate" : "Activate"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteRoute(route))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Route"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

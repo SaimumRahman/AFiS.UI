@@ -1,13 +1,29 @@
-﻿using JM.UI.DataService.DAL.Approval;
+﻿using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Actions;
+using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
-using JM.UI.DataService.DAL.Stores;
-using JM.UI.DataService.DAL.UserGroup;
+using JM.UI.DataService.DAL.GroupRoutePermissions;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Purchases;
+using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
+using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.UserGroup;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -68,6 +84,11 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IItemRepository ItemRepository { get; }
         public IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
         
+        public IActionRepository ActionRepository { get; }
+        public IRouteRepository RouteRepository { get; }
+        public IGroupRoutePermissionRepository GroupRoutePermissionRepository { get; }
+        public IGroupActionPermissionRepository GroupActionPermissionRepository { get; }
+
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
             ITokenProvider tokenProvider,
@@ -102,6 +123,10 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             PurchaseReturnRepository = new PurchaseReturnRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnRepository>());
             ColorsRepository = new ColorsRepository(factory, tokenProvider, loggerFactory.CreateLogger<ColorsRepository>());
             GroupRepository = new GroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRepository>());
+            ActionRepository = new ActionRepository(factory, tokenProvider, loggerFactory.CreateLogger<ActionRepository>());
+            RouteRepository = new RouteRepository(factory, tokenProvider, loggerFactory.CreateLogger<RouteRepository>());
+            GroupRoutePermissionRepository = new GroupRoutePermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoutePermissionRepository>());
+            GroupActionPermissionRepository = new GroupActionPermissionRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupActionPermissionRepository>());
             SubGroupRepository = new SubGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<SubGroupRepository>());
             MesurementUnitRepository = new MesurementUnitRepository(factory, tokenProvider, loggerFactory.CreateLogger<MesurementUnitRepository>());
             ItemRepository = new ItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemRepository>());

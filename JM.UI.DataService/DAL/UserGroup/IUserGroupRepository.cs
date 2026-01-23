@@ -13,5 +13,6 @@ namespace JM.UI.DataService.DAL.UserGroup
         Task<GroupUsersDTO> GetGroupUsersDetail(int groupId);
         Task<ResponseResult> AssignUsersToGroup(int groupId, List<int> userIds);
         Task<ResponseResult> RemoveUserFromGroup(int userId, int groupId);
+        Task<ResponseResult> UpdateGroupUsers(int groupId, List<int> userIds);
     }
 }

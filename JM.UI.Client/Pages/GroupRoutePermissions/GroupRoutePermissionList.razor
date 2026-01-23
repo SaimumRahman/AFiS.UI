@@ -1,0 +1,119 @@
+﻿@page "/GroupRoutePermissionList"
+@using JM.UI.Client.Pages.GroupRoutePermission
+@using JM.UI.Entities.Model.GroupRoutePermission
+@inherits GroupRoutePermissionListComponent
+@attribute [Authorize]
+<PageTitle>Group Route Permissions</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="vpn_key" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Group Route Permission Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Permission"
+                                  Click="@AddGroupRoutePermission"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="GroupRoutePermissionsGrid"
+                        Data="@GroupRoutePermissions"
+                        TItem="GroupRoutePermissionModelDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="Id" Title="ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="permission">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{permission.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Group ID -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="GroupId" Title="Group ID" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="permission">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" JustifyContent="JustifyContent.Center">
+                            <RadzenIcon Icon="group" Style="color: var(--rz-primary);" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@permission.GroupId.ToString()" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Group Name (if available) -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="GroupName" Title="Group Name" Width="220px">
+                    <Template Context="permission">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            @(permission.GroupName ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Route ID -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="RouteId" Title="Route ID" Width="150px" TextAlign="TextAlign.Center">
+                    <Template Context="permission">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" JustifyContent="JustifyContent.Center">
+                            <RadzenIcon Icon="route" Style="color: var(--rz-success);" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@permission.RouteId.ToString()" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Route Name (if available) -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Property="RouteName" Title="Route Name" Width="220px">
+                    <Template Context="permission">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            @(permission.RouteName ?? "N/A")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="GroupRoutePermissionModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="permission">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditGroupRoutePermission(permission))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Permission"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteGroupRoutePermission(permission))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Permission"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

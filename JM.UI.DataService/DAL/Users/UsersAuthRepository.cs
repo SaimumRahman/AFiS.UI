@@ -1,13 +1,18 @@
 ﻿using JM.Infrastructure.Base;
 using JM.Infrastructure.Common;
 using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Users;
+using JM.UI.Entities.Services;
 using JM.UI.Entities.ViewModel;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,13 +23,17 @@ namespace JM.UI.DataService.DAL.Users
     {
         private readonly ILogger<UsersAuthRepository> _logger;
         private readonly HttpClient _httpClient;
+        private readonly ITokenProvider  _token;
+
 
         public UsersAuthRepository(
             ILogger<UsersAuthRepository> logger,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            ITokenProvider token)
         {
             _logger = logger;
             _httpClient = httpClientFactory.CreateClient("AuthApi");
+            _token = token;
         }
         public async Task<string> Register(RegisterRequest registerRequests)
         {
@@ -133,5 +142,34 @@ namespace JM.UI.DataService.DAL.Users
                 }
           
         }
+
+        public async Task<List<User>> GetAllUsers()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching all users");
+
+                var token = _token.GetToken();
+
+                _httpClient.DefaultRequestHeaders.Remove("Authorization");
+
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.GetAsync("api/auth/User-GetAll");
+
+                response.EnsureSuccessStatusCode();
+
+                var users = await response.Content.ReadFromJsonAsync<List<User>>();
+
+                return users ?? new List<User>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while fetching users");
+                throw; 
+            }
+        }
+
     }
 }

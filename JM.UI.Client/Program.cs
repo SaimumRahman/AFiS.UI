@@ -3,14 +3,14 @@ using JM.UI.Client.Services;
 using JM.UI.Entities.Model;
 using JM.UI.Entities.Services;
 using Microsoft.AspNetCore.Components.Server.Circuits;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Options;
 using Radzen;
 using RadzenBlazorDemos.Server.Data;
 using JM.UI.Service;
 using JM.UI.DataService;
-using Microsoft.AspNetCore.Components.Authorization;  // ✅ Add this
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +28,14 @@ builder.Services.AddRazorComponents()
         o.MaximumReceiveMessageSize = 10 * 1024 * 1024;
     });
 
-// 🔐 Add Authentication & Authorization (ADD BEFORE OTHER SERVICES)
+// 🔐 Configure Authorization for Blazor Server
 builder.Services.AddAuthorizationCore();
+
+// 🔐 Use custom authorization handler that doesn't trigger authentication challenges
+// This allows Blazor's AuthorizeRouteView to handle unauthorized access
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorAuthorizationMiddlewareResultHandler>();
+
+// 🔐 Register Custom Authentication State Provider
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
 // Add Radzen.Blazor services
@@ -57,6 +63,8 @@ builder.Services.AddScoped<CircuitHandlerService>();
 builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHandlerService>());
 builder.Services.AddScoped<ITokenProvider, CircuitTokenProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+
 
 builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
 {
@@ -108,8 +116,7 @@ app.UseRouting();
 app.UseCors("AllowBlazor");
 app.UseAntiforgery();
 
-// 🔐 Authentication & Authorization middleware (ORDER MATTERS!)
-app.UseAuthentication();
+// 🔐 Authorization middleware (with custom handler to prevent challenges)
 app.UseAuthorization();
 
 app.MapRazorPages();
@@ -117,3 +124,16 @@ app.MapRazorComponents<JM.UI.Client.App>().AddInteractiveServerRenderMode();
 app.MapControllers();
 
 app.Run();
+public class BlazorAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
+{
+    public Task HandleAsync(
+        RequestDelegate next,
+        HttpContext context,
+        AuthorizationPolicy policy,
+        PolicyAuthorizationResult authorizeResult)
+    {
+        // Don't challenge or forbid - just continue to next middleware
+        // Blazor's AuthorizeRouteView will handle showing NotAuthorized content
+        return next(context);
+    }
+}

@@ -167,12 +167,13 @@ namespace JM.UI.Client.Pages.Employees
                 IsProcessing = true;
                 var result = await _serviceUnitOfWork.EmployeeService.SaveUpdateEmployee(Employee);
 
-                if (Employee.IsUserCreate)
+
+                if (Employee.IsUserCreate && result.IsSuccessStatus == true)
                 {
                     RegisterRequest loginRequest = new RegisterRequest
                     {
                         Email = Employee.Email,
-                        Username = Employee.Username,
+                        Username = Employee.Surname,
                         Password = Employee.Password,
                         PhoneNumber = Employee.Contact,
                         ConfirmPassword = Employee.ConfirmPassword,
@@ -257,7 +258,7 @@ namespace JM.UI.Client.Pages.Employees
 
             if (!value)
             {
-                Employee.Username = string.Empty;
+                Employee.Surname = string.Empty;
                 Employee.Password = string.Empty;
                 Employee.ConfirmPassword = string.Empty;
             }

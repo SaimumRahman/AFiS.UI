@@ -6,6 +6,7 @@ using JM.UI.Service.Users;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace JM.UI.Service.Employee
@@ -99,7 +100,6 @@ namespace JM.UI.Service.Employee
             {
                 employee.ModifiedOn = DateTime.Now;
             }
-
             return await _repositoryUnitOfWork
                 .EmployeeRepository
                 .SaveUpdateEmployee(employee);
@@ -133,6 +133,9 @@ namespace JM.UI.Service.Employee
         {
             if (string.IsNullOrWhiteSpace(employee.Name))
                 return Task.FromResult((false, "Employee name is required."));
+
+            if (!Regex.IsMatch(employee.Surname, "^[A-Za-z]+$"))
+                return Task.FromResult((false, "Surname must contain only letters and no whitespace."));
 
             if (employee.Name.Length > 200)
                 return Task.FromResult((false, "Employee name cannot exceed 200 characters."));

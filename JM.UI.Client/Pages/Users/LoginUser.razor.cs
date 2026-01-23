@@ -1,5 +1,6 @@
 ﻿using JM.UI.Client.Services;
 using JM.UI.Entities.Model.Users;
+using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.Users;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -12,8 +13,11 @@ namespace JM.UI.Client.Pages.Users
     public partial class LoginUserComponent : ComponentBase
     {
         [Inject] IUserAuthService userAuthService { get; set; }
+        [Inject] IServiceUnitOfWork  serviceUnitOfWork { get; set; }
         [Inject] ITokenService tokenService { get; set; }
         [Inject] ProtectedSessionStorage sessionStorage { get; set; }
+
+        [Inject] ProtectedLocalStorage _localStorage { get; set; }
         [Inject] NavigationManager navigationManager { get; set; }
         [Inject] IJSRuntime jsRuntimes { get; set; }
         [Inject] AuthenticationStateProvider AuthStateProvider { get; set; }
@@ -69,11 +73,19 @@ namespace JM.UI.Client.Pages.Users
                         await tokenService.SetTokenAsync(response.Token);
                         await sessionStorage.SetAsync("UserId", response.UserId.ToString());
                         await sessionStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
+                        await _localStorage.SetAsync("UserId", response.UserId.ToString());
+                        await _localStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
 
                         if (response.CompanyId > 0)
                         {
                             await sessionStorage.SetAsync("CompanyId", response.CompanyId.ToString());
                         }
+                        var permissions = await serviceUnitOfWork.GroupRoutePermissionService.GetRouteListByUserId(response.UserId);
+
+                        await sessionStorage.SetAsync(
+                            "Permissions",
+                            JsonConvert.SerializeObject(permissions)
+                        );
 
                         Console.WriteLine("✅ All credentials saved successfully");
 

@@ -8,14 +8,15 @@ namespace JM.UI.Client.Services
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly ProtectedSessionStorage _sessionStorage;
+        private readonly ProtectedLocalStorage _localStorage; // Changed to LocalStorage
         private readonly ITokenService _tokenService;
+        private ClaimsPrincipal _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
 
         public CustomAuthenticationStateProvider(
-            ProtectedSessionStorage sessionStorage,
+            ProtectedLocalStorage localStorage, // Changed to LocalStorage
             ITokenService tokenService)
         {
-            _sessionStorage = sessionStorage;
+            _localStorage = localStorage;
             _tokenService = tokenService;
         }
 
@@ -23,54 +24,54 @@ namespace JM.UI.Client.Services
         {
             try
             {
-                // Check if token exists in session
-                var tokenResult = await _sessionStorage.GetAsync<string>("Credentials");
+                Console.WriteLine("🔍 Checking authentication state...");
+
+                // Check if token exists in local storage (shared across tabs)
+                var tokenResult = await _localStorage.GetAsync<string>("Credentials");
 
                 if (!tokenResult.Success || string.IsNullOrEmpty(tokenResult.Value))
                 {
                     Console.WriteLine("❌ No token found - User not authenticated");
-                    return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                    _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+                    return new AuthenticationState(_cachedPrincipal);
                 }
 
                 var token = tokenResult.Value;
+                Console.WriteLine($"✅ Token found: {token.Substring(0, Math.Min(20, token.Length))}...");
 
                 // Validate token is not expired
                 if (!await _tokenService.ValidateTokenAsync(token))
                 {
                     Console.WriteLine("❌ Token invalid or expired - Clearing session");
                     await ClearSessionAsync();
-                    return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                    _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+                    return new AuthenticationState(_cachedPrincipal);
                 }
 
-                // Get user info from session
-                var userInfoResult = await _sessionStorage.GetAsync<string>("UserInfo");
+                // Get user info from local storage
+                var userIdResult = await _localStorage.GetAsync<string>("UserId");
                 var claims = new List<Claim>();
-
-                if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
+                if (userIdResult.Success && !string.IsNullOrEmpty(userIdResult.Value))
                 {
-                    var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
-
-                    claims.Add(new Claim(ClaimTypes.Name, userInfo.Username ?? ""));
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, userInfo.UserId.ToString()));
-                    claims.Add(new Claim("UserId", userInfo.UserId.ToString()));
-
-                    if (userInfo.CompanyId > 0)
-                    {
-                        claims.Add(new Claim("CompanyId", userInfo.CompanyId.ToString()));
-                    }
-
-                    Console.WriteLine($"✅ User authenticated: {userInfo.Username}");
+                    claims.Add(new Claim("UserId", userIdResult.Value));
+                    Console.WriteLine($"✅ User authenticated (UserId: {userIdResult.Value})");
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Token found but UserId missing - User still authenticated");
                 }
 
                 var identity = new ClaimsIdentity(claims, "JwtAuth");
-                var user = new ClaimsPrincipal(identity);
+                _cachedPrincipal = new ClaimsPrincipal(identity);
 
-                return new AuthenticationState(user);
+                return new AuthenticationState(_cachedPrincipal);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Auth state error: {ex.Message}");
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+                return new AuthenticationState(_cachedPrincipal);
             }
         }
 
@@ -81,17 +82,17 @@ namespace JM.UI.Client.Services
 
         public void NotifyUserLogout()
         {
-            var authState = Task.FromResult(
-                new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
+            _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+            var authState = Task.FromResult(new AuthenticationState(_cachedPrincipal));
             NotifyAuthenticationStateChanged(authState);
         }
 
         private async Task ClearSessionAsync()
         {
-            await _sessionStorage.DeleteAsync("Credentials");
-            await _sessionStorage.DeleteAsync("UserId");
-            await _sessionStorage.DeleteAsync("UserInfo");
-            await _sessionStorage.DeleteAsync("CompanyId");
+            await _localStorage.DeleteAsync("Credentials");
+            await _localStorage.DeleteAsync("UserId");
+            await _localStorage.DeleteAsync("UserInfo");
+            await _localStorage.DeleteAsync("CompanyId");
         }
     }
 }

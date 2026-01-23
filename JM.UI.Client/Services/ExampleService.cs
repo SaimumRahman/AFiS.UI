@@ -219,11 +219,47 @@ namespace JM.UI.Client.Services
                     new Example
                     {
                         Name = "User Groups",
-                        Path = "/GroupUserAssignment",
+                        Path = "/UserGroupList",
                         Icon = "\ue7fd",
                         Title = "User Group Assignment",
                         Description = "Assign users to security groups",
                         Tags = new[] { "user", "group", "assignment", "access" }
+                    },
+                    new Example
+                    {
+                        Name = "Action",
+                        Path = "/ActionList",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
+                    },
+                    new Example
+                    {
+                        Name = "Menu",
+                        Path = "/RouteList",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
+                    },
+                    new Example
+                    {
+                        Name = "Route Permission",
+                        Path = "/GroupRoutePermissionList",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
+                    },
+                    new Example
+                    {
+                        Name = "Group Action Permissions",
+                        Path = "/GroupActionPermissionsAdd",
+                        Icon = "\ue7fd",
+                        Title = "User Action List",
+                        Description = "Create Action for Groups",
+                        Tags = new[] { "user", "group", "assignment", "action" }
                     }
                 }
             },

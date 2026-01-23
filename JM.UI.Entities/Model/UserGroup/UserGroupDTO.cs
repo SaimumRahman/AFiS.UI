@@ -9,9 +9,16 @@ namespace JM.UI.Entities.Model.UserGroup
         public int UserGroupId { get; set; }
         public int UserId { get; set; }
         public int GroupId { get; set; }
-        public string? UserName { get; set; }
+
+        // Joined data from core_users
+        public string UserName { get; set; } = string.Empty;
         public string? FullName { get; set; }
         public string? Email { get; set; }
-        public string? GroupName { get; set; }
+
+        // Joined data from Groups table
+        public string GroupName { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsSystem { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

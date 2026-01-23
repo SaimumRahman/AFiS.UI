@@ -1,0 +1,235 @@
+﻿@page "/GroupRoutePermissionAdd"
+@page "/GroupRoutePermissionAdd/{GroupId:int}"
+@using JM.UI.Client.Pages.Action
+@using JM.UI.Entities.Model.GroupRoutePermission
+@using JM.UI.Entities.Model.Groups
+@using JM.UI.Entities.Model.Routes
+@attribute [Authorize]
+@inherits GroupRoutePermissionAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    @if (IsLoading)
+    {
+        <RadzenCard class="text-center p-5">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1" class="mt-3">Loading permissions...</RadzenText>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- Header Card -->
+        <RadzenCard class="mb-4">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="arrow_back"
+                                      Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@Cancel"
+                                      Size="ButtonSize.Medium" />
+                        <RadzenIcon Icon="@PageIcon" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                        <RadzenButton Text="Reset"
+                                      Icon="refresh"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Outlined"
+                                      Click="@Reset"
+                                      Disabled="@IsProcessing" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- Form Card -->
+        <RadzenCard>
+            <RadzenStack Gap="1.5rem">
+                <!-- Group Selection Section -->
+                <RadzenFieldset Text="Select Group" Icon="group">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Group *" Component="GroupDropdown" />
+                                    <RadzenDropDown @bind-Value="@SelectedGroupId"
+                                                    Data="@GroupRoles"
+                                                    TextProperty="GroupName"
+                                                    ValueProperty="GroupId"
+                                                    Placeholder="Select a group"
+                                                    Name="GroupDropdown"
+                                                    Style="width: 100%;"
+                                                    Change="@OnGroupChanged"
+                                                    Disabled="@IsProcessing" />
+                                    @if (SelectedGroupId == null || SelectedGroupId == 0)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                            Please select a group
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                @if (SelectedGroupId != null && SelectedGroupId > 0)
+                                {
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Selected Group ID" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                                     Text="@($"Group ID: {SelectedGroupId}")"
+                                                     Style="padding: 8px 12px; font-size: 14px;" />
+                                    </RadzenStack>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <!-- Route Selection Section -->
+                @if (SelectedGroupId != null && SelectedGroupId > 0)
+                {
+                    <RadzenFieldset Text="Select Routes" Icon="route">
+                        <RadzenStack Gap="1rem">
+                            <!-- Search and Filter Controls -->
+                            <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Search Routes" />
+                                        <RadzenTextBox @bind-Value="@SearchText"
+                                                       Placeholder="Search by route name..."
+                                                       Style="width: 100%;"
+                                                       @oninput="@(args => OnSearchChanged(args.Value?.ToString()))" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                                        <RadzenButton Text="Select All"
+                                                      Icon="check_box"
+                                                      ButtonStyle="ButtonStyle.Success"
+                                                      Variant="Variant.Outlined"
+                                                      Size="ButtonSize.Small"
+                                                      Click="@SelectAllRoutes"
+                                                      Disabled="@IsProcessing" />
+                                        <RadzenButton Text="Deselect All"
+                                                      Icon="check_box_outline_blank"
+                                                      ButtonStyle="ButtonStyle.Warning"
+                                                      Variant="Variant.Outlined"
+                                                      Size="ButtonSize.Small"
+                                                      Click="@DeselectAllRoutes"
+                                                      Disabled="@IsProcessing" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- Selected Count -->
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="info" />
+                                            <RadzenText TextStyle="TextStyle.Body1">
+                                                <strong>@SelectedRouteIds.Count</strong> route(s) selected out of <strong>@FilteredRoutes.Count()</strong>
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </RadzenAlert>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- Routes Grid -->
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    <RadzenDataGrid Data="@FilteredRoutes"
+                                                    TItem="RouteModelDTO"
+                                                    AllowPaging="true"
+                                                    AllowSorting="true"
+                                                    PageSize="10"
+                                                    PagerHorizontalAlign="HorizontalAlign.Center"
+                                                    GridLines="DataGridGridLines.Both"
+                                                    Density="Density.Compact"
+                                                    Style="max-height: 500px;">
+                                        <Columns>
+                                            <RadzenDataGridColumn TItem="RouteModelDTO"
+                                                                  Title="Select"
+                                                                  Width="80px"
+                                                                  TextAlign="TextAlign.Center"
+                                                                  Sortable="false">
+                                                <Template Context="route">
+                                                    <RadzenCheckBox TValue="bool"
+                                                                    Value="@route.IsSelected"
+                                                                    ValueChanged="@(async value => await OnRouteSelectionChanged(route, value))"
+                                                                    Disabled="@IsProcessing" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+
+
+
+
+
+                                            <!-- Route ID -->
+                                            <RadzenDataGridColumn TItem="RouteModelDTO" Property="Id" Title="Route ID" Width="100px" TextAlign="TextAlign.Center">
+                                                <Template Context="route">
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{route.RouteId}")" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+
+                                            <!-- Route Name -->
+                                            <RadzenDataGridColumn TItem="RouteModelDTO" Property="RouteName" Title="Route Name" Width="250px">
+                                                <Template Context="route">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenIcon Icon="route" Style="color: var(--rz-primary);" />
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                                            @route.RouteName
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                </Template>
+                                            </RadzenDataGridColumn>
+
+                                            <!-- Route Path -->
+                                            <RadzenDataGridColumn TItem="RouteModelDTO" Property="RoutePath" Title="Route Path" Width="300px">
+                                                <Template Context="route">
+                                                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                                                        @(route.RoutePath ?? "N/A")
+                                                    </RadzenText>
+                                                </Template>
+                                            </RadzenDataGridColumn>
+
+                                            <!-- Status -->
+                                            <RadzenDataGridColumn TItem="RouteModelDTO" Property="IsActive" Title="Status" Width="100px" TextAlign="TextAlign.Center">
+                                                <Template Context="route">
+                                                    <RadzenBadge BadgeStyle="@(route.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                                                 Text="@(route.IsActive ? "Active" : "Inactive")" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenFieldset>
+                }
+
+                <!-- Action Buttons -->
+                <RadzenCard class="mt-2">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Cancel"
+                                      Icon="cancel"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Flat"
+                                      Click="@Cancel"
+                                      Disabled="@IsProcessing" />
+                        <RadzenButton Text="Save Permissions"
+                                      Icon="save"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@Save"
+                                      IsBusy="@IsProcessing"
+                                      BusyText="Saving..."
+                                      Disabled="@(IsProcessing || SelectedGroupId == null || SelectedGroupId == 0 || SelectedRouteIds.Count == 0)" />
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenContent>

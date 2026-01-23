@@ -30,5 +30,9 @@ namespace JM.UI.Service.Users
         {
             return await _UserauthRepo.GetCompanyIdByUserId(Userid);
         }
+        public async Task<List<User>> GetAllUsers()
+        {
+            return await _UserauthRepo.GetAllUsers();
+        }
     }
 }

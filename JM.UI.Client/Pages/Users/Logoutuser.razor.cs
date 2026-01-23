@@ -67,7 +67,7 @@ namespace JM.UI.Client.Pages.Users
                 Console.WriteLine("═══════════════════════════════════");
 
                 // Navigate to login page
-                navigationManager.NavigateTo("/LoginUser", true);
+                navigationManager.NavigateTo("/", true);
             }
             catch (Exception e)
             {
@@ -77,7 +77,7 @@ namespace JM.UI.Client.Pages.Users
                 Console.WriteLine("═══════════════════════════════════");
 
                 // Even if error, redirect to login
-                navigationManager.NavigateTo("/LoginUser", true);
+                navigationManager.NavigateTo("/", true);
             }
             finally
             {

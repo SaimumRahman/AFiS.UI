@@ -66,5 +66,27 @@ namespace JM.UI.Service.UserGroup
 
             return await _repositoryUnitOfWork.UserGroupRepository.RemoveUserFromGroup(userId, groupId);
         }
+        public async Task<ResponseResult> UpdateGroupUsers(int groupId, List<int> userIds)
+        {
+            if (groupId <= 0)
+            {
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = "Invalid group ID"
+                };
+            }
+
+            if (userIds == null || !userIds.Any())
+            {
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = "Please select at least one user"
+                };
+            }
+
+            return await _repositoryUnitOfWork.UserGroupRepository.UpdateGroupUsers(groupId, userIds);
+        }
     }
 }
