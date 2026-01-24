@@ -106,7 +106,7 @@
                 _hasRoutePermission = await permissionService.CanAccessRoute(routePath);
                 if (_hasRoutePermission == false)
                 {
-                    navigationManager.NavigateTo("/Logout");
+                    navigationManager.NavigateTo("/UnAuthorized");
                 }
             }
 
