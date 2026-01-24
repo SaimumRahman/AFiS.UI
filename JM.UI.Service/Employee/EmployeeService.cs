@@ -78,6 +78,12 @@ namespace JM.UI.Service.Employee
                 .EmployeeRepository
                 .GetEmployeeById(id);
         }
+        public async Task<EmployeeModelDTO?> GetEmployeeBySurname(string surname)
+        {
+            return await _repositoryUnitOfWork
+                .EmployeeRepository
+                .GetEmployeeBySurname(surname);
+        }
         public async Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee)
         {
             var validation = await ValidateEmployee(employee);
@@ -146,21 +152,21 @@ namespace JM.UI.Service.Employee
             if (employee.EmployeeCode.Length > 50)
                 return Task.FromResult((false, "Employee code cannot exceed 50 characters."));
 
-            if (!string.IsNullOrWhiteSpace(employee.Contact) &&
-                employee.Contact.Length > 50)
-                return Task.FromResult((false, "Contact cannot exceed 50 characters."));
+            //if (!string.IsNullOrWhiteSpace(employee.Contact) &&
+            //    employee.Contact.Length > 50)
+            //    return Task.FromResult((false, "Contact cannot exceed 50 characters."));
 
-            if (!string.IsNullOrWhiteSpace(employee.Email))
-            {
-                if (employee.Email.Length > 100)
-                    return Task.FromResult((false, "Email cannot exceed 100 characters."));
+            //if (!string.IsNullOrWhiteSpace(employee.Email))
+            //{
+            //    if (employee.Email.Length > 100)
+            //        return Task.FromResult((false, "Email cannot exceed 100 characters."));
 
-                if (!IsValidEmail(employee.Email))
-                    return Task.FromResult((false, "Invalid email format."));
-            }
+            //    if (!IsValidEmail(employee.Email))
+            //        return Task.FromResult((false, "Invalid email format."));
+            //}
 
-            if (employee.BasicSalary.HasValue && employee.BasicSalary < 0)
-                return Task.FromResult((false, "Basic salary cannot be negative."));
+            //if (employee.BasicSalary.HasValue && employee.BasicSalary < 0)
+            //    return Task.FromResult((false, "Basic salary cannot be negative."));
 
             return Task.FromResult((true, string.Empty));
         }

@@ -130,7 +130,21 @@ namespace JM.UI.Client.Pages.Employees
                 IsLoading = false;
             }
         }
-
+        protected async Task CheckSurname()
+        {
+            if (Employee.Surname.ToCharArray().Length > 4)
+            {
+                var existingEmployee = await _serviceUnitOfWork.EmployeeService.GetEmployeeBySurname(Employee.Surname);
+                if (existingEmployee != null && existingEmployee.Id != Employee.Id)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Warning", "An employee with this surname already exists.");
+                }
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Surname must grater than 4 Characters");
+            }
+        }
         private async Task InitializeEmployee()
         {
             Employee = await _serviceUnitOfWork.EmployeeService.CreateNewEmployee();

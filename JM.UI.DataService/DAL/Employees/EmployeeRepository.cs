@@ -74,6 +74,35 @@ namespace JM.UI.DataService.DAL.Employees
                 throw new Exception($"Unexpected error fetching employee: {ex.Message}", ex);
             }
         }
+        public async Task<EmployeeModelDTO?> GetEmployeeBySurname(string surname)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch surname: {surname}", surname);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Employees/get-by-surname?surname={surname}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Employee not found: {surname}", surname);
+                    return null;
+                }
+
+                var employee = await response.Content.ReadFromJsonAsync<EmployeeModelDTO>();
+                return employee;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get employee by surname: {surname}", surname);
+                throw new Exception($"Failed to fetch employee: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get employee by surname: {surname}", surname);
+                throw new Exception($"Unexpected error fetching employee: {ex.Message}", ex);
+            }
+        }
 
         public async Task DeleteEmployee(int id)
         {
