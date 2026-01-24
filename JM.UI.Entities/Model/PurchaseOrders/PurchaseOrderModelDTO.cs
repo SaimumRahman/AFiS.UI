@@ -1,4 +1,6 @@
+using JM.UI.Entities.Model.PurchaseOrderItems;
 using System;
+using System.Collections.Generic;
 
 namespace JM.UI.Entities.Model.PurchaseOrders
 {
@@ -15,6 +17,8 @@ namespace JM.UI.Entities.Model.PurchaseOrders
         public decimal VAT { get; set; }
         public decimal VATPercentage { get; set; }
         public int PurchaseOrderStatus { get; set; }
+
+        public List<PurchaseOrderItemsDTO> PurchaseOrderItems { get; set; } = new();
 
         // UI Helpers
         public string? SupplierName { get; set; }

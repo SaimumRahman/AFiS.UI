@@ -1,4 +1,6 @@
+using JM.UI.Entities.Model.PurchaseItems;
 using System;
+using System.Collections.Generic;
 
 namespace JM.UI.Entities.Model.Purchases
 {
@@ -25,6 +27,8 @@ namespace JM.UI.Entities.Model.Purchases
         public decimal TransportCost { get; set; }
         public decimal Total { get; set; }
         public decimal NetTotal { get; set; }
+
+        public List<PurchaseItemsDTO> PurchaseItems { get; set; } = new();
 
         // UI Helpers
         public string? SupplierName { get; set; }
