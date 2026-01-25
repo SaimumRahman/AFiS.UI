@@ -140,7 +140,7 @@ namespace JM.UI.Service.Employee
             if (string.IsNullOrWhiteSpace(employee.Name))
                 return Task.FromResult((false, "Employee name is required."));
 
-            if (!Regex.IsMatch(employee.Surname, "^[A-Za-z]+$"))
+            if (!Regex.IsMatch(employee.Surname, "^[A-Za-z0-9]+$"))
                 return Task.FromResult((false, "Surname must contain only letters and no whitespace."));
 
             if (employee.Name.Length > 200)

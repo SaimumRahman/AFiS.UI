@@ -75,7 +75,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
 
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var requestBody = new { AccountsGroupsDTO = accountsGroups };
-                var response = await httpClient.PostAsJsonAsync("AccountsGroups/InsertUpdateAccountsGroups", requestBody);
+                var response = await httpClient.PostAsJsonAsync("AccountsGroups/insert-update", requestBody);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
