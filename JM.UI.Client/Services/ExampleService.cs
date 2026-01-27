@@ -273,15 +273,7 @@ namespace JM.UI.Client.Services
                 Icon = "\ue8d2",  // layers / inventory
                 Children = new[]
                 {
-                    new Example
-                    {
-                        Name = "Product Suppliers",
-                        Path = "/ProductSuppliersList",
-                        Icon = "\ue558", // business / handshake
-                        Title = "Product Suppliers",
-                        Description = "Manage suppliers for products",
-                        Tags = new[] { "supplier", "product", "inventory" }
-                    },
+
                     new Example{ Name = "Colors", Path = "/ColorsList", Icon = "\ue3e8", Title = "Colors", Description = "Manage product colors", Tags = new[] { "color", "attribute" } },
                     new Example{ Name = "Groups", Path = "/GroupsList", Icon = "\ue7fd", Title = "Groups", Description = "Manage product groups", Tags = new[] { "group", "attribute" } },
                     new Example { Name = "SubGroups", Path = "/SubGroupsList", Icon = "\ue5db", Title = "SubGroups", Description = "Manage product sub-groups", Tags = new[] { "subgroup", "attribute" } },
@@ -312,23 +304,7 @@ namespace JM.UI.Client.Services
             // ────────────────────────────────────────────────
             // 9. Appearance (only if your app actually has theme customization)
             // ────────────────────────────────────────────────
-            new Example
-            {
-                Name = "Appearance",
-                Icon = "\ue3e8",  // palette
-                Children = new[]
-                {
-                    new Example
-                    {
-                        Name = "Colors",
-                        Path = "/ColorsList",
-                        Icon = "\ue3e8",
-                        Title = "Color Settings",
-                        Description = "Customize application color theme",
-                        Tags = new[] { "theme", "color", "appearance" }
-                    }
-                }
-            }
+
         };
 
         public IEnumerable<Example> Examples => allExamples;

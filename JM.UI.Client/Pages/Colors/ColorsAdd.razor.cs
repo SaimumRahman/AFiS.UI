@@ -9,13 +9,13 @@ namespace JM.UI.Client.Pages.Colors;
 public partial class ColorsAddComponent : PosComponentBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
-    [Parameter] public int? ColorsID { get; set; }
+    [Parameter] public int? Id { get; set; }
 
     protected ColorsDTO Colors { get; set; } = new();
     protected bool IsProcessing { get; set; } = false;
     protected bool IsLoading { get; set; } = false;
 
-    protected bool IsEditMode => ColorsID.HasValue && ColorsID.Value > 0;
+    protected bool IsEditMode => Id.HasValue && Id.Value > 0;
     protected string PageTitle => IsEditMode ? "Edit Colors" : "Add New Colors";
     protected string PageIcon => IsEditMode ? "edit" : "work";
 
@@ -34,14 +34,14 @@ public partial class ColorsAddComponent : PosComponentBase
         try
         {
             IsLoading = true;
-            var Colors = await _serviceUnitOfWork.ColorsService.GetColorsById(ColorsID!.Value);
-            if (Colors == null)
+            var result = await _serviceUnitOfWork.ColorsService.GetColorsById(Id!.Value);
+            if (result == null)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", "Colors not found.");
                 NavigationManager.NavigateTo("/ColorsList");
                 return;
             }
-            Colors = Colors;
+            Colors = result;
         }
         catch (Exception ex)
         {
