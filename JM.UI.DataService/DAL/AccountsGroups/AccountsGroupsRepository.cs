@@ -46,7 +46,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                 _logger.LogInformation("Starting to fetch AccountsGroups: {Id}", id);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"AccountsGroups/GetAccountsGroupsById/{id}");
+                var response = await httpClient.GetAsync($"AccountsGroups/get/{id}");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -95,7 +95,7 @@ namespace JM.UI.DataService.DAL.AccountsGroups
                 _logger.LogInformation("Starting to save AccountsGroups");
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.DeleteAsync($"AccountsGroups/DeleteAccountsGroups/{id}");
+                var response = await httpClient.DeleteAsync($"AccountsGroups/delete/{id}");
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();

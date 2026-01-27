@@ -11,7 +11,7 @@ namespace JM.UI.Client.Pages.AccountsGroups;
 public partial class AccountsGroupsAddComponent : PosComponentBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
-    [Parameter] public int? AccountsGroupsID { get; set; }
+    [Parameter] public int? Id { get; set; }
 
     protected AccountsGroupsDTO AccountsGroups { get; set; } = new();
     protected bool IsProcessing { get; set; } = false;
@@ -19,7 +19,7 @@ public partial class AccountsGroupsAddComponent : PosComponentBase
 
 
     protected List<StoreDTO> Stores { get; set; } = new();
-    protected bool IsEditMode => AccountsGroupsID.HasValue && AccountsGroupsID.Value > 0;
+    protected bool IsEditMode => Id.HasValue && Id.Value > 0;
     protected string PageTitle => IsEditMode ? "Edit AccountsGroups" : "Add New AccountsGroups";
     protected string PageIcon => IsEditMode ? "edit" : "work";
 
@@ -41,7 +41,7 @@ public partial class AccountsGroupsAddComponent : PosComponentBase
             IsLoading = true;
 
             var data = await _serviceUnitOfWork.AccountsGroupsService
-                .GetAccountsGroupsById(AccountsGroupsID!.Value);
+                .GetAccountsGroupsById(Id!.Value);
 
             if (data == null)
             {

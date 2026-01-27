@@ -1,12 +1,13 @@
-using JM.Infrastructure.Models;
-using JM.UI.Entities.Model.MesurementUnits;
-using JM.UI.Entities.Services;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Bank;
+using JM.UI.Entities.Model.MesurementUnits;
+using JM.UI.Entities.Services;
+using Microsoft.Extensions.Logging;
 
 namespace JM.UI.DataService.DAL.MesurementUnits
 {
@@ -59,20 +60,12 @@ namespace JM.UI.DataService.DAL.MesurementUnits
 
         public async Task<ResponseResult> SaveUpdateMesurementUnit(MesurementUnitModelDTO unit)
         {
-            try
-            {
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.PostAsJsonAsync("MesurementUnits/SaveUpdateMesurementUnit", unit);
                 response.EnsureSuccessStatusCode();
 
-                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
-                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving measurement unit");
-                throw;
-            }
+                return await response.Content.ReadFromJsonAsync<ResponseResult>() ?? new() { IsSuccessStatus = false };
+
         }
 
         public async Task DeleteMesurementUnit(int id)

@@ -1,9 +1,10 @@
-using JM.Infrastructure.Models;
-using JM.UI.DataService.DAL.UnitOfWork;
-using JM.UI.Entities.Model.MesurementUnits;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using JM.Infrastructure.Models;
+using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.Entities.Model.Bank;
+using JM.UI.Entities.Model.MesurementUnits;
 
 namespace JM.UI.Service.MesurementUnits
 {
@@ -42,14 +43,8 @@ namespace JM.UI.Service.MesurementUnits
 
         public async Task<ResponseResult> SaveUpdateMesurementUnit(MesurementUnitModelDTO unit)
         {
-            try
-            {
                 return await _unitOfWork.MesurementUnitRepository.SaveUpdateMesurementUnit(unit);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
-            }
+            
         }
 
         public async Task<ResponseResult> DeleteMesurementUnit(int id)

@@ -77,7 +77,7 @@ namespace JM.UI.Client.Pages.MesurementUnits
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save unit: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Already Exist");
             }
             finally
             {
