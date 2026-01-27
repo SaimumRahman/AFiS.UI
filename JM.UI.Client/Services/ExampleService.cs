@@ -10,7 +10,7 @@ namespace JM.UI.Client.Services
         private readonly Example[] allExamples = new[]
         {
            
-            // 1. Dashboard / Home
+            // 1. Dashboard / HomeA
            
             new Example
             {
@@ -223,15 +223,15 @@ namespace JM.UI.Client.Services
                         Description = "Assign users to security groups",
                         Tags = new[] { "user", "group", "assignment", "access" }
                     },
-                    new Example
-                    {
-                        Name = "Action",
-                        Path = "/ActionList",
-                        Icon = "\ue7fd",
-                        Title = "User Action List",
-                        Description = "Create Action for Groups",
-                        Tags = new[] { "user", "group", "assignment", "action" }
-                    },
+                    //new Example
+                    //{
+                    //    Name = "Action",
+                    //    Path = "/ActionList",
+                    //    Icon = "\ue7fd",
+                    //    Title = "User Action List",
+                    //    Description = "Create Action for Groups",
+                    //    Tags = new[] { "user", "group", "assignment", "action" }
+                    //},
                     //new Example
                     //{
                     //    Name = "Menu",
@@ -244,7 +244,7 @@ namespace JM.UI.Client.Services
                     new Example
                     {
                         Name = "Route Permission",
-                        Path = "/GroupRoutePermissionList",
+                        Path = "/GroupRoutePermissionAdd",
                         Icon = "\ue7fd",
                         Title = "User Action List",
                         Description = "Create Action for Groups",

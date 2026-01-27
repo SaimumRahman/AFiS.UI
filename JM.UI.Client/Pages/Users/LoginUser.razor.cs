@@ -82,7 +82,7 @@ namespace JM.UI.Client.Pages.Users
                         }
                         var permissions = await serviceUnitOfWork.GroupRoutePermissionService.GetRouteListByUserId(response.UserId);
 
-                        await sessionStorage.SetAsync(
+                        await _localStorage.SetAsync(
                             "Permissions",
                             JsonConvert.SerializeObject(permissions)
                         );
