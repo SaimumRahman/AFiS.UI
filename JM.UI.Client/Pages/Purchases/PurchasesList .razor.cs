@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Purchases
 {
-    public partial class PurchasesListComponent : PosComponentBase, IDisposable
+    public partial class PurchaseListComponent : PosComponentBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-        protected RadzenDataGrid<PurchaseModelDTO> PurchasesGrid = default!;
-        protected IEnumerable<PurchaseModelDTO> PurchasesList = new List<PurchaseModelDTO>();
-        protected bool IsLoading;
+        protected RadzenDataGrid<PurchaseSummaryDTO> PurchasesGrid = default!;
+        protected IEnumerable<PurchaseSummaryDTO> Purchases { get; set; } = new List<PurchaseSummaryDTO>();
+        protected bool IsLoading { get; set; } = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -24,12 +24,12 @@ namespace JM.UI.Client.Pages.Purchases
             await LoadPurchases();
         }
 
-        protected async Task LoadPurchases()
+        private async Task LoadPurchases()
         {
             try
             {
                 IsLoading = true;
-                PurchasesList = await _serviceUnitOfWork.PurchaseService.GetPurchases();
+                Purchases = await _serviceUnitOfWork.PurchaseService.GetAllPurchases();
             }
             catch (Exception ex)
             {
@@ -44,28 +44,44 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void AddPurchase()
         {
-            NavigationManager.NavigateTo("/PurchasesAdd");
+            NavigationManager.NavigateTo("/PurchaseEntry");
         }
 
-        protected void EditPurchase(PurchaseModelDTO purchase)
+        protected void EditPurchase(PurchaseSummaryDTO purchase)
         {
-            NavigationManager.NavigateTo($"/PurchasesAdd/{purchase.Id}");
+            NavigationManager.NavigateTo($"/PurchaseEntry/{purchase.Id}");
         }
 
-        protected async Task DeletePurchase(PurchaseModelDTO purchase)
+        protected void ViewPurchase(PurchaseSummaryDTO purchase)
         {
-            var confirm = await dialogService.Confirm($"Are you sure you want to delete Purchase ID #{purchase.Id}?", "Confirm Delete");
+            NavigationManager.NavigateTo($"/PurchaseEntry/{purchase.Id}");
+        }
+
+        protected async Task DeletePurchase(PurchaseSummaryDTO purchase)
+        {
+            var confirm = await dialogService.Confirm(
+                $"Are you sure you want to delete purchase '{purchase.BillInvoiceNumber}'?",
+                "Confirm Delete",
+                new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" });
 
             if (confirm == true)
             {
                 var result = await _serviceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
-
-                notificationService.Notify(result.IsSuccessStatus ? NotificationSeverity.Success : NotificationSeverity.Error,
-                    result.IsSuccessStatus ? "Success" : "Error", result.Message);
-
                 if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success", result.Message ?? "Purchase deleted successfully.");
                     await LoadPurchases();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message ?? "Failed to delete purchase.");
+                }
             }
+        }
+
+        protected void ShowTooltip(ElementReference elementReference, string text)
+        {
+            TooltipService.Open(elementReference, text, new TooltipOptions { Position = TooltipPosition.Top });
         }
 
         public void Dispose()

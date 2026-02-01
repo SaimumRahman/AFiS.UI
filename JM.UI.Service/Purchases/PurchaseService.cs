@@ -1,5 +1,6 @@
 using JM.Infrastructure.Models;
 using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
 using System;
 using System.Collections.Generic;
@@ -9,60 +10,180 @@ namespace JM.UI.Service.Purchases
 {
     public class PurchaseService : IPurchaseService
     {
-        private readonly IRepositoryUnitOfWork _unitOfWork;
+        private readonly IRepositoryUnitOfWork _repositoryUnitOfWork;
 
-        public PurchaseService(IRepositoryUnitOfWork unitOfWork)
+        public PurchaseService(IRepositoryUnitOfWork repositoryUnitOfWork)
+            => _repositoryUnitOfWork = repositoryUnitOfWork;
+
+        // =============================================
+        // Get All Purchases
+        // =============================================
+        public async Task<IEnumerable<PurchaseSummaryDTO>> GetAllPurchases()
         {
-            _unitOfWork = unitOfWork;
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchases();
         }
 
-        public async Task<IEnumerable<PurchaseModelDTO>> GetPurchases()
+        // =============================================
+        // Get Purchase By Id
+        // =============================================
+        public async Task<PurchaseDTO?> GetPurchaseById(int id)
         {
-            try
-            {
-                return await _unitOfWork.PurchaseRepository.GetPurchases();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchaseById(id);
         }
 
-        public async Task<PurchaseModelDTO?> GetPurchaseById(int id)
+        // =============================================
+        // Save/Update Purchase
+        // =============================================
+        public async Task<ResponseResult> SaveUpdatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items)
         {
-            try
+            var validation = await ValidatePurchase(purchase, items);
+            if (!validation.IsValid)
             {
-                return await _unitOfWork.PurchaseRepository.GetPurchaseById(id);
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = validation.ErrorMessage
+                };
             }
-            catch (Exception)
+
+            // Calculate totals
+            purchase.TotalAmount = CalculatePurchaseTotal(items);
+            purchase.NetAmount = purchase.TotalAmount - (purchase.DiscountAmount ?? 0) + (purchase.VatAmount ?? 0);
+            purchase.DueAmount = purchase.NetAmount - (purchase.PaidAmount ?? 0);
+
+            if (purchase.Id == 0)
             {
-                throw;
+                purchase.CreatedDate = DateTime.Now;
             }
+            else
+            {
+                purchase.LastModifiedDate = DateTime.Now;
+            }
+
+            return await _repositoryUnitOfWork.PurchaseRepository.SaveUpdatePurchase(purchase, items);
         }
 
-        public async Task<ResponseResult> SaveUpdatePurchase(PurchaseModelDTO purchase)
-        {
-            try
-            {
-                return await _unitOfWork.PurchaseRepository.SaveUpdatePurchase(purchase);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
-            }
-        }
-
+        // =============================================
+        // Delete Purchase
+        // =============================================
         public async Task<ResponseResult> DeletePurchase(int id)
         {
             try
             {
-                await _unitOfWork.PurchaseRepository.DeletePurchase(id);
-                return new ResponseResult { IsSuccessStatus = true, Message = "Purchase deleted successfully." };
+                await _repositoryUnitOfWork.PurchaseRepository.DeletePurchase(id);
+                return new ResponseResult
+                {
+                    IsSuccessStatus = true,
+                    Message = "Purchase deleted successfully!"
+                };
             }
             catch (Exception ex)
             {
-                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = $"Failed to delete purchase: {ex.Message}"
+                };
             }
+        }
+
+        // =============================================
+        // Generate Barcode
+        // =============================================
+        public async Task<string> GenerateBarcode(BarcodeGenerationRequestDTO request)
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository.GenerateBarcode(request);
+        }
+
+        // =============================================
+        // Search By Barcode
+        // =============================================
+        public async Task<BarcodeSearchResponseDTO> SearchByBarcode(string barcode)
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository.SearchByBarcode(barcode);
+        }
+
+        // =============================================
+        // Validate Purchase
+        // =============================================
+        public Task<(bool IsValid, string ErrorMessage)> ValidatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items)
+        {
+            if (purchase.SupplierId == null || purchase.SupplierId <= 0)
+                return Task.FromResult((false, "Supplier is required."));
+
+            if (purchase.PurchaseDate == default)
+                return Task.FromResult((false, "Purchase date is required."));
+
+            if (purchase.StoreId == null || purchase.StoreId <= 0)
+                return Task.FromResult((false, "Store is required."));
+
+            if (items == null || !items.Any())
+                return Task.FromResult((false, "At least one item is required."));
+
+            foreach (var item in items)
+            {
+                if (item.ItemId <= 0)
+                    return Task.FromResult((false, "Please select a valid item."));
+
+                if (item.Quantity <= 0)
+                    return Task.FromResult((false, "Quantity must be greater than 0."));
+
+                if (item.PurchasePrice <= 0)
+                    return Task.FromResult((false, "Purchase price must be greater than 0."));
+
+                if (item.IsSaleable && (!item.SalePrice.HasValue || item.SalePrice.Value <= 0))
+                    return Task.FromResult((false, $"Item '{item.ItemName}' is marked as saleable but has no sale price."));
+
+                if (item.IsSaleable && item.SalePrice.HasValue && item.SalePrice.Value <= item.PurchasePrice)
+                    return Task.FromResult((false, $"Sale price for '{item.ItemName}' must be greater than purchase price."));
+
+                if (string.IsNullOrWhiteSpace(item.Barcode))
+                    return Task.FromResult((false, $"Barcode is required for item '{item.ItemName}'."));
+            }
+
+            return Task.FromResult((true, string.Empty));
+        }
+
+        // =============================================
+        // Create New Purchase
+        // =============================================
+        public PurchaseDTO CreateNewPurchase()
+        {
+            return new PurchaseDTO
+            {
+                PurchaseDate = DateTime.Now,
+                IsActive = true,
+                IsVatIncluded = false,
+                PurchaseItems = new List<PurchaseItemDTO>()
+            };
+        }
+
+        // =============================================
+        // Calculate Item Total
+        // =============================================
+        public decimal CalculateItemTotal(PurchaseItemDTO item)
+        {
+            decimal baseAmount = item.Quantity * item.PurchasePrice;
+            decimal otherCosts = (item.OtherCost ?? 0) + (item.CarryingCost ?? 0) + (item.OperationalCost ?? 0);
+            decimal subtotal = baseAmount + otherCosts;
+
+            // VAT Calculation
+            if (item.VatPercentage.HasValue && item.VatPercentage.Value > 0)
+            {
+                item.VatAmount = subtotal * (item.VatPercentage.Value / 100);
+                subtotal += item.VatAmount.Value;
+            }
+
+            item.TotalAmount = subtotal;
+            return item.TotalAmount;
+        }
+
+        // =============================================
+        // Calculate Purchase Total
+        // =============================================
+        public decimal CalculatePurchaseTotal(List<PurchaseItemDTO> items)
+        {
+            return items.Sum(x => x.TotalAmount);
         }
     }
 }

@@ -1,17 +1,18 @@
-@page "/PurchasesList"
+@page "/PurchaseList"
 @using JM.UI.Entities.Model.Purchases
+@inherits PurchaseListComponent
 @attribute [Authorize]
-@inherits PurchasesListComponent
 
-<PageTitle>Purchases</PageTitle>
+<PageTitle>Purchase List</PageTitle>
 
 <RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchases</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
@@ -26,45 +27,140 @@
         </RadzenRow>
     </RadzenCard>
 
+    <!-- Data Grid Card -->
     <RadzenCard>
         <RadzenDataGrid @ref="PurchasesGrid"
-                        Data="@PurchasesList"
-                        TItem="PurchaseModelDTO"
+                        Data="@Purchases"
+                        TItem="PurchaseSummaryDTO"
                         AllowFiltering="true"
                         AllowColumnResize="true"
                         AllowAlternatingRows="true"
                         AllowPaging="true"
                         AllowSorting="true"
                         PagerHorizontalAlign="HorizontalAlign.Center"
-                        PageSize="15"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
                         FilterMode="FilterMode.Advanced"
                         ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
                         IsLoading="@IsLoading"
                         GridLines="DataGridGridLines.Both"
                         Density="Density.Compact">
 
             <Columns>
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="Id" Visible="false" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="PurchaseDate" Title="Date" Width="100px" FormatString="{0:d}" />
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="SupplierName" Title="Supplier" Width="150px" />
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="StoreName" Title="Store" Width="150px" />
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="InvoiceNo" Title="Invoice No" Width="120px" />
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Property="NetTotal" Title="Net Total" Width="100px" FormatString="{0:C}" TextAlign="TextAlign.Right" />
-                
-                <RadzenDataGridColumn TItem="PurchaseModelDTO" Title="Actions" Width="100px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                <!-- Bill Invoice Number -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="BillInvoiceNumber" Title="Invoice #" Width="140px" Frozen="true">
+                    <Template Context="purchase">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="receipt" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @(purchase.BillInvoiceNumber ?? "N/A")
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Supplier Name -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="SupplierName" Title="Supplier" Width="180px">
+                    <Template Context="purchase">
+                        @(purchase.SupplierName ?? "N/A")
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Purchase Date -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="PurchaseDate" Title="Date" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="purchase">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @purchase.PurchaseDate.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Store Name -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="StoreName" Title="Store" Width="140px">
+                    <Template Context="purchase">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                     Text="@(purchase.StoreName ?? "N/A")"
+                                     Icon="store" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Total Items -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="TotalItems" Title="Items" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="purchase">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
+                                     Text="@purchase.TotalItems.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Total Quantity -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="TotalQuantity" Title="Total Qty" Width="100px" TextAlign="TextAlign.Right">
+                    <Template Context="purchase">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @purchase.TotalQuantity.ToString("N2")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Net Amount -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="NetAmount" Title="Net Amount" Width="130px" TextAlign="TextAlign.Right">
+                    <Template Context="purchase">
+                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600; color: var(--rz-success);">
+                            @purchase.NetAmount.ToString("C")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Paid Amount -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="PaidAmount" Title="Paid" Width="120px" TextAlign="TextAlign.Right">
+                    <Template Context="purchase">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @(purchase.PaidAmount?.ToString("C") ?? "0.00")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Due Amount -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="DueAmount" Title="Due" Width="120px" TextAlign="TextAlign.Right">
+                    <Template Context="purchase">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="@(purchase.DueAmount > 0 ? "color: var(--rz-danger); font-weight: 600;" : "")">
+                            @(purchase.DueAmount?.ToString("C") ?? "0.00")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="IsActive" Title="Status" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="purchase">
+                        <RadzenBadge BadgeStyle="@(purchase.IsActive? BadgeStyle.Success: BadgeStyle.Danger)"
+                                     Text="@(purchase.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Title="Actions" Width="180px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="purchase">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="visibility"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ViewPurchase(purchase))"
+                                          MouseEnter="@(args => ShowTooltip(args, "View Purchase"))" />
+
                             <RadzenButton Icon="edit"
                                           ButtonStyle="ButtonStyle.Info"
                                           Size="ButtonSize.Small"
                                           Variant="Variant.Flat"
-                                          Click="@(() => EditPurchase(purchase))" />
+                                          Click="@(() => EditPurchase(purchase))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Purchase"))" />
 
                             <RadzenButton Icon="delete"
                                           ButtonStyle="ButtonStyle.Danger"
                                           Size="ButtonSize.Small"
                                           Variant="Variant.Flat"
-                                          Click="@(() => DeletePurchase(purchase))" />
+                                          Click="@(() => DeletePurchase(purchase))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Purchase"))" />
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
