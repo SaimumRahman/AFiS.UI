@@ -35,7 +35,7 @@
         <RadzenCard>
             <RadzenDataGrid @ref="ItemsGrid" 
                             Data="@ItemsList" 
-                            TItem="ItemModelDTO" 
+                            TItem="ItemDTO" 
                             AllowFiltering="true" 
                             AllowColumnResize="true"
                             AllowAlternatingRows="true"
@@ -52,17 +52,17 @@
                             Density="Density.Compact"
                             Responsive="true">
                 <Columns>
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Name" Title="Name" Width="200px" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SubGroupName" Title="SubGroup" Width="150px" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="MesurementUnitName" Title="Unit" Width="100px" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SupplierName" Title="Supplier" Width="150px" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Property="Barcode" Title="Barcode" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="Name" Title="Name" Width="200px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="SubGroupName" Title="SubGroup" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="MesurementUnitName" Title="Unit" Width="100px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="SupplierName" Title="Supplier" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="Barcode" Title="Barcode" Width="150px" />
                     
-                    <RadzenDataGridColumn TItem="ItemModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <RadzenDataGridColumn TItem="ItemDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="item">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                 <RadzenButton Icon="edit" 

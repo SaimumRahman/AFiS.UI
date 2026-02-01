@@ -7,9 +7,9 @@ namespace JM.UI.Service.Items
 {
     public interface IItemService
     {
-        Task<IEnumerable<ItemModelDTO>> GetItems();
-        Task<ItemModelDTO?> GetItemById(int id);
-        Task<ResponseResult> SaveUpdateItem(ItemModelDTO item);
+        Task<IEnumerable<ItemDTO>> GetItems();
+        Task<ItemDTO?> GetItemById(int id);
+        Task<ResponseResult> SaveUpdateItem(ItemDTO item);
         Task<ResponseResult> DeleteItem(int id);
     }
 }

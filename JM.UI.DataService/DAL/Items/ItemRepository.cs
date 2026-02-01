@@ -20,7 +20,7 @@ namespace JM.UI.DataService.DAL.Items
         {
         }
 
-        public async Task<IEnumerable<ItemModelDTO>> GetItems()
+        public async Task<IEnumerable<ItemDTO>> GetItems()
         {
             try
             {
@@ -28,8 +28,8 @@ namespace JM.UI.DataService.DAL.Items
                 var response = await httpClient.GetAsync("Items/GetAllItems");
                 response.EnsureSuccessStatusCode();
 
-                var items = await response.Content.ReadFromJsonAsync<List<ItemModelDTO>>();
-                return items ?? new List<ItemModelDTO>();
+                var items = await response.Content.ReadFromJsonAsync<List<ItemDTO>>();
+                return items ?? new List<ItemDTO>();
             }
             catch (Exception ex)
             {
@@ -38,7 +38,7 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
-        public async Task<ItemModelDTO?> GetItemById(int id)
+        public async Task<ItemDTO?> GetItemById(int id)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace JM.UI.DataService.DAL.Items
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                return await response.Content.ReadFromJsonAsync<ItemModelDTO>();
+                return await response.Content.ReadFromJsonAsync<ItemDTO>();
             }
             catch (Exception ex)
             {
@@ -57,7 +57,7 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
-        public async Task<ResponseResult> SaveUpdateItem(ItemModelDTO item)
+        public async Task<ResponseResult> SaveUpdateItem(ItemDTO item)
         {
             try
             {

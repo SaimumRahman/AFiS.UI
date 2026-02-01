@@ -14,8 +14,8 @@ namespace JM.UI.Client.Pages.Items
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-        protected RadzenDataGrid<ItemModelDTO> ItemsGrid = default!;
-        protected IEnumerable<ItemModelDTO> ItemsList = new List<ItemModelDTO>();
+        protected RadzenDataGrid<ItemDTO> ItemsGrid = default!;
+        protected IEnumerable<ItemDTO> ItemsList = new List<ItemDTO>();
         protected bool IsLoading;
 
         protected override async Task OnInitializedAsync()
@@ -47,12 +47,12 @@ namespace JM.UI.Client.Pages.Items
             NavigationManager.NavigateTo("/ItemsAdd");
         }
 
-        protected void EditItem(ItemModelDTO item)
+        protected void EditItem(ItemDTO item)
         {
             NavigationManager.NavigateTo($"/ItemsAdd/{item.Id}");
         }
 
-        protected async Task DeleteItem(ItemModelDTO item)
+        protected async Task DeleteItem(ItemDTO item)
         {
             var confirm = await dialogService.Confirm($"Are you sure you want to delete Item '{item.Name}'?", "Confirm Delete");
 

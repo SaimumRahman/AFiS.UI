@@ -1,5 +1,12 @@
+using JM.UI.Entities.Model.Colors;
+using JM.UI.Entities.Model.Groups;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
+using JM.UI.Entities.Model.Sizes;
+using JM.UI.Entities.Model.Stores;
+using JM.UI.Entities.Model.SubGroups;
+using JM.UI.Entities.Model.Suppliers;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -20,13 +27,13 @@ namespace JM.UI.Client.Pages.Purchases
         protected PurchaseItemDTO CurrentItem { get; set; } = new();
 
         // Lookup Data
-        protected IEnumerable<dynamic> Suppliers { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> Stores { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> Groups { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> SubGroups { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> Items { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> Colors { get; set; } = new List<dynamic>();
-        protected IEnumerable<dynamic> Sizes { get; set; } = new List<dynamic>();
+        protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
+        protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
+        protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
+        protected IEnumerable<SubGroupModelDTO> SubGroups { get; set; } = new List<SubGroupModelDTO>();
+        protected IEnumerable<ItemDTO> Items { get; set; } = new List<ItemDTO>();
+        protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
+        protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
 
         // UI State
         protected bool IsProcessing { get; set; } = false;
@@ -135,34 +142,34 @@ namespace JM.UI.Client.Pages.Purchases
         // =============================================
         // Lookup Load Methods (Implement based on your services)
         // =============================================
-        private async Task<IEnumerable<dynamic>> LoadSuppliers()
+        private async Task<IEnumerable<SupplierModelDTO>> LoadSuppliers()
         {
             // Implement supplier loading
-            return new List<dynamic>();
+            return await _serviceUnitOfWork.SupplierService.GetSuppliers();
         }
 
-        private async Task<IEnumerable<dynamic>> LoadStores()
+        private async Task<IEnumerable<StoreDTO>> LoadStores()
         {
             // Implement store loading
-            return new List<dynamic>();
+            return await _serviceUnitOfWork.StoreService.GetStores();
         }
 
-        private async Task<IEnumerable<dynamic>> LoadGroups()
+        private async Task<IEnumerable<GroupModelDTO>> LoadGroups()
         {
             // Implement group loading
-            return new List<dynamic>();
+            return await _serviceUnitOfWork.GroupService.GetGroups();
         }
 
-        private async Task<IEnumerable<dynamic>> LoadColors()
+        private async Task<IEnumerable<ColorsDTO>> LoadColors()
         {
             // Implement color loading
-            return new List<dynamic>();
+            return await _serviceUnitOfWork.ColorsService.GetColorss();
         }
 
-        private async Task<IEnumerable<dynamic>> LoadSizes()
+        private async Task<IEnumerable<SizesDTO>> LoadSizes()
         {
             // Implement size loading
-            return new List<dynamic>();
+            return  await _serviceUnitOfWork.SizesService.GetSizess();
         }
 
         // =============================================
@@ -174,7 +181,7 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 var groupId = Convert.ToInt32(value);
                 SubGroups = await LoadSubGroupsByGroup(groupId);
-                Items = new List<dynamic>();
+                Items = new List<ItemDTO>();
             }
         }
 
@@ -202,16 +209,16 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        private async Task<IEnumerable<dynamic>> LoadSubGroupsByGroup(int groupId)
+        private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
         {
             // Implement subgroup loading by group
-            return new List<dynamic>();
+            return new List<SubGroupModelDTO>();
         }
 
-        private async Task<IEnumerable<dynamic>> LoadItemsBySubGroup(int subGroupId)
+        private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)
         {
             // Implement items loading by subgroup
-            return new List<dynamic>();
+            return new List<ItemDTO>();
         }
 
         private async Task<dynamic?> LoadItemDetails(int itemId)
@@ -298,7 +305,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem = CreateNewItem();
 
             // Recalculate purchase totals
-            CalculateTotals();
+            CalculateTotals(CurrentItem);
 
             notificationService.Notify(NotificationSeverity.Success, "Success", "Item added to purchase!");
             StateHasChanged();
@@ -314,7 +321,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected void DeleteItem(PurchaseItemDTO item)
         {
             PurchaseItems.Remove(item);
-            CalculateTotals();
+            CalculateTotals(item);
             notificationService.Notify(NotificationSeverity.Success, "Success", "Item removed from purchase!");
             StateHasChanged();
         }

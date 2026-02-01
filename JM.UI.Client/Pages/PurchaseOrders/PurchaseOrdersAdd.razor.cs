@@ -19,7 +19,7 @@ namespace JM.UI.Client.Pages.PurchaseOrders
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         
         // Line Item Lookups
-        protected IEnumerable<JM.UI.Entities.Model.Items.ItemModelDTO> ItemsList = new List<JM.UI.Entities.Model.Items.ItemModelDTO>();
+        protected IEnumerable<JM.UI.Entities.Model.Items.ItemDTO> ItemsList = new List<JM.UI.Entities.Model.Items.ItemDTO>();
         protected IEnumerable<JM.UI.Entities.Model.Colors.ColorsDTO> ColorsList = new List<JM.UI.Entities.Model.Colors.ColorsDTO>();
         protected IEnumerable<JM.UI.Entities.Model.Sizes.SizesDTO> SizesList = new List<JM.UI.Entities.Model.Sizes.SizesDTO>();
 

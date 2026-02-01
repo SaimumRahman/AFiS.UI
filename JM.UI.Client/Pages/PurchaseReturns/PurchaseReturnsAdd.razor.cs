@@ -27,7 +27,7 @@ namespace JM.UI.Client.Pages.PurchaseReturns
         protected IEnumerable<VoucherModelDTO> Vouchers { get; set; } = new List<VoucherModelDTO>();
         
         // Line Item Lookups
-        protected IEnumerable<ItemModelDTO> ItemsList = new List<ItemModelDTO>();
+        protected IEnumerable<ItemDTO> ItemsList = new List<ItemDTO>();
         protected IEnumerable<ColorsDTO> ColorsList = new List<ColorsDTO>();
         protected IEnumerable<SizesDTO> SizesList = new List<SizesDTO>();
 

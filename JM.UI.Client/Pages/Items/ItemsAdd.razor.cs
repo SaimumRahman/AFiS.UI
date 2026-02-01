@@ -6,9 +6,6 @@ using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Items
 {
@@ -18,7 +15,7 @@ namespace JM.UI.Client.Pages.Items
 
         [Parameter] public int? Id { get; set; }
 
-        protected ItemModelDTO Item { get; set; } = new();
+        protected ItemDTO Item { get; set; } = new();
         protected IEnumerable<SubGroupModelDTO> SubGroupsList = new List<SubGroupModelDTO>();
         protected IEnumerable<MesurementUnitModelDTO> MeasurementUnitsList = new List<MesurementUnitModelDTO>();
         protected IEnumerable<SupplierModelDTO> SuppliersList = new List<SupplierModelDTO>();

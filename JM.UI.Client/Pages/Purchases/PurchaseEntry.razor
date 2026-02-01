@@ -462,7 +462,7 @@
                         <RadzenStack Gap="0.25rem">
                             <RadzenLabel Text="Paid Amount" Component="PaidAmount" />
                             <RadzenNumeric @bind-Value="Purchase.PaidAmount"
-                                           Change="@((decimal? _) => CalculateTotals(CurrentItem))"
+                                          Change="@((decimal? _) => CalculateTotals(CurrentItem))"
                                            Min="0"
                                            Format="c"
                                            Style="width: 100%;" />

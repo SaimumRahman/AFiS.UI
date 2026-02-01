@@ -16,17 +16,17 @@ namespace JM.UI.Service.Items
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<ItemModelDTO>> GetItems()
+        public async Task<IEnumerable<ItemDTO>> GetItems()
         {
             return await _unitOfWork.ItemRepository.GetItems();
         }
 
-        public async Task<ItemModelDTO?> GetItemById(int id)
+        public async Task<ItemDTO?> GetItemById(int id)
         {
             return await _unitOfWork.ItemRepository.GetItemById(id);
         }
 
-        public async Task<ResponseResult> SaveUpdateItem(ItemModelDTO item)
+        public async Task<ResponseResult> SaveUpdateItem(ItemDTO item)
         {
             return await _unitOfWork.ItemRepository.SaveUpdateItem(item);
         }
