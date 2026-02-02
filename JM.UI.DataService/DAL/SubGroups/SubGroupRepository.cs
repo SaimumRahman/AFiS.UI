@@ -56,6 +56,25 @@ namespace JM.UI.DataService.DAL.SubGroups
                 throw;
             }
         }
+        public async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"SubGroups/GetSubGroupByGroupId/{groupId}");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var subGroups = await response.Content.ReadFromJsonAsync<List<SubGroupModelDTO>>();
+                return subGroups ?? new List<SubGroupModelDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sub-group by ID: {Id}", groupId);
+                throw;
+            }
+        }
 
         public async Task<ResponseResult> SaveUpdateSubGroup(SubGroupModelDTO subGroup)
         {

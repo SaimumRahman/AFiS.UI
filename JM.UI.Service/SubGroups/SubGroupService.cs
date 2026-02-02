@@ -39,6 +39,17 @@ namespace JM.UI.Service.SubGroups
                 throw;
             }
         }
+        public async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
+        {
+            try
+            {
+                return await _unitOfWork.SubGroupRepository.LoadSubGroupsByGroup(groupId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
         public async Task<ResponseResult> SaveUpdateSubGroup(SubGroupModelDTO subGroup)
         {

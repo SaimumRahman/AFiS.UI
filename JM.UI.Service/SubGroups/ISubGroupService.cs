@@ -9,6 +9,8 @@ namespace JM.UI.Service.SubGroups
     {
         Task<IEnumerable<SubGroupModelDTO>> GetSubGroups();
         Task<SubGroupModelDTO?> GetSubGroupById(int id);
+        //Task<SubGroupModelDTO?> GetSubGroupByGroupId(int id);
+        Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId);
         Task<ResponseResult> SaveUpdateSubGroup(SubGroupModelDTO subGroup);
         Task<ResponseResult> DeleteSubGroup(int id);
     }

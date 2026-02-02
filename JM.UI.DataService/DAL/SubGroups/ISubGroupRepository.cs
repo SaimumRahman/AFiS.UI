@@ -9,6 +9,7 @@ namespace JM.UI.DataService.DAL.SubGroups
     {
         Task<IEnumerable<SubGroupModelDTO>> GetSubGroups();
         Task<SubGroupModelDTO?> GetSubGroupById(int id);
+        Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId);
         Task<ResponseResult> SaveUpdateSubGroup(SubGroupModelDTO subGroup);
         Task DeleteSubGroup(int id);
     }
