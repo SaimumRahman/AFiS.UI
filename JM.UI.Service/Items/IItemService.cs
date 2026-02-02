@@ -9,6 +9,7 @@ namespace JM.UI.Service.Items
     {
         Task<IEnumerable<ItemDTO>> GetItems();
         Task<ItemDTO?> GetItemById(int id);
+        Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
         Task<ResponseResult> SaveUpdateItem(ItemDTO item);
         Task<ResponseResult> DeleteItem(int id);
     }

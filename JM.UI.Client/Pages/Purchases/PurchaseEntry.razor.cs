@@ -211,17 +211,16 @@ namespace JM.UI.Client.Pages.Purchases
 
         private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
         {
-            // Implement subgroup loading by group
             return await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId);
-           // return new List<SubGroupModelDTO>();
+          
         }
 
         private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)
         {
             // Implement items loading by subgroup
-            //return await _serviceUnitOfWork.ItemService.GetItemById();
+            return await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId);
 
-            return new List<ItemDTO>();
+            //return new List<ItemDTO>();
         }
 
         private async Task<dynamic?> LoadItemDetails(int itemId)

@@ -1,12 +1,13 @@
-using JM.Infrastructure.Models;
-using JM.UI.Entities.Model.Items;
-using JM.UI.Entities.Services;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.SubGroups;
+using JM.UI.Entities.Services;
+using Microsoft.Extensions.Logging;
 
 namespace JM.UI.DataService.DAL.Items
 {
@@ -89,5 +90,25 @@ namespace JM.UI.DataService.DAL.Items
                 throw;
             }
         }
+        public async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Items/GetItemsBySubGroupId/{subGroupId}");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var subGroups = await response.Content.ReadFromJsonAsync<List<ItemDTO>>();
+                return subGroups ?? new List<ItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sub-group by ID: {Id}", subGroupId);
+                throw;
+            }
+        }
+
     }
 }
