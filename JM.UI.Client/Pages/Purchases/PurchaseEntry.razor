@@ -158,9 +158,35 @@
                 <RadzenRow Gap="1rem">
                     @if (!DisableItemFields)
                     {
+                        <!-- Group (always visible) -->
+                        <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
+                            <RadzenLabel Text="Group *" />
+                            <RadzenDropDown @bind-Value="CurrentItem.GroupId"
+                                            Data="@Groups"
+                                            TextProperty="Name"
+                                            ValueProperty="Id"
+                                            Placeholder="Select Group"
+                                            Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
+                                            Style="width: 100%"
+                                            Disabled="@IsProcessing" />
+                        </RadzenColumn>
+
+                        <!-- Sub-Group (always visible) -->
+                        <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
+                            <RadzenLabel Text="Sub-Group *" />
+                            <RadzenDropDown @bind-Value="CurrentItem.SubGroupId"
+                                            Data="@SubGroups"
+                                            TextProperty="Name"
+                                            ValueProperty="Id"
+                                            Placeholder="Select Sub-Group"
+                                            Change="@(args => OnSubGroupChanged(CurrentItem.SubGroupId))"
+                                            Style="width: 100%"
+                                            Disabled="@IsProcessing" />
+                        </RadzenColumn>
+
                         @if (IsNewItemMode)
                         {
-                            <!-- New Item Creation Fields -->
+                            <!-- New Item Name -->
                             <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
                                 <RadzenLabel Text="Item Name *" />
                                 <RadzenTextBox @bind-Value="CurrentItem.ItemName"
@@ -172,30 +198,6 @@
                         else
                         {
                             <!-- Existing Item Selection -->
-                            <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
-                                <RadzenLabel Text="Group *" />
-                                <RadzenDropDown @bind-Value="CurrentItem.GroupId"
-                                                Data="@Groups"
-                                                TextProperty="Name"
-                                                ValueProperty="Id"
-                                                Placeholder="Select Group"
-                                                Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
-                                                Style="width: 100%"
-                                                Disabled="@IsProcessing" />
-                            </RadzenColumn>
-
-                            <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
-                                <RadzenLabel Text="Sub-Group *" />
-                                <RadzenDropDown @bind-Value="CurrentItem.SubGroupId"
-                                                Data="@SubGroups"
-                                                TextProperty="Name"
-                                                ValueProperty="Id"
-                                                Placeholder="Select Sub-Group"
-                                                Change="@(args => OnSubGroupChanged(CurrentItem.SubGroupId))"
-                                                Style="width: 100%"
-                                                Disabled="@IsProcessing" />
-                            </RadzenColumn>
-
                             <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
                                 <RadzenLabel Text="Item *" />
                                 <RadzenDropDown @bind-Value="CurrentItem.ItemId"
@@ -220,6 +222,7 @@
                         </RadzenColumn>
                     }
 
+                    <!-- Barcode (unchanged) -->
                     <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                         <RadzenLabel Text="Barcode *" />
                         <RadzenTextBox @bind-Value="CurrentItem.Barcode"
@@ -227,6 +230,7 @@
                                        Placeholder="Barcode"
                                        ReadOnly="true" />
                     </RadzenColumn>
+
                 </RadzenRow>
 
                 <!-- Additional Fields Row 1 -->

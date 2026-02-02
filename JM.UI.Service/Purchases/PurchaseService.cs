@@ -122,8 +122,6 @@ namespace JM.UI.Service.Purchases
 
             foreach (var item in items)
             {
-                if (item.ItemId <= 0)
-                    return Task.FromResult((false, "Please select a valid item."));
 
                 if (item.Quantity <= 0)
                     return Task.FromResult((false, "Quantity must be greater than 0."));
