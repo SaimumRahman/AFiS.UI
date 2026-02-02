@@ -5,8 +5,6 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int Id { get; set; }
         public int PurchaseId { get; set; }
         public int ItemId { get; set; }
-        public int GroupId { get; set; }
-        public int SubGroupId { get; set; }
         public string? ItemName { get; set; }
         public string? GroupName { get; set; }
         public string? SubGroupName { get; set; }
@@ -30,6 +28,20 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string? ProductType { get; set; } // SellProduct, RawMaterial, Both, Consume, ComboPackage
         public string? ImagePath { get; set; }
         public bool IsActive { get; set; }
+
+        // NEW: Flag to indicate if this is a new item being created
+        public bool IsNewItem { get; set; }
+
+        // NEW: Additional fields for creating new item
+        public int? GroupId { get; set; }
+        public int? SubGroupId { get; set; }
+        public string? MaterialType { get; set; }
+        public string? Origin { get; set; }
+        public string? Features { get; set; }
+        public string? BrandColor { get; set; }
+        public int? MesurementUnitId { get; set; }
+        public bool CountStockByColor { get; set; }
+        public bool CountStockBySize { get; set; }
     }
 
 }

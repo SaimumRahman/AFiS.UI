@@ -14,6 +14,5 @@ namespace JM.UI.DataService.DAL.Purchases
         Task DeletePurchase(int id);
         Task<string> GenerateBarcode(BarcodeGenerationRequestDTO request);
         Task<BarcodeSearchResponseDTO> SearchByBarcode(string barcode);
-
     }
 }

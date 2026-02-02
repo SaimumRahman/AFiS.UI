@@ -1,6 +1,7 @@
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Model.Sizes;
@@ -34,12 +35,19 @@ namespace JM.UI.Client.Pages.Purchases
         protected IEnumerable<ItemDTO> Items { get; set; } = new List<ItemDTO>();
         protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
         protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
+        protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
 
         // UI State
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : "New Purchase Entry";
+
+        // NEW: Create Item on the Go state
+        protected bool IsNewItemMode { get; set; } = false;
+        protected bool IsSearchingBarcode { get; set; } = false;
+        protected bool DisableItemFields { get; set; } = false;
+        protected string BarcodeSearchText { get; set; } = string.Empty;
 
         // Grid Reference
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
@@ -86,7 +94,10 @@ namespace JM.UI.Client.Pages.Purchases
                 IsSaleable = true,
                 ProductType = "Sell Product",
                 Quantity = 1,
-                IsActive = true
+                IsActive = true,
+                IsNewItem = false,
+                CountStockByColor = false,
+                CountStockBySize = false
             };
         }
 
@@ -97,12 +108,13 @@ namespace JM.UI.Client.Pages.Purchases
         {
             try
             {
-                // Load all lookup data (you'll need to implement these methods)
+                // Load all lookup data (implement these methods in your services)
                 Suppliers = await LoadSuppliers();
                 Stores = await LoadStores();
                 Groups = await LoadGroups();
                 Colors = await LoadColors();
                 Sizes = await LoadSizes();
+                Units = await LoadUnits();
             }
             catch (Exception ex)
             {
@@ -144,119 +156,195 @@ namespace JM.UI.Client.Pages.Purchases
         // =============================================
         private async Task<IEnumerable<SupplierModelDTO>> LoadSuppliers()
         {
-            // Implement supplier loading
-            return await _serviceUnitOfWork.SupplierService.GetSuppliers();
+            // TODO: Implement supplier loading from your service
+            return await _serviceUnitOfWork.SupplierService.GetSuppliers() ?? new List<SupplierModelDTO>();
         }
 
         private async Task<IEnumerable<StoreDTO>> LoadStores()
         {
-            // Implement store loading
-            return await _serviceUnitOfWork.StoreService.GetStores();
+            // TODO: Implement store loading from your service
+            return await _serviceUnitOfWork.StoreService.GetStores() ?? new List<StoreDTO>();
         }
 
         private async Task<IEnumerable<GroupModelDTO>> LoadGroups()
         {
-            // Implement group loading
-            return await _serviceUnitOfWork.GroupService.GetGroups();
+            // TODO: Implement group loading from your service
+            return await _serviceUnitOfWork.GroupService.GetGroups() ?? new List<GroupModelDTO>();
         }
 
         private async Task<IEnumerable<ColorsDTO>> LoadColors()
         {
-            // Implement color loading
-            return await _serviceUnitOfWork.ColorsService.GetColorss();
+            // TODO: Implement color loading from your service
+            return await _serviceUnitOfWork.ColorsService.GetColorss() ?? new List<ColorsDTO>();
         }
 
         private async Task<IEnumerable<SizesDTO>> LoadSizes()
         {
-            // Implement size loading
-            return  await _serviceUnitOfWork.SizesService.GetSizess();
+            // TODO: Implement size loading from your service
+            return await _serviceUnitOfWork.SizesService.GetSizess() ?? new List<SizesDTO>();
         }
 
-        // =============================================
-        // Item Management Methods
-        // =============================================
-        protected async Task OnGroupChange(object value)
+        private async Task<IEnumerable<MesurementUnitModelDTO>> LoadUnits()
         {
-            if (value != null)
+            // TODO: Implement unit loading from your service
+            return await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits() ?? new List<MesurementUnitModelDTO>();
+        }
+
+        protected async Task OnGroupChanged(int? groupId)
+        {
+            if (groupId.HasValue)
             {
-                var groupId = Convert.ToInt32(value);
-                SubGroups = await LoadSubGroupsByGroup(groupId);
+                SubGroups = await LoadSubGroupsByGroup(groupId.Value);
                 Items = new List<ItemDTO>();
+                CurrentItem.GroupId = groupId;
+                CurrentItem.SubGroupId = null;
+                CurrentItem.ItemId = 0;
             }
         }
 
-        protected async Task OnSubGroupChange(object value)
+        protected async Task OnSubGroupChanged(int? subGroupId)
         {
-            if (value != null)
+            if (subGroupId.HasValue)
             {
-                var subGroupId = Convert.ToInt32(value);
-                Items = await LoadItemsBySubGroup(subGroupId);
+                Items = await LoadItemsBySubGroup(subGroupId.Value);
+                CurrentItem.SubGroupId = subGroupId;
+                CurrentItem.ItemId = 0;
             }
         }
 
-        protected async Task OnItemChange(object value)
+        protected async Task OnItemChanged(int itemId)
         {
-            if (value != null)
+            if (itemId > 0)
             {
-                var itemId = Convert.ToInt32(value);
-                var item = await LoadItemDetails(itemId);
-
-                if (item != null)
-                {
-                    CurrentItem.ShadeNo = item.ShadeNo;
-                    CurrentItem.ProductPricePercentage = item.ProductPricePercentage;
-                }
+                await LoadItemDetails(itemId);
             }
         }
 
         private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
         {
-            return await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId);
-          
+            // TODO: Implement
+            return await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId) ?? new List<SubGroupModelDTO>();
         }
 
         private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)
         {
-            // Implement items loading by subgroup
-            return await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId);
-
-            //return new List<ItemDTO>();
+            // TODO: Implement
+            return await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId) ?? new List<ItemDTO>();
         }
 
-        private async Task<dynamic?> LoadItemDetails(int itemId)
+        private async Task LoadItemDetails(int itemId)
         {
-            // Implement item details loading
-            return await _serviceUnitOfWork.ItemService.GetItems();
-
-            //return null;
+            // TODO: Implement to load item details and populate current item
         }
 
         // =============================================
-        // Barcode Methods
+        // NEW: Barcode Search and Create Item on the Go
         // =============================================
+        protected async Task SearchByBarcode()
+        {
+            if (string.IsNullOrWhiteSpace(BarcodeSearchText))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please enter a barcode to search");
+                return;
+            }
+
+            try
+            {
+                IsSearchingBarcode = true;
+                var result = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(BarcodeSearchText);
+
+                if (result.Found)
+                {
+                    if (result.ItemDetails != null)
+                    {
+                        // Existing item found - populate and disable fields
+                        PopulateFromExistingItem(result.ItemDetails);
+                        DisableItemFields = true;
+                        IsNewItemMode = false;
+                        notificationService.Notify(NotificationSeverity.Success, "Success", "Existing item found!");
+                    }
+                    else if (result.Item != null)
+                    {
+                        // Item from purchase history found
+                        PopulateFromPurchaseItem(result.Item);
+                        DisableItemFields = false;
+                        notificationService.Notify(NotificationSeverity.Info, "Info", "Item found in purchase history");
+                    }
+                }
+                else
+                {
+                    // No item found - enable create new item mode
+                    CurrentItem.Barcode = BarcodeSearchText;
+                    DisableItemFields = false;
+                    IsNewItemMode = true;
+                    notificationService.Notify(NotificationSeverity.Info, "Create New", "No item found. You can create a new item.");
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Search failed: {ex.Message}");
+            }
+            finally
+            {
+                IsSearchingBarcode = false;
+                StateHasChanged();
+            }
+        }
+
+        private void PopulateFromExistingItem(ItemDTO item)
+        {
+            CurrentItem.ItemId = item.Id;
+            CurrentItem.ItemName = item.Name;
+            CurrentItem.GroupId = item.GroupId;
+            CurrentItem.SubGroupId = item.SubGroupId;
+            CurrentItem.ShadeNo = item.ShadeNo;
+            CurrentItem.MaterialType = item.MaterialType;
+            CurrentItem.Origin = item.Origin;
+            CurrentItem.Features = item.Features;
+            CurrentItem.BrandColor = item.BrandColor;
+            CurrentItem.ProductPricePercentage = item.ProductPricePercentage;
+            CurrentItem.SalePrice = item.SalePrice;
+            CurrentItem.PurchasePrice = item.PurchasePrice ?? 0;
+            CurrentItem.Barcode = BarcodeSearchText;
+            CurrentItem.IsNewItem = false;
+            CurrentItem.MesurementUnitId = item.MesurementUnitId;
+            CurrentItem.CountStockByColor = item.CountStockByColor;
+            CurrentItem.CountStockBySize = item.CountStockBySize;
+            CurrentItem.ProductType = item.ProductType;
+        }
+
+        private void PopulateFromPurchaseItem(PurchaseItemDTO item)
+        {
+            CurrentItem.ItemId = item.ItemId;
+            CurrentItem.ItemName = item.ItemName;
+            CurrentItem.GroupName = item.GroupName;
+            CurrentItem.SubGroupName = item.SubGroupName;
+            CurrentItem.ShadeNo = item.ShadeNo;
+            CurrentItem.ColorId = item.ColorId;
+            CurrentItem.SizeId = item.SizeId;
+            CurrentItem.PurchasePrice = item.PurchasePrice;
+            CurrentItem.SalePrice = item.SalePrice;
+            CurrentItem.ProductType = item.ProductType;
+            CurrentItem.Barcode = BarcodeSearchText;
+            CurrentItem.IsNewItem = false;
+        }
+
         protected async Task GenerateBarcode()
         {
             try
             {
-                if (CurrentItem.ItemId <= 0)
-                {
-                    notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please select an item first.");
-                    return;
-                }
-
                 var request = new BarcodeGenerationRequestDTO
                 {
                     ShadeNo = CurrentItem.ShadeNo,
                     ColorName = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name,
                     SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
-                    ItemId = CurrentItem.ItemId
+                    ItemId = CurrentItem.ItemId > 0 ? CurrentItem.ItemId : null
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
                 CurrentItem.Barcode = barcode;
-
-                notificationService.Notify(NotificationSeverity.Success, "Success", "Barcode generated successfully!");
-                StateHasChanged();
+                BarcodeSearchText = barcode;
+                notificationService.Notify(NotificationSeverity.Success, "Success", "Barcode generated successfully");
             }
             catch (Exception ex)
             {
@@ -264,91 +352,124 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        protected async Task SearchBarcode(string barcode)
+        protected void ToggleCreateNewItem()
         {
-            if (string.IsNullOrWhiteSpace(barcode))
-                return;
+            IsNewItemMode = !IsNewItemMode;
+            CurrentItem.IsNewItem = IsNewItemMode;
 
-            try
+            if (IsNewItemMode)
             {
-                var result = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
+                DisableItemFields = false;
+                // Clear item selection but keep entered data
+                CurrentItem.ItemId = 0;
+                notificationService.Notify(NotificationSeverity.Info, "Create Mode", "Fill in the details to create a new item");
+            }
+            else
+            {
+                // Back to selection mode
+                CurrentItem = CreateNewItem();
+                DisableItemFields = false;
+                BarcodeSearchText = string.Empty;
+            }
 
-                if (result.Found && result.Item != null)
-                {
-                    CurrentItem = result.Item;
-                    notificationService.Notify(NotificationSeverity.Success, "Found", "Item found and loaded!");
-                }
-                else
-                {
-                    notificationService.Notify(NotificationSeverity.Warning, "Not Found", result.Message ?? "No item found with this barcode.");
-                }
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Error searching barcode: {ex.Message}");
-            }
+            StateHasChanged();
+        }
+
+        protected void ClearBarcodeSearch()
+        {
+            BarcodeSearchText = string.Empty;
+            DisableItemFields = false;
+            IsNewItemMode = false;
+            CurrentItem = CreateNewItem();
+            StateHasChanged();
         }
 
         // =============================================
-        // Item Grid Methods
+        // Item Management Methods
         // =============================================
         protected void AddItemToGrid()
         {
             var validation = ValidateCurrentItem();
             if (!validation.IsValid)
             {
-                notificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", validation.Message);
                 return;
             }
 
-            // Calculate item total
-            _serviceUnitOfWork.PurchaseService.CalculateItemTotal(CurrentItem);
+            // Calculate totals
+            CalculateItemTotal();
 
             // Add to grid
             PurchaseItems.Add(CurrentItem);
+            CalculateTotals();
+
+            // Reset current item
             CurrentItem = CreateNewItem();
+            BarcodeSearchText = string.Empty;
+            DisableItemFields = false;
+            IsNewItemMode = false;
 
-            // Recalculate purchase totals
-            CalculateTotals(CurrentItem);
-
-            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added to purchase!");
-            StateHasChanged();
+            ItemsGrid?.Reload();
+            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added to purchase");
         }
 
         protected void EditItem(PurchaseItemDTO item)
         {
             CurrentItem = item;
+            BarcodeSearchText = item.Barcode ?? string.Empty;
             PurchaseItems.Remove(item);
-            StateHasChanged();
+            CalculateTotals();
+            ItemsGrid?.Reload();
         }
 
         protected void DeleteItem(PurchaseItemDTO item)
         {
             PurchaseItems.Remove(item);
-            CalculateTotals(item);
-            notificationService.Notify(NotificationSeverity.Success, "Success", "Item removed from purchase!");
-            StateHasChanged();
+            CalculateTotals();
+            ItemsGrid?.Reload();
+            notificationService.Notify(NotificationSeverity.Success, "Success", "Item removed from purchase");
         }
 
-        private (bool IsValid, string ErrorMessage) ValidateCurrentItem()
+        private (bool IsValid, string Message) ValidateCurrentItem()
         {
-            if (CurrentItem.ItemId <= 0)
-                return (false, "Please select an item.");
+            if (IsNewItemMode)
+            {
+                if (string.IsNullOrWhiteSpace(CurrentItem.ItemName))
+                    return (false, "Item name is required for new items");
 
-            if (CurrentItem.Quantity <= 0)
-                return (false, "Quantity must be greater than 0.");
+                if (!CurrentItem.SubGroupId.HasValue || CurrentItem.SubGroupId.Value == 0)
+                    return (false, "Sub-group is required for new items");
 
-            if (CurrentItem.PurchasePrice <= 0)
-                return (false, "Purchase price must be greater than 0.");
+                if (!CurrentItem.MesurementUnitId.HasValue || CurrentItem.MesurementUnitId.Value == 0)
+                    return (false, "Unit is required for new items");
+            }
+            else
+            {
+                if (CurrentItem.ItemId == 0)
+                    return (false, "Please select an item or enable create new item mode");
+            }
 
             if (string.IsNullOrWhiteSpace(CurrentItem.Barcode))
-                return (false, "Barcode is required.");
+                return (false, "Barcode is required");
 
-            if (CurrentItem.IsSaleable && (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0))
-                return (false, "Saleable items must have a sale price.");
+            if (CurrentItem.Quantity <= 0)
+                return (false, "Quantity must be greater than 0");
 
-            if (CurrentItem.IsSaleable && CurrentItem.SalePrice.HasValue && CurrentItem.SalePrice.Value <= CurrentItem.PurchasePrice)
-                return (false, "Sale price must be greater than purchase price.");
+            if (CurrentItem.PurchasePrice <= 0)
+                return (false, "Purchase price must be greater than 0");
+
+            if (CurrentItem.IsSaleable)
+            {
+                if (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0)
+                    return (false, "Sale price is required for saleable items");
+
+                if (CurrentItem.SalePrice.Value <= CurrentItem.PurchasePrice)
+                    return (false, "Sale price must be greater than purchase price");
+            }
+
+            // Check for duplicate barcode in current items
+            if (PurchaseItems.Any(i => i.Barcode == CurrentItem.Barcode))
+                return (false, "Item with this barcode already added");
 
             return (true, string.Empty);
         }
@@ -356,69 +477,57 @@ namespace JM.UI.Client.Pages.Purchases
         // =============================================
         // Calculation Methods
         // =============================================
-        protected void CalculateItemTotal(PurchaseItemDTO? _)
+        protected void CalculateItemTotal()
         {
-            _serviceUnitOfWork.PurchaseService.CalculateItemTotal(CurrentItem);
+            var itemTotal = _serviceUnitOfWork.PurchaseService.CalculateItemTotal(CurrentItem);
+            CurrentItem.TotalAmount = itemTotal;
+        }
+
+        protected void CalculateTotals()
+        {
+            Purchase.TotalAmount = _serviceUnitOfWork.PurchaseService.CalculatePurchaseTotal(PurchaseItems);
+            Purchase.NetAmount = Purchase.TotalAmount - (Purchase.DiscountAmount ?? 0) + (Purchase.VatAmount ?? 0);
+            Purchase.DueAmount = Purchase.NetAmount - (Purchase.PaidAmount ?? 0);
             StateHasChanged();
         }
 
-
-        protected void CalculateTotals(PurchaseItemDTO? _)
+        protected void OnDiscountChanged()
         {
-            Purchase.TotalAmount = _serviceUnitOfWork.PurchaseService.CalculatePurchaseTotal(PurchaseItems);
+            CalculateTotals();
+        }
 
-            Purchase.OtherCostTotal = PurchaseItems.Sum(x => x.OtherCost ?? 0);
-            Purchase.CarryingCostTotal = PurchaseItems.Sum(x => x.CarryingCost ?? 0);
-            Purchase.OperationalCostTotal = PurchaseItems.Sum(x => x.OperationalCost ?? 0);
-            Purchase.VatAmount = PurchaseItems.Sum(x => x.VatAmount ?? 0);
+        protected void OnVatChanged()
+        {
+            CalculateTotals();
+        }
 
-            Purchase.NetAmount = Purchase.TotalAmount - (Purchase.DiscountAmount ?? 0);
-            Purchase.DueAmount = Purchase.NetAmount - (Purchase.PaidAmount ?? 0);
-
-            StateHasChanged();
+        protected void OnPaidAmountChanged()
+        {
+            CalculateTotals();
         }
 
         // =============================================
         // Save Methods
         // =============================================
-        protected async Task Save()
+        protected async Task SavePurchase()
         {
-            if (!PurchaseItems.Any())
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Validation", "Please add at least one item.");
+            if (!ValidatePurchase())
                 return;
-            }
-
-            var userObj = await sessionStorage.GetAsync<string>("UserId");
-            int? userId = null;
-            if (!string.IsNullOrEmpty(userObj.Value) && int.TryParse(userObj.Value, out int parsedUserId))
-            {
-                userId = parsedUserId;
-            }
-
-            if (IsEditMode)
-            {
-                Purchase.LastModifiedBy = userId;
-            }
-            else
-            {
-                Purchase.CreatedBy = userId;
-            }
 
             try
             {
                 IsProcessing = true;
+
                 var result = await _serviceUnitOfWork.PurchaseService.SaveUpdatePurchase(Purchase, PurchaseItems);
 
                 if (result.IsSuccessStatus)
                 {
-                    notificationService.Notify(NotificationSeverity.Success, "Success",
-                        IsEditMode ? "Purchase updated successfully!" : "Purchase created successfully!");
+                    notificationService.Notify(NotificationSeverity.Success, "Success", result.Message ?? "Purchase saved successfully");
                     NavigationManager.NavigateTo("/PurchaseList");
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message ?? "Failed to save purchase");
                 }
             }
             catch (Exception ex)
@@ -431,22 +540,43 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
+        private bool ValidatePurchase()
+        {
+            if (!Purchase.SupplierId.HasValue || Purchase.SupplierId.Value == 0)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a supplier");
+                return false;
+            }
+
+            if (!Purchase.StoreId.HasValue || Purchase.StoreId.Value == 0)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a store");
+                return false;
+            }
+
+            if (Purchase.PurchaseDate == default)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a purchase date");
+                return false;
+            }
+
+            if (PurchaseItems.Count == 0)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please add at least one item");
+                return false;
+            }
+
+            return true;
+        }
+
         protected void Cancel()
         {
             NavigationManager.NavigateTo("/PurchaseList");
         }
 
-        protected async Task Reset()
+        public void Dispose()
         {
-            if (IsEditMode)
-            {
-                await LoadPurchase();
-            }
-            else
-            {
-                InitializePurchase();
-            }
-            StateHasChanged();
+            ItemsGrid?.Dispose();
         }
     }
 }

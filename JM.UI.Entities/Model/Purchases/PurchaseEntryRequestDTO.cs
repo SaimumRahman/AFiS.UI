@@ -10,4 +10,5 @@ namespace JM.UI.Entities.Model.Purchases
         public PurchaseDTO Purchase { get; set; } = new();
         public List<PurchaseItemDTO> Items { get; set; } = new();
     }
+
 }

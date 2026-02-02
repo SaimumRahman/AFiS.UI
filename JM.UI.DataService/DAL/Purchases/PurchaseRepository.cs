@@ -190,6 +190,9 @@ namespace JM.UI.DataService.DAL.Purchases
             }
         }
     }
+
+   
+
     internal class BarcodeResponse
     {
         public string Barcode { get; set; } = string.Empty;
