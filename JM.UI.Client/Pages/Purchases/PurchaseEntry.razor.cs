@@ -317,6 +317,8 @@ namespace JM.UI.Client.Pages.Purchases
         {
             CurrentItem.ItemId = item.ItemId;
             CurrentItem.ItemName = item.ItemName;
+            CurrentItem.Quantity = item.Quantity;
+            CurrentItem.TotalAmount = item.TotalAmount;
             CurrentItem.GroupName = item.GroupName;
             CurrentItem.SubGroupName = item.SubGroupName;
             CurrentItem.ShadeNo = item.ShadeNo;
