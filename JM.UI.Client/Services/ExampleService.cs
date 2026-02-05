@@ -156,6 +156,24 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name = "Purchase Entry",
+                        Path = "/PurchaseEntry",
+                        Icon = "\ue8cc",
+                        Title = "Purchase Entry",
+                        Description = "Create and track purchase entry",
+                        Tags = new[] { "po", "order", "purchase" }
+                    },
+                    new Example
+                    {
+                        Name = "Purchase Draft",
+                        Path = "/PurchaseDraftList",
+                        Icon = "\ue8cc",
+                        Title = "Purchase Entry",
+                        Description = "Create and track purchase entry",
+                        Tags = new[] { "po", "order", "purchase" }
+                    },
+                    new Example
+                    {
                         Name = "Purchase Invoices",
                         Path = "/PurchasesList",
                         Icon = "\ue873",  // receipt

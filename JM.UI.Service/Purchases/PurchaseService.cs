@@ -183,5 +183,83 @@ namespace JM.UI.Service.Purchases
         {
             return items.Sum(x => x.TotalAmount);
         }
+        public async Task<IEnumerable<PurchaseDraftDTO>> GetPurchaseDrafts()
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchaseDrafts();
+        }
+
+        public async Task<PurchaseDraftDTO?> GetPurchaseDraftById(int id)
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchaseDraftById(id);
+        }
+
+        public async Task<ResponseResult> SavePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items)
+        {
+            var validation = await ValidatePurchaseDraft(draft, items);
+            if (!validation.IsValid)
+            {
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = validation.ErrorMessage
+                };
+            }
+
+            if (draft.Id == 0)
+            {
+                draft.CreatedDate = DateTime.Now;
+            }
+            else
+            {
+                draft.LastModifiedDate = DateTime.Now;
+            }
+
+            return await _repositoryUnitOfWork.PurchaseRepository.SavePurchaseDraft(draft, items);
+        }
+
+        public async Task<ResponseResult> DeletePurchaseDraft(int id)
+        {
+            try
+            {
+                await _repositoryUnitOfWork.PurchaseRepository.DeletePurchaseDraft(id);
+                return new ResponseResult
+                {
+                    IsSuccessStatus = true,
+                    Message = "Draft deleted successfully!"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = $"Failed to delete draft: {ex.Message}"
+                };
+            }
+        }
+
+        public Task<(bool IsValid, string ErrorMessage)> ValidatePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items)
+        {
+            if (string.IsNullOrWhiteSpace(draft.DraftName))
+                return Task.FromResult((false, "Draft name is required."));
+
+            if (draft.DraftName.Length > 200)
+                return Task.FromResult((false, "Draft name cannot exceed 200 characters."));
+
+            if (items == null || items.Count == 0)
+                return Task.FromResult((false, "At least one item is required to save draft."));
+
+            return Task.FromResult((true, string.Empty));
+        }
+
+        public string FormatCurrency(decimal amount)
+        {
+            return amount.ToString("N2");
+        }
+
+        public string FormatDate(DateTime? date)
+        {
+            return date?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+        }
     }
 }

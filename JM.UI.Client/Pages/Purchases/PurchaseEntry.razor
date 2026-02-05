@@ -578,12 +578,20 @@
         </RadzenCard>
 
         <!-- Action Buttons -->
+        <!-- Action Buttons -->
         <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.End">
             <RadzenButton Icon="save"
                           ButtonStyle="ButtonStyle.Success"
                           Click="@SavePurchase"
                           Disabled="@IsProcessing"
                           Text="@(IsEditMode ? "Update Purchase" : "Save Purchase")" />
+
+            <RadzenButton Icon="drafts"
+                          ButtonStyle="ButtonStyle.Info"
+                          Click="@SaveAsDraft"
+                          Disabled="@IsProcessing"
+                          Text="Save as Draft" />
+
             <RadzenButton Icon="cancel"
                           ButtonStyle="ButtonStyle.Light"
                           Click="@Cancel"

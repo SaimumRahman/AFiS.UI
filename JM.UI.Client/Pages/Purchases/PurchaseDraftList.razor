@@ -1,0 +1,170 @@
+@page "/PurchaseDraftList"
+@using JM.UI.Entities.Model.Purchases
+@inherits PurchaseDraftListComponent
+
+<PageTitle>Purchase Drafts</PageTitle>
+
+<RadzenStack Gap="1rem">
+    @if (IsLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+            <Template>Loading...</Template>
+        </RadzenProgressBarCircular>
+    }
+    else
+    {
+        <!-- Page Header -->
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.H4" TagName="TagName.H1">Purchase Drafts</RadzenText>
+                    <RadzenButton Icon="add_circle"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Click="@CreateNewDraft"
+                                  Text="New Purchase Entry" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Drafts Grid -->
+        <RadzenCard>
+            <RadzenDataGrid @ref="DraftsGrid"
+                            Data="@Drafts"
+                            TItem="PurchaseDraftDTO"
+                            AllowPaging="true"
+                            PageSize="20"
+                            AllowSorting="true"
+                            AllowFiltering="true"
+                            FilterMode="FilterMode.Advanced"
+                            EmptyText="No drafts found">
+                <Columns>
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="DraftName" Title="Draft Name" Width="200px" Frozen="true">
+                        <Template Context="draft">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenIcon Icon="drafts" />
+                                <RadzenText>@draft.DraftName</RadzenText>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="SupplierName" Title="Supplier" Width="180px">
+                        <Template Context="draft">
+                            @(draft.SupplierName ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="StoreName" Title="Store" Width="150px">
+                        <Template Context="draft">
+                            @(draft.StoreName ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="PurchaseDate" Title="Purchase Date" Width="150px">
+                        <Template Context="draft">
+                            @(draft.PurchaseDate?.ToString("dd/MM/yyyy") ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="BillInvoiceNumber" Title="Bill Number" Width="150px">
+                        <Template Context="draft">
+                            @(draft.BillInvoiceNumber ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Title="Items" Width="100px" Sortable="false" Filterable="false">
+                        <Template Context="draft">
+                            <RadzenBadge Text="@GetItemCount(draft)" BadgeStyle="BadgeStyle.Info" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="TotalAmount" Title="Total Amount" Width="130px">
+                        <Template Context="draft">
+                            <RadzenText>@FormatCurrency(draft.TotalAmount)</RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="NetAmount" Title="Net Amount" Width="130px">
+                        <Template Context="draft">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="font-weight: 600;">
+                                @FormatCurrency(draft.NetAmount)
+                            </RadzenText>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="IsVatIncluded" Title="VAT Included" Width="120px">
+                        <Template Context="draft">
+                            <RadzenBadge Text="@(draft.IsVatIncluded ? "Yes" : "No")"
+                                         BadgeStyle="@(draft.IsVatIncluded ? BadgeStyle.Success : BadgeStyle.Light)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="CreatedDate" Title="Created" Width="160px">
+                        <Template Context="draft">
+                            <RadzenStack Gap="0.2rem">
+                                <RadzenText TextStyle="TextStyle.Body2">@draft.CreatedDate.ToString("dd/MM/yyyy")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: #888;">@draft.CreatedDate.ToString("HH:mm")</RadzenText>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="LastModifiedDate" Title="Last Modified" Width="160px">
+                        <Template Context="draft">
+                            @if (draft.LastModifiedDate.HasValue)
+                            {
+                                <RadzenStack Gap="0.2rem">
+                                    <RadzenText TextStyle="TextStyle.Body2">@draft.LastModifiedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: #888;">@draft.LastModifiedDate.Value.ToString("HH:mm")</RadzenText>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenText>-</RadzenText>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Title="Actions" Width="180px" Sortable="false" Filterable="false" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="draft">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => LoadDraft(draft.Id))"
+                                              Disabled="@IsDeleting"
+                                              title="Load Draft"
+                                              Text="Load" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => DeleteDraft(draft.Id))"
+                                              Disabled="@IsDeleting"
+                                              title="Delete Draft"
+                                              Text="Delete" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+
+        @if (Drafts?.Any() == true)
+        {
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" JustifyContent="JustifyContent.Start">
+                    <RadzenStack Gap="0.2rem">
+                        <RadzenText TextStyle="TextStyle.Caption">Total Drafts</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6">@Drafts.Count()</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem">
+                        <RadzenText TextStyle="TextStyle.Caption">Total Value</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6">@FormatCurrency(Drafts.Sum(d => d.NetAmount))</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Gap="0.2rem">
+                        <RadzenText TextStyle="TextStyle.Caption">Total Items</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6">@Drafts.Sum(d => d.DraftItems?.Count ?? 0)</RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        }
+    }
+</RadzenStack>

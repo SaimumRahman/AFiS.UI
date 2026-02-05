@@ -1,0 +1,26 @@
+﻿
+@using Radzen
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Draft Name" Variant="Variant.Outlined">
+        <RadzenTextBox @bind-Value="@DraftName"
+                       Style="width: 100%;"
+                       Placeholder="Enter draft name"
+                       MaxLength="200" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Save"
+                      Click="@(() => dialogService.Close(DraftName))"
+                      ButtonStyle="ButtonStyle.Success"
+                      Disabled="@(string.IsNullOrWhiteSpace(DraftName))" />
+        <RadzenButton Text="Cancel"
+                      Click="@(() => dialogService.Close(null))"
+                      ButtonStyle="ButtonStyle.Light" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Inject] DialogService dialogService { get; set; } = default!;
+    [Parameter] public string DraftName { get; set; } = $"Draft_{DateTime.Now:yyyyMMdd_HHmmss}";
+}

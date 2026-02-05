@@ -189,6 +189,117 @@ namespace JM.UI.DataService.DAL.Purchases
                 throw new Exception("Failed to search by barcode: " + ex.Message, ex);
             }
         }
+        public async Task<IEnumerable<PurchaseDraftDTO>> GetPurchaseDrafts()
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch all purchase drafts");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("PurchaseDrafts/getall");
+                response.EnsureSuccessStatusCode();
+
+                var drafts = await response.Content.ReadFromJsonAsync<List<PurchaseDraftDTO>>();
+
+                return drafts ?? new List<PurchaseDraftDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get purchase drafts");
+                throw new Exception("Failed to fetch purchase drafts: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get purchase drafts");
+                throw new Exception("Unexpected error fetching purchase drafts: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<PurchaseDraftDTO?> GetPurchaseDraftById(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch purchase draft: {Id}", id);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"PurchaseDrafts/get/{id}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Purchase draft not found: {Id}", id);
+                    return null;
+                }
+
+                var draft = await response.Content.ReadFromJsonAsync<PurchaseDraftDTO>();
+                return draft;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get purchase draft by ID: {Id}", id);
+                throw new Exception($"Failed to fetch purchase draft: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get purchase draft by ID: {Id}", id);
+                throw new Exception($"Unexpected error fetching purchase draft: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<ResponseResult> SavePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to save purchase draft");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var requestBody = new
+                {
+                    Draft = draft,
+                    Items = items
+                };
+                var content = JsonContent.Create(requestBody);
+                var response = await httpClient.PostAsync("PurchaseDrafts/save", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during save purchase draft");
+                throw new Exception("Failed to save purchase draft: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during save purchase draft");
+                throw new Exception("Unexpected error saving purchase draft: " + ex.Message, ex);
+            }
+        }
+
+        public async Task DeletePurchaseDraft(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to delete purchase draft: {Id}", id);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.DeleteAsync($"PurchaseDrafts/delete/{id}");
+                response.EnsureSuccessStatusCode();
+
+                _logger.LogInformation("Purchase draft deleted successfully: {Id}", id);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request exception during delete purchase draft: {Id}", id);
+                throw new Exception($"Failed to delete purchase draft: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during delete purchase draft: {Id}", id);
+                throw new Exception($"Unexpected error deleting purchase draft: {ex.Message}", ex);
+            }
+        }
     }
 
    

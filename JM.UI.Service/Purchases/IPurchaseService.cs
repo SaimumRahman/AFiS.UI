@@ -18,5 +18,12 @@ namespace JM.UI.Service.Purchases
         PurchaseDTO CreateNewPurchase();
         decimal CalculateItemTotal(PurchaseItemDTO item);
         decimal CalculatePurchaseTotal(List<PurchaseItemDTO> items);
+        Task<IEnumerable<PurchaseDraftDTO>> GetPurchaseDrafts();
+        Task<PurchaseDraftDTO?> GetPurchaseDraftById(int id);
+        Task<ResponseResult> SavePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items);
+        Task<ResponseResult> DeletePurchaseDraft(int id);
+        Task<(bool IsValid, string ErrorMessage)> ValidatePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items);
+        string FormatCurrency(decimal amount);
+        string FormatDate(DateTime? date);
     }
 }

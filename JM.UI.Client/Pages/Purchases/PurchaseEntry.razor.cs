@@ -1,3 +1,4 @@
+using JM.UI.Client.Pages.Dialog;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.Items;
@@ -21,6 +22,8 @@ namespace JM.UI.Client.Pages.Purchases
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
         [Parameter] public int? Id { get; set; }
+        [Parameter] public int? DraftId { get; set; }
+        protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
 
         // Purchase Data
         protected PurchaseDTO Purchase { get; set; } = new();
@@ -49,6 +52,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
+
         // Grid Reference
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
 
@@ -67,7 +71,11 @@ namespace JM.UI.Client.Pages.Purchases
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
 
-            if (IsEditMode)
+            if (IsDraftMode)
+            {
+                await LoadDraft();
+            }
+            else if (IsEditMode)
             {
                 await LoadPurchase();
             }
@@ -85,6 +93,184 @@ namespace JM.UI.Client.Pages.Purchases
             Purchase = _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
             PurchaseItems = new List<PurchaseItemDTO>();
             CurrentItem = CreateNewItem();
+        }
+
+        // Add new methods
+        // Update LoadDraft method (already provided in previous response)
+        protected async Task LoadDraft()
+        {
+            try
+            {
+                IsLoading = true;
+                var draft = await _serviceUnitOfWork.PurchaseService.GetPurchaseDraftById(DraftId!.Value);
+
+                if (draft == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", "Draft not found.");
+                    NavigationManager.NavigateTo("/PurchaseDraftList");
+                    return;
+                }
+
+                // Map draft to Purchase
+                Purchase = new PurchaseDTO
+                {
+                    SupplierId = draft.SupplierId,
+                    StoreId = draft.StoreId,
+                    PurchaseDate = draft.PurchaseDate ?? DateTime.Now,
+                    BillInvoiceNumber = draft.BillInvoiceNumber,
+                    BillInvoiceName = draft.BillInvoiceName,
+                    IsVatIncluded = draft.IsVatIncluded,
+                    TotalAmount = draft.TotalAmount,
+                    DiscountAmount = draft.DiscountAmount,
+                    VatAmount = draft.VatAmount,
+                    NetAmount = draft.NetAmount,
+                    PaidAmount = draft.PaidAmount,
+                    DueAmount = draft.DueAmount,
+                    Remarks = draft.Remarks
+                };
+
+                // Map draft items to purchase items
+                PurchaseItems = draft.DraftItems.Select(di => new PurchaseItemDTO
+                {
+                    ItemId = di.ItemId ?? 0,
+                    ItemName = di.ItemName,
+                    GroupId = di.GroupId,
+                    GroupName = di.GroupName,
+                    SubGroupId = di.SubGroupId,
+                    SubGroupName = di.SubGroupName,
+                    ShadeNo = di.ShadeNo,
+                    ColorId = di.ColorId,
+                    ColorName = di.ColorName,
+                    SizeId = di.SizeId,
+                    SizeName = di.SizeName,
+                    Barcode = di.Barcode,
+                    Quantity = di.Quantity,
+                    PurchasePrice = di.PurchasePrice,
+                    ProductPricePercentage = di.ProductPricePercentage,
+                    OtherCost = di.OtherCost,
+                    CarryingCost = di.CarryingCost,
+                    OperationalCost = di.OperationalCost,
+                    VatPercentage = di.VatPercentage,
+                    VatAmount = di.VatAmount,
+                    TotalAmount = di.TotalAmount,
+                    IsSaleable = di.IsSaleable,
+                    SalePrice = di.SalePrice,
+                    ProductType = di.ProductType,
+                    MaterialType = di.MaterialType,
+                    Origin = di.Origin,
+                    Features = di.Features,
+                    BrandColor = di.BrandColor,
+                    MesurementUnitId = di.MesurementUnitId,
+                    CountStockByColor = di.CountStockByColor,
+                    CountStockBySize = di.CountStockBySize,
+                    IsNewItem = di.IsNewItem,
+                    IsActive = di.IsActive
+                }).ToList();
+
+                CurrentItem = CreateNewItem();
+
+                notificationService.Notify(NotificationSeverity.Info, "Draft Loaded", $"Draft '{draft.DraftName}' loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load draft: {ex.Message}");
+                NavigationManager.NavigateTo("/PurchaseDraftList");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        protected async Task SaveAsDraft()
+        {
+            try
+            {
+                // Show dialog to get draft name
+                var result = await dialogService.OpenAsync<SaveDraftDialog>("Save as Draft",
+                    new Dictionary<string, object>() { { "DraftName", "" } },
+                    new DialogOptions() { Width = "400px" });
+
+                if (result == null || string.IsNullOrWhiteSpace(result.ToString()))
+                    return;
+
+                IsProcessing = true;
+
+                var draftDTO = new PurchaseDraftDTO
+                {
+                    DraftName = result.ToString(),
+                    SupplierId = Purchase.SupplierId,
+                    StoreId = Purchase.StoreId,
+                    PurchaseDate = Purchase.PurchaseDate,
+                    BillInvoiceNumber = Purchase.BillInvoiceNumber,
+                    BillInvoiceName = Purchase.BillInvoiceName,
+                    IsVatIncluded = Purchase.IsVatIncluded,
+                    TotalAmount = Purchase.TotalAmount,
+                    DiscountAmount = Purchase.DiscountAmount,
+                    VatAmount = Purchase.VatAmount,
+                    NetAmount = Purchase.NetAmount,
+                    PaidAmount = Purchase.PaidAmount,
+                    DueAmount = Purchase.DueAmount,
+                    Remarks = Purchase.Remarks,
+                    CreatedBy = 1 // TODO: Get from current user
+                };
+
+                var draftItems = PurchaseItems.Select(pi => new PurchaseDraftItemDTO
+                {
+                    ItemId = pi.ItemId,
+                    ItemName = pi.ItemName,
+                    GroupId = pi.GroupId,
+                    GroupName = pi.GroupName,
+                    SubGroupId = pi.SubGroupId,
+                    SubGroupName = pi.SubGroupName,
+                    ShadeNo = pi.ShadeNo,
+                    ColorId = pi.ColorId,
+                    ColorName = pi.ColorName,
+                    SizeId = pi.SizeId,
+                    SizeName = pi.SizeName,
+                    Barcode = pi.Barcode,
+                    Quantity = pi.Quantity,
+                    PurchasePrice = pi.PurchasePrice,
+                    ProductPricePercentage = pi.ProductPricePercentage,
+                    OtherCost = pi.OtherCost,
+                    CarryingCost = pi.CarryingCost,
+                    OperationalCost = pi.OperationalCost,
+                    VatPercentage = pi.VatPercentage,
+                    VatAmount = pi.VatAmount,
+                    TotalAmount = pi.TotalAmount,
+                    IsSaleable = pi.IsSaleable,
+                    SalePrice = pi.SalePrice,
+                    ProductType = pi.ProductType,
+                    MaterialType = pi.MaterialType,
+                    Origin = pi.Origin,
+                    Features = pi.Features,
+                    BrandColor = pi.BrandColor,
+                    MesurementUnitId = pi.MesurementUnitId,
+                    CountStockByColor = pi.CountStockByColor,
+                    CountStockBySize = pi.CountStockBySize,
+                    IsNewItem = pi.IsNewItem,
+                    IsActive = pi.IsActive
+                }).ToList();
+
+                var saveResult = await _serviceUnitOfWork.PurchaseService.SavePurchaseDraft(draftDTO, draftItems);
+
+                if (saveResult.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success", saveResult.Message ?? "Draft saved successfully");
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message ?? "Failed to save draft");
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save draft: {ex.Message}");
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
         }
 
         private PurchaseItemDTO CreateNewItem()
