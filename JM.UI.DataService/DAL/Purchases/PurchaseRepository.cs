@@ -196,7 +196,7 @@ namespace JM.UI.DataService.DAL.Purchases
                 _logger.LogInformation("Starting to fetch all purchase drafts");
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("PurchaseDrafts/getall");
+                var response = await httpClient.GetAsync("api/Purchase/getall-draft");
                 response.EnsureSuccessStatusCode();
 
                 var drafts = await response.Content.ReadFromJsonAsync<List<PurchaseDraftDTO>>();
@@ -222,7 +222,7 @@ namespace JM.UI.DataService.DAL.Purchases
                 _logger.LogInformation("Starting to fetch purchase draft: {Id}", id);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"PurchaseDrafts/get/{id}");
+                var response = await httpClient.GetAsync($"api/Purchase/get-draft/{id}");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -258,7 +258,7 @@ namespace JM.UI.DataService.DAL.Purchases
                     Items = items
                 };
                 var content = JsonContent.Create(requestBody);
-                var response = await httpClient.PostAsync("PurchaseDrafts/save", content);
+                var response = await httpClient.PostAsync("api/Purchase/save-draft", content);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
@@ -284,7 +284,7 @@ namespace JM.UI.DataService.DAL.Purchases
                 _logger.LogInformation("Starting to delete purchase draft: {Id}", id);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.DeleteAsync($"PurchaseDrafts/delete/{id}");
+                var response = await httpClient.DeleteAsync($"api/Purchase/delete-draft/{id}");
                 response.EnsureSuccessStatusCode();
 
                 _logger.LogInformation("Purchase draft deleted successfully: {Id}", id);
