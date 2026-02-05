@@ -201,6 +201,22 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItem.ItemId = 0;
             }
         }
+        protected async Task OnColorChanged(int? colorId)
+        {
+            if (colorId.HasValue)
+            {
+                var col = Colors.Where(x=>x.Id==colorId).FirstOrDefault().Name;
+                CurrentItem.Barcode = CurrentItem.Barcode + "-" + col;
+            }
+        }
+        protected async Task OnSizeChanged(int? sizeId)
+        {
+            if (sizeId.HasValue)
+            {
+                var col = Sizes.Where(x=>x.Id== sizeId).FirstOrDefault().Name;
+                CurrentItem.Barcode = CurrentItem.Barcode + "-" + col;
+            }
+        }
 
         protected async Task OnSubGroupChanged(int? subGroupId)
         {
