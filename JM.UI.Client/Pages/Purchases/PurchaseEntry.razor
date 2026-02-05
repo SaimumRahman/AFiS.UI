@@ -1,4 +1,4 @@
-@page "/PurchaseEntry"
+﻿@page "/PurchaseEntry"
 @page "/PurchaseEntry/{Id:int}"
 @using JM.UI.Entities.Model.PurchaseItems
 @inherits PurchaseEntryComponent
@@ -158,31 +158,6 @@
                 <RadzenRow Gap="1rem">
                     @if (!DisableItemFields)
                     {
-                        <!-- Group (always visible) -->
-                        <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
-                            <RadzenLabel Text="Group *" />
-                            <RadzenDropDown @bind-Value="CurrentItem.GroupId"
-                                            Data="@Groups"
-                                            TextProperty="Name"
-                                            ValueProperty="Id"
-                                            Placeholder="Select Group"
-                                            Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
-                                            Style="width: 100%"
-                                            Disabled="@IsProcessing" />
-                        </RadzenColumn>
-
-                        <!-- Sub-Group (always visible) -->
-                        <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
-                            <RadzenLabel Text="Sub-Group *" />
-                            <RadzenDropDown @bind-Value="CurrentItem.SubGroupId"
-                                            Data="@SubGroups"
-                                            TextProperty="Name"
-                                            ValueProperty="Id"
-                                            Placeholder="Select Sub-Group"
-                                            Change="@(args => OnSubGroupChanged(CurrentItem.SubGroupId))"
-                                            Style="width: 100%"
-                                            Disabled="@IsProcessing" />
-                        </RadzenColumn>
 
                         @if (IsNewItemMode)
                         {
@@ -237,6 +212,18 @@
                 <RadzenRow Gap="1rem">
                     @if (IsNewItemMode)
                     {
+                        <!-- Group (always visible) -->
+                        <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
+                            <RadzenLabel Text="Group *" />
+                            <RadzenDropDown @bind-Value="CurrentItem.GroupId"
+                                            Data="@Groups"
+                                            TextProperty="Name"
+                                            ValueProperty="Id"
+                                            Placeholder="Select Group"
+                                            Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
+                                            Style="width: 100%"
+                                            Disabled="@IsProcessing" />
+                        </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4" SizeLG="3">
                             <RadzenLabel Text="Sub-Group *" />
                             <RadzenDropDown @bind-Value="CurrentItem.SubGroupId"
@@ -276,7 +263,8 @@
                                         ValueProperty="Id"
                                         Placeholder="Select Color"
                                         Style="width: 100%"
-                                        Disabled="@(IsProcessing || DisableItemFields)" />
+                                        Disabled="@(IsProcessing || DisableItemFields)"
+                                        Change="@(args => OnColorChanged(CurrentItem.ColorId))" />
                     </RadzenColumn>
 
                     <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
@@ -287,7 +275,8 @@
                                         ValueProperty="Id"
                                         Placeholder="Select Size"
                                         Style="width: 100%"
-                                        Disabled="@(IsProcessing || DisableItemFields)" />
+                                        Disabled="@(IsProcessing || DisableItemFields)"
+                                        Change="@(args => OnSizeChanged(CurrentItem.SizeId))" />
                     </RadzenColumn>
                 </RadzenRow>
 
