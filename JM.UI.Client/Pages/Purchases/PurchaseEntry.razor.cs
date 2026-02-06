@@ -600,22 +600,80 @@ namespace JM.UI.Client.Pages.Purchases
                 return;
             }
 
-            // Calculate totals
             CalculateItemTotal();
 
-            // Add to grid
-            PurchaseItems.Add(CurrentItem);
+            var itemToAdd = new PurchaseItemDTO
+            {
+                ItemId = CurrentItem.ItemId,
+                ItemName = CurrentItem.ItemName,
+                Barcode = CurrentItem.Barcode,
+                GroupId = CurrentItem.GroupId,
+                GroupName = CurrentItem.GroupName,
+                SubGroupId = CurrentItem.SubGroupId,
+                SubGroupName = CurrentItem.SubGroupName,
+                ShadeNo = CurrentItem.ShadeNo,
+                ColorId = CurrentItem.ColorId,
+                ColorName = CurrentItem.ColorName,
+                SizeId = CurrentItem.SizeId,
+                SizeName = CurrentItem.SizeName,
+                MesurementUnitId = CurrentItem.MesurementUnitId,
+                Quantity = CurrentItem.Quantity,
+                PurchasePrice = CurrentItem.PurchasePrice,
+                OtherCost = CurrentItem.OtherCost,
+                CarryingCost = CurrentItem.CarryingCost,
+                VatPercentage = CurrentItem.VatPercentage,
+                TotalAmount = CurrentItem.TotalAmount,
+                IsSaleable = CurrentItem.IsSaleable,
+                SalePrice = CurrentItem.SalePrice,
+                ProductType = CurrentItem.ProductType,
+                MaterialType = CurrentItem.MaterialType,
+                Origin = CurrentItem.Origin,
+                BrandColor = CurrentItem.BrandColor,
+                CountStockByColor = CurrentItem.CountStockByColor,
+                CountStockBySize = CurrentItem.CountStockBySize,
+                IsNewItem = CurrentItem.IsNewItem,
+            };
+
+            PurchaseItems.Add(itemToAdd);
             CalculateTotals();
-
-            // Reset current item
-            CurrentItem = CreateNewItem();
-            BarcodeSearchText = string.Empty;
-            DisableItemFields = false;
-            IsNewItemMode = false;
-
             ItemsGrid?.Reload();
-            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added to purchase");
+
+            CurrentItem.Quantity = 1;                   
+            CurrentItem.PurchasePrice = 0;
+            CurrentItem.OtherCost = null;
+            CurrentItem.CarryingCost = null;
+            CurrentItem.VatPercentage = null;
+            CurrentItem.TotalAmount = 0;
+
+            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added – ready for next entry");
+
         }
+
+        //protected void AddItemToGrid()
+        //{
+        //    var validation = ValidateCurrentItem();
+        //    if (!validation.IsValid)
+        //    {
+        //        notificationService.Notify(NotificationSeverity.Error, "Validation Error", validation.Message);
+        //        return;
+        //    }
+
+        //    // Calculate totals
+        //    CalculateItemTotal();
+
+        //    // Add to grid
+        //    PurchaseItems.Add(CurrentItem);
+        //    CalculateTotals();
+
+        //    // Reset current item
+        //    CurrentItem = CreateNewItem();
+        //    BarcodeSearchText = string.Empty;
+        //    DisableItemFields = false;
+        //    IsNewItemMode = false;
+
+        //    ItemsGrid?.Reload();
+        //    notificationService.Notify(NotificationSeverity.Success, "Success", "Item added to purchase");
+        //}
 
         protected void EditItem(PurchaseItemDTO item)
         {
