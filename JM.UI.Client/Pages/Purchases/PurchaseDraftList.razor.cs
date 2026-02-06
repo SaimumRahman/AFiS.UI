@@ -49,7 +49,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void LoadDraft(int draftId)
         {
-            NavigationManager.NavigateTo($"/PurchaseEntry?draftId={draftId}");
+            NavigationManager.NavigateTo($"/PurchaseEntry/Draft/{draftId}");
         }
 
         protected async Task DeleteDraft(int draftId)
