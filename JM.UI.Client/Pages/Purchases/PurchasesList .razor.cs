@@ -1,92 +1,128 @@
+using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace JM.UI.Client.Pages.Purchases
+public partial class PurchaseListComponent : PosComponentBase, IDisposable
 {
-    public partial class PurchaseListComponent : PosComponentBase
+    [Inject] public IServiceUnitOfWork ServiceUnitOfWork { get; set; } = default!;
+    [Inject] public NotificationService NotificationService { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
+
+    protected RadzenDataGrid<PurchaseSummaryDTO>? PurchasesGrid;
+    protected IEnumerable<PurchaseSummaryDTO> Purchases = new List<PurchaseSummaryDTO>();
+    protected Dictionary<int, List<PurchaseItemDTO>> PurchaseItemsCache = new();
+    protected bool IsLoading;
+
+    protected override async Task OnInitializedAsync()
     {
-        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        await LoadPurchases();
+    }
 
-        protected RadzenDataGrid<PurchaseSummaryDTO> PurchasesGrid = default!;
-        protected IEnumerable<PurchaseSummaryDTO> Purchases { get; set; } = new List<PurchaseSummaryDTO>();
-        protected bool IsLoading { get; set; } = false;
-
-        protected override async Task OnInitializedAsync()
+    protected async Task LoadPurchases()
+    {
+        try
         {
-            await TokenService.InitializeTokenAsync();
-            await LoadPurchases();
+            IsLoading = true;
+            Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases();
         }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to load purchases: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
 
-        private async Task LoadPurchases()
+    protected List<PurchaseItemDTO> GetPurchaseItems(PurchaseSummaryDTO purchase)
+    {
+        // Return cached items or empty list
+        return PurchaseItemsCache.GetValueOrDefault(purchase.Id) ?? new List<PurchaseItemDTO>();
+    }
+
+    protected async Task OnRowExpand(PurchaseSummaryDTO purchase)
+    {
+        // Skip if already loaded
+        if (PurchaseItemsCache.ContainsKey(purchase.Id))
+            return;
+
+        try
+        {
+            var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+            PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to load purchase items: {ex.Message}");
+            // Add empty list to prevent repeated failed attempts
+            PurchaseItemsCache[purchase.Id] = new List<PurchaseItemDTO>();
+        }
+    }
+
+    protected void AddPurchase()
+    {
+        NavigationManager.NavigateTo("/PurchaseEntry");
+    }
+
+    protected void EditPurchase(PurchaseSummaryDTO purchase)
+    {
+        NavigationManager.NavigateTo($"/PurchaseEntry/Edit/{purchase.Id}");
+    }
+
+    protected async Task DeletePurchase(PurchaseSummaryDTO purchase)
+    {
+        var confirm = await DialogService.Confirm(
+            $"Are you sure you want to delete purchase '{purchase.BillInvoiceNumber}'?",
+            "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirm == true)
         {
             try
             {
-                IsLoading = true;
-                Purchases = await _serviceUnitOfWork.PurchaseService.GetAllPurchases();
+                await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
+                PurchaseItemsCache.Remove(purchase.Id);
+                await LoadPurchases();
+                NotifySuccess("Purchase deleted successfully");
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load purchases: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-                StateHasChanged();
+                NotifyError($"Failed to delete purchase: {ex.Message}");
             }
         }
+    }
 
-        protected void AddPurchase()
+    private void NotifyError(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
         {
-            NavigationManager.NavigateTo("/PurchaseEntry");
-        }
+            Severity = NotificationSeverity.Error,
+            Summary = "Error",
+            Detail = message,
+            Duration = 4000
+        });
+    }
 
-        protected void EditPurchase(PurchaseSummaryDTO purchase)
+    private void NotifySuccess(string message)
+    {
+        NotificationService.Notify(new NotificationMessage
         {
-            NavigationManager.NavigateTo($"/PurchaseEntry/{purchase.Id}");
-        }
+            Severity = NotificationSeverity.Success,
+            Summary = "Success",
+            Detail = message,
+            Duration = 3000
+        });
+    }
 
-        protected void ViewPurchase(PurchaseSummaryDTO purchase)
-        {
-            NavigationManager.NavigateTo($"/PurchaseEntry/{purchase.Id}");
-        }
-
-        protected async Task DeletePurchase(PurchaseSummaryDTO purchase)
-        {
-            var confirm = await dialogService.Confirm(
-                $"Are you sure you want to delete purchase '{purchase.BillInvoiceNumber}'?",
-                "Confirm Delete",
-                new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" });
-
-            if (confirm == true)
-            {
-                var result = await _serviceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
-                if (result.IsSuccessStatus)
-                {
-                    notificationService.Notify(NotificationSeverity.Success, "Success", result.Message ?? "Purchase deleted successfully.");
-                    await LoadPurchases();
-                }
-                else
-                {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message ?? "Failed to delete purchase.");
-                }
-            }
-        }
-
-        protected void ShowTooltip(ElementReference elementReference, string text)
-        {
-            TooltipService.Open(elementReference, text, new TooltipOptions { Position = TooltipPosition.Top });
-        }
-
-        public void Dispose()
-        {
-            PurchasesGrid?.Dispose();
-        }
+    public void Dispose()
+    {
+        PurchasesGrid?.Dispose();
+        PurchaseItemsCache.Clear();
     }
 }

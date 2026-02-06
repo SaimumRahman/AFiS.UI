@@ -156,8 +156,8 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name = "Purchase Entry",
-                        Path = "/PurchaseEntry",
+                        Name = "Purchase",
+                        Path = "/PurchaseList",
                         Icon = "\ue8cc",
                         Title = "Purchase Entry",
                         Description = "Create and track purchase entry",

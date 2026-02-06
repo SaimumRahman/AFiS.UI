@@ -42,6 +42,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? MesurementUnitId { get; set; }
         public bool CountStockByColor { get; set; }
         public bool CountStockBySize { get; set; }
+
     }
 
 }

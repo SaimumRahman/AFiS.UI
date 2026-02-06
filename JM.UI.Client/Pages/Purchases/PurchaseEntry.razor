@@ -94,47 +94,60 @@
                     </RadzenColumn>
                 </RadzenRow>
 
-                <!-- NEW: Barcode Search Section -->
-                <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
-                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                        <RadzenLabel Text="Barcode Search" />
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenTextBox @bind-Value="BarcodeSearchText"
-                                           Style="width: 100%"
-                                           Placeholder="Enter or scan barcode"
-                                           Disabled="@IsProcessing"
-                                           @onkeypress="@(async (args) => { if (args.Key == "Enter") await SearchByBarcode(); })" />
-                            <RadzenButton Icon="search"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          Click="@SearchByBarcode"
-                                          Disabled="@(IsProcessing || IsSearchingBarcode)"
-                                          Text="Search" />
-                            <RadzenButton Icon="clear"
-                                          ButtonStyle="ButtonStyle.Light"
-                                          Click="@ClearBarcodeSearch"
+                <RadzenCard Style="padding: 1rem;">
+                    <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+
+                        <!-- Barcode Search -->
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                            <RadzenLabel Text="Barcode Search" Style="font-weight: 600;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 0.25rem;">
+                                <RadzenTextBox @bind-Value="BarcodeSearchText"
+                                               Placeholder="Enter or scan barcode"
+                                               Style="flex: 1;"
+                                               Disabled="@IsProcessing"
+                                               @onkeypress="@(async args =>
+                                               {
+                                                   if (args.Key == "Enter")
+                                                       await SearchByBarcode();
+                                               })" />
+
+                                <RadzenButton Icon="search"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@SearchByBarcode"
+                                              Disabled="@(IsProcessing || IsSearchingBarcode)" />
+
+                                <RadzenButton Icon="close"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Click="@ClearBarcodeSearch"
+                                              Disabled="@IsProcessing" />
+                            </RadzenStack>
+                        </RadzenColumn>
+
+                        <!-- Generate Barcode -->
+                        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                            <RadzenLabel Text="Barcode Actions" Style="font-weight: 600;" />
+                            <RadzenButton Icon="qr_code"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="@GenerateBarcode"
                                           Disabled="@IsProcessing"
-                                          Text="Clear" />
-                        </RadzenStack>
-                    </RadzenColumn>
+                                          Text="Generate Barcode"
+                                          Style="width: 100%; margin-top: 0.25rem;" />
+                        </RadzenColumn>
 
-                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-                        <RadzenLabel Text="Or Generate Barcode" />
-                        <RadzenButton Icon="qr_code"
-                                      ButtonStyle="ButtonStyle.Secondary"
-                                      Click="@GenerateBarcode"
-                                      Disabled="@IsProcessing"
-                                      Text="Generate Barcode" />
-                    </RadzenColumn>
+                        <!-- Create New Item -->
+                        <RadzenColumn Size="12" SizeLG="4">
+                            <RadzenLabel Text="Item Management" Style="font-weight: 600;" />
+                            <RadzenButton Icon="@(IsNewItemMode ? "close" : "add_circle")"
+                                          ButtonStyle="@(IsNewItemMode ? ButtonStyle.Warning : ButtonStyle.Success)"
+                                          Click="@ToggleCreateNewItem"
+                                          Disabled="@IsProcessing"
+                                          Text="@(IsNewItemMode ? "Cancel New Item" : "Create New Item")"
+                                          Style="width: 100%; margin-top: 0.25rem;" />
+                        </RadzenColumn>
 
-                    <RadzenColumn Size="12" SizeMD="12" SizeLG="4">
-                        <RadzenButton Icon="@(IsNewItemMode ? "list" : "add_circle")"
-                                      ButtonStyle="@(IsNewItemMode ? ButtonStyle.Warning : ButtonStyle.Success)"
-                                      Click="@ToggleCreateNewItem"
-                                      Disabled="@IsProcessing"
-                                      Text="@(IsNewItemMode ? "Cancel New Item" : "Create New Item")"
-                                      Style="width: 100%" />
-                    </RadzenColumn>
-                </RadzenRow>
+                    </RadzenRow>
+                </RadzenCard>
+
 
                 @if (DisableItemFields)
                 {

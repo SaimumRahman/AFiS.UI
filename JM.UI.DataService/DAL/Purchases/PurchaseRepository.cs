@@ -5,7 +5,9 @@ using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
@@ -81,7 +83,29 @@ namespace JM.UI.DataService.DAL.Purchases
                 throw new Exception($"Unexpected error fetching purchase: {ex.Message}", ex);
             }
         }
+        public async Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/Purchase/get-item-purchase/{purchaseId}");
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Failed to fetch purchase items for PurchaseId: {PurchaseId}. Status: {StatusCode}",
+                        purchaseId, response.StatusCode);
+                    return new List<PurchaseItemDTO>();
+                }
+
+                var purchase = await response.Content.ReadFromJsonAsync<IEnumerable<PurchaseItemDTO>>();
+                return purchase ?? new List<PurchaseItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetPurchaseItems service for PurchaseId: {PurchaseId}", purchaseId);
+                throw;
+            }
+        }
         // =============================================
         // Save/Update Purchase
         // =============================================

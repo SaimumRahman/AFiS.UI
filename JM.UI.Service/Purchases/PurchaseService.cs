@@ -3,7 +3,9 @@ using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace JM.UI.Service.Purchases
@@ -62,7 +64,18 @@ namespace JM.UI.Service.Purchases
 
             return await _repositoryUnitOfWork.PurchaseRepository.SaveUpdatePurchase(purchase, items);
         }
-
+        public async Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId)
+        {
+            try
+            {
+                var response = await _repositoryUnitOfWork.PurchaseRepository.GetPurchaseItems(purchaseId);
+                return response ?? new List<PurchaseItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
         // =============================================
         // Delete Purchase
         // =============================================

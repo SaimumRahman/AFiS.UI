@@ -18,5 +18,6 @@ namespace JM.UI.DataService.DAL.Purchases
         Task<PurchaseDraftDTO?> GetPurchaseDraftById(int id);
         Task<ResponseResult> SavePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items);
         Task DeletePurchaseDraft(int id);
+        Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId);
     }
 }

@@ -25,5 +25,6 @@ namespace JM.UI.Service.Purchases
         Task<(bool IsValid, string ErrorMessage)> ValidatePurchaseDraft(PurchaseDraftDTO draft, List<PurchaseDraftItemDTO> items);
         string FormatCurrency(decimal amount);
         string FormatDate(DateTime? date);
+        Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId);
     }
 }
