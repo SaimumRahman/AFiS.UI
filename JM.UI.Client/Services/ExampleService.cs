@@ -127,15 +127,6 @@ namespace JM.UI.Client.Services
                 {
                     new Example
                     {
-                        Name = "Suppliers",
-                        Path = "/SuppliersList",
-                        Icon = "\ue558",  // business / handshake
-                        Title = "Suppliers",
-                        Description = "Manage vendor and supplier records",
-                        Tags = new[] { "supplier", "vendor", "purchase" }
-                    },
-                    new Example
-                    {
                         Toc = [ new () { Text = "PurchaseReturnsList", Anchor = "#text-tag-name" } ],
                         Name = "Purchase Returns",
                         Path = "/PurchaseReturnsList",
@@ -180,6 +171,52 @@ namespace JM.UI.Client.Services
                         Title = "Purchase Invoices",
                         Description = "Record and manage received invoices",
                         Tags = new[] { "invoice", "bill", "purchase" }
+                    },
+                }
+            },
+
+            // 5a. Supplier Management
+            new Example
+            {
+                Name = "Supplier",
+                Icon = "\ue558", // business
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Suppliers",
+                        Path = "/SuppliersList",
+                        Icon = "\ue558",
+                        Title = "Suppliers",
+                        Description = "Manage vendor and supplier records",
+                        Tags = new[] { "supplier", "vendor" }
+                    },
+                    new Example
+                    {
+                        Name = "Supplier Payments",
+                        Path = "/SupplierPaymentsList",
+                        Icon = "\ue8a1",
+                        Title = "Supplier Payments",
+                        Description = "Record and track payments to suppliers",
+                        Tags = new[] { "payment", "supplier", "finance" }
+                    },
+                    new Example
+                    {
+                        Name = "Supplier Ledger",
+                        Path = "/SupplierLedger",
+                        Icon = "\ue8f4",
+                        Title = "Supplier Ledger",
+                        Description = "View supplier account statements",
+                        Tags = new[] { "ledger", "supplier", "statement" }
+                    },
+                    new Example
+                    {
+                        Name = "Outstanding",
+                        Path = "/SupplierOutstanding",
+                        Icon = "\ue85d",
+                        Title = "Supplier Outstanding",
+                        Description = "View outstanding balances per supplier",
+                        Tags = new[] { "outstanding", "balance", "supplier" }
                     }
                 }
             },

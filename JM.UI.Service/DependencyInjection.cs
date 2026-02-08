@@ -46,6 +46,7 @@ using JM.UI.Service.SubGroups;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
+using JM.UI.Service.SupplierPayments;
 
 namespace JM.UI.Service
 {
@@ -90,7 +91,9 @@ namespace JM.UI.Service
             services.AddTransient<IGroupRoutePermissionService, GroupRoutePermissionService>();
             services.AddTransient<IGroupActionPermissionService, GroupActionPermissionService>();
             services.AddTransient<IItemService, ItemService>();
+            services.AddTransient<IItemService, ItemService>();
             services.AddTransient<IPurchaseReturnItemService, PurchaseReturnItemService>();
+            services.AddTransient<ISupplierPaymentService, SupplierPaymentService>();
         }
     }
 }

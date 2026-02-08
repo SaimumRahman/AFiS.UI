@@ -43,6 +43,7 @@ using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
+using JM.UI.DataService.DAL.SupplierPayments;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -80,5 +81,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IMesurementUnitRepository MesurementUnitRepository { get; }
         IItemRepository ItemRepository { get; }
         IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
+        ISupplierPaymentRepository SupplierPaymentRepository { get; }
     }
 }

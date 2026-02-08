@@ -1,0 +1,78 @@
+@page "/SupplierPaymentsList"
+@using JM.UI.Entities.Model.SupplierPayments
+@attribute [Authorize]
+@inherits SupplierPaymentsListComponent
+
+<PageTitle>Supplier Payments</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="payments" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Supplier Payments</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="New Payment"
+                                  Click="@AddPayment"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="PaymentsGrid"
+                        Data="@PaymentsList"
+                        TItem="SupplierPaymentDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="15"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="Id" Visible="false" Title="ID" Width="70px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="PaymentDate" Title="Date" FormatString="{0:d}" Width="100px" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="SupplierName" Title="Supplier" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="StoreName" Title="Store" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="PaymentAmount" Title="Amount" FormatString="{0:C}" Width="120px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="PaymentMethod" Title="Method" Width="100px" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="ReferenceNo" Title="Reference" Width="120px" />
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Property="UserName" Title="User" Width="120px" />
+                
+                <RadzenDataGridColumn TItem="SupplierPaymentDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="payment">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditPayment(payment))" 
+                                          ToolTip="Edit Payment" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeletePayment(payment))" 
+                                          ToolTip="Delete Payment" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

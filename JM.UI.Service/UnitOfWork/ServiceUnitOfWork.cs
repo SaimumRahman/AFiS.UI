@@ -38,6 +38,7 @@ using JM.UI.Service.SubGroups;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
+using JM.UI.Service.SupplierPayments;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -76,6 +77,7 @@ namespace JM.UI.Service.UnitOfWork
         public IGroupActionPermissionService GroupActionPermissionService { get; private set; }
         public IItemService ItemService { get; private set; }
         public IPurchaseReturnItemService PurchaseReturnItemService { get; private set; }
+        public ISupplierPaymentService SupplierPaymentService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -115,6 +117,7 @@ namespace JM.UI.Service.UnitOfWork
             RouteService = new RouteService(_repoUow);
             GroupRoutePermissionService = new GroupRoutePermissionService(_repoUow);
             GroupActionPermissionService = new GroupActionPermissionService(_repoUow);
+            SupplierPaymentService = new SupplierPaymentService(_repoUow);
         }
 
         public void Dispose()

@@ -1,0 +1,81 @@
+@page "/SupplierPaymentsAdd"
+@page "/SupplierPaymentsAdd/{Id:int}"
+@using JM.UI.Entities.Model.SupplierPayments
+@using JM.UI.Entities.Model.Suppliers
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Entities.Model.Bank
+@attribute [Authorize]
+@inherits SupplierPaymentsAddComponent
+
+<PageTitle>@(Id == 0 ? "New Payment" : "Edit Payment")</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">@(Id == 0 ? "New Supplier Payment" : "Edit Supplier Payment")</RadzenText>
+
+        <RadzenTemplateForm Data="@PaymentModel" Submit="@(async (SupplierPaymentDTO args) => { await SavePayment(args); })">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack>
+                        <RadzenFormField Text="Payment Date" Variant="Variant.Outlined">
+                            <RadzenDatePicker @bind-Value="@PaymentModel.PaymentDate" Name="PaymentDate" DateFormat="d"/>
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="PaymentDate" Text="Payment date is required" />
+
+                        <RadzenFormField Text="Supplier" Variant="Variant.Outlined">
+                            <RadzenDropDown Data="@SuppliersList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.SupplierId" Name="SupplierId" 
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="SupplierId" Text="Supplier is required" DefaultValue="0" />
+
+                        <RadzenFormField Text="Store" Variant="Variant.Outlined">
+                            <RadzenDropDown Data="@StoresList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.StoreId" Name="StoreId" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" />
+
+                        <RadzenFormField Text="Amount" Variant="Variant.Outlined">
+                            <RadzenNumeric @bind-Value="@PaymentModel.PaymentAmount" Name="PaymentAmount" Format="c" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="PaymentAmount" Text="Amount is required" DefaultValue="0" />
+                        <RadzenCompareValidator Component="PaymentAmount" Value="@(0m)" Operator="CompareOperator.GreaterThan" Text="Amount must be greater than 0" />
+                    </RadzenStack>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack>
+                        <RadzenFormField Text="Payment Method" Variant="Variant.Outlined">
+                            <RadzenDropDown Data="@PaymentMethods" @bind-Value="@PaymentModel.PaymentMethod" Name="PaymentMethod" Change="@OnPaymentMethodChange" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="PaymentMethod" Text="Payment method is required" />
+
+                        <RadzenFormField Text="Bank" Variant="Variant.Outlined" Visible="@(IsBankVisible)">
+                            <RadzenDropDown Data="@BanksList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.BankId" Name="BankId" />
+                        </RadzenFormField>
+                        <RadzenRequiredValidator Component="BankId" Text="Bank is required" Visible="@(IsBankVisible)" DefaultValue="0" />
+
+                        <RadzenFormField Text="Cheque No" Variant="Variant.Outlined" Visible="@(IsChequeVisible)">
+                            <RadzenTextBox @bind-Value="@PaymentModel.ChequeNo" Name="ChequeNo" />
+                        </RadzenFormField>
+                        
+                        <RadzenFormField Text="Cheque Date" Variant="Variant.Outlined" Visible="@(IsChequeVisible)">
+                             <RadzenDatePicker @bind-Value="@PaymentModel.ChequeDate" Name="ChequeDate" DateFormat="d" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Reference No" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="@PaymentModel.ReferenceNo" Name="ReferenceNo" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Remarks" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="@PaymentModel.Remarks" Name="Remarks" Rows="3" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenCard>
+</RadzenContent>

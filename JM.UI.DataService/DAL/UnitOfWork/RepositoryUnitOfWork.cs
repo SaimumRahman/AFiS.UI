@@ -45,6 +45,7 @@ using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
+using JM.UI.DataService.DAL.SupplierPayments;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -83,6 +84,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IMesurementUnitRepository MesurementUnitRepository { get; }
         public IItemRepository ItemRepository { get; }
         public IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
+        public ISupplierPaymentRepository SupplierPaymentRepository { get; }
         
         public IActionRepository ActionRepository { get; }
         public IRouteRepository RouteRepository { get; }
@@ -131,6 +133,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             MesurementUnitRepository = new MesurementUnitRepository(factory, tokenProvider, loggerFactory.CreateLogger<MesurementUnitRepository>());
             ItemRepository = new ItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemRepository>());
             PurchaseReturnItemRepository = new PurchaseReturnItemRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseReturnItemRepository>());
+            SupplierPaymentRepository = new SupplierPaymentRepository(factory, tokenProvider, loggerFactory.CreateLogger<SupplierPaymentRepository>());
         }
 
         public void Dispose()

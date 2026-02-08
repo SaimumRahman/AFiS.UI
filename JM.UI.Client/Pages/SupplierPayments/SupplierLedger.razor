@@ -1,0 +1,62 @@
+@page "/SupplierLedger"
+@using JM.UI.Entities.Model.SupplierPayments
+@using JM.UI.Entities.Model.Suppliers
+@attribute [Authorize]
+@inherits SupplierLedgerComponent
+
+<PageTitle>Supplier Ledger</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">Supplier Ledger</RadzenText>
+        
+        <RadzenRow AlignItems="AlignItems.End" Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Select Supplier</RadzenText>
+                <RadzenDropDown Data="@SuppliersList" TextProperty="Name" ValueProperty="Id" @bind-Value="@SelectedSupplierId" 
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Change="@OnSupplierChange" Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+               <RadzenButton Text="Print Ledger" Icon="print" ButtonStyle="ButtonStyle.Secondary" Click="@PrintLedger" Disabled="@(SelectedSupplierId == 0)" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (LedgerList != null && LedgerList.Any())
+    {
+        <RadzenCard>
+            <RadzenDataGrid Data="@LedgerList" TItem="SupplierLedgerDTO"
+                            AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" AllowPaging="true" PageSize="20"
+                            AllowSorting="true" GridLines="DataGridGridLines.Both" Density="Density.Compact">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="TransactionDate" Title="Date" FormatString="{0:d}" Width="100px" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="TransactionType" Title="Type" Width="100px" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="ReferenceNo" Title="Reference" Width="150px" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="DebitAmount" Title="Debit (Payment)" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px">
+                         <FooterTemplate>
+                            @LedgerList.Sum(x => x.DebitAmount).ToString("C")
+                        </FooterTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="CreditAmount" Title="Credit (Purchase)" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px">
+                         <FooterTemplate>
+                            @LedgerList.Sum(x => x.CreditAmount).ToString("C")
+                        </FooterTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="RunningBalance" Title="Balance" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="Remarks" Title="Remarks" />
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    }
+    else if (SelectedSupplierId != 0 && IsLoading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (SelectedSupplierId != 0 && (LedgerList == null || !LedgerList.Any())) 
+    {
+         <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Body1">No transactions found for this supplier.</RadzenText>
+         </RadzenCard>
+    }
+</RadzenContent>

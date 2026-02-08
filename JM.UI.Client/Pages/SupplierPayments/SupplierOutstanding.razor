@@ -1,0 +1,45 @@
+@page "/SupplierOutstanding"
+@using JM.UI.Entities.Model.SupplierPayments
+@attribute [Authorize]
+@inherits SupplierOutstandingComponent
+
+<PageTitle>Supplier Outstanding</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">Supplier Outstanding Balances</RadzenText>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid Data="@OutstandingList" TItem="SupplierOutstandingDTO"
+                        AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" AllowPaging="true" PageSize="20"
+                        AllowSorting="true" GridLines="DataGridGridLines.Both" Density="Density.Compact"
+                        IsLoading="@IsLoading">
+            <Columns>
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierName" Title="Supplier Name" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierContactNo" Title="Contact No" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierAddress" Title="Address" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPurchases" Title="Total Purchases" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPayments" Title="Total Payments" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="OutstandingBalance" Title="Balance Due" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px">
+                    <Template Context="data">
+                        <RadzenText TextStyle="TextStyle.Body1" class="@(data.OutstandingBalance > 0 ? "rz-color-danger" : "rz-color-success")">
+                            @data.OutstandingBalance.ToString("C")
+                        </RadzenText>
+                    </Template>
+                     <FooterTemplate>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-danger">
+                            @OutstandingList.Sum(x => x.OutstandingBalance).ToString("C")
+                        </RadzenText>
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Title="Actions" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="data">
+                         <RadzenButton Icon="receipt_long" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Variant="Variant.Flat" 
+                                       Click="@(() => ViewLedger(data.SupplierId))" ToolTip="View Ledger" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>
