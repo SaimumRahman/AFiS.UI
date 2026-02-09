@@ -13,8 +13,9 @@ namespace JM.UI.Entities.Model.Purchases
         public string? BillInvoiceName { get; set; }
         public DateTime PurchaseDate { get; set; }
         public decimal TotalAmount { get; set; }
-        public decimal? DiscountAmount { get; set; }
-        public decimal? VatAmount { get; set; }
+        public decimal? DiscountAmount { get; set; } = 0m;
+        public decimal? VatAmount { get; set; } = 0m;
+
         public bool IsVatIncluded { get; set; }
         public decimal? OtherCostTotal { get; set; }
         public decimal? CarryingCostTotal { get; set; }

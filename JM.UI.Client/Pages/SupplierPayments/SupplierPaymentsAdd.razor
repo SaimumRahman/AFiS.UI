@@ -34,7 +34,7 @@
                         <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" />
 
                         <RadzenFormField Text="Amount" Variant="Variant.Outlined">
-                            <RadzenNumeric @bind-Value="@PaymentModel.PaymentAmount" Name="PaymentAmount" Format="c" />
+                            <RadzenNumeric @bind-Value="@PaymentModel.PaymentAmount" Name="PaymentAmount" />
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="PaymentAmount" Text="Amount is required" DefaultValue="0" />
                         <RadzenCompareValidator Component="PaymentAmount" Value="@(0m)" Operator="CompareOperator.GreaterThan" Text="Amount must be greater than 0" />

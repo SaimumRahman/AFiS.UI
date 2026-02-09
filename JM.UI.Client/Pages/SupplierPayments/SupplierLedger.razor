@@ -33,18 +33,18 @@
                     <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="TransactionDate" Title="Date" FormatString="{0:d}" Width="100px" />
                     <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="TransactionType" Title="Type" Width="100px" />
                     <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="ReferenceNo" Title="Reference" Width="150px" />
-                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="DebitAmount" Title="Debit (Payment)" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px">
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="DebitAmount" Title="Debit (Payment)" TextAlign="TextAlign.Right" Width="120px">
                          <FooterTemplate>
-                            @LedgerList.Sum(x => x.DebitAmount).ToString("C")
+                         Total:   @LedgerList.Sum(x => x.DebitAmount).ToString()
                         </FooterTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="CreditAmount" Title="Credit (Purchase)" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px">
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="CreditAmount" Title="Credit (Purchase)" TextAlign="TextAlign.Right" Width="150px">
                          <FooterTemplate>
-                            @LedgerList.Sum(x => x.CreditAmount).ToString("C")
+                          Total:  @LedgerList.Sum(x => x.CreditAmount).ToString()
                         </FooterTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="RunningBalance" Title="Balance" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="120px" />
-                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="Remarks" Title="Remarks" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="RunningBalance" Title="Balance" TextAlign="TextAlign.Right" Width="120px" />
+                    <RadzenDataGridColumn TItem="SupplierLedgerDTO" Property="Remarks" Title="Remarks" Width="150px" />
                 </Columns>
             </RadzenDataGrid>
         </RadzenCard>

@@ -16,20 +16,20 @@
                         AllowSorting="true" GridLines="DataGridGridLines.Both" Density="Density.Compact"
                         IsLoading="@IsLoading">
             <Columns>
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierName" Title="Supplier Name" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierName" Title="Supplier Name" Width="150px" />
                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierContactNo" Title="Contact No" Width="150px" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierAddress" Title="Address" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPurchases" Title="Total Purchases" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPayments" Title="Total Payments" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="OutstandingBalance" Title="Balance Due" FormatString="{0:C}" TextAlign="TextAlign.Right" Width="150px">
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierAddress" Title="Address" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPurchases" Title="Total Purchases"  TextAlign="TextAlign.Right" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPayments" Title="Total Payments"  TextAlign="TextAlign.Right" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="OutstandingBalance" Title="Balance Due"  TextAlign="TextAlign.Right" Width="150px">
                     <Template Context="data">
                         <RadzenText TextStyle="TextStyle.Body1" class="@(data.OutstandingBalance > 0 ? "rz-color-danger" : "rz-color-success")">
-                            @data.OutstandingBalance.ToString("C")
+                            @data.OutstandingBalance.ToString()
                         </RadzenText>
                     </Template>
                      <FooterTemplate>
                         <RadzenText TextStyle="TextStyle.Body1" class="rz-color-danger">
-                            @OutstandingList.Sum(x => x.OutstandingBalance).ToString("C")
+                            @OutstandingList.Sum(x => x.OutstandingBalance).ToString()
                         </RadzenText>
                     </FooterTemplate>
                 </RadzenDataGridColumn>
