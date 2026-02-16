@@ -52,8 +52,8 @@
                             Density="Density.Compact">
                 <Columns>
                     <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Visible="false" Title="ID" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" c/>
-                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Color" Width="150px">
+                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Color">
                         <Template Context="color">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
 
@@ -65,7 +65,7 @@
                     border: 1px solid #ccc;">
                                 </div>
 
-                                <span>@color.ColorCode</span>
+                                @* <span>@color.ColorCode</span> *@
 
                             </RadzenStack>
                         </Template>
