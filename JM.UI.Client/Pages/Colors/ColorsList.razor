@@ -51,9 +51,26 @@
                             GridLines="DataGridGridLines.Both"
                             Density="Density.Compact">
                 <Columns>
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
-                    
+                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Visible="false" Title="ID" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" c/>
+                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Color" Width="150px">
+                        <Template Context="color">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+
+                                <div style="
+                    width: 30px;
+                    height: 30px;
+                    background-color:@(string.IsNullOrWhiteSpace(color.ColorCode) ? "#ffffff" : color.ColorCode);
+                    border-radius: 6px;
+                    border: 1px solid #ccc;">
+                                </div>
+
+                                <span>@color.ColorCode</span>
+
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
                     <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="color">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">

@@ -387,14 +387,18 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItem.ItemId = 0;
             }
         }
-        protected async Task OnColorChanged(int? colorId)
+        protected void OnColorChanged(int? colorId)
         {
-            if (colorId.HasValue)
+            if (!colorId.HasValue) return;
+
+            var col = Colors.FirstOrDefault(x => x.Id == colorId);
+
+            if (col != null && !string.IsNullOrWhiteSpace(col.Name))
             {
-                var col = Colors.Where(x=>x.Id==colorId).FirstOrDefault().Name;
-                CurrentItem.Barcode = CurrentItem.Barcode + "-" + col;
+                CurrentItem.Barcode = $"{CurrentItem.Barcode}-{col.Name}";
             }
         }
+
         protected async Task OnSizeChanged(int? sizeId)
         {
             if (sizeId.HasValue)

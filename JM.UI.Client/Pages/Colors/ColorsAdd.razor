@@ -34,6 +34,13 @@
                             <RadzenRequiredValidator Component="Name" Text="Name is required" />
                         </RadzenStack>
                     </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Color Code" Component="ColorCode" />
+                            <RadzenTextBox Name="ColorCode" @bind-Value="@Colors.ColorCode" class="w-100" />
+                            <RadzenRequiredValidator Component="ColorCode" Text="" />
+                        </RadzenStack>
+                    </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">

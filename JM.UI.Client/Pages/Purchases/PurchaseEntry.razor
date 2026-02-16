@@ -274,12 +274,23 @@
                         <RadzenLabel Text="Color" />
                         <RadzenDropDown @bind-Value="CurrentItem.ColorId"
                                         Data="@Colors"
-                                        TextProperty="Name"
                                         ValueProperty="Id"
                                         Placeholder="Select Color"
-                                        Style="width: 100%"
-                                        Disabled="@(IsProcessing || DisableItemFields)"
-                                        Change="@(args => OnColorChanged(CurrentItem.ColorId))" />
+                                        Style="width: 100%">
+                            <Template Context="color">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="
+                    width:16px;
+                    height:16px;
+                    border-radius:4px;
+                    border:1px solid #ccc;
+                    background-color:@color.ColorCode">
+                                    </div>
+                                    <span>@color.Name</span>
+                                </div>
+                            </Template>
+                        </RadzenDropDown>
+
                     </RadzenColumn>
 
                     <RadzenColumn Size="12" SizeMD="4" SizeLG="2">

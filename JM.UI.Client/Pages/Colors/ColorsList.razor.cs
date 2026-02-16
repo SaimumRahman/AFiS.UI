@@ -28,18 +28,20 @@ public partial class ColorsListComponent : PosComponentBase
         IsLoading = true;
         try
         {
-            Colorss = await _serviceUnitOfWork.ColorsService.GetColorss();
+            var result = await _serviceUnitOfWork.ColorsService.GetColorss();
+            Colorss = result ?? new List<ColorsDTO>();
         }
         catch (Exception ex)
         {
+            Colorss = new List<ColorsDTO>();
             notificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
         }
         finally
         {
             IsLoading = false;
-            StateHasChanged();
         }
     }
+
 
     protected void AddColors() => NavigationManager.NavigateTo("/ColorsAdd");
 
