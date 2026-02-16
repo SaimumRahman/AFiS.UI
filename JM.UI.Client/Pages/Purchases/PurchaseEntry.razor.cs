@@ -393,9 +393,9 @@ namespace JM.UI.Client.Pages.Purchases
 
             var col = Colors.FirstOrDefault(x => x.Id == colorId);
 
-            if (col != null && !string.IsNullOrWhiteSpace(col.Name))
+            if (col != null && !string.IsNullOrWhiteSpace(col.ColorCode))
             {
-                CurrentItem.Barcode = $"{CurrentItem.Barcode}-{col.Name}";
+                CurrentItem.Barcode = $"{CurrentItem.Barcode}{col.ColorCode}";
             }
         }
 
@@ -404,7 +404,7 @@ namespace JM.UI.Client.Pages.Purchases
             if (sizeId.HasValue)
             {
                 var col = Sizes.Where(x=>x.Id== sizeId).FirstOrDefault().Name;
-                CurrentItem.Barcode = CurrentItem.Barcode + "-" + col;
+                CurrentItem.Barcode = CurrentItem.Barcode  + col;
             }
         }
 
@@ -544,9 +544,9 @@ namespace JM.UI.Client.Pages.Purchases
                 var request = new BarcodeGenerationRequestDTO
                 {
                     ShadeNo = CurrentItem.ShadeNo,
-                    ColorName = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name,
+                    ColorName = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.ColorCode,
                     SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
-                    ItemId = CurrentItem.ItemId > 0 ? CurrentItem.ItemId : null
+                    ItemId = CurrentItem.ItemId > 0 ? CurrentItem.ItemId : CurrentItem.GroupId,
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);

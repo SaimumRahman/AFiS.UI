@@ -272,24 +272,36 @@
 
                     <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
                         <RadzenLabel Text="Color" />
-                        <RadzenDropDown @bind-Value="CurrentItem.ColorId"
-                                        Data="@Colors"
-                                        ValueProperty="Id"
-                                        Placeholder="Select Color"
-                                        Style="width: 100%">
-                            <Template Context="color">
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    <div style="
-                    width:16px;
-                    height:16px;
-                    border-radius:4px;
-                    border:1px solid #ccc;
-                    background-color:@color.ColorCode">
-                                    </div>
-                                    <span>@color.Name</span>
-                                </div>
-                            </Template>
-                        </RadzenDropDown>
+                        <RadzenDropDownDataGrid @bind-Value="CurrentItem.ColorId"
+                                                Data="@Colors"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                AllowFiltering="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                Style="width: 100%"
+                                                Placeholder="Select Color"
+                                                Change="@(args => OnColorChanged(CurrentItem.ColorId))"
+                                                AllowFilteringByAllStringColumns="true">
+
+                            <Columns>
+                                <RadzenDropDownDataGridColumn Width="60px" Filterable="false">
+                                    <Template Context="color">
+                                        <div style="
+                        width:16px;
+                        height:16px;
+                        border-radius:4px;
+                        border:1px solid #ccc;
+                        background-color:@color.ColorCode">
+                                        </div>
+                                    </Template>
+                                </RadzenDropDownDataGridColumn>
+
+                                <RadzenDropDownDataGridColumn Property="Name" Title="Color Name" />
+                                <RadzenDropDownDataGridColumn Property="ColorCode" Title="Hex Code" />
+                            </Columns>
+
+                        </RadzenDropDownDataGrid>
+
 
                     </RadzenColumn>
 
