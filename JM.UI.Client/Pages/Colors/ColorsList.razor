@@ -52,20 +52,19 @@
                             Density="Density.Compact">
                 <Columns>
                     <RadzenDataGridColumn TItem="ColorsDTO" Property="Id" Visible="false" Title="ID" Frozen="true" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ColorsDTO" Property="Name" Title="Name" />
                     <RadzenDataGridColumn TItem="ColorsDTO" Title="Color">
                         <Template Context="color">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
 
                                 <div style="
-                    width: 30px;
-                    height: 30px;
-                    background-color:@(string.IsNullOrWhiteSpace(color.ColorCode) ? "#ffffff" : color.ColorCode);
-                    border-radius: 6px;
-                    border: 1px solid #ccc;">
+                                width: 30px;
+                                height: 30px;
+                                background-color:@(string.IsNullOrWhiteSpace(color.ColorCode) ? "#ffffff" : color.ColorCode);
+                                border-radius: 6px;
+                                border: 1px solid #ccc;">
                                 </div>
 
-                                @* <span>@color.ColorCode</span> *@
+                                 <span>@color.Name</span> 
 
                             </RadzenStack>
                         </Template>
