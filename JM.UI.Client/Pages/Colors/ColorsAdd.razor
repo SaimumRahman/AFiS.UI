@@ -41,6 +41,12 @@
                             <RadzenRequiredValidator Component="ColorCode" Text="" />
                         </RadzenStack>
                     </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Pick Color" Component="HexCode" />
+                            <RadzenColorPicker @bind-Value=@Colors.HexCode ShowHSV="true" ShowRGBA="true" ShowColors="true" class="w-100" />
+                        </RadzenStack>
+                    </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">

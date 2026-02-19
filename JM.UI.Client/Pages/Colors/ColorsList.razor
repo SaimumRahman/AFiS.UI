@@ -59,7 +59,7 @@
                                 <div style="
                                 width: 30px;
                                 height: 30px;
-                                background-color:@(string.IsNullOrWhiteSpace(color.ColorCode) ? "#ffffff" : color.ColorCode);
+                                background-color:@(string.IsNullOrWhiteSpace(color.HexCode) ? "#ffffff" : color.HexCode);
                                 border-radius: 6px;
                                 border: 1px solid #ccc;">
                                 </div>
@@ -69,6 +69,7 @@
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ColorsDTO" Property="ColorCode" Title="Color Code" />
 
                     <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="color">
