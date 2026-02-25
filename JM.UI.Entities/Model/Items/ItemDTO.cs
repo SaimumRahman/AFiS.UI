@@ -20,9 +20,13 @@ namespace JM.UI.Entities.Model.Items
         public decimal? PurchasePrice { get; set; }
         public decimal? SalePrice { get; set; }
         public decimal? WholeSalePrice { get; set; }
-        public decimal? ReorderLevel { get; set; }
         public decimal? LastCostPrice { get; set; }
         public bool IsActive { get; set; }
+        public int? SupplierId { get; set; }
+        public string? SupplierName { get; set; }
+        public byte[]? Image { get; set; }
+        public bool? RawMaterial { get; set; }
+        public bool? FinishedGood { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
         public int? LastModifiedBy { get; set; }
