@@ -20,11 +20,11 @@ using Microsoft.Extensions.Logging;
 
 namespace JM.UI.DataService.DAL.Users
 {
-    public class UsersAuthRepository: IUserAuthRepository
+    public class UsersAuthRepository : IUserAuthRepository
     {
         private readonly ILogger<UsersAuthRepository> _logger;
         private readonly HttpClient _httpClient;
-        private readonly ITokenProvider  _token;
+        private readonly ITokenProvider _token;
 
 
         public UsersAuthRepository(
@@ -133,21 +133,21 @@ namespace JM.UI.DataService.DAL.Users
 
         public async Task<LoggedInfo> GetCompanyIdByUserId(int Userid)
         {
-          
-                try
-                {
-                    string sql = "";
-                    sql = $@"Select UserId,CompanyId from UserAuthDetails where UserId=@UserId";
 
-                   // return await base.QueryFirstOrDefaultAsync<LoggedInfo>(sql, new { Userid = Userid });
+            try
+            {
+                string sql = "";
+                sql = $@"Select UserId,CompanyId from UserAuthDetails where UserId=@UserId";
+
+                // return await base.QueryFirstOrDefaultAsync<LoggedInfo>(sql, new { Userid = Userid });
                 return null;
             }
-                catch (Exception e)
-                {
+            catch (Exception e)
+            {
 
-                    throw;
-                }
-          
+                throw;
+            }
+
         }
 
         public async Task<List<User>> GetAllUsers()
@@ -174,7 +174,7 @@ namespace JM.UI.DataService.DAL.Users
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while fetching users");
-                throw; 
+                throw;
             }
         }
 

@@ -62,6 +62,7 @@ else
                                                 ValueProperty="Id"
                                                 Placeholder="Select from dropdown"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@IsProcessing" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -122,6 +123,7 @@ else
                                                 ValueProperty="Id"
                                                 Placeholder="Select from dropdown"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@IsProcessing" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -139,12 +141,13 @@ else
                                                 Placeholder="Select from dropdown"
                                                 Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@IsProcessing" />
                             </RadzenColumn>
                         </RadzenRow>
 
                         <!-- Product -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
+                      @*   <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="Product" Style="font-weight:600; font-size:0.85rem;" />
                             </RadzenColumn>
@@ -172,7 +175,7 @@ else
                                                     Disabled="@IsProcessing" />
                                 }
                             </RadzenColumn>
-                        </RadzenRow>
+                        </RadzenRow> *@
 
                         <!-- SubProduct -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
@@ -186,6 +189,7 @@ else
                                                 ValueProperty="Id"
                                                 Placeholder="Select from dropdown"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -241,6 +245,7 @@ else
                                                 ValueProperty="Id"
                                                 Placeholder="Select / Create on the fly"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -328,13 +333,13 @@ else
 
                         <!-- Top right: ProductName + Barcode -->
                         <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center">
-                            <RadzenColumn Size="12" SizeMD="6">
+                            @* <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenLabel Text="ProductName" Style="font-weight:600; font-size:0.85rem;" />
                                 <RadzenTextBox Value="@CurrentItem.ItemName"
                                                Style="width:100%"
                                                ReadOnly="@DisableItemFields"
                                                Placeholder="Product Name" />
-                            </RadzenColumn>
+                            </RadzenColumn> *@
                             <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenLabel Text="Barcode" Style="font-weight:600; font-size:0.85rem;" />
                                 <RadzenTextBox @bind-Value="CurrentItem.Barcode"
@@ -378,6 +383,7 @@ else
                                                 ValueProperty="Id"
                                                 Placeholder="Select"
                                                 Style="width:100%"
+                                                AllowFiltering="true"
                                                 Disabled="@(IsProcessing || DisableItemFields)"
                                                 Change="@(args => OnSizeChanged(CurrentItem.SizeId))" />
                             </RadzenColumn>
