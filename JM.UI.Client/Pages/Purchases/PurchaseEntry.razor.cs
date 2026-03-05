@@ -133,6 +133,7 @@ namespace JM.UI.Client.Pages.Purchases
                     VatAmount = draft.VatAmount,
                     NetAmount = draft.NetAmount,
                     PaidAmount = draft.PaidAmount,
+                    CreatedDate = draft.CreatedDate,
                     DueAmount = draft.DueAmount,
                     Remarks = draft.Remarks
                 };
