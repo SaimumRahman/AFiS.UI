@@ -37,19 +37,17 @@ else
                     <RadzenStack Gap="0.4rem">
 
                         <!-- PurchaseDT / Default DT -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem" Visible="false">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="PurchaseDT" Style="font-weight:600; font-size:0.85rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
-                                <RadzenDatePicker @bind-Value="Purchase.PurchaseDate"
+                                <RadzenDatePicker @bind-Value="Purchase.CreatedDate"
                                                   Style="width:100%"
                                                   DateFormat="dd/MM/yyyy"
-                                                  Placeholder="Default DT (Not editable)"
-                                                  Disabled="@IsProcessing" />
+                                                  Disabled="true" />
                             </RadzenColumn>
                         </RadzenRow>
-
                         <!-- Supplier -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenColumn Size="4">
@@ -369,7 +367,24 @@ else
                         </RadzenRow>
 
                         <!-- Color / Size / UID / ProductPrice / OperationCost / SalePrice -->
+
                         <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center">
+                   
+                            <!-- Product -->
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Product" Style="font-weight:600; font-size:0.85rem;" />
+                                @if (DisableItemFields)
+                                {
+                                    <RadzenTextBox Value="@CurrentItem.ItemName" Style="width:100%" ReadOnly="true" />
+                                }
+                                else
+                                {
+                                    <RadzenTextBox @bind-Value="CurrentItem.ItemName"
+                                                   Style="width:100%"
+                                                   Placeholder="Enter product name"
+                                                   Disabled="@IsProcessing" />
+                                }
+                            </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Color" Style="font-weight:600; font-size:0.85rem;" />
                                 <RadzenDropDownDataGrid @bind-Value="CurrentItem.ColorId"

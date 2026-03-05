@@ -135,6 +135,7 @@ namespace JM.UI.Client.Pages.Purchases
                     VatAmount = draft.VatAmount,
                     NetAmount = draft.NetAmount,
                     PaidAmount = draft.PaidAmount,
+                    CreatedDate = draft.CreatedDate,
                     DueAmount = draft.DueAmount,
                     Remarks = draft.Remarks
                 };
@@ -652,7 +653,9 @@ namespace JM.UI.Client.Pages.Purchases
                 CountStockByColor = CurrentItem.CountStockByColor,
                 CountStockBySize = CurrentItem.CountStockBySize,
                 IsNewItem = CurrentItem.IsNewItem,
-                MesurementUnitId = CurrentItem.MesurementUnitId
+                MesurementUnitId = CurrentItem.MesurementUnitId,
+                DesignId = CurrentItem.DesignId,
+                DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name
             };
 
             PurchaseItems.Add(itemToAdd);        
