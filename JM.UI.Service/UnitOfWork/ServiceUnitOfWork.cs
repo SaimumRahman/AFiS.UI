@@ -35,6 +35,7 @@ using JM.UI.Service.Colors;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
+using JM.UI.Service.Designs;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
@@ -78,6 +79,7 @@ namespace JM.UI.Service.UnitOfWork
         public IItemService ItemService { get; private set; }
         public IPurchaseReturnItemService PurchaseReturnItemService { get; private set; }
         public ISupplierPaymentService SupplierPaymentService { get; private set; }
+        public IDesignService DesignService { get; private set; }
 
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
@@ -118,6 +120,7 @@ namespace JM.UI.Service.UnitOfWork
             GroupRoutePermissionService = new GroupRoutePermissionService(_repoUow);
             GroupActionPermissionService = new GroupActionPermissionService(_repoUow);
             SupplierPaymentService = new SupplierPaymentService(_repoUow);
+            DesignService = new DesignService(_repoUow);
         }
 
         public void Dispose()

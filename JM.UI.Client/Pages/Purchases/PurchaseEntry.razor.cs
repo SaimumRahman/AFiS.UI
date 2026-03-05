@@ -8,6 +8,7 @@ using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.SubGroups;
+using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Suppliers;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -35,6 +36,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
         protected IEnumerable<SubGroupModelDTO> SubGroups { get; set; } = new List<SubGroupModelDTO>();
+        protected IEnumerable<DesignModelDTO> Designs { get; set; } = new List<DesignModelDTO>();
         protected IEnumerable<ItemDTO> Items { get; set; } = new List<ItemDTO>();
         protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
         protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
@@ -413,9 +415,16 @@ namespace JM.UI.Client.Pages.Purchases
             if (subGroupId.HasValue)
             {
                 Items = await LoadItemsBySubGroup(subGroupId.Value);
+                Designs = await LoadDesignsBySubGroup(subGroupId.Value);
                 CurrentItem.SubGroupId = subGroupId;
+                CurrentItem.DesignId = null;
                 CurrentItem.ItemId = 0;
             }
+        }
+
+        protected void OnDesignChanged(int? designId)
+        {
+            CurrentItem.DesignId = designId;
         }
 
         protected async Task OnItemChanged(int itemId)
@@ -429,6 +438,11 @@ namespace JM.UI.Client.Pages.Purchases
         private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId)
         {
             return await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId) ?? new List<SubGroupModelDTO>();
+        }
+
+        private async Task<IEnumerable<DesignModelDTO>> LoadDesignsBySubGroup(int subGroupId)
+        {
+            return await _serviceUnitOfWork.DesignService.LoadDesignsBySubGroup(subGroupId) ?? new List<DesignModelDTO>();
         }
 
         private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)

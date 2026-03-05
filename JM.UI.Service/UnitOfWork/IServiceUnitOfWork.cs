@@ -40,6 +40,7 @@ using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
+using JM.UI.Service.Designs;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
@@ -85,5 +86,6 @@ namespace JM.UI.Service.UnitOfWork
         IItemService ItemService { get; }
         IPurchaseReturnItemService PurchaseReturnItemService { get; }
         ISupplierPaymentService SupplierPaymentService { get; }
+        IDesignService DesignService { get; }
     }
 }

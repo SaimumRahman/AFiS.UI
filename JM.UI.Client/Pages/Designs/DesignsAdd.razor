@@ -1,0 +1,73 @@
+@page "/DesignsAdd"
+@page "/DesignsAdd/{Id:int}"
+@using JM.UI.Entities.Model.Designs
+@attribute [Authorize]
+@inherits DesignsAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="style" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenTemplateForm TItem="DesignModelDTO" Data="@Design" Submit="@Save">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenCard>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Parent Sub Product" Component="SubGroupId" />
+                            <RadzenDropDown TValue="int" @bind-Value="@Design.SubGroupId"
+                                            Data="@SubGroups" TextProperty="Name" ValueProperty="Id"
+                                            Placeholder="Select Sub Product..." class="w-100" Name="SubGroupId"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                            <RadzenRequiredValidator Component="SubGroupId" Text="Sub Product is required" DefaultValue="0" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Name" Component="Name" />
+                            <RadzenTextBox Name="Name" @bind-Value="@Design.Name" class="w-100" />
+                            <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Code" Component="Code" />
+                            <RadzenTextBox Name="Code" @bind-Value="@Design.Code" class="w-100" />
+                            <RadzenRequiredValidator Component="Code" Text="Code is required" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@Cancel"
+                                  Icon="cancel"
+                                  Disabled="@IsProcessing" />
+                    <RadzenButton ButtonType="ButtonType.Submit"
+                                  Text="@(IsEditMode ? "Update" : "Save")"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Icon="save"
+                                  IsBusy="@IsProcessing" />
+                </RadzenRow>
+            </RadzenCard>
+        }
+    </RadzenTemplateForm>
+</RadzenContent>

@@ -35,6 +35,8 @@ namespace JM.UI.Entities.Model.PurchaseItems
         // NEW: Additional fields for creating new item
         public int? GroupId { get; set; }
         public int? SubGroupId { get; set; }
+        public int? DesignId { get; set; }
+        public string? DesignName { get; set; }
         public string? MaterialType { get; set; }
         public string? Origin { get; set; }
         public string? Features { get; set; }

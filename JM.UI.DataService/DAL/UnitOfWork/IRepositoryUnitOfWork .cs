@@ -40,6 +40,7 @@ using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.Designs;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
@@ -82,5 +83,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IItemRepository ItemRepository { get; }
         IPurchaseReturnItemRepository PurchaseReturnItemRepository { get; }
         ISupplierPaymentRepository SupplierPaymentRepository { get; }
+        IDesignRepository DesignRepository { get; }
     }
 }

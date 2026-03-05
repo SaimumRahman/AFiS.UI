@@ -1,0 +1,81 @@
+@page "/DesignsList"
+@using JM.UI.Entities.Model.Designs
+@attribute [Authorize]
+@inherits DesignsListComponent
+
+<PageTitle>Designs</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="style" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Designs Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Design"
+                                  Click="@AddDesign"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <RadzenCard>
+            <RadzenDataGrid @ref="DesignsGrid"
+                            Data="@DesignsList"
+                            TItem="DesignModelDTO"
+                            AllowFiltering="true"
+                            AllowColumnResize="true"
+                            AllowAlternatingRows="true"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            PagerHorizontalAlign="HorizontalAlign.Center"
+                            PageSize="10"
+                            PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                            FilterMode="FilterMode.Advanced"
+                            ShowPagingSummary="true"
+                            PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                            IsLoading="@IsLoading"
+                            GridLines="DataGridGridLines.Both"
+                            Density="Density.Compact">
+                <Columns>
+                    <RadzenDataGridColumn TItem="DesignModelDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="DesignModelDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="DesignModelDTO" Property="Code" Title="Code" Width="120px" />
+                    <RadzenDataGridColumn TItem="DesignModelDTO" Property="SubGroupName" Title="Sub Product" />
+
+                    <RadzenDataGridColumn TItem="DesignModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                        <Template Context="design">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(args => EditDesign(design))"
+                                              MouseEnter="@(args => TooltipService.Open(args, "Edit Design"))" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(args => DeleteDesign(design))"
+                                              MouseEnter="@(args => TooltipService.Open(args, "Delete Design"))" />
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    }
+</RadzenContent>

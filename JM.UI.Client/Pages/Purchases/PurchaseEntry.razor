@@ -146,8 +146,8 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <!-- Product -->
-                      @*   <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
+                        @*<!-- Product -->
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="Product" Style="font-weight:600; font-size:0.85rem;" />
                             </RadzenColumn>
@@ -175,7 +175,7 @@ else
                                                     Disabled="@IsProcessing" />
                                 }
                             </RadzenColumn>
-                        </RadzenRow> *@
+                        </RadzenRow>*@
 
                         <!-- SubProduct -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
@@ -190,7 +190,26 @@ else
                                                 Placeholder="Select from dropdown"
                                                 Style="width:100%"
                                                 AllowFiltering="true"
+                                                Change="@(args => OnSubGroupChanged(CurrentItem.SubGroupId))"
                                                 Disabled="@(IsProcessing || DisableItemFields)" />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <!-- Design -->
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <RadzenColumn Size="4">
+                                <RadzenLabel Text="Design" Style="font-weight:600; font-size:0.85rem;" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="8">
+                                <RadzenDropDown @bind-Value="CurrentItem.DesignId"
+                                                Data="@Designs"
+                                                TextProperty="Name"
+                                                ValueProperty="Id"
+                                                Placeholder="Select Design..."
+                                                Style="width:100%"
+                                                AllowFiltering="true"
+                                                Change="@(args => OnDesignChanged(CurrentItem.DesignId))"
+                                                Disabled="@(IsProcessing || !CurrentItem.SubGroupId.HasValue)" />
                             </RadzenColumn>
                         </RadzenRow>
 
