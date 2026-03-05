@@ -389,6 +389,7 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItem.SubGroupId = null;
                 CurrentItem.ItemId = 0;
 
+                GenerateProductName();
                 await GenerateBarcode();
             }
         }
@@ -398,6 +399,7 @@ namespace JM.UI.Client.Pages.Purchases
             if (colorId.HasValue)
             {
                 CurrentItem.ColorId = colorId;
+                GenerateProductName();
                 await GenerateBarcode();
             }
         }
@@ -407,6 +409,7 @@ namespace JM.UI.Client.Pages.Purchases
             if (sizeId.HasValue)
             {
                 CurrentItem.SizeId = sizeId;
+                GenerateProductName();
                 await GenerateBarcode();
             }
         }
@@ -420,12 +423,52 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItem.SubGroupId = subGroupId;
                 CurrentItem.DesignId = null;
                 CurrentItem.ItemId = 0;
+                
+                GenerateProductName();
+                await GenerateBarcode();
             }
         }
 
         protected void OnDesignChanged(int? designId)
         {
             CurrentItem.DesignId = designId;
+        }
+
+        protected void OnBrandChanged(string? brand)
+        {
+            CurrentItem.BrandColor = brand;
+            GenerateProductName();
+        }
+
+        protected void OnCatalogueChanged(string? catalogue)
+        {
+            CurrentItem.Catalogue = catalogue;
+            GenerateProductName();
+        }
+
+        private void GenerateProductName()
+        {
+            if (CurrentItem.ItemId != 0 && !IsNewItemMode) return;
+
+            string subProduct = SubGroups.FirstOrDefault(s => s.Id == CurrentItem.SubGroupId)?.Name ?? "";
+            string brand = CurrentItem.BrandColor ?? "";
+            string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
+            string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
+            string catalogue = CurrentItem.Catalogue ?? "";
+
+            if (!string.IsNullOrWhiteSpace(catalogue))
+            {
+                CurrentItem.ItemName = $"{catalogue}{color}{size}".Trim();
+            }
+            else
+            {
+                CurrentItem.ItemName = $"{subProduct}{brand}{color}{size}".Trim();
+            }
+
+            // Remove all spaces
+            CurrentItem.ItemName = CurrentItem.ItemName.Replace(" ", "");
+
+            StateHasChanged();
         }
 
         protected async Task OnItemChanged(int itemId)
@@ -530,6 +573,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.CountStockByColor = item.CountStockByColor;
             CurrentItem.CountStockBySize = item.CountStockBySize;
             CurrentItem.ProductType = item.ProductType;
+            CurrentItem.Catalogue = item.Catalogue;
         }
 
         private void PopulateFromPurchaseItem(PurchaseItemDTO item)
@@ -548,6 +592,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.ProductType = item.ProductType;
             CurrentItem.Barcode = BarcodeSearchText;
             CurrentItem.IsNewItem = false;
+            CurrentItem.Catalogue = item.Catalogue;
         }
 
         protected async Task GenerateBarcode()
@@ -568,6 +613,10 @@ namespace JM.UI.Client.Pages.Purchases
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
                 CurrentItem.Barcode = barcode;
                 BarcodeSearchText = barcode;
+                
+                // Ensure name is also up to date when barcode is refreshed
+                GenerateProductName();
+                
                 StateHasChanged();
             }
             catch (Exception ex)
@@ -586,6 +635,7 @@ namespace JM.UI.Client.Pages.Purchases
                 DisableItemFields = false;
                 // Clear item selection but keep entered data
                 CurrentItem.ItemId = 0;
+                GenerateProductName();
                 notificationService.Notify(NotificationSeverity.Info, "Create Mode", "Fill in the details to create a new item");
             }
             else
@@ -655,7 +705,8 @@ namespace JM.UI.Client.Pages.Purchases
                 IsNewItem = CurrentItem.IsNewItem,
                 MesurementUnitId = CurrentItem.MesurementUnitId,
                 DesignId = CurrentItem.DesignId,
-                DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name
+                DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name,
+                Catalogue = CurrentItem.Catalogue
             };
 
             PurchaseItems.Add(itemToAdd);        

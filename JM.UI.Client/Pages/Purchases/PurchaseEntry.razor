@@ -137,7 +137,7 @@ else
                                                 TextProperty="Name"
                                                 ValueProperty="Id"
                                                 Placeholder="Select from dropdown"
-                                                Change="@(args => OnGroupChanged(CurrentItem.GroupId))"
+                                                 Change="@(args => OnGroupChanged((int?)args))"
                                                 Style="width:100%"
                                                 AllowFiltering="true"
                                                 Disabled="@IsProcessing" />
@@ -188,7 +188,7 @@ else
                                                 Placeholder="Select from dropdown"
                                                 Style="width:100%"
                                                 AllowFiltering="true"
-                                                Change="@(args => OnSubGroupChanged(CurrentItem.SubGroupId))"
+                                                 Change="@(args => OnSubGroupChanged((int?)args))"
                                                 Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -220,6 +220,8 @@ else
                                 <RadzenTextBox @bind-Value="CurrentItem.BrandColor"
                                                Style="width:100%"
                                                Placeholder="Select / Create on the fly"
+                                               ValueUpdateMode="ValueUpdateMode.OnInput"
+                                               Input="@((string args) => OnBrandChanged(args))"
                                                Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -268,17 +270,19 @@ else
                         </RadzenRow>
 
                         <!-- Catalogue -->
-                       @*  <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="Catalogue" Style="font-weight:600; font-size:0.85rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
                                 <RadzenTextBox @bind-Value="CurrentItem.Catalogue"
                                                Style="width:100%"
-                                               Placeholder="Select / Create on the fly"
+                                               Placeholder="Enter catalogue"
+                                               ValueUpdateMode="ValueUpdateMode.OnInput"
+                                               Input="@((string args) => OnCatalogueChanged(args))"
                                                Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
-                        </RadzenRow> *@
+                        </RadzenRow>
 
                         <!-- Origin -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
@@ -395,7 +399,7 @@ else
                                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                         Style="width:100%"
                                                         Placeholder="Select"
-                                                        Change="@(args => OnColorChanged(CurrentItem.ColorId))"
+                                                         Change="@(args => OnColorChanged((int?)args))"
                                                         AllowFilteringByAllStringColumns="true">
                                     <Columns>
                                         <RadzenDropDownDataGridColumn Width="40px" Filterable="false">
@@ -419,7 +423,7 @@ else
                                                 Style="width:100%"
                                                 AllowFiltering="true"
                                                 Disabled="@(IsProcessing || DisableItemFields)"
-                                                Change="@(args => OnSizeChanged(CurrentItem.SizeId))" />
+                                                 Change="@(args => OnSizeChanged((int?)args))" />
                             </RadzenColumn>
 
                            @*  <RadzenColumn Size="12" SizeMD="4">
