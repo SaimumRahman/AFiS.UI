@@ -3,12 +3,14 @@ using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
 using JM.UI.Service.Barcodes;
+using JM.UI.Service.Colors;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
@@ -17,13 +19,22 @@ using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
+using JM.UI.Service.Groups;
+using JM.UI.Service.ItemBrand;
+using JM.UI.Service.ItemFeature;
+using JM.UI.Service.ItemOrigin;
+using JM.UI.Service.Items;
+using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
+using JM.UI.Service.PurchaseReturnItems;
 using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.Purchases;
 using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Stores;
+using JM.UI.Service.SubGroups;
+using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
@@ -81,6 +92,9 @@ namespace JM.UI.Service.UnitOfWork
         public ISupplierPaymentService SupplierPaymentService { get; private set; }
         public IDesignService DesignService { get; private set; }
 
+        public IItemOriginService ItemOriginService { get; private set; }
+        public IItemFeatureService ItemFeatureService { get; private set; }
+        public IItemBrandService ItemBrandService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -121,13 +135,13 @@ namespace JM.UI.Service.UnitOfWork
             GroupActionPermissionService = new GroupActionPermissionService(_repoUow);
             SupplierPaymentService = new SupplierPaymentService(_repoUow);
             DesignService = new DesignService(_repoUow);
+            ItemOriginService = new ItemOriginService(_repoUow);
+            ItemFeatureService = new ItemFeatureService(_repoUow);
+            ItemBrandService = new ItemBrandService(_repoUow);
         }
-
         public void Dispose()
         {
             _repoUow.Dispose();
         }
     }
-
-
 }

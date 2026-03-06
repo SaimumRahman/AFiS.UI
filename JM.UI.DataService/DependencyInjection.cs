@@ -2,11 +2,13 @@
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
@@ -15,12 +17,22 @@ using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.ItemBrand;
+using JM.UI.DataService.DAL.ItemFeatures;
+using JM.UI.DataService.DAL.ItemOrigin;
+using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
+using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.SupplierPayments;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
@@ -33,15 +45,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using JM.UI.DataService.DAL.Colors;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.PurchaseReturns;
-using JM.UI.DataService.DAL.Groups;
-using JM.UI.DataService.DAL.SubGroups;
-using JM.UI.DataService.DAL.MesurementUnits;
-using JM.UI.DataService.DAL.Items;
-using JM.UI.DataService.DAL.PurchaseReturnItems;
-using JM.UI.DataService.DAL.SupplierPayments;
 
 namespace JM.UI.DataService
 {
@@ -86,6 +89,9 @@ namespace JM.UI.DataService
             services.AddScoped<IItemRepository, ItemRepository>();
             services.AddScoped<IPurchaseReturnItemRepository, PurchaseReturnItemRepository>();
             services.AddScoped<ISupplierPaymentRepository, SupplierPaymentRepository>();
+            services.AddScoped<IItemOriginRepository, ItemOriginRepository>();
+            services.AddScoped<IItemBrandRepository, ItemBrandRepository>();
+            services.AddScoped<IItemFeatureRepository, ItemFeatureRepository>();
             #endregion
 
 
