@@ -664,7 +664,8 @@ else
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="Actions" Width="100px" Sortable="false" Filterable="false">
                         <Template Context="item">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => EditItem(item))" Disabled="@IsProcessing" />
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                          Click="@(async () => await EditItem(item))" Disabled="@IsProcessing" />
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeleteItem(item))" Disabled="@IsProcessing" />
                         </Template>
                     </RadzenDataGridColumn>

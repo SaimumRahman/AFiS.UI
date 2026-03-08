@@ -288,9 +288,6 @@ namespace JM.UI.Client.Pages.Purchases
                     SalePrice = di.SalePrice,
                     ProductType = di.ProductType,
                     MaterialType = di.MaterialType,
-                    Origin = di.Origin,
-                    Features = di.Features,
-                    BrandColor = di.BrandColor,
                     MesurementUnitId = di.MesurementUnitId,
                     CountStockByColor = di.CountStockByColor,
                     CountStockBySize = di.CountStockBySize,
@@ -345,7 +342,6 @@ namespace JM.UI.Client.Pages.Purchases
                 BrandSuggestions = new List<ItemBrandDTO>();
                 SelectedBrandId = null;
                 IsNewBrand = false;
-                CurrentItem.BrandColor = null;
                 CurrentItem.BrandId = null;
                 return;
             }
@@ -361,14 +357,12 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 SelectedBrandId = exactMatch.BrandId;
                 CurrentItem.BrandId = exactMatch.BrandId;
-                CurrentItem.BrandColor = exactMatch.BrandName;
                 IsNewBrand = false;
             }
             else
             {
                 SelectedBrandId = null;
                 CurrentItem.BrandId = null;
-                CurrentItem.BrandColor = text;
                 IsNewBrand = true;
             }
 
@@ -381,7 +375,6 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 SelectedBrandId = brand.BrandId;
                 CurrentItem.BrandId = brand.BrandId;
-                CurrentItem.BrandColor = brand.BrandName;
                 BrandSearchText = brand.BrandName;
                 IsNewBrand = false;
                 GenerateProductName();
@@ -402,7 +395,6 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = null;
                 IsNewOrigin = false;
                 CurrentItem.OriginName = null;
-                CurrentItem.Origin = null;
                 CurrentItem.OriginId = null;
                 return;
             }
@@ -419,7 +411,6 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = exactMatch.OriginId;
                 CurrentItem.OriginId = exactMatch.OriginId;
                 CurrentItem.OriginName = exactMatch.OriginName;
-                CurrentItem.Origin = exactMatch.OriginName;
                 IsNewOrigin = false;
             }
             else
@@ -427,7 +418,6 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = null;
                 CurrentItem.OriginId = null;
                 CurrentItem.OriginName = text;
-                CurrentItem.Origin = text;
                 IsNewOrigin = true;
             }
 
@@ -440,7 +430,6 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 SelectedOriginId = origin.OriginId;
                 CurrentItem.OriginId = origin.OriginId;
-                CurrentItem.Origin = origin.OriginName;
                 CurrentItem.OriginName = origin.OriginName;
                 OriginSearchText = origin.OriginName;
                 IsNewOrigin = false;
@@ -490,15 +479,15 @@ namespace JM.UI.Client.Pages.Purchases
             try
             {
                 // 1. Brand
-                if (IsNewBrand && !string.IsNullOrWhiteSpace(item.BrandColor))
+                if (IsNewBrand && !string.IsNullOrWhiteSpace(item.BrandName))
                 {
                     var brandResult = await _serviceUnitOfWork.ItemBrandService.SaveItemBrand(
-                        new ItemBrandDTO { BrandName = item.BrandColor });
+                        new ItemBrandDTO { BrandName = item.BrandName });
 
                     if (brandResult == null || !brandResult.IsSuccessStatus)
                     {
                         notificationService.Notify(NotificationSeverity.Error, "Error",
-                            $"Failed to create brand '{item.BrandColor}'");
+                            $"Failed to create brand '{item.BrandName}'");
                         return false;
                     }
 
@@ -508,15 +497,15 @@ namespace JM.UI.Client.Pages.Purchases
                 }
 
                 // 2. Origin
-                if (IsNewOrigin && !string.IsNullOrWhiteSpace(item.Origin))
+                if (IsNewOrigin && !string.IsNullOrWhiteSpace(item.OriginName))
                 {
                     var originResult = await _serviceUnitOfWork.ItemOriginService.SaveItemOrigin(
-                        new ItemOriginDTO { OriginName = item.Origin });
+                        new ItemOriginDTO { OriginName = item.OriginName });
 
                     if (originResult == null || !originResult.IsSuccessStatus)
                     {
                         notificationService.Notify(NotificationSeverity.Error, "Error",
-                            $"Failed to create origin '{item.Origin}'");
+                            $"Failed to create origin '{item.OriginName}'");
                         return false;
                     }
 
@@ -599,11 +588,11 @@ namespace JM.UI.Client.Pages.Purchases
                 BrandId = CurrentItem.BrandId,
                 BrandName = CurrentItem.BrandId.HasValue
                     ? Brands.FirstOrDefault(b => b.BrandId == CurrentItem.BrandId)?.BrandName
-                    : CurrentItem.BrandColor,
+                    : CurrentItem.BrandName,
                 OriginId = CurrentItem.OriginId,
                 OriginName = CurrentItem.OriginId.HasValue
                     ? Origins.FirstOrDefault(o => o.OriginId == CurrentItem.OriginId)?.OriginName
-                    : CurrentItem.Origin,
+                    : CurrentItem.OriginName,
                 FeatureIds = CurrentItem.FeatureIds,
                 FeaturesDisplay = CurrentItem.FeaturesDisplay,
                 Barcode = CurrentItem.Barcode,
@@ -619,8 +608,6 @@ namespace JM.UI.Client.Pages.Purchases
                 SalePrice = CurrentItem.SalePrice,
                 ProductType = CurrentItem.ProductType,
                 MaterialType = CurrentItem.MaterialType,
-                Origin = CurrentItem.Origin,
-                BrandColor = CurrentItem.BrandColor,
                 CountStockByColor = CurrentItem.CountStockByColor,
                 CountStockBySize = CurrentItem.CountStockBySize,
                 IsNewItem = CurrentItem.IsNewItem,
@@ -646,13 +633,95 @@ namespace JM.UI.Client.Pages.Purchases
             notificationService.Notify(NotificationSeverity.Success, "Success", "Item added – ready for next entry");
         }
 
-        protected void EditItem(PurchaseItemDTO item)
+        // ═══════════════════════════════════════════════════════════════
+        // Edit Item — restores ALL form state including cascaded dropdowns
+        // ═══════════════════════════════════════════════════════════════
+        protected async Task EditItem(PurchaseItemDTO item)
         {
             _editingItem = item;
-            CurrentItem = new PurchaseItemDTO();
+
+            // ── 1. Copy all scalar fields into CurrentItem ───────────────
+            CurrentItem = new PurchaseItemDTO
+            {
+                Id = item.Id,
+                PurchaseId = item.PurchaseId,
+                ItemId = item.ItemId,
+                ItemName = item.ItemName,
+                GroupId = item.GroupId,
+                GroupName = item.GroupName,
+                SubGroupId = item.SubGroupId,
+                SubGroupName = item.SubGroupName,
+                DesignId = item.DesignId,
+                DesignName = item.DesignName,
+                ShadeNo = item.ShadeNo,
+                ColorId = item.ColorId,
+                ColorName = item.ColorName,
+                SizeId = item.SizeId,
+                SizeName = item.SizeName,
+                BrandId = item.BrandId,
+                BrandName = item.BrandName,
+                OriginId = item.OriginId,
+                OriginName = item.OriginName,
+                FeatureIds = item.FeatureIds?.ToList() ?? new List<int>(),
+                FeaturesDisplay = item.FeaturesDisplay,
+                Barcode = item.Barcode,
+                Quantity = item.Quantity,
+                PurchasePrice = item.PurchasePrice,
+                ProductPricePercentage = item.ProductPricePercentage,
+                OtherCost = item.OtherCost,
+                CarryingCost = item.CarryingCost,
+                TransportCost = item.TransportCost,
+                OperationalCost = item.OperationalCost,
+                VatPercentage = item.VatPercentage,
+                VatAmount = item.VatAmount,
+                TotalAmount = item.TotalAmount,
+                IsSaleable = item.IsSaleable,
+                IsConsume = item.IsConsume,
+                SalePrice = item.SalePrice,
+                ProductType = item.ProductType,
+                MaterialType = item.MaterialType,
+                MesurementUnitId = item.MesurementUnitId,
+                MesurementUnitName = item.MesurementUnitName,
+                CountStockByColor = item.CountStockByColor,
+                CountStockBySize = item.CountStockBySize,
+                Catalogue = item.Catalogue,
+                IsNewItem = item.IsNewItem,
+                IsActive = item.IsActive,
+            };
+
+            // ── 2. Restore Brand / Origin / Features UI state ────────────
+            BrandSearchText = item.BrandName ?? string.Empty;
+            OriginSearchText = item.OriginName ?? string.Empty;
+            SelectedFeatureIds = item.FeatureIds?.ToList() ?? new List<int>();
+            NewFeatureNames = new List<string>();
+            NewFeatureInput = string.Empty;
+
+            IsNewBrand = false;
+            IsNewOrigin = false;
+
+            // ── 3. Restore barcode search text ───────────────────────────
+            BarcodeSearchText = item.Barcode ?? string.Empty;
+            DisableItemFields = false;     // allow editing
+            IsNewItemMode = item.IsNewItem;
+
+            // ── 4. Reload cascaded dropdowns ─────────────────────────────
+            if (item.GroupId.HasValue)
+            {
+                SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
+            }
+
+            if (item.SubGroupId.HasValue)
+            {
+                Items = await LoadItemsBySubGroup(item.SubGroupId.Value);
+                Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
+            }
+
+            // ── 5. Remove from grid and recalculate ──────────────────────
             PurchaseItems.Remove(item);
             CalculateTotals();
-            ItemsGrid?.Reload();
+            await ItemsGrid.Reload();
+
+            StateHasChanged();
         }
 
         protected void Cancel()
@@ -837,15 +906,12 @@ namespace JM.UI.Client.Pages.Purchases
                     // Brand
                     BrandId = pi.BrandId,
                     BrandName = pi.BrandName,
-                    BrandColor = pi.BrandColor,
 
                     // Origin
                     OriginId = pi.OriginId,
                     OriginName = pi.OriginName,
-                    Origin = pi.Origin,
 
                     // Features
-                    Features = pi.Features,
                     FeatureIds = pi.FeatureIds ?? new List<int>(),
                     FeaturesDisplay = pi.FeaturesDisplay ?? string.Empty,
 
@@ -943,7 +1009,7 @@ namespace JM.UI.Client.Pages.Purchases
         }
 
         protected void OnDesignChanged(int? designId) => CurrentItem.DesignId = designId;
-        protected void OnBrandChanged(string? brand) { CurrentItem.BrandColor = brand; GenerateProductName(); }
+        protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
         protected void OnCatalogueChanged(string? catalogue) { CurrentItem.Catalogue = catalogue; GenerateProductName(); }
 
         private void GenerateProductName()
@@ -951,7 +1017,7 @@ namespace JM.UI.Client.Pages.Purchases
             if (CurrentItem.ItemId != 0 && !IsNewItemMode) return;
 
             string subProduct = SubGroups.FirstOrDefault(s => s.Id == CurrentItem.SubGroupId)?.Name ?? "";
-            string brand = CurrentItem.BrandColor ?? "";
+            string brand = CurrentItem.BrandName ?? "";
             string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
             string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
             string catalogue = CurrentItem.Catalogue ?? "";
@@ -1036,9 +1102,6 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = item.SubGroupId;
             CurrentItem.ShadeNo = item.ShadeNo;
             CurrentItem.MaterialType = item.MaterialType;
-            CurrentItem.Origin = item.Origin;
-            CurrentItem.Features = item.Features;
-            CurrentItem.BrandColor = item.BrandColor;
             CurrentItem.ProductPricePercentage = item.ProductPricePercentage;
             CurrentItem.SalePrice = item.SalePrice;
             CurrentItem.PurchasePrice = item.PurchasePrice ?? 0;
