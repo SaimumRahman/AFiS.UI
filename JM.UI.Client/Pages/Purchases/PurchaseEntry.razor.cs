@@ -45,6 +45,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
         protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
+        protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
         // ─── Brand / Origin / Features Lookups ─────────────────────────
         protected IEnumerable<ItemBrandDTO> Brands { get; set; } = new List<ItemBrandDTO>();
@@ -159,6 +160,7 @@ namespace JM.UI.Client.Pages.Purchases
                 Brands = await LoadBrands();
                 Features = await LoadFeatures();
                 Origins = await LoadOrigins();
+                AvailableItems = await LoadAllItems();
             }
             catch (Exception ex)
             {
@@ -166,6 +168,8 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
+        private async Task<IEnumerable<ItemDTO>> LoadAllItems() =>
+            await _serviceUnitOfWork.ItemService.GetItems() ?? new List<ItemDTO>();
         private async Task<IEnumerable<SupplierModelDTO>> LoadSuppliers() =>
             await _serviceUnitOfWork.SupplierService.GetSuppliers() ?? new List<SupplierModelDTO>();
 
@@ -964,18 +968,17 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Barcode Search / Create New Item
         // ═══════════════════════════════════════════════════════════════
-        protected async Task SearchByBarcode()
+        protected async Task OnBarcodeDropdownChanged(object value)
         {
-            if (string.IsNullOrWhiteSpace(BarcodeSearchText))
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please enter a barcode to search");
-                return;
-            }
+            var barcode = value?.ToString();
+            if (string.IsNullOrWhiteSpace(barcode)) return;
 
             try
             {
                 IsSearchingBarcode = true;
-                var result = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(BarcodeSearchText);
+                BarcodeSearchText = barcode;
+
+                var result = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
 
                 if (result.Found)
                 {
@@ -984,7 +987,7 @@ namespace JM.UI.Client.Pages.Purchases
                         PopulateFromExistingItem(result.ItemDetails);
                         DisableItemFields = true;
                         IsNewItemMode = false;
-                        notificationService.Notify(NotificationSeverity.Success, "Success", "Existing item found!");
+                        notificationService.Notify(NotificationSeverity.Success, "Success", "Item loaded!");
                     }
                     else if (result.Item != null)
                     {
@@ -995,10 +998,11 @@ namespace JM.UI.Client.Pages.Purchases
                 }
                 else
                 {
-                    CurrentItem.Barcode = BarcodeSearchText;
+                    CurrentItem.Barcode = barcode;
                     DisableItemFields = false;
                     IsNewItemMode = true;
-                    notificationService.Notify(NotificationSeverity.Info, "Create New", "No item found. You can create a new item.");
+                    notificationService.Notify(NotificationSeverity.Info, "Create New",
+                        "No item found. You can create a new item.");
                 }
             }
             catch (Exception ex)
