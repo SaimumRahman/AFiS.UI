@@ -65,9 +65,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsNewOrigin { get; set; } = false;
 
         // Features multi-select
-        // Existing feature IDs selected from the dropdown
         protected IEnumerable<int> SelectedFeatureIds { get; set; } = new List<int>();
-        // New feature names typed by the user (not yet in DB)
         protected List<string> NewFeatureNames { get; set; } = new();
         protected string NewFeatureInput { get; set; } = string.Empty;
 
@@ -75,7 +73,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
-        protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : "New Purchase Entry";
+        protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : IsDraftMode ? "Purchase Entry (From Draft)" : "New Purchase Entry";
         protected bool IsNewItemMode { get; set; } = false;
         protected bool IsSearchingBarcode { get; set; } = false;
         protected bool DisableItemFields { get; set; } = false;
@@ -172,28 +170,20 @@ namespace JM.UI.Client.Pages.Purchases
             await _serviceUnitOfWork.ItemService.GetItems() ?? new List<ItemDTO>();
         private async Task<IEnumerable<SupplierModelDTO>> LoadSuppliers() =>
             await _serviceUnitOfWork.SupplierService.GetSuppliers() ?? new List<SupplierModelDTO>();
-
         private async Task<IEnumerable<StoreDTO>> LoadStores() =>
             await _serviceUnitOfWork.StoreService.GetStores() ?? new List<StoreDTO>();
-
         private async Task<IEnumerable<GroupModelDTO>> LoadGroups() =>
             await _serviceUnitOfWork.GroupService.GetGroups() ?? new List<GroupModelDTO>();
-
         private async Task<IEnumerable<ColorsDTO>> LoadColors() =>
             await _serviceUnitOfWork.ColorsService.GetColorss() ?? new List<ColorsDTO>();
-
         private async Task<IEnumerable<SizesDTO>> LoadSizes() =>
             await _serviceUnitOfWork.SizesService.GetSizess() ?? new List<SizesDTO>();
-
         private async Task<IEnumerable<MesurementUnitModelDTO>> LoadUnits() =>
             await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits() ?? new List<MesurementUnitModelDTO>();
-
         private async Task<IEnumerable<ItemBrandDTO>> LoadBrands() =>
             await _serviceUnitOfWork.ItemBrandService.GetItemBrands() ?? new List<ItemBrandDTO>();
-
         private async Task<IEnumerable<ItemFeatureDTO>> LoadFeatures() =>
             await _serviceUnitOfWork.ItemFeatureService.GetItemFeatures() ?? new List<ItemFeatureDTO>();
-
         private async Task<IEnumerable<ItemOriginDTO>> LoadOrigins() =>
             await _serviceUnitOfWork.ItemOriginService.GetItemOrigins() ?? new List<ItemOriginDTO>();
 
@@ -211,15 +201,8 @@ namespace JM.UI.Client.Pages.Purchases
                 }
 
                 Purchase = purchase;
-
-                // ✅ Option A — if your service has a separate method to get items by purchase ID:
-                //var items = await _serviceUnitOfWork.PurchaseService.GetPurchaseItemsByPurchaseId(Id!.Value);
-                //PurchaseItems = items?.ToList() ?? new List<PurchaseItemDTO>();
-
-                // ✅ Option B — if PurchaseDTO has the items under a different property name, 
-                // check your DTO and use the correct one, e.g.:
-                // PurchaseItems = purchase.PurchaseItems?.ToList() ?? new List<PurchaseItemDTO>();
-                // PurchaseItems = purchase.LineItems?.ToList() ?? new List<PurchaseItemDTO>();
+                // Load items from the navigation property
+                PurchaseItems = purchase.PurchaseItems?.ToList() ?? new List<PurchaseItemDTO>();
 
                 CurrentItem = CreateNewItem();
                 CalculateTotals();
@@ -231,6 +214,9 @@ namespace JM.UI.Client.Pages.Purchases
             finally { IsLoading = false; }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // FIX: LoadDraft — restores ALL fields including Brand/Origin/Features
+        // ═══════════════════════════════════════════════════════════════
         protected async Task LoadDraft()
         {
             try
@@ -244,6 +230,7 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
 
+                // ── Restore Purchase header ──────────────────────────
                 Purchase = new PurchaseDTO
                 {
                     SupplierId = draft.SupplierId,
@@ -262,6 +249,7 @@ namespace JM.UI.Client.Pages.Purchases
                     Remarks = draft.Remarks
                 };
 
+                // ── Restore line items ───────────────────────────────
                 PurchaseItems = draft.DraftItems.Select(di => new PurchaseItemDTO
                 {
                     ItemId = di.ItemId ?? 0,
@@ -279,19 +267,24 @@ namespace JM.UI.Client.Pages.Purchases
                     BrandName = di.BrandName,
                     OriginId = di.OriginId,
                     OriginName = di.OriginName,
-                    FeatureIds = di.FeatureIds,
-                    FeaturesDisplay = di.FeaturesDisplay.ToString(),
+                    FeatureIds = di.FeatureIds ?? new List<int>(),
+                    // FIX: guard against null FeaturesDisplay
+                    FeaturesDisplay = di.FeaturesDisplay ?? string.Empty,
                     Barcode = di.Barcode,
                     Quantity = di.Quantity,
                     PurchasePrice = di.PurchasePrice,
                     ProductPricePercentage = di.ProductPricePercentage,
                     OtherCost = di.OtherCost,
                     CarryingCost = di.CarryingCost,
+                    // FIX: TransportCost was missing
+                    TransportCost = di.TransportCost,
                     OperationalCost = di.OperationalCost,
                     VatPercentage = di.VatPercentage,
                     VatAmount = di.VatAmount,
                     TotalAmount = di.TotalAmount,
                     IsSaleable = di.IsSaleable,
+                    // FIX: IsConsume was missing
+                    IsConsume = di.IsConsume,
                     SalePrice = di.SalePrice,
                     ProductType = di.ProductType,
                     MaterialType = di.MaterialType,
@@ -302,28 +295,46 @@ namespace JM.UI.Client.Pages.Purchases
                     CountStockByColor = di.CountStockByColor,
                     CountStockBySize = di.CountStockBySize,
                     IsNewItem = di.IsNewItem,
-                    IsActive = di.IsActive
+                    IsActive = di.IsActive,
+                    MesurementUnitName = di.MesurementUnitName,
                 }).ToList();
 
+                // ── Pre-load cascaded lookups for the last/first item so
+                //    dropdowns are not empty when user edits from draft ─
+                var firstItem = PurchaseItems.FirstOrDefault();
+                if (firstItem?.GroupId.HasValue == true)
+                {
+                    SubGroups = await LoadSubGroupsByGroup(firstItem.GroupId.Value);
+                }
+                if (firstItem?.SubGroupId.HasValue == true)
+                {
+                    Items = await LoadItemsBySubGroup(firstItem.SubGroupId.Value);
+                    Designs = await LoadDesignsBySubGroup(firstItem.SubGroupId.Value);
+                }
+
                 CurrentItem = CreateNewItem();
-                notificationService.Notify(NotificationSeverity.Info, "Draft Loaded", $"Draft '{draft.DraftName}' loaded successfully");
+
+                // FIX: recalculate totals after loading items
+                CalculateTotals();
+
+                notificationService.Notify(NotificationSeverity.Info, "Draft Loaded",
+                    $"Draft '{draft.DraftName}' loaded successfully");
             }
             catch (Exception ex)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load draft: {ex.Message}");
                 NavigationManager.NavigateTo("/PurchaseDraftList");
             }
-            finally { IsLoading = false; }
+            finally
+            {
+                IsLoading = false;
+                StateHasChanged();
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
         // Brand Auto-Complete Handlers
         // ═══════════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// Called on every keystroke in the Brand autocomplete.
-        /// Filters suggestions and marks as "new" if no exact match exists.
-        /// </summary>
         protected void OnBrandTextChanged(object value)
         {
             var text = value?.ToString();
@@ -364,9 +375,6 @@ namespace JM.UI.Client.Pages.Purchases
             GenerateProductName();
         }
 
-        /// <summary>
-        /// Called when the user picks an item from the Brand autocomplete dropdown.
-        /// </summary>
         protected void OnBrandSelected(object value)
         {
             if (value is ItemBrandDTO brand)
@@ -383,7 +391,6 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Origin Auto-Complete Handlers
         // ═══════════════════════════════════════════════════════════════
-
         protected void OnOriginTextChanged(object value)
         {
             var text = value?.ToString();
@@ -395,7 +402,7 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = null;
                 IsNewOrigin = false;
                 CurrentItem.OriginName = null;
-                CurrentItem.Origin = null;   // ← add this
+                CurrentItem.Origin = null;
                 CurrentItem.OriginId = null;
                 return;
             }
@@ -412,7 +419,7 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = exactMatch.OriginId;
                 CurrentItem.OriginId = exactMatch.OriginId;
                 CurrentItem.OriginName = exactMatch.OriginName;
-                CurrentItem.Origin = exactMatch.OriginName;   // ← add this
+                CurrentItem.Origin = exactMatch.OriginName;
                 IsNewOrigin = false;
             }
             else
@@ -420,7 +427,7 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = null;
                 CurrentItem.OriginId = null;
                 CurrentItem.OriginName = text;
-                CurrentItem.Origin = text;   // ← add this — this is what ResolveNewLookupEntriesAsync reads
+                CurrentItem.Origin = text;
                 IsNewOrigin = true;
             }
 
@@ -434,7 +441,7 @@ namespace JM.UI.Client.Pages.Purchases
                 SelectedOriginId = origin.OriginId;
                 CurrentItem.OriginId = origin.OriginId;
                 CurrentItem.Origin = origin.OriginName;
-                CurrentItem.OriginName = origin.OriginName;   // ← add this
+                CurrentItem.OriginName = origin.OriginName;
                 OriginSearchText = origin.OriginName;
                 IsNewOrigin = false;
             }
@@ -443,16 +450,13 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Features Multi-Select Handlers
         // ═══════════════════════════════════════════════════════════════
-
         protected void AddNewFeature()
         {
             var trimmed = NewFeatureInput?.Trim();
             if (string.IsNullOrWhiteSpace(trimmed)) return;
 
-            // Don't add if it already exists in the master list
             if (Features.Any(f => f.FeatureName.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
             {
-                // Auto-select the existing feature instead
                 var existing = Features.First(f => f.FeatureName.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
                 var ids = SelectedFeatureIds.ToList();
                 if (!ids.Contains(existing.FeatureId))
@@ -481,11 +485,6 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Save – Brand / Origin / Features pre-save resolution
         // ═══════════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// Ensures Brand, Origin, and all new Features exist in the DB.
-        /// Returns resolved IDs on the CurrentItem before it is added to the grid.
-        /// </summary>
         private async Task<bool> ResolveNewLookupEntriesAsync(PurchaseItemDTO item)
         {
             try
@@ -504,7 +503,6 @@ namespace JM.UI.Client.Pages.Purchases
                     }
 
                     item.BrandId = Convert.ToInt32(brandResult.Id);
-                    // Refresh master list so the new brand is available going forward
                     Brands = await LoadBrands();
                     IsNewBrand = false;
                 }
@@ -527,7 +525,7 @@ namespace JM.UI.Client.Pages.Purchases
                     IsNewOrigin = false;
                 }
 
-                // 3. New Features — save each, collect IDs
+                // 3. New Features
                 var allFeatureIds = SelectedFeatureIds.ToList();
 
                 foreach (var fname in NewFeatureNames.ToList())
@@ -546,7 +544,6 @@ namespace JM.UI.Client.Pages.Purchases
                         allFeatureIds.Add(Convert.ToInt32(featureResult.Id));
                 }
 
-                // Refresh features master list once after all new ones are saved
                 if (NewFeatureNames.Any())
                 {
                     Features = await LoadFeatures();
@@ -555,8 +552,8 @@ namespace JM.UI.Client.Pages.Purchases
 
                 item.FeatureIds = allFeatureIds;
                 item.FeaturesDisplay = string.Join(", ", Features
-                .Where(f => allFeatureIds.Contains(f.FeatureId))
-                .Select(f => f.FeatureName));
+                    .Where(f => allFeatureIds.Contains(f.FeatureId))
+                    .Select(f => f.FeatureName));
 
                 return true;
             }
@@ -582,7 +579,6 @@ namespace JM.UI.Client.Pages.Purchases
 
             CalculateItemTotal();
 
-            // Resolve new Brand / Origin / Features before adding to grid
             bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
             if (!resolved) return;
 
@@ -601,7 +597,7 @@ namespace JM.UI.Client.Pages.Purchases
                 SizeId = CurrentItem.SizeId,
                 SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
                 BrandId = CurrentItem.BrandId,
-                BrandName = CurrentItem.BrandId.HasValue 
+                BrandName = CurrentItem.BrandId.HasValue
                     ? Brands.FirstOrDefault(b => b.BrandId == CurrentItem.BrandId)?.BrandName
                     : CurrentItem.BrandColor,
                 OriginId = CurrentItem.OriginId,
@@ -615,9 +611,11 @@ namespace JM.UI.Client.Pages.Purchases
                 PurchasePrice = CurrentItem.PurchasePrice,
                 OtherCost = CurrentItem.OtherCost,
                 CarryingCost = CurrentItem.CarryingCost,
+                TransportCost = CurrentItem.TransportCost,
                 VatPercentage = CurrentItem.VatPercentage,
                 TotalAmount = CurrentItem.TotalAmount,
                 IsSaleable = CurrentItem.IsSaleable,
+                IsConsume = CurrentItem.IsConsume,
                 SalePrice = CurrentItem.SalePrice,
                 ProductType = CurrentItem.ProductType,
                 MaterialType = CurrentItem.MaterialType,
@@ -633,7 +631,7 @@ namespace JM.UI.Client.Pages.Purchases
             };
 
             PurchaseItems.Add(itemToAdd);
-            await ItemsGrid.Reload();   // reload grid first
+            await ItemsGrid.Reload();
             CalculateTotals();
 
             // Partial reset — keep header-level selections
@@ -650,10 +648,8 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void EditItem(PurchaseItemDTO item)
         {
-            _editingItem = item;          // remember it
+            _editingItem = item;
             CurrentItem = new PurchaseItemDTO();
-            // copy all fields from item to CurrentItem so the form is populated...
-            // (map fields just like PopulateFromPurchaseItem does)
             PurchaseItems.Remove(item);
             CalculateTotals();
             ItemsGrid?.Reload();
@@ -661,7 +657,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void Cancel()
         {
-            if (_editingItem != null)     // restore if editing was aborted
+            if (_editingItem != null)
             {
                 PurchaseItems.Add(_editingItem);
                 _editingItem = null;
@@ -669,6 +665,7 @@ namespace JM.UI.Client.Pages.Purchases
             }
             NavigationManager.NavigateTo("/PurchaseList");
         }
+
         protected void DeleteItem(PurchaseItemDTO item)
         {
             PurchaseItems.Remove(item);
@@ -683,10 +680,8 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 if (string.IsNullOrWhiteSpace(CurrentItem.ItemName))
                     return (false, "Item name is required for new items");
-
                 if (!CurrentItem.SubGroupId.HasValue || CurrentItem.SubGroupId.Value == 0)
                     return (false, "Sub-group is required for new items");
-
                 if (!CurrentItem.MesurementUnitId.HasValue || CurrentItem.MesurementUnitId.Value == 0)
                     return (false, "Unit is required for new items");
             }
@@ -698,10 +693,8 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (string.IsNullOrWhiteSpace(CurrentItem.Barcode))
                 return (false, "Barcode is required");
-
             if (CurrentItem.Quantity <= 0)
                 return (false, "Quantity must be greater than 0");
-
             if (CurrentItem.PurchasePrice <= 0)
                 return (false, "Purchase price must be greater than 0");
 
@@ -709,7 +702,6 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 if (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0)
                     return (false, "Sale price is required for saleable items");
-
                 if (CurrentItem.SalePrice.Value <= CurrentItem.PurchasePrice)
                     return (false, "Sale price must be greater than purchase price");
             }
@@ -721,7 +713,7 @@ namespace JM.UI.Client.Pages.Purchases
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // Save Purchase — full flow with ItemWiseFeature pivot
+        // Save Purchase
         // ═══════════════════════════════════════════════════════════════
         protected async Task SavePurchase()
         {
@@ -730,7 +722,6 @@ namespace JM.UI.Client.Pages.Purchases
             try
             {
                 IsProcessing = true;
-
                 var result = await _serviceUnitOfWork.PurchaseService.SaveUpdatePurchase(Purchase, PurchaseItems);
 
                 if (result.IsSuccessStatus)
@@ -781,10 +772,14 @@ namespace JM.UI.Client.Pages.Purchases
             return true;
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // FIX: SaveAsDraft — all fields correctly mapped
+        // ═══════════════════════════════════════════════════════════════
         protected async Task SaveAsDraft()
         {
             try
             {
+                // ── 1. Ask user for draft name ───────────────────────────────
                 var result = await dialogService.OpenAsync<SaveDraftDialog>("Save as Draft",
                     new Dictionary<string, object>() { { "DraftName", "" } },
                     new DialogOptions() { Width = "400px" });
@@ -793,9 +788,10 @@ namespace JM.UI.Client.Pages.Purchases
 
                 IsProcessing = true;
 
+                // ── 2. Build draft header ────────────────────────────────────
                 var draftDTO = new PurchaseDraftDTO
                 {
-                    DraftName = result.ToString(),
+                    DraftName = result.ToString()!,
                     SupplierId = Purchase.SupplierId,
                     StoreId = Purchase.StoreId,
                     PurchaseDate = Purchase.PurchaseDate,
@@ -809,62 +805,91 @@ namespace JM.UI.Client.Pages.Purchases
                     PaidAmount = Purchase.PaidAmount,
                     DueAmount = Purchase.DueAmount,
                     Remarks = Purchase.Remarks,
-                    CreatedBy = 1
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = 1,
+                    IsActive = true
                 };
 
+                // ── 3. Build draft items ─────────────────────────────────────
                 var draftItems = PurchaseItems.Select(pi => new PurchaseDraftItemDTO
                 {
+                    // Identity
                     ItemId = pi.ItemId,
                     ItemName = pi.ItemName,
+
+                    // Group / SubGroup / Design
                     GroupId = pi.GroupId,
                     GroupName = pi.GroupName,
                     SubGroupId = pi.SubGroupId,
                     SubGroupName = pi.SubGroupName,
+                    DesignId = pi.DesignId,
+                    DesignName = pi.DesignName,
+
+                    // Attributes
                     ShadeNo = pi.ShadeNo,
                     ColorId = pi.ColorId,
                     ColorName = pi.ColorName,
                     SizeId = pi.SizeId,
                     SizeName = pi.SizeName,
+                    Catalogue = pi.Catalogue,
+                    MaterialType = pi.MaterialType,
+
+                    // Brand
                     BrandId = pi.BrandId,
                     BrandName = pi.BrandName,
+                    BrandColor = pi.BrandColor,
+
+                    // Origin
                     OriginId = pi.OriginId,
                     OriginName = pi.OriginName,
-                    FeatureIds = pi.FeatureIds,
-                    FeaturesDisplay = pi.FeaturesDisplay.ToString(),
+                    Origin = pi.Origin,
+
+                    // Features
+                    Features = pi.Features,
+                    FeatureIds = pi.FeatureIds ?? new List<int>(),
+                    FeaturesDisplay = pi.FeaturesDisplay ?? string.Empty,
+
+                    // Barcode / UoM
                     Barcode = pi.Barcode,
+                    MesurementUnitId = pi.MesurementUnitId,
+
+                    // Pricing
                     Quantity = pi.Quantity,
                     PurchasePrice = pi.PurchasePrice,
                     ProductPricePercentage = pi.ProductPricePercentage,
                     OtherCost = pi.OtherCost,
                     CarryingCost = pi.CarryingCost,
+                    TransportCost = pi.TransportCost,
                     OperationalCost = pi.OperationalCost,
                     VatPercentage = pi.VatPercentage,
                     VatAmount = pi.VatAmount,
                     TotalAmount = pi.TotalAmount,
-                    IsSaleable = pi.IsSaleable,
                     SalePrice = pi.SalePrice,
+
+                    // Flags
+                    IsSaleable = pi.IsSaleable,
+                    IsConsume = pi.IsConsume,
                     ProductType = pi.ProductType,
-                    MaterialType = pi.MaterialType,
-                    Origin = pi.Origin,
-                    Features = pi.Features,
-                    BrandColor = pi.BrandColor,
-                    MesurementUnitId = pi.MesurementUnitId,
                     CountStockByColor = pi.CountStockByColor,
                     CountStockBySize = pi.CountStockBySize,
                     IsNewItem = pi.IsNewItem,
                     IsActive = pi.IsActive
                 }).ToList();
 
+                // ── 4. Save ──────────────────────────────────────────────────
                 var saveResult = await _serviceUnitOfWork.PurchaseService.SavePurchaseDraft(draftDTO, draftItems);
 
                 if (saveResult.IsSuccessStatus)
-                    notificationService.Notify(NotificationSeverity.Success, "Success", saveResult.Message ?? "Draft saved successfully");
+                    notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
+                        saveResult.Message ?? $"Draft '{draftDTO.DraftName}' saved successfully");
                 else
-                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message ?? "Failed to save draft");
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        saveResult.Message ?? "Failed to save draft");
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save draft: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to save draft: {ex.Message}");
             }
             finally
             {
@@ -918,18 +943,8 @@ namespace JM.UI.Client.Pages.Purchases
         }
 
         protected void OnDesignChanged(int? designId) => CurrentItem.DesignId = designId;
-
-        protected void OnBrandChanged(string? brand)
-        {
-            CurrentItem.BrandColor = brand;
-            GenerateProductName();
-        }
-
-        protected void OnCatalogueChanged(string? catalogue)
-        {
-            CurrentItem.Catalogue = catalogue;
-            GenerateProductName();
-        }
+        protected void OnBrandChanged(string? brand) { CurrentItem.BrandColor = brand; GenerateProductName(); }
+        protected void OnCatalogueChanged(string? catalogue) { CurrentItem.Catalogue = catalogue; GenerateProductName(); }
 
         private void GenerateProductName()
         {
@@ -956,13 +971,10 @@ namespace JM.UI.Client.Pages.Purchases
 
         private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId) =>
             await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId) ?? new List<SubGroupModelDTO>();
-
         private async Task<IEnumerable<DesignModelDTO>> LoadDesignsBySubGroup(int subGroupId) =>
             await _serviceUnitOfWork.DesignService.LoadDesignsBySubGroup(subGroupId) ?? new List<DesignModelDTO>();
-
         private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId) =>
             await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId) ?? new List<ItemDTO>();
-
         private Task LoadItemDetails(int itemId) => Task.CompletedTask; // TODO
 
         // ═══════════════════════════════════════════════════════════════
@@ -1040,7 +1052,6 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
 
-            // Restore Brand / Origin text for autocomplete display
             BrandSearchText = item.BrandId.HasValue
                 ? (Brands.FirstOrDefault(b => b.BrandId == item.BrandId)?.BrandName ?? item.BrandColor ?? "")
                 : (item.BrandColor ?? "");
@@ -1048,7 +1059,6 @@ namespace JM.UI.Client.Pages.Purchases
                 ? (Origins.FirstOrDefault(o => o.OriginId == item.OriginId)?.OriginName ?? item.Origin ?? "")
                 : (item.Origin ?? "");
 
-            // Restore feature selections
             SelectedFeatureIds = item.FeatureIds ?? new List<int>();
             NewFeatureNames = new();
         }
@@ -1102,7 +1112,8 @@ namespace JM.UI.Client.Pages.Purchases
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to generate barcode: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to generate barcode: {ex.Message}");
             }
         }
 
@@ -1116,7 +1127,8 @@ namespace JM.UI.Client.Pages.Purchases
                 DisableItemFields = false;
                 CurrentItem.ItemId = 0;
                 GenerateProductName();
-                notificationService.Notify(NotificationSeverity.Info, "Create Mode", "Fill in the details to create a new item");
+                notificationService.Notify(NotificationSeverity.Info, "Create Mode",
+                    "Fill in the details to create a new item");
             }
             else
             {

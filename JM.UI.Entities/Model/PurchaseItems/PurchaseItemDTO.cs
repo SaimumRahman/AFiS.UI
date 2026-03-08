@@ -44,6 +44,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string? Features { get; set; }
         public string? BrandColor { get; set; }
         public int? MesurementUnitId { get; set; }
+        public string MesurementUnitName { get; set; }
         public bool CountStockByColor { get; set; }
         public bool CountStockBySize { get; set; }
         public string? Catalogue { get; set; }
@@ -52,6 +53,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? OriginId { get; set; }
         public string OriginName { get; set; }
         public List<int> FeatureIds { get; set; }
+        public string FeatureIdsList { get; set; }
         public string FeaturesDisplay { get; set; }
     }
 
