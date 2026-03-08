@@ -875,6 +875,8 @@ namespace JM.UI.Client.Pages.Purchases
         {
             if (!groupId.HasValue) return;
             SubGroups = await LoadSubGroupsByGroup(groupId.Value);
+            var sad = await _serviceUnitOfWork.GroupService.GetGroupById(groupId.Value);
+            CurrentItem.VatPercentage = sad.VAT;
             Items = new List<ItemDTO>();
             CurrentItem.GroupId = groupId;
             CurrentItem.SubGroupId = null;
