@@ -8,9 +8,11 @@ namespace JM.UI.Entities.Model.Items
         public int? GroupId { get; set; }
         public int? OriginId { get; set; }
         public int? BrandId { get; set; }
+        public int? ItemWiseFeatureId { get; set; }
         public List<int> FeatureIds { get; set; }
         public string? GroupName { get; set; }
         public int? SubGroupId { get; set; }
+        public int? DesignId { get; set; }
         public string? SubGroupName { get; set; }
         public int? UnitId { get; set; }
         public string? UnitName { get; set; }

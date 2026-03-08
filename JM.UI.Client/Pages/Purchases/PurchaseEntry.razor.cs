@@ -1062,7 +1062,7 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     if (result.ItemDetails != null)
                     {
-                        PopulateFromExistingItem(result.ItemDetails);
+                        await PopulateFromExistingItem(result.ItemDetails);
                         DisableItemFields = true;
                         IsNewItemMode = false;
                         notificationService.Notify(NotificationSeverity.Success, "Success", "Item loaded!");
@@ -1094,12 +1094,10 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        private void PopulateFromExistingItem(ItemDTO item)
+        private async Task PopulateFromExistingItem(ItemDTO item)
         {
             CurrentItem.ItemId = item.Id;
             CurrentItem.ItemName = item.Name;
-            CurrentItem.GroupId = item.GroupId;
-            CurrentItem.SubGroupId = item.SubGroupId;
             CurrentItem.ShadeNo = item.ShadeNo;
             CurrentItem.MaterialType = item.MaterialType;
             CurrentItem.ProductPricePercentage = item.ProductPricePercentage;
@@ -1114,10 +1112,39 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.Catalogue = item.Catalogue;
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
+            CurrentItem.FeatureIds = item.FeatureIds;
+            CurrentItem.DesignId = item.DesignId;
 
+            // ─── Cascade: load SubGroups for this Group ──────────────────
+            if (item.GroupId.HasValue)
+            {
+                CurrentItem.GroupId = item.GroupId;
+                SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
+
+                // Also load the Group's VAT
+                var group = await _serviceUnitOfWork.GroupService.GetGroupById(item.GroupId.Value);
+                if (group != null) CurrentItem.VatPercentage = group.VAT;
+            }
+
+            // ─── Cascade: load Items + Designs for this SubGroup ─────────
+            if (item.SubGroupId.HasValue)
+            {
+                CurrentItem.SubGroupId = item.SubGroupId;
+                Items = await LoadItemsBySubGroup(item.SubGroupId.Value);
+                Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
+            }
+
+            CurrentItem.DesignId = item.DesignId;   
+
+            // ─── Features ────────
+            SelectedFeatureIds = item.FeatureIds ?? new List<int>();
+            NewFeatureNames = new();
+
+            // ─── Brand / Origin autocomplete text ──────
             BrandSearchText = item.BrandId.HasValue
                 ? (Brands.FirstOrDefault(b => b.BrandId == item.BrandId)?.BrandName ?? item.BrandColor ?? "")
                 : (item.BrandColor ?? "");
+
             OriginSearchText = item.OriginId.HasValue
                 ? (Origins.FirstOrDefault(o => o.OriginId == item.OriginId)?.OriginName ?? item.Origin ?? "")
                 : (item.Origin ?? "");
@@ -1125,7 +1152,6 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = item.FeatureIds ?? new List<int>();
             NewFeatureNames = new();
         }
-
         private void PopulateFromPurchaseItem(PurchaseItemDTO item)
         {
             CurrentItem.ItemId = item.ItemId;
