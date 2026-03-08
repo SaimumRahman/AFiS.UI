@@ -3,8 +3,6 @@ using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using System;
-using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Groups
 {

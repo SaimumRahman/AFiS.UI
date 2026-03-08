@@ -40,6 +40,15 @@
                             <RadzenTextBox Name="Code" @bind-Value="@Group.Code" class="w-100" />
                         </RadzenStack>
                     </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="VAT" Component="VAT" />
+                            <RadzenNumeric Name="VAT"
+                                           @bind-Value="@Group.VAT"
+                                           TValue="decimal"
+                                           Style="width:100%" />
+                        </RadzenStack>
+                    </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">

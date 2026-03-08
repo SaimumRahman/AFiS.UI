@@ -1,9 +1,9 @@
-namespace JM.UI.Entities.Model.Groups
+namespace JM.UI.Entities.Model.Groups;
+
+public class GroupModelDTO
 {
-    public class GroupModelDTO
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
-    }
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public decimal VAT { get; set; }
 }
