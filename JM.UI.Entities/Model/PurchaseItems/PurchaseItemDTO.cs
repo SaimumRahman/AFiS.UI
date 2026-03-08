@@ -19,11 +19,13 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public decimal? ProductPricePercentage { get; set; }
         public decimal? OtherCost { get; set; }
         public decimal? CarryingCost { get; set; }
+        public decimal? TransportCost { get; set; }
         public decimal? OperationalCost { get; set; }
         public decimal? VatPercentage { get; set; }
         public decimal? VatAmount { get; set; }
         public decimal TotalAmount { get; set; }
         public bool IsSaleable { get; set; }
+        public bool IsConsume { get; set; }
         public decimal? SalePrice { get; set; }
         public string? ProductType { get; set; } // SellProduct, RawMaterial, Both, Consume, ComboPackage
         public string? ImagePath { get; set; }
@@ -45,7 +47,12 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public bool CountStockByColor { get; set; }
         public bool CountStockBySize { get; set; }
         public string? Catalogue { get; set; }
-
+        public int? BrandId { get; set; }
+        public string BrandName { get; set; }
+        public int? OriginId { get; set; }
+        public string OriginName { get; set; }
+        public List<int> FeatureIds { get; set; }
+        public string FeaturesDisplay { get; set; }
     }
 
 }

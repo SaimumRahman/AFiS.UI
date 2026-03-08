@@ -6,6 +6,9 @@ namespace JM.UI.Entities.Model.Items
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int? GroupId { get; set; }
+        public int? OriginId { get; set; }
+        public int? BrandId { get; set; }
+        public List<int> FeatureIds { get; set; }
         public string? GroupName { get; set; }
         public int? SubGroupId { get; set; }
         public string? SubGroupName { get; set; }

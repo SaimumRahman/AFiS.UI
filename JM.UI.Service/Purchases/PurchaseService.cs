@@ -48,20 +48,19 @@ namespace JM.UI.Service.Purchases
                 };
             }
 
-            // Calculate totals
+            // Calculate totals before sending
             purchase.TotalAmount = CalculatePurchaseTotal(items);
             purchase.NetAmount = purchase.TotalAmount - (purchase.DiscountAmount ?? 0) + (purchase.VatAmount ?? 0);
             purchase.DueAmount = purchase.NetAmount - (purchase.PaidAmount ?? 0);
 
             if (purchase.Id == 0)
-            {
                 purchase.CreatedDate = DateTime.Now;
-            }
             else
-            {
                 purchase.LastModifiedDate = DateTime.Now;
-            }
 
+            // All ItemWiseFeature logic now lives inside the API handler.
+            // The result carries SavedItems back if the UI needs them for display,
+            // but no further action is required here.
             return await _repositoryUnitOfWork.PurchaseRepository.SaveUpdatePurchase(purchase, items);
         }
         public async Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId)

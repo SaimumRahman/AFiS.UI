@@ -41,5 +41,11 @@ namespace JM.UI.Entities.Model.Purchases
         public bool CountStockBySize { get; set; }
         public bool IsNewItem { get; set; }
         public bool IsActive { get; set; }
+        public int? BrandId { get; set; }
+        public string BrandName { get; set; }
+        public int? OriginId { get; set; }
+        public string OriginName { get; set; }
+        public string FeaturesDisplay { get; set; }
+        public List<int> FeatureIds { get; set; }
     }
 }
