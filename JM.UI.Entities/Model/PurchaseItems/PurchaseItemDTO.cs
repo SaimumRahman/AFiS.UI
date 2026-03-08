@@ -38,6 +38,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? GroupId { get; set; }
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
+        public int? ItemWiseFeatureId { get; set; }
         public string? DesignName { get; set; }
         public string? MaterialType { get; set; }
         public string? Origin { get; set; }
