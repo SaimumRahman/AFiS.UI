@@ -100,7 +100,7 @@ else
                             </RadzenColumn>
                             <RadzenColumn Size="8">
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" Style="flex-wrap:wrap;">
-                                    <RadzenCheckBox @bind-Value="CurrentItem.IsSaleable" Name="typeSale" />
+                                    <RadzenCheckBox @bind-Value="CurrentItem.IsSaleable" Name="typeSale" Visible="false"/>
                                    <RadzenCheckBox @bind-Value="CurrentItem.IsConsume" Name="typeConsume" />
                                     <RadzenLabel Text="Consume" Component="typeConsume" Style="font-size:0.8rem;" />
                                 </RadzenStack>
@@ -163,7 +163,7 @@ else
                         <!-- Design -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenColumn Size="4">
-                                <RadzenLabel Text="Design" Style="font-weight:600; font-size:0.85rem;" />
+                                <RadzenLabel Text="Product" Style="font-weight:600; font-size:0.85rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
                                 <RadzenDropDown @bind-Value="CurrentItem.DesignId"
@@ -273,7 +273,7 @@ else
                                                Style="width:100%"
                                                Placeholder="Enter catalogue"
                                                ValueUpdateMode="ValueUpdateMode.OnInput"
-                                               Input="@((string args) => OnCatalogueChanged(args))"
+                                               Change="@((string args) => OnCatalogueChanged(args))"
                                                Disabled="@(IsProcessing || DisableItemFields)" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -385,9 +385,13 @@ else
                                 }
                                 else
                                 {
+
+                                    <RadzenCheckBox @bind-Value="IsProductNameFieldChange"
+                                                     Style="display:none" />
                                     <RadzenTextBox @bind-Value="CurrentItem.ItemName"
                                                    Style="width:100%"
                                                    Placeholder="Enter product name"
+                                                   Change="@((string args) => OnProductNameChanged(args))"
                                                    Disabled="@IsProcessing" />
                                 }
                             </RadzenColumn>

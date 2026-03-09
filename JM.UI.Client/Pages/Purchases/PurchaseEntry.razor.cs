@@ -29,6 +29,7 @@ namespace JM.UI.Client.Pages.Purchases
         [Parameter] public int? Id { get; set; }
         [Parameter] public int? DraftId { get; set; }
         protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
+        protected bool IsProductNameFieldChange { get; set; } = false;
 
         // ─── Purchase Data ──────────────────────────────────────────────
         protected PurchaseDTO Purchase { get; set; } = new();
@@ -1008,31 +1009,66 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = subGroupId;
             CurrentItem.DesignId = null;
             CurrentItem.ItemId = 0;
-            GenerateProductName();
+
             await GenerateBarcode();
         }
 
-        protected void OnDesignChanged(int? designId) => CurrentItem.DesignId = designId;
+        protected void OnDesignChanged(int? designId)
+        {
+            CurrentItem.DesignId = designId;
+            GenerateProductName();
+        }
         protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
         protected void OnCatalogueChanged(string? catalogue) { CurrentItem.Catalogue = catalogue; GenerateProductName(); }
+        protected void OnProductNameChanged(string? productName) 
+        {
+            IsProductNameFieldChange = true;
+            GenerateProductName(); 
+        }
 
         private void GenerateProductName()
         {
             if (CurrentItem.ItemId != 0 && !IsNewItemMode) return;
 
-            string subProduct = SubGroups.FirstOrDefault(s => s.Id == CurrentItem.SubGroupId)?.Name ?? "";
-            string brand = CurrentItem.BrandName ?? "";
+            string subProduct = Designs.FirstOrDefault(s => s.Id == CurrentItem.DesignId)?.Name ?? "";
+            string brand = BrandSearchText ?? "";
             string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
             string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
             string catalogue = CurrentItem.Catalogue ?? "";
 
-            CurrentItem.ItemName = (!string.IsNullOrWhiteSpace(catalogue)
-                ? $"{catalogue}{color}{size}"
-                : $"{subProduct}{brand}{color}{size}")
-                .Replace(" ", "").Trim();
+            if (IsProductNameFieldChange)
+            {
+                // Base name = current product name without previous color/size
+                var parts = (CurrentItem.ItemName ?? "")
+                    .Split(" - ")
+                    .TakeWhile(p => p != color && p != size)
+                    .ToList();
+
+                parts.AddRange(new[] { color, size }
+                    .Where(p => !string.IsNullOrWhiteSpace(p)));
+
+                CurrentItem.ItemName = string.Join(" - ", parts);
+            }
+            else
+            {
+                List<string> parts;
+
+                if (!string.IsNullOrWhiteSpace(catalogue))
+                {
+                    parts = new List<string> { catalogue, color, size };
+                }
+                else
+                {
+                    parts = new List<string> { subProduct, brand, color, size };
+                }
+
+                CurrentItem.ItemName = string.Join(" - ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+            }
 
             StateHasChanged();
         }
+
+
 
         protected async Task OnItemChanged(int itemId)
         {
@@ -1066,7 +1102,7 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     if (result.ItemDetails != null)
                     {
-                        await PopulateFromExistingItem(result.ItemDetails,result.itemWiseFeatures);
+                        await PopulateFromExistingItem(result.ItemDetails, result.itemWiseFeatures);
                         DisableItemFields = true;
                         IsNewItemMode = false;
                         notificationService.Notify(NotificationSeverity.Success, "Success", "Item loaded!");
