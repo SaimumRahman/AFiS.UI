@@ -51,6 +51,7 @@ using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
 using JM.UI.Service.SupplierPayments;
+using JM.UI.DataService.DAL.StockOpenings;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -95,6 +96,7 @@ namespace JM.UI.Service.UnitOfWork
         public IItemOriginService ItemOriginService { get; private set; }
         public IItemFeatureService ItemFeatureService { get; private set; }
         public IItemBrandService ItemBrandService { get; private set; }
+        public IStockOpeningRepository StockOpeningService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -138,6 +140,7 @@ namespace JM.UI.Service.UnitOfWork
             ItemOriginService = new ItemOriginService(_repoUow);
             ItemFeatureService = new ItemFeatureService(_repoUow);
             ItemBrandService = new ItemBrandService(_repoUow);
+            StockOpeningService = _repoUow.StockOpeningRepository;
         }
         public void Dispose()
         {
