@@ -6,6 +6,7 @@ using JM.UI.Entities.Model.ItemBrand;
 using JM.UI.Entities.Model.ItemFeatures;
 using JM.UI.Entities.Model.ItemOrigin;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.ItemWiseFeature;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
@@ -1062,7 +1063,7 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     if (result.ItemDetails != null)
                     {
-                        await PopulateFromExistingItem(result.ItemDetails);
+                        await PopulateFromExistingItem(result.ItemDetails,result.itemWiseFeatures);
                         DisableItemFields = true;
                         IsNewItemMode = false;
                         notificationService.Notify(NotificationSeverity.Success, "Success", "Item loaded!");
@@ -1094,11 +1095,13 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        private async Task PopulateFromExistingItem(ItemDTO item)
+        private async Task PopulateFromExistingItem(ItemDTO item, List<ItemWiseFeatureDTO> itemWiseFeatures)
         {
             CurrentItem.ItemId = item.Id;
             CurrentItem.ItemName = item.Name;
             CurrentItem.ShadeNo = item.ShadeNo;
+            CurrentItem.ColorId = item.ColorId;
+            CurrentItem.SizeId = item.SizeId;
             CurrentItem.MaterialType = item.MaterialType;
             CurrentItem.ProductPricePercentage = item.ProductPricePercentage;
             CurrentItem.SalePrice = item.SalePrice;
@@ -1112,7 +1115,10 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.Catalogue = item.Catalogue;
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
-            CurrentItem.FeatureIds = item.FeatureIds;
+            CurrentItem.FeatureIds = itemWiseFeatures
+    .Select(x => x.FeaturesId)
+    .ToList();
+
             CurrentItem.DesignId = item.DesignId;
 
             // ─── Cascade: load SubGroups for this Group ──────────────────
@@ -1138,7 +1144,7 @@ namespace JM.UI.Client.Pages.Purchases
             //CurrentItem.DesignId = item.DesignId;   
 
             // ─── Features ────────
-            SelectedFeatureIds = item.FeatureIds ?? new List<int>();
+            SelectedFeatureIds = itemWiseFeatures.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             NewFeatureNames = new();
 
             // ─── Brand / Origin autocomplete text ──────
@@ -1150,7 +1156,6 @@ namespace JM.UI.Client.Pages.Purchases
                 ? (Origins.FirstOrDefault(o => o.OriginId == item.OriginId)?.OriginName ?? item.Origin ?? "")
                 : (item.Origin ?? "");
 
-            SelectedFeatureIds = item.FeatureIds ?? new List<int>();
             NewFeatureNames = new();
         }
         private void PopulateFromPurchaseItem(PurchaseItemDTO item)
