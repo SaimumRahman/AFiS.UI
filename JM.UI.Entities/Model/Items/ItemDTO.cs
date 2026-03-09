@@ -13,6 +13,7 @@ namespace JM.UI.Entities.Model.Items
         public string? GroupName { get; set; }
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
+        public string? DesignName { get; set; }
         public string? SubGroupName { get; set; }
         public int? UnitId { get; set; }
         public string? UnitName { get; set; }

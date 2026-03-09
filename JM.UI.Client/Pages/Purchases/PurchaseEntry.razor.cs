@@ -1058,9 +1058,10 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItem.SubGroupId = item.SubGroupId;
                 Items = await LoadItemsBySubGroup(item.SubGroupId.Value);
                 Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
-            }
 
-            CurrentItem.DesignId = item.DesignId;   
+                CurrentItem.DesignId = item.DesignId;
+            }
+            //CurrentItem.DesignId = item.DesignId;   
 
             // ─── Features ────────
             SelectedFeatureIds = item.FeatureIds ?? new List<int>();
