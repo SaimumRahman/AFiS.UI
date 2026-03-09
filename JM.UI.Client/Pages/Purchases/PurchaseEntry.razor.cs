@@ -567,7 +567,10 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             CalculateItemTotal();
-
+            if (IsNewBrand)
+            {
+                CurrentItem.BrandName = BrandSearchText;
+            }
             bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
             if (!resolved) return;
 
@@ -1111,6 +1114,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.ProductType = item.ProductType;
             CurrentItem.Catalogue = item.Catalogue;
             CurrentItem.BrandId = item.BrandId;
+            CurrentItem.ColorName = item.BrandColor;
             CurrentItem.OriginId = item.OriginId;
             CurrentItem.FeatureIds = item.FeatureIds;
             CurrentItem.DesignId = item.DesignId;
