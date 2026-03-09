@@ -14,6 +14,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? SizeId { get; set; }
         public string? SizeName { get; set; }
         public string? Barcode { get; set; }
+        public string? MesurementUnitName { get; set; }
         public decimal Quantity { get; set; }
         public decimal PurchasePrice { get; set; }
         public decimal? ProductPricePercentage { get; set; }
@@ -41,9 +42,6 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? ItemWiseFeatureId { get; set; }
         public string? DesignName { get; set; }
         public string? MaterialType { get; set; }
-        public string? Origin { get; set; }
-        public string? Features { get; set; }
-        public string? BrandColor { get; set; }
         public int? MesurementUnitId { get; set; }
         public bool CountStockByColor { get; set; }
         public bool CountStockBySize { get; set; }

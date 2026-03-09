@@ -4,13 +4,11 @@ using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Purchases
 {
-    public partial class PurchaseDraftListComponent : PosComponentBase
+    // FIX: explicitly implement IDisposable
+    public partial class PurchaseDraftListComponent : PosComponentBase, IDisposable
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
@@ -30,15 +28,19 @@ namespace JM.UI.Client.Pages.Purchases
             try
             {
                 IsLoading = true;
-                Drafts = await _serviceUnitOfWork.PurchaseService.GetPurchaseDrafts();
+                Drafts = await _serviceUnitOfWork.PurchaseService.GetPurchaseDrafts()
+                         ?? new List<PurchaseDraftDTO>();
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load drafts: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to load drafts: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
+                // FIX: ensure UI refreshes after data is assigned
+                StateHasChanged();
             }
         }
 
@@ -61,8 +63,7 @@ namespace JM.UI.Client.Pages.Purchases
                     "Delete Draft",
                     new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
 
-                if (confirmed != true)
-                    return;
+                if (confirmed != true) return;
 
                 IsDeleting = true;
 
@@ -70,43 +71,40 @@ namespace JM.UI.Client.Pages.Purchases
 
                 if (result.IsSuccessStatus)
                 {
-                    notificationService.Notify(NotificationSeverity.Success, "Success", result.Message ?? "Draft deleted successfully");
+                    notificationService.Notify(NotificationSeverity.Success, "Success",
+                        result.Message ?? "Draft deleted successfully");
+
+                    // FIX: reload data first, then reload grid — no duplicate reload
                     await LoadDrafts();
-                    DraftsGrid?.Reload();
+                    await DraftsGrid.Reload();
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message ?? "Failed to delete draft");
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message ?? "Failed to delete draft");
                 }
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to delete draft: {ex.Message}");
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to delete draft: {ex.Message}");
             }
             finally
             {
                 IsDeleting = false;
+                StateHasChanged();
             }
         }
 
-        protected string FormatCurrency(decimal amount)
-        {
-            return _serviceUnitOfWork.PurchaseService.FormatCurrency(amount);
-        }
+        protected string FormatCurrency(decimal amount) =>
+            _serviceUnitOfWork.PurchaseService.FormatCurrency(amount);
 
-        protected string FormatDate(DateTime? date)
-        {
-            return _serviceUnitOfWork.PurchaseService.FormatDate(date);
-        }
+        protected string FormatDate(DateTime? date) =>
+            _serviceUnitOfWork.PurchaseService.FormatDate(date);
 
-        protected string GetItemCount(PurchaseDraftDTO draft)
-        {
-            return draft.DraftItems?.Count.ToString() ?? "0";
-        }
+        protected string GetItemCount(PurchaseDraftDTO draft) =>
+            draft.DraftItems?.Count.ToString() ?? "0";
 
-        public void Dispose()
-        {
-            DraftsGrid?.Dispose();
-        }
+        public void Dispose() => DraftsGrid?.Dispose();
     }
 }
