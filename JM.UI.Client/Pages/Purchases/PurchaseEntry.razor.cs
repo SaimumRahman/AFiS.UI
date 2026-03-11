@@ -17,6 +17,7 @@ using JM.UI.Entities.Model.Suppliers;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Radzen;
 using Radzen.Blazor;
 
@@ -30,6 +31,10 @@ namespace JM.UI.Client.Pages.Purchases
         [Parameter] public int? DraftId { get; set; }
         protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
         protected bool IsProductNameFieldChange { get; set; } = false;
+        // ─── Image Upload ────────────────────────────────────────────
+        protected string CurrentItemImageBase64 { get; set; } = string.Empty;
+        protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
+
 
         // ─── Purchase Data ──────────────────────────────────────────────
         protected PurchaseDTO Purchase { get; set; } = new();
@@ -142,6 +147,8 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new();
             NewFeatureInput = string.Empty;
+            CurrentItemImageBase64 = string.Empty;
+            CurrentItemImageMimeType = string.Empty;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -330,7 +337,46 @@ namespace JM.UI.Client.Pages.Purchases
                 StateHasChanged();
             }
         }
+        protected async Task OnItemImageSelected(InputFileChangeEventArgs e)
+        {
+            var file = e.File;
+            if (file == null) return;
 
+            const long maxBytes = 2 * 1024 * 1024; // 2 MB
+            if (file.Size > maxBytes)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "File Too Large",
+                    "Please select an image under 2 MB.");
+                return;
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream(maxBytes);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var bytes = ms.ToArray();
+
+                CurrentItemImageMimeType = file.ContentType;
+                CurrentItemImageBase64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+                CurrentItem.ImageBase64 = CurrentItemImageBase64;
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Upload Error",
+                    $"Failed to read image: {ex.Message}");
+            }
+        }
+
+        protected void ClearItemImage()
+        {
+            CurrentItemImageBase64 = string.Empty;
+            CurrentItemImageMimeType = string.Empty;
+            CurrentItem.ImageBase64 = null;
+            StateHasChanged();
+        }
         // ═══════════════════════════════════════════════════════════════
         // Brand Auto-Complete Handlers
         // ═══════════════════════════════════════════════════════════════
@@ -619,7 +665,8 @@ namespace JM.UI.Client.Pages.Purchases
                 MesurementUnitId = CurrentItem.MesurementUnitId,
                 DesignId = CurrentItem.DesignId,
                 DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name,
-                Catalogue = CurrentItem.Catalogue
+                Catalogue = CurrentItem.Catalogue,
+                ImageBase64 = CurrentItem.ImageBase64,
             };
 
             PurchaseItems.Add(itemToAdd);
@@ -693,6 +740,7 @@ namespace JM.UI.Client.Pages.Purchases
                 IsNewItem = item.IsNewItem,
                 IsActive = item.IsActive,
             };
+            CurrentItemImageBase64 = item.ImageBase64 ?? string.Empty;
 
             // ── 2. Restore Brand / Origin / Features UI state ────────────
             BrandSearchText = item.BrandName ?? string.Empty;

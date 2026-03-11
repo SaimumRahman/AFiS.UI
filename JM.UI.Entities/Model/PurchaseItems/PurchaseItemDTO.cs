@@ -13,6 +13,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string? ColorName { get; set; }
         public int? SizeId { get; set; }
         public string? SizeName { get; set; }
+        public string? ImageBase64 { get; set; }
         public string? Barcode { get; set; }
         public string? MesurementUnitName { get; set; }
         public decimal Quantity { get; set; }

@@ -455,14 +455,14 @@ else
 
                         <!-- Top right: Barcode -->
                         <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
-                            <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Barcode" Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
                                 <RadzenTextBox @bind-Value="CurrentItem.Barcode"
                                                Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;"
                                                ReadOnly="true"
                                                Placeholder="Barcode" />
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Product" Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
                                 @if (DisableItemFields)
                                 {
@@ -478,8 +478,50 @@ else
                                                    Disabled="@IsProcessing" />
                                 }
                             </RadzenColumn>
-                        </RadzenRow>
+                          <!-- Item Image Upload -->
+                     <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenLabel Text="Item Image"
+                                     Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
 
+                        <div style="display:flex; align-items:center; gap:6px;">
+
+                            <!-- Upload Button -->
+                            <label for="itemImageUpload"
+                                   style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;
+                                   background:#1976d2; color:#fff; border-radius:4px;
+                                   padding:3px 10px; font-size:0.7rem; font-weight:600;
+                                   @(IsProcessing || DisableItemFields ? "opacity:0.5;pointer-events:none;" : "")">
+                                <span class="rzi">upload</span> Upload
+                            </label>
+
+                            <InputFile id="itemImageUpload"
+                                       OnChange="@OnItemImageSelected"
+                                       accept="image/*"
+                                       style="display:none;"
+                                       disabled="@(IsProcessing || DisableItemFields)" />
+
+                            <!-- Preview -->
+                            @if (!string.IsNullOrWhiteSpace(CurrentItemImageBase64))
+                            {
+                                <img src="@CurrentItemImageBase64"
+                                     style="width:60px; height:40px; object-fit:contain;" />
+
+                                <RadzenButton Icon="close"
+                                              Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Click="@ClearItemImage"
+                                              Disabled="@IsProcessing"
+                                              Style="height:24px; width:24px; padding:0;" />
+                            }
+                            else
+                            {
+                                <span style="font-size:0.6rem; color:#aaa;">No Image</span>
+                            }
+
+                        </div>
+                    </RadzenColumn>
+                        </RadzenRow>
+                       
                         <!-- Product / Color / Size -->
                         <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
                           
@@ -733,7 +775,20 @@ else
                     <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="BrandName" Title="Brand" Width="85px" />
                     <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="OriginName" Title="Origin" Width="85px" />
                     <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="FeaturesDisplay" Title="Features" Width="130px" />
-
+                    <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="Image" Width="60px" Sortable="false" Filterable="false">
+                        <Template Context="item">
+                            @if (!string.IsNullOrWhiteSpace(item.ImageBase64))
+                            {
+                                <img src="@item.ImageBase64"
+                                     alt="item"
+                                     style="width:36px; height:36px; object-fit:cover; border-radius:3px; border:1px solid #ddd;" />
+                            }
+                            else
+                            {
+                                <span style="color:#bbb; font-size:0.65rem;">—</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="New" Width="55px">
                         <Template Context="item">
                             @if (item.IsNewItem)

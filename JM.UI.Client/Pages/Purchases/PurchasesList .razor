@@ -69,7 +69,28 @@
                                     Density="Density.Compact">
 
                         <Columns>
-
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
+                                                  Title="Image"
+                                                  Width="60px"
+                                                  Sortable="false"
+                                                  Filterable="false">
+                                <Template Context="item">
+                                    @if (!string.IsNullOrWhiteSpace(item.ImageBase64))
+                                    {
+                                        <img src="@item.ImageBase64"
+                                             alt="@item.ItemName"
+                                             style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid #dee2e6; cursor:pointer;"
+                                             @onclick="@(() => OpenImagePreview(item.ImageBase64, item.ItemName))" />
+                                    }
+                                    else
+                                    {
+                                        <div style="width:40px; height:40px; border:1px dashed #ccc; border-radius:4px;
+                            display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
+                                            <RadzenIcon Icon="image_not_supported" Style="font-size:1rem; color:#bbb;" />
+                                        </div>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="PurchaseItemDTO"
                                                   Title="#"
                                                   Width="60px">

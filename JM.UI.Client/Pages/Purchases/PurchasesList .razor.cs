@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices.JavaScript;
+using JM.UI.Client.Pages.Dialog;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
 using JM.UI.Service.UnitOfWork;
@@ -9,6 +11,7 @@ using Radzen.Blazor;
 public partial class PurchaseListComponent : PosComponentBase, IDisposable
 {
     [Inject] public IServiceUnitOfWork ServiceUnitOfWork { get; set; } = default!;
+    [Inject] public DialogService dialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
 
@@ -22,6 +25,18 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         await LoadPurchases();
     }
 
+    protected async Task OpenImagePreview(string imageBase64, string itemName)
+    {
+        await dialogService.OpenAsync<ImagePreviewDialog>(
+            $"Item Image — {itemName}",
+            new Dictionary<string, object>
+            {
+            { "ImageBase64", imageBase64 },
+            { "ItemName", itemName }
+            },
+            new DialogOptions { Width = "600px", CloseDialogOnOverlayClick = true }
+        );
+    }
     protected async Task LoadPurchases()
     {
         try
