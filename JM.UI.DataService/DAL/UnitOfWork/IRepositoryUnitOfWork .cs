@@ -65,6 +65,7 @@ using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
 using JM.UI.DataService.DAL.SupplierPayments;
+using JM.UI.DataService.DAL.StockOpenings;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -107,5 +108,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IItemOriginRepository ItemOriginRepository { get; }
         IItemBrandRepository ItemBrandRepository { get; }
         IItemFeatureRepository ItemFeatureRepository { get; }
+        IStockOpeningRepository StockOpeningRepository { get; }
     }
 }

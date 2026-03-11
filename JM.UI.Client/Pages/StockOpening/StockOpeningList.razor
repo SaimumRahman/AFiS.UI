@@ -1,0 +1,60 @@
+@page "/StockOpeningList"
+
+@inherits StockOpeningListComponent
+
+<PageTitle>@PageTitleOverride</PageTitle>
+
+@if (IsLoading)
+{
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+        <Template>Loading...</Template>
+    </RadzenProgressBarCircular>
+}
+else
+{
+    <RadzenStack Gap="1rem">
+        <RadzenRow>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H1">@PageTitleOverride</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" Style="display: flex; justify-content: flex-end; align-items: center;">
+                <RadzenButton Icon="add" 
+                              ButtonStyle="ButtonStyle.Primary" 
+                              Click="@AddNewStockOpening" 
+                              Text="Add Stock Opening" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenCard Style="padding: 1rem;">
+            <RadzenDataGrid Data="@StockOpenings" 
+                            TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" 
+                            AllowPaging="true" 
+                            PageSize="15" 
+                            AllowSorting="true" 
+                            AllowFiltering="true" 
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            EmptyText="No stock openings found.">
+                <Columns>
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="ReferenceNo" Title="Reference No" Width="150px" />
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="TransectionDate" Title="Date" Width="150px">
+                        <Template Context="doc">@doc.TransectionDate.ToString("dd MMM yyyy")</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="StoreName" Title="Store" Width="200px">
+                         <Template Context="doc">
+                            @doc.StoreName
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="ItemName" Title="Item Name" />
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="Barcode" Title="Barcode" Width="150px" />
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="TotalQuantity" Title="Total Qty" Width="100px">
+                        <Template Context="doc">@doc.TotalQuantity.ToString("N2")</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="TotalAmount" Title="Total Amount" Width="120px">
+                        <Template Context="doc">@doc.TotalAmount.ToString("N2")</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningEntryDTO" Property="CreatedBy" Title="User ID" Width="100px" />
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    </RadzenStack>
+}

@@ -350,6 +350,7 @@ namespace JM.UI.Client.Services
                             new Example { Name = "Designs", Path = "/DesignsList", Icon = "\ue41f", Title = "Designs", Description = "Manage product designs per sub-product", Tags = new[] { "design", "attribute", "style" } },
                             new Example { Name = "MesurementUnits", Path = "/MesurementUnitsList", Icon = "\ue41c", Title = "Measurement Units", Description = "Manage measurement units", Tags = new[] { "unit", "attribute" } },
                             new Example { Name = "Items", Path = "/ItemsList", Icon = "\ue1bd", Title = "Items", Description = "Manage inventory items", Tags = new[] { "item", "inventory", "product" } },
+                            new Example { Name = "Stock Opening", Path = "/StockOpeningList", Icon = "\ue14f", Title = "Stock Opening", Description = "Add new opening stock", Tags = new[] { "stock", "opening", "inventory" } },
                         }
                     },
                     new Example

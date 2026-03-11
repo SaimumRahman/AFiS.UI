@@ -67,6 +67,7 @@ using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
 using JM.UI.DataService.DAL.SupplierPayments;
+using JM.UI.DataService.DAL.StockOpenings;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -115,6 +116,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IItemOriginRepository ItemOriginRepository { get; }
         public IItemBrandRepository ItemBrandRepository { get; }
         public IItemFeatureRepository ItemFeatureRepository { get; }
+        public IStockOpeningRepository StockOpeningRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -163,6 +165,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ItemOriginRepository = new ItemOriginRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemOriginRepository>());
             ItemBrandRepository = new ItemBrandRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemBrandRepository>());
             ItemFeatureRepository = new ItemFeatureRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemFeatureRepository>());
+            StockOpeningRepository = new StockOpeningRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockOpeningRepository>());
         }
 
         public void Dispose()

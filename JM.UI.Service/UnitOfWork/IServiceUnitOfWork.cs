@@ -62,9 +62,9 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.Designs;
 using JM.UI.Service.MesurementUnits;
-using JM.UI.Service.Items;
 using JM.UI.Service.PurchaseReturnItems;
 using JM.UI.Service.SupplierPayments;
+using JM.UI.DataService.DAL.StockOpenings;
 
 namespace JM.UI.Service.UnitOfWork
 {
@@ -106,9 +106,10 @@ namespace JM.UI.Service.UnitOfWork
         IItemService ItemService { get; }
         IPurchaseReturnItemService PurchaseReturnItemService { get; }
         ISupplierPaymentService SupplierPaymentService { get; }
-        IDesignService DesignService { get; }
         IItemOriginService ItemOriginService { get; }
         IItemFeatureService ItemFeatureService { get; }
         IItemBrandService ItemBrandService { get; }
+        IDesignService DesignService { get; }
+        IStockOpeningRepository StockOpeningService { get; }
     }
 }
