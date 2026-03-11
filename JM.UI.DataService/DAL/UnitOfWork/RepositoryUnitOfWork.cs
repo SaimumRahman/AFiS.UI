@@ -1,5 +1,7 @@
 ﻿using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.Accounts;
+using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.Actions;
@@ -8,40 +10,58 @@ using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Barcodes;
+using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
+using JM.UI.DataService.DAL.Designs;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.ItemBrand;
+using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
 using JM.UI.DataService.DAL.ItemOrigin;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.PurchaseOrders;
 using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseOrders;
+using JM.UI.DataService.DAL.PurchaseReturnItems;
 using JM.UI.DataService.DAL.PurchaseReturnItems;
 using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.PurchaseReturns;
+using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
+using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
+using JM.UI.DataService.DAL.SupplierPayments;
+using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.VoucherDetails;
+using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.Entities.Services;
@@ -49,25 +69,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using JM.UI.DataService.DAL.Sizes;
-using JM.UI.DataService.DAL.Barcodes;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Suppliers;
-using JM.UI.DataService.DAL.PurchaseOrders;
-using JM.UI.DataService.DAL.Purchases;
-using JM.UI.DataService.DAL.PurchaseReturns;
-using JM.UI.DataService.DAL.Colors;
-using JM.UI.DataService.DAL.Groups;
-using JM.UI.DataService.DAL.SubGroups;
-using JM.UI.DataService.DAL.Designs;
-using JM.UI.DataService.DAL.MesurementUnits;
-using JM.UI.DataService.DAL.Items;
-using JM.UI.DataService.DAL.PurchaseReturnItems;
-using JM.UI.DataService.DAL.SupplierPayments;
-using JM.UI.DataService.DAL.StockOpenings;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -117,6 +118,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IItemBrandRepository ItemBrandRepository { get; }
         public IItemFeatureRepository ItemFeatureRepository { get; }
         public IStockOpeningRepository StockOpeningRepository { get; }
+        public IItemCatalogueRepository ItemCatalogueRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -166,6 +168,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ItemBrandRepository = new ItemBrandRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemBrandRepository>());
             ItemFeatureRepository = new ItemFeatureRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemFeatureRepository>());
             StockOpeningRepository = new StockOpeningRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockOpeningRepository>());
+            ItemCatalogueRepository = new ItemCatalogueRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemCatalogueRepository>());
         }
 
         public void Dispose()

@@ -31,6 +31,7 @@ namespace JM.UI.Entities.Model.Items
         public decimal? LastCostPrice { get; set; }
         public bool IsActive { get; set; }
         public int? SupplierId { get; set; }
+        public int? CatalogueId { get; set; }
         public string? SupplierName { get; set; }
         public byte[]? Image { get; set; }
         public bool? RawMaterial { get; set; }

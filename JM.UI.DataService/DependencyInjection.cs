@@ -19,6 +19,7 @@ using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.ItemBrand;
+using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
 using JM.UI.DataService.DAL.ItemOrigin;
 using JM.UI.DataService.DAL.Items;
@@ -92,6 +93,7 @@ namespace JM.UI.DataService
             services.AddScoped<IItemOriginRepository, ItemOriginRepository>();
             services.AddScoped<IItemBrandRepository, ItemBrandRepository>();
             services.AddScoped<IItemFeatureRepository, ItemFeatureRepository>();
+            services.AddScoped<IItemCatalogueRepository, ItemCatalogueRepository>();
             #endregion
 
 

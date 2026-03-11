@@ -363,18 +363,30 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <!-- Catalogue -->
+                        <!-- Catalogue (Auto-Create Combo) -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="Catalogue" Style="font-weight:600; font-size:0.75rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
-                                <RadzenTextBox @bind-Value="CurrentItem.Catalogue"
-                                               Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;"
-                                               Placeholder="Enter catalogue"
-                                               ValueUpdateMode="ValueUpdateMode.OnInput"
-                                               Change="@((string args) => OnCatalogueChanged(args))"
-                                               Disabled="@(IsProcessing || DisableItemFields)" />
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.1rem">
+
+                                    <RadzenAutoComplete @bind-Value="CatalogueSearchText"
+                                                        Data="@CatalogueSuggestions"
+                                                        TextProperty="CatalogueName"
+                                                        Style="width:100%; font-size:0.75rem;"
+                                                        Placeholder="Search or create catalogue"
+                                                        InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
+                                                        Change="OnCatalogueTextChanged"
+                                                        Select="@((object val) => OnCatalogueSelected(val))"
+                                                        Disabled="@(IsProcessing || DisableItemFields)" />
+                                    @if (IsNewCatalogue)
+                                    {
+                                        <RadzenBadge Text="NEW — will be created on save"
+                                                     BadgeStyle="BadgeStyle.Warning"
+                                                     Style="font-size:0.65rem;" />
+                                    }
+                                </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
 

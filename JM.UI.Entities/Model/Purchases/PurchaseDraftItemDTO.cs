@@ -67,5 +67,7 @@ namespace JM.UI.Entities.Model.Purchases
 
         // ── Type ─────────────────────────────────────────────────────
         public string? ProductType { get; set; }
+        public int? CatalogueId { get; set; }
+        public string? CatalogueName { get; set; }
     }
 }

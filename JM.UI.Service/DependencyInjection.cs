@@ -22,6 +22,7 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.ItemBrand;
+using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
@@ -100,6 +101,7 @@ namespace JM.UI.Service
             services.AddTransient<IItemBrandService, ItemBrandService>();
             services.AddTransient<IItemOriginService, ItemOriginService>();
             services.AddTransient<IItemFeatureService, ItemFeatureService>();
+            services.AddTransient<IItemCatalogueService, ItemCatalogueService>();
         }
     }
 }

@@ -3,6 +3,7 @@ using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.ItemBrand;
+using JM.UI.Entities.Model.ItemCatalogue;
 using JM.UI.Entities.Model.ItemFeatures;
 using JM.UI.Entities.Model.ItemOrigin;
 using JM.UI.Entities.Model.Items;
@@ -35,7 +36,14 @@ namespace JM.UI.Client.Pages.Purchases
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
+        // ── Add to lookup fields (alongside Brand/Origin) ─────────────────────
+        protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
 
+        // Catalogue auto-complete state
+        protected string CatalogueSearchText { get; set; } = string.Empty;
+        protected List<ItemCatalogueDTO> CatalogueSuggestions { get; set; } = new();
+        protected int? SelectedCatalogueId { get; set; }
+        protected bool IsNewCatalogue { get; set; } = false;
         // ─── Purchase Data ──────────────────────────────────────────────
         protected PurchaseDTO Purchase { get; set; } = new();
         protected List<PurchaseItemDTO> PurchaseItems { get; set; } = new();
@@ -135,7 +143,60 @@ namespace JM.UI.Client.Pages.Purchases
             CountStockByColor = false,
             CountStockBySize = false
         };
+        protected void OnCatalogueTextChanged(object value)
+        {
+            var text = value?.ToString();
+            CatalogueSearchText = text;
 
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                CatalogueSuggestions = new List<ItemCatalogueDTO>();
+                SelectedCatalogueId = null;
+                IsNewCatalogue = false;
+                CurrentItem.CatalogueId = null;
+                CurrentItem.CatalogueName = null;
+                StateHasChanged();   // ← was missing
+                return;
+            }
+
+            CatalogueSuggestions = Catalogues
+                .Where(c => c.CatalogueName.Contains(text, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var exact = Catalogues.FirstOrDefault(c =>
+                c.CatalogueName.Equals(text, StringComparison.OrdinalIgnoreCase));
+
+            if (exact != null)
+            {
+                SelectedCatalogueId = exact.CatalogueId;
+                CurrentItem.CatalogueId = exact.CatalogueId;
+                CurrentItem.CatalogueName = exact.CatalogueName;
+                IsNewCatalogue = false;
+            }
+            else
+            {
+                SelectedCatalogueId = null;
+                CurrentItem.CatalogueId = null;
+                CurrentItem.CatalogueName = text;
+                IsNewCatalogue = true;
+            }
+
+            GenerateProductName();
+            StateHasChanged();   // ← was missing
+        }
+
+        protected void OnCatalogueSelected(object value)
+        {
+            if (value is ItemCatalogueDTO cat)
+            {
+                SelectedCatalogueId = cat.CatalogueId;
+                CurrentItem.CatalogueId = cat.CatalogueId;
+                CurrentItem.CatalogueName = cat.CatalogueName;
+                CatalogueSearchText = cat.CatalogueName;
+                IsNewCatalogue = false;
+                GenerateProductName();
+            }
+        }
         private void ResetItemFormSelections()
         {
             BrandSearchText = string.Empty;
@@ -149,6 +210,9 @@ namespace JM.UI.Client.Pages.Purchases
             NewFeatureInput = string.Empty;
             CurrentItemImageBase64 = string.Empty;
             CurrentItemImageMimeType = string.Empty;
+            CatalogueSearchText = string.Empty;
+            SelectedCatalogueId = null;
+            IsNewCatalogue = false;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -168,13 +232,16 @@ namespace JM.UI.Client.Pages.Purchases
                 Features = await LoadFeatures();
                 Origins = await LoadOrigins();
                 AvailableItems = await LoadAllItems();
+                Catalogues = await LoadCatalogues();
             }
             catch (Exception ex)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load lookup data: {ex.Message}");
             }
         }
-
+        private async Task<IEnumerable<ItemCatalogueDTO>> LoadCatalogues() =>
+    await _serviceUnitOfWork.ItemCatalogueService.GetItemCatalogues()
+    ?? new List<ItemCatalogueDTO>();
         private async Task<IEnumerable<ItemDTO>> LoadAllItems() =>
             await _serviceUnitOfWork.ItemService.GetItems() ?? new List<ItemDTO>();
         private async Task<IEnumerable<SupplierModelDTO>> LoadSuppliers() =>
@@ -303,6 +370,7 @@ namespace JM.UI.Client.Pages.Purchases
                     IsNewItem = di.IsNewItem,
                     IsActive = di.IsActive,
                     MesurementUnitName = di.MesurementUnitName,
+
                 }).ToList();
 
                 // ── Pre-load cascaded lookups for the last/first item so
@@ -561,7 +629,23 @@ namespace JM.UI.Client.Pages.Purchases
                     Origins = await LoadOrigins();
                     IsNewOrigin = false;
                 }
+                // 3. Catalogue
+                if (IsNewCatalogue && !string.IsNullOrWhiteSpace(item.CatalogueName))
+                {
+                    var catResult = await _serviceUnitOfWork.ItemCatalogueService.SaveItemCatalogue(
+                        new ItemCatalogueDTO { CatalogueName = item.CatalogueName });
 
+                    if (catResult == null || !catResult.IsSuccessStatus)
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Error",
+                            $"Failed to create catalogue '{item.CatalogueName}'");
+                        return false;
+                    }
+
+                    item.CatalogueId = Convert.ToInt32(catResult.Id);
+                    Catalogues = await LoadCatalogues();
+                    IsNewCatalogue = false;
+                }
                 // 3. New Features
                 var allFeatureIds = SelectedFeatureIds.ToList();
 
@@ -665,7 +749,10 @@ namespace JM.UI.Client.Pages.Purchases
                 MesurementUnitId = CurrentItem.MesurementUnitId,
                 DesignId = CurrentItem.DesignId,
                 DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name,
-                Catalogue = CurrentItem.Catalogue,
+                CatalogueId = CurrentItem.CatalogueId,
+                CatalogueName = CurrentItem.CatalogueId.HasValue
+    ? Catalogues.FirstOrDefault(c => c.CatalogueId == CurrentItem.CatalogueId)?.CatalogueName
+    : CurrentItem.CatalogueName,
                 ImageBase64 = CurrentItem.ImageBase64,
             };
 
@@ -736,10 +823,12 @@ namespace JM.UI.Client.Pages.Purchases
                 MesurementUnitName = item.MesurementUnitName,
                 CountStockByColor = item.CountStockByColor,
                 CountStockBySize = item.CountStockBySize,
-                Catalogue = item.Catalogue,
                 IsNewItem = item.IsNewItem,
                 IsActive = item.IsActive,
             };
+            CatalogueSearchText = item.CatalogueName ?? string.Empty;
+            SelectedCatalogueId = item.CatalogueId;
+            IsNewCatalogue = false;
             CurrentItemImageBase64 = item.ImageBase64 ?? string.Empty;
 
             // ── 2. Restore Brand / Origin / Features UI state ────────────
@@ -953,7 +1042,8 @@ namespace JM.UI.Client.Pages.Purchases
                     ColorName = pi.ColorName,
                     SizeId = pi.SizeId,
                     SizeName = pi.SizeName,
-                    Catalogue = pi.Catalogue,
+                    CatalogueId = pi.CatalogueId,
+                    CatalogueName = pi.CatalogueName,
                     MaterialType = pi.MaterialType,
 
                     // Brand
@@ -1067,7 +1157,7 @@ namespace JM.UI.Client.Pages.Purchases
             GenerateProductName();
         }
         protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
-        protected void OnCatalogueChanged(string? catalogue) { CurrentItem.Catalogue = catalogue; GenerateProductName(); }
+        protected void OnCatalogueChanged(string? catalogue) { CurrentItem.CatalogueName = catalogue; GenerateProductName(); }
         protected void OnProductNameChanged(string? productName) 
         {
             IsProductNameFieldChange = true;
@@ -1082,7 +1172,7 @@ namespace JM.UI.Client.Pages.Purchases
             string brand = BrandSearchText ?? "";
             string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
             string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
-            string catalogue = CurrentItem.Catalogue ?? "";
+            string catalogue = CatalogueSearchText ?? "";
 
             if (IsProductNameFieldChange)
             {
@@ -1199,7 +1289,8 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.CountStockByColor = item.CountStockByColor;
             CurrentItem.CountStockBySize = item.CountStockBySize;
             CurrentItem.ProductType = item.ProductType;
-            CurrentItem.Catalogue = item.Catalogue;
+            CurrentItem.CatalogueId = item.CatalogueId;
+            CurrentItem.CatalogueName = item.Catalogue; // map from existing item fi
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.ColorName = item.BrandColor;
             CurrentItem.OriginId = item.OriginId;
@@ -1243,7 +1334,10 @@ namespace JM.UI.Client.Pages.Purchases
             OriginSearchText = item.OriginId.HasValue
                 ? (Origins.FirstOrDefault(o => o.OriginId == item.OriginId)?.OriginName ?? item.Origin ?? "")
                 : (item.Origin ?? "");
-
+            CatalogueSearchText = item.CatalogueId.HasValue
+    ? (Catalogues.FirstOrDefault(c => c.CatalogueId == item.CatalogueId)?.CatalogueName
+       ?? item.Catalogue ?? "")
+    : (item.Catalogue ?? "");
             NewFeatureNames = new();
         }
         private void PopulateFromPurchaseItem(PurchaseItemDTO item)
@@ -1262,7 +1356,8 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.ProductType = item.ProductType;
             CurrentItem.Barcode = BarcodeSearchText;
             CurrentItem.IsNewItem = false;
-            CurrentItem.Catalogue = item.Catalogue;
+            CurrentItem.CatalogueName = item.CatalogueName;
+            CurrentItem.CatalogueId = item.CatalogueId;
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
 
