@@ -209,6 +209,7 @@ namespace JM.UI.Client.Pages.StockOpening
                 Barcode = CurrentItem.Barcode,
                 ColorId = CurrentItem.ColorId,
                 ColorName = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name,
+                HexCode = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.HexCode,
                 SizeId = CurrentItem.SizeId,
                 SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
                 Quantity = CurrentItem.Quantity,

@@ -13,14 +13,12 @@ namespace JM.UI.DataService.DAL.StockOpenings
 {
     public class StockOpeningRepository : BaseRepository, IStockOpeningRepository
     {
-        private readonly ILogger<StockOpeningRepository> _logger;
         public StockOpeningRepository(
             IHttpClientFactory httpClientFactory,
             ITokenProvider tokenProvider,
             ILogger<StockOpeningRepository> logger)
             : base(httpClientFactory, tokenProvider, logger)
         {
-            _logger = logger;
         }
 
         public async Task<ResponseResult> InsertStockOpening(StockOpeningEntryDTO stockOpening)
@@ -48,7 +46,7 @@ namespace JM.UI.DataService.DAL.StockOpenings
             }
         }
 
-        public async Task<IEnumerable<StockOpeningEntryDTO>> GetAllStockOpenings()
+        public async Task<IEnumerable<StockOpeningEntryDTO>> GetStockOpeningsList()
         {
             try
             {
@@ -65,6 +63,26 @@ namespace JM.UI.DataService.DAL.StockOpenings
             {
                 _logger.LogError(ex, "Error getting all stock openings");
                 return new List<StockOpeningEntryDTO>();
+            }
+        }
+
+        public async Task<int> GetNextReferenceNo(int storeId)
+        {
+            try
+            {
+                _logger.LogInformation($"Starting to fetch next reference no for store {storeId}");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/StockOpening/getnextreferenceno/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                var nextNo = await response.Content.ReadFromJsonAsync<int>();
+                return nextNo;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting next reference no");
+                return 1;
             }
         }
     }

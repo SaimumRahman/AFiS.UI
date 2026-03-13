@@ -32,7 +32,7 @@ namespace JM.UI.Client.Pages.StockOpening
             {
                 IsLoading = true;
                 StateHasChanged();
-                StockOpenings = await _serviceUnitOfWork.StockOpeningService.GetAllStockOpenings();
+                StockOpenings = await _serviceUnitOfWork.StockOpeningService.GetStockOpeningsList();
             }
             finally
             {
@@ -46,6 +46,5 @@ namespace JM.UI.Client.Pages.StockOpening
             NavigationManager.NavigateTo("/StockOpeningEntry");
         }
 
-        // Search logic just for Radzen Grid filtering if needed
     }
 }

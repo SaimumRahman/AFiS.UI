@@ -8,6 +8,7 @@ namespace JM.UI.DataService.DAL.StockOpenings
     public interface IStockOpeningRepository
     {
         Task<ResponseResult> InsertStockOpening(StockOpeningEntryDTO stockOpening);
-        Task<IEnumerable<StockOpeningEntryDTO>> GetAllStockOpenings();
+        Task<IEnumerable<StockOpeningEntryDTO>> GetStockOpeningsList();
+        Task<int> GetNextReferenceNo(int storeId);
     }
 }

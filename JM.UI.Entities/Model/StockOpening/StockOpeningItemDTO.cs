@@ -9,6 +9,7 @@ namespace JM.UI.Entities.Model.StockOpening
         public string? Barcode { get; set; }
         public int? ColorId { get; set; }
         public string? ColorName { get; set; }
+        public string? HexCode { get; set; }
         public int? SizeId { get; set; }
         public string? SizeName { get; set; }
         public decimal Quantity { get; set; }
