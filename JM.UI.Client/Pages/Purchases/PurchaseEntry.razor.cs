@@ -110,6 +110,9 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
+        // ─── Edit-item mode: true while an item from the confirmed grid is being edited ───
+        protected bool IsEditItemMode { get; set; } = false;
+
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
 
         protected List<string> ProductTypes = new()
@@ -434,6 +437,10 @@ namespace JM.UI.Client.Pages.Purchases
                 CurrentItemImageMimeType = file.ContentType;
                 CurrentItemImageBase64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
                 CurrentItem.ImageBase64 = CurrentItemImageBase64;
+
+                // Apply this image to all preview rows that share the current item's color
+                ApplyImageToMatchingPreviewRows(CurrentItemImageBase64);
+
                 StateHasChanged();
             }
             catch (Exception ex)
@@ -442,11 +449,36 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
+        /// <summary>
+        /// Applies the given image to every preview row whose ColorId matches
+        /// the currently selected ColorId on CurrentItem.
+        /// </summary>
+        private void ApplyImageToMatchingPreviewRows(string imageBase64)
+        {
+            if (!PreviewItems.Any()) return;
+
+            foreach (var row in PreviewItems)
+            {
+                if (row.ColorId == CurrentItem.ColorId)
+                {
+                    row.ImageBase64 = imageBase64;
+                }
+            }
+
+            PreviewGrid?.Reload();
+        }
+
         protected void ClearItemImage()
         {
             CurrentItemImageBase64 = string.Empty;
             CurrentItemImageMimeType = string.Empty;
             CurrentItem.ImageBase64 = null;
+
+            // Also clear image from preview rows that share the current color
+            foreach (var row in PreviewItems.Where(r => r.ColorId == CurrentItem.ColorId))
+                row.ImageBase64 = null;
+
+            PreviewGrid?.Reload();
             StateHasChanged();
         }
 
@@ -741,7 +773,6 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 foreach (var item in response.ItemDetails.Where(x => x != null))
                 {
-                    // Use item's own barcode — fall back to search barcode only if empty
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode
                         : barcode;
@@ -779,17 +810,18 @@ namespace JM.UI.Client.Pages.Purchases
                         MaterialType = item.MaterialType,
                         CountStockByColor = item.CountStockByColor,
                         CountStockBySize = item.CountStockBySize,
-                        // Pricing — quantity 0, stock from existing
                         Quantity = 0,
                         StockQuantity = response.Stock?.Quantity ?? 0,
                         PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                         SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
                         OtherCost = SharedOtherCost,
                         CarryingCost = SharedCarryingCost,
-                        VatPercentage = SharedVatPercentage ,
+                        VatPercentage = SharedVatPercentage,
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
-                        TotalAmount = 0
+                        TotalAmount = 0,
+                        // Carry current image if this row's color matches the currently selected color
+                        ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null
                     };
 
                     rows.Add(row);
@@ -797,7 +829,6 @@ namespace JM.UI.Client.Pages.Purchases
             }
             else
             {
-                // Not found — add as new item row if barcode not already present
                 if (!PreviewItems.Any(p => p.Barcode == barcode))
                 {
                     var newRow = new PreviewItemRow
@@ -832,7 +863,8 @@ namespace JM.UI.Client.Pages.Purchases
                         VatPercentage = SharedVatPercentage,
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
-                        TotalAmount = 0
+                        TotalAmount = 0,
+                        ImageBase64 = CurrentItemImageBase64
                     };
                     rows.Add(newRow);
                 }
@@ -846,7 +878,13 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         protected async Task AddItemToGrid()
         {
-            // If preview grid has rows, add all of them (skipping zero-quantity rows)
+            // If we're in edit-item mode, delegate to the update path
+            if (IsEditItemMode)
+            {
+                await UpdateEditedItem();
+                return;
+            }
+
             if (PreviewItems.Any())
             {
                 var validRows = PreviewItems.Where(r => r.Quantity > 0).ToList();
@@ -859,7 +897,6 @@ namespace JM.UI.Client.Pages.Purchases
 
                 foreach (var row in validRows)
                 {
-                    // Check barcode duplicate
                     if (PurchaseItems.Any(i => i.Barcode == row.Barcode))
                     {
                         notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
@@ -916,7 +953,8 @@ namespace JM.UI.Client.Pages.Purchases
                         DesignName = Designs.FirstOrDefault(d => d.Id == row.DesignId)?.Name,
                         CatalogueId = row.CatalogueId,
                         CatalogueName = row.CatalogueName,
-                        ImageBase64 = CurrentItemImageBase64,
+                        // Use the per-row image (set when color matched on upload)
+                        ImageBase64 = row.ImageBase64,
                         IsActive = true
                     });
                 }
@@ -1029,10 +1067,31 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Edit Item
         // ═══════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Enters edit mode for an existing confirmed item.
+        /// The item is kept in PurchaseItems (just visually highlighted as being
+        /// edited) so that Cancel can simply exit edit mode without data loss.
+        /// The item is only replaced when the user clicks Update.
+        /// </summary>
         protected async Task EditItem(PurchaseItemDTO item)
         {
-            _editingItem = item;
+            // If we were already editing something, restore it first
+            if (IsEditItemMode && _editingItem != null && _editingItem != item)
+            {
+                // Discard unsaved changes to the previous item — nothing to do
+                // because the item was never removed from the list
+            }
 
+            _editingItem = item;
+            IsEditItemMode = true;
+
+            // Clear the preview grid — irrelevant while editing a confirmed item
+            PreviewItems.Clear();
+            PreviewGrid?.Reload();
+            ResetSharedPricing();
+
+            // Populate form from the item being edited
             CurrentItem = new PurchaseItemDTO
             {
                 Id = item.Id,
@@ -1078,12 +1137,17 @@ namespace JM.UI.Client.Pages.Purchases
                 CountStockBySize = item.CountStockBySize,
                 IsNewItem = item.IsNewItem,
                 IsActive = item.IsActive,
+                CatalogueId = item.CatalogueId,
+                CatalogueName = item.CatalogueName,
+                ImageBase64 = item.ImageBase64,
             };
 
+            // Sync all auxiliary UI state
             CatalogueSearchText = item.CatalogueName ?? string.Empty;
             SelectedCatalogueId = item.CatalogueId;
             IsNewCatalogue = false;
             CurrentItemImageBase64 = item.ImageBase64 ?? string.Empty;
+            CurrentItemImageMimeType = "image/jpeg";
             BrandSearchText = item.BrandName ?? string.Empty;
             OriginSearchText = item.OriginName ?? string.Empty;
             SelectedFeatureIds = item.FeatureIds?.ToList() ?? new List<int>();
@@ -1092,9 +1156,14 @@ namespace JM.UI.Client.Pages.Purchases
             IsNewBrand = false;
             IsNewOrigin = false;
             BarcodeSearchText = item.Barcode ?? string.Empty;
+
+            // In edit mode the item already exists, so fields should be editable
+            // but item identity (barcode) must not be changed
             DisableItemFields = false;
             IsNewItemMode = item.IsNewItem;
+            IsProductNameFieldChange = false;
 
+            // Load cascaded dropdowns
             if (item.GroupId.HasValue)
                 SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
 
@@ -1104,21 +1173,202 @@ namespace JM.UI.Client.Pages.Purchases
                 Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
             }
 
-            PurchaseItems.Remove(item);
-            CalculateTotals();
-            await ItemsGrid.Reload();
+            // Sync shared pricing fields so the bar shows the item's current prices
+            SharedPurchasePrice = item.PurchasePrice;
+            SharedSalePrice = item.SalePrice ?? 0;
+            SharedVatPercentage = item.VatPercentage;
+            SharedOtherCost = item.OtherCost;
+            SharedCarryingCost = item.CarryingCost;
+            SharedTransportCost = item.TransportCost;
+            SharedOperationalCost = item.OperationalCost;
+
+            // Scroll / notify
+            notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
+                $"Editing '{item.ItemName}' — make changes then click Update.");
+
             StateHasChanged();
         }
 
+        /// <summary>
+        /// Saves changes made to the item currently being edited back into
+        /// PurchaseItems in-place, without removing/re-adding.
+        /// </summary>
+        protected async Task UpdateEditedItem()
+        {
+            if (_editingItem == null) return;
+
+            // Validate — skip barcode-duplicate check for the item being edited
+            var validation = ValidateEditedItem();
+            if (!validation.IsValid)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", validation.Message);
+                return;
+            }
+
+            // Resolve any new brand / origin / catalogue / features
+            if (IsNewBrand) CurrentItem.BrandName = BrandSearchText;
+            bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
+            if (!resolved) return;
+
+            // Recalculate total
+            CalculateItemTotal();
+
+            // Update the existing item in PurchaseItems in-place
+            var idx = PurchaseItems.IndexOf(_editingItem);
+            if (idx < 0)
+            {
+                // Safety: was removed externally — just add it back
+                PurchaseItems.Add(BuildUpdatedItem());
+            }
+            else
+            {
+                PurchaseItems[idx] = BuildUpdatedItem();
+            }
+
+            await ItemsGrid.Reload();
+            CalculateTotals();
+            CancelEditItem();
+
+            notificationService.Notify(NotificationSeverity.Success, "Updated",
+                $"'{CurrentItem.ItemName}' updated successfully.");
+        }
+
+        /// <summary>
+        /// Builds the updated PurchaseItemDTO from CurrentItem, preserving
+        /// the original Id and PurchaseId so the server can do an UPDATE not INSERT.
+        /// </summary>
+        private PurchaseItemDTO BuildUpdatedItem() => new PurchaseItemDTO
+        {
+            Id = _editingItem!.Id,
+            PurchaseId = _editingItem.PurchaseId,
+            ItemId = CurrentItem.ItemId,
+            ItemName = CurrentItem.ItemName,
+            GroupId = CurrentItem.GroupId,
+            GroupName = Groups.FirstOrDefault(g => g.Id == CurrentItem.GroupId)?.Name ?? CurrentItem.GroupName,
+            SubGroupId = CurrentItem.SubGroupId,
+            SubGroupName = SubGroups.FirstOrDefault(s => s.Id == CurrentItem.SubGroupId)?.Name ?? CurrentItem.SubGroupName,
+            ShadeNo = CurrentItem.ShadeNo,
+            ColorId = CurrentItem.ColorId,
+            ColorName = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? CurrentItem.ColorName,
+            SizeId = CurrentItem.SizeId,
+            SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? CurrentItem.SizeName,
+            DesignId = CurrentItem.DesignId,
+            DesignName = Designs.FirstOrDefault(d => d.Id == CurrentItem.DesignId)?.Name ?? CurrentItem.DesignName,
+            BrandId = CurrentItem.BrandId,
+            BrandName = CurrentItem.BrandId.HasValue
+                ? Brands.FirstOrDefault(b => b.BrandId == CurrentItem.BrandId)?.BrandName ?? CurrentItem.BrandName
+                : CurrentItem.BrandName,
+            OriginId = CurrentItem.OriginId,
+            OriginName = CurrentItem.OriginId.HasValue
+                ? Origins.FirstOrDefault(o => o.OriginId == CurrentItem.OriginId)?.OriginName ?? CurrentItem.OriginName
+                : CurrentItem.OriginName,
+            FeatureIds = CurrentItem.FeatureIds,
+            FeaturesDisplay = CurrentItem.FeaturesDisplay,
+            Barcode = CurrentItem.Barcode,
+            Quantity = CurrentItem.Quantity,
+            PurchasePrice = CurrentItem.PurchasePrice,
+            ProductPricePercentage = CurrentItem.ProductPricePercentage,
+            OtherCost = CurrentItem.OtherCost,
+            CarryingCost = CurrentItem.CarryingCost,
+            TransportCost = CurrentItem.TransportCost,
+            OperationalCost = CurrentItem.OperationalCost,
+            VatPercentage = CurrentItem.VatPercentage,
+            VatAmount = CurrentItem.VatAmount,
+            TotalAmount = CurrentItem.TotalAmount,
+            IsSaleable = CurrentItem.IsSaleable,
+            IsConsume = CurrentItem.IsConsume,
+            SalePrice = CurrentItem.SalePrice,
+            ProductType = CurrentItem.ProductType,
+            MaterialType = CurrentItem.MaterialType,
+            MesurementUnitId = CurrentItem.MesurementUnitId,
+            MesurementUnitName = Units.FirstOrDefault(u => u.Id == CurrentItem.MesurementUnitId)?.Name ?? CurrentItem.MesurementUnitName,
+            CountStockByColor = CurrentItem.CountStockByColor,
+            CountStockBySize = CurrentItem.CountStockBySize,
+            IsNewItem = CurrentItem.IsNewItem,
+            IsActive = CurrentItem.IsActive,
+            CatalogueId = CurrentItem.CatalogueId,
+            CatalogueName = CurrentItem.CatalogueId.HasValue
+                ? Catalogues.FirstOrDefault(c => c.CatalogueId == CurrentItem.CatalogueId)?.CatalogueName ?? CurrentItem.CatalogueName
+                : CurrentItem.CatalogueName,
+            ImageBase64 = CurrentItem.ImageBase64,
+        };
+
+        /// <summary>
+        /// Validates CurrentItem in edit mode — identical to ValidateCurrentItem
+        /// except barcode-duplicate check is scoped to other items only.
+        /// </summary>
+        private (bool IsValid, string Message) ValidateEditedItem()
+        {
+            if (IsNewItemMode)
+            {
+                if (string.IsNullOrWhiteSpace(CurrentItem.ItemName))
+                    return (false, "Item name is required");
+                if (!CurrentItem.SubGroupId.HasValue || CurrentItem.SubGroupId.Value == 0)
+                    return (false, "Sub-group is required");
+                if (!CurrentItem.MesurementUnitId.HasValue || CurrentItem.MesurementUnitId.Value == 0)
+                    return (false, "Unit is required");
+            }
+            else
+            {
+                if (CurrentItem.ItemId == 0)
+                    return (false, "Item must be selected");
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentItem.Barcode))
+                return (false, "Barcode is required");
+            if (CurrentItem.Quantity <= 0)
+                return (false, "Quantity must be greater than 0");
+            if (CurrentItem.PurchasePrice <= 0)
+                return (false, "Purchase price must be greater than 0");
+
+            if (CurrentItem.IsSaleable)
+            {
+                if (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0)
+                    return (false, "Sale price is required for saleable items");
+                if (CurrentItem.SalePrice.Value <= CurrentItem.PurchasePrice)
+                    return (false, "Sale price must be greater than purchase price");
+            }
+
+            // Duplicate barcode check — exclude the item being edited
+            if (PurchaseItems.Any(i => i != _editingItem && i.Barcode == CurrentItem.Barcode))
+                return (false, "Another item with this barcode already exists");
+
+            return (true, string.Empty);
+        }
+
+        /// <summary>
+        /// Exits edit mode, restores all form state, without navigating away.
+        /// </summary>
+        protected void CancelEditItem()
+        {
+            _editingItem = null;
+            IsEditItemMode = false;
+            IsNewItemMode = false;
+            DisableItemFields = false;
+            BarcodeSearchText = string.Empty;
+            IsProductNameFieldChange = false;
+            CurrentItem = CreateNewItem();
+            PreviewItems.Clear();
+            PreviewGrid?.Reload();
+            ResetSharedPricing();
+            ResetItemFormSelections();
+            StateHasChanged();
+        }
+
+        /// <summary>
+        /// Main Cancel button — exits edit mode if editing, otherwise navigates to list.
+        /// </summary>
         protected void Cancel()
         {
-            if (_editingItem != null)
+            if (IsEditItemMode)
             {
-                PurchaseItems.Add(_editingItem);
-                _editingItem = null;
-                CalculateTotals();
+                CancelEditItem();
+                notificationService.Notify(NotificationSeverity.Info, "Cancelled", "Edit cancelled. No changes were saved.");
             }
-            NavigationManager.NavigateTo("/PurchaseList");
+            else
+            {
+                NavigationManager.NavigateTo("/PurchaseList");
+            }
         }
 
         protected void DeleteItem(PurchaseItemDTO item)
@@ -1161,7 +1411,8 @@ namespace JM.UI.Client.Pages.Purchases
                     return (false, "Sale price must be greater than purchase price");
             }
 
-            if (PurchaseItems.Any(i => i.Barcode == CurrentItem.Barcode))
+            // Exclude the item currently being edited from the duplicate check
+            if (PurchaseItems.Any(i => i != _editingItem && i.Barcode == CurrentItem.Barcode))
                 return (false, "Item with this barcode already added");
 
             return (true, string.Empty);
@@ -1345,11 +1596,18 @@ namespace JM.UI.Client.Pages.Purchases
             await GenerateBarcode();
         }
 
-        // ─── Color Change: call barcode prefix API, load into preview grid ───
+        // ─── Color Change: clear image, then load barcode preview ────────────
         protected async Task OnColorChanged(int? colorId)
         {
             if (!colorId.HasValue) return;
+            if (!CurrentItem.SizeId.HasValue) return;
             CurrentItem.ColorId = colorId;
+
+            // Clear the current image so the user uploads a new one for this color
+            CurrentItemImageBase64 = string.Empty;
+            CurrentItemImageMimeType = string.Empty;
+            CurrentItem.ImageBase64 = null;
+
             GenerateProductName();
             await GenerateBarcode();
 
@@ -1357,6 +1615,8 @@ namespace JM.UI.Client.Pages.Purchases
             {
                 await SearchSingleBarcodeAndAddToPreview(CurrentItem.Barcode);
             }
+
+            StateHasChanged();
         }
 
         // ─── Size Change: call same barcode search API ─────────────────────
@@ -1367,17 +1627,16 @@ namespace JM.UI.Client.Pages.Purchases
             GenerateProductName();
             await GenerateBarcode();
 
-            // Only search and add the single new barcode row
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
             {
                 await SearchSingleBarcodeAndAddToPreview(CurrentItem.Barcode);
             }
         }
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
             {
-                // Skip if this exact barcode already exists in preview grid
                 if (PreviewItems.Any(p => p.Barcode == barcode)) return;
 
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
@@ -1386,10 +1645,9 @@ namespace JM.UI.Client.Pages.Purchases
 
                 if (response.Found && response.ItemDetails != null && response.ItemDetails.Any())
                 {
-                    // Find the exact matching item by barcode
                     var item = response.ItemDetails.FirstOrDefault(x => x.Barcode == barcode);
 
-                    if (item==null)
+                    if (item == null)
                     {
                         newRow = new PreviewItemRow
                         {
@@ -1423,15 +1681,17 @@ namespace JM.UI.Client.Pages.Purchases
                             VatPercentage = SharedVatPercentage,
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
-                            TotalAmount = 0
+                            TotalAmount = 0,
+                            // Image is null — user must upload for this new color
+                            ImageBase64 = null
                         };
                     }
                     else
                     {
                         var features = response.itemWiseFeatures?
-                        .Where(f => f?.ItemId == item.Id)
-                        .Select(f => f!.FeaturesId)
-                        .ToList() ?? new List<int>();
+                            .Where(f => f?.ItemId == item.Id)
+                            .Select(f => f!.FeaturesId)
+                            .ToList() ?? new List<int>();
 
                         newRow = new PreviewItemRow
                         {
@@ -1470,13 +1730,14 @@ namespace JM.UI.Client.Pages.Purchases
                             VatPercentage = SharedVatPercentage,
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
-                            TotalAmount = 0
+                            TotalAmount = 0,
+                            // Image is null — user must upload for this new color
+                            ImageBase64 = null
                         };
                     }
                 }
                 else
                 {
-                    // Not found — create new item row
                     newRow = new PreviewItemRow
                     {
                         ItemId = 0,
@@ -1509,7 +1770,9 @@ namespace JM.UI.Client.Pages.Purchases
                         VatPercentage = SharedVatPercentage,
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
-                        TotalAmount = 0
+                        TotalAmount = 0,
+                        // Image is null — user must upload for this new color
+                        ImageBase64 = null
                     };
                 }
 
@@ -1523,10 +1786,7 @@ namespace JM.UI.Client.Pages.Purchases
                     $"Preview load failed: {ex.Message}");
             }
         }
-        /// <summary>
-        /// Calls the barcode search API and merges results into the preview grid.
-        /// Existing rows are preserved; new rows are appended.
-        /// </summary>
+
         private async Task SearchAndUpdatePreviewGrid(string barcode)
         {
             try
@@ -1648,7 +1908,6 @@ namespace JM.UI.Client.Pages.Purchases
                         DisableItemFields = true;
                         IsNewItemMode = false;
 
-                        // Load ALL items from the response into preview grid
                         PreviewItems.Clear();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
                         foreach (var row in newRows)
@@ -1666,7 +1925,6 @@ namespace JM.UI.Client.Pages.Purchases
                         PopulateFromPurchaseItem(result.Item);
                         DisableItemFields = false;
 
-                        // Load into preview grid
                         PreviewItems.Clear();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
                         foreach (var row in newRows)
@@ -1682,7 +1940,6 @@ namespace JM.UI.Client.Pages.Purchases
                     DisableItemFields = false;
                     IsNewItemMode = true;
 
-                    // Add as new item row in preview
                     PreviewItems.Clear();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
                     foreach (var row in newRows)
@@ -1731,7 +1988,6 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
 
-            // Sync shared pricing from item
             SharedPurchasePrice = item.PurchasePrice ?? 0;
             SharedSalePrice = item.SalePrice ?? 0;
 

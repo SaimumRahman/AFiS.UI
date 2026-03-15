@@ -28,6 +28,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public decimal TotalAmount { get; set; }
         public bool IsSaleable { get; set; }
         public bool IsConsume { get; set; }
+        public bool IsRawMaterial { get; set; }
         public decimal? SalePrice { get; set; }
         public string? ProductType { get; set; } // SellProduct, RawMaterial, Both, Consume, ComboPackage
         public string? ImagePath { get; set; }

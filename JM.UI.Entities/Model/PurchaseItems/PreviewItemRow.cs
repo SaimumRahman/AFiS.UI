@@ -28,6 +28,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string CatalogueName { get; set; } = string.Empty;
         public string? MaterialType { get; set; }
         public string ProductType { get; set; } = "Sell Product";
+        public string ImageBase64 { get; set; } 
         public bool IsSaleable { get; set; } = true;
         public bool IsConsume { get; set; }
         public bool IsNewItem { get; set; }
