@@ -83,6 +83,36 @@ namespace JM.UI.DataService.DAL.Purchases
                 throw new Exception($"Unexpected error fetching purchase: {ex.Message}", ex);
             }
         }
+        public async Task<SystemInVoiceDTO?> GetSystemInvoiceNew()
+        {
+            try
+            {
+                _logger.LogInformation("Requesting new System Invoice Number");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/Purchase/system-invoice-new");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Failed to retrieve new System Invoice Number");
+                    return null;
+                }
+
+                var invoice = await response.Content.ReadFromJsonAsync<SystemInVoiceDTO>();
+                return invoice;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed while fetching new System Invoice Number");
+                throw new Exception($"Failed to fetch System Invoice Number: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while fetching new System Invoice Number");
+                throw new Exception($"Unexpected error fetching System Invoice Number: {ex.Message}", ex);
+            }
+        }
+
         public async Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId)
         {
             try

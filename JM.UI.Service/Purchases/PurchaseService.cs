@@ -278,5 +278,8 @@ namespace JM.UI.Service.Purchases
         {
             return date?.ToString("dd/MM/yyyy HH:mm") ?? "-";
         }
+
+        public Task<SystemInVoiceDTO?> GetSystemInvoiceNew()
+        => _repositoryUnitOfWork.PurchaseRepository.GetSystemInvoiceNew();
     }
 }
