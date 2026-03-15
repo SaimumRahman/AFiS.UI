@@ -12,7 +12,7 @@ namespace JM.UI.Entities.Model.Purchases
     {
         public bool Found { get; set; }
         public PurchaseItemDTO? Item { get; set; }
-        public ItemDTO? ItemDetails { get; set; }
+        public List<ItemDTO?> ItemDetails { get; set; }
         public StockDTO? Stock { get; set; }
         public List<ItemWiseFeatureDTO?> itemWiseFeatures { get; set; }
         public string? Message { get; set; }
