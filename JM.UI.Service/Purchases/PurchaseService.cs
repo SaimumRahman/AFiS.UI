@@ -112,7 +112,12 @@ namespace JM.UI.Service.Purchases
         // =============================================
         public async Task<BarcodeSearchResponseDTO> SearchByBarcode(string barcode)
         {
-            return await _repositoryUnitOfWork.PurchaseRepository.SearchByBarcode(barcode);
+            var data = await _repositoryUnitOfWork.PurchaseRepository.SearchByBarcode(barcode);
+            if (data.ItemDetails.Count()>0) 
+            {
+                data.Found = true;
+            }
+            return data;
         }
 
         // =============================================
