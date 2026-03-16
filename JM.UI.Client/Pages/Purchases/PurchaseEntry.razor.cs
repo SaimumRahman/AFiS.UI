@@ -1087,9 +1087,54 @@ namespace JM.UI.Client.Pages.Purchases
             IsEditItemMode = true;
 
             // Clear the preview grid — irrelevant while editing a confirmed item
+            // Load the item being edited into the preview grid so the user can edit it there
             PreviewItems.Clear();
-            PreviewGrid?.Reload();
             ResetSharedPricing();
+
+            PreviewItems.Add(new PreviewItemRow
+            {
+                ItemId = item.ItemId,
+                ItemName = item.ItemName,
+                Barcode = item.Barcode ?? string.Empty,
+                ColorId = item.ColorId,
+                ColorName = item.ColorName ?? string.Empty,
+                SizeId = item.SizeId,
+                SizeName = item.SizeName ?? string.Empty,
+                GroupId = item.GroupId,
+                SubGroupId = item.SubGroupId,
+                BrandId = item.BrandId,
+                BrandName = item.BrandName ?? string.Empty,
+                OriginId = item.OriginId,
+                OriginName = item.OriginName ?? string.Empty,
+                FeatureIds = item.FeatureIds?.ToList() ?? new List<int>(),
+                FeaturesDisplay = item.FeaturesDisplay ?? string.Empty,
+                MesurementUnitId = item.MesurementUnitId,
+                MesurementUnitName = item.MesurementUnitName ?? string.Empty,
+                CatalogueId = item.CatalogueId,
+                CatalogueName = item.CatalogueName ?? string.Empty,
+                DesignId = item.DesignId,
+                IsNewItem = item.IsNewItem,
+                IsSaleable = item.IsSaleable,
+                IsConsume = item.IsConsume,
+                ProductType = item.ProductType ?? "Sell Product",
+                MaterialType = item.MaterialType,
+                CountStockByColor = item.CountStockByColor,
+                CountStockBySize = item.CountStockBySize,
+                // Keep quantity from the saved item — the user is editing it
+                Quantity = item.Quantity,
+                StockQuantity = 0,   // not available from PurchaseItemDTO
+                PurchasePrice = item.PurchasePrice,
+                SalePrice = item.SalePrice ?? 0,
+                OtherCost = item.OtherCost,
+                CarryingCost = item.CarryingCost,
+                TransportCost = item.TransportCost,
+                OperationalCost = item.OperationalCost,
+                VatPercentage = item.VatPercentage,
+                TotalAmount = item.TotalAmount,
+                ImageBase64 = item.ImageBase64,
+            });
+
+            PreviewGrid?.Reload();
 
             // Populate form from the item being edited
             CurrentItem = new PurchaseItemDTO
@@ -1188,16 +1233,43 @@ namespace JM.UI.Client.Pages.Purchases
 
             StateHasChanged();
         }
-
-        /// <summary>
-        /// Saves changes made to the item currently being edited back into
-        /// PurchaseItems in-place, without removing/re-adding.
-        /// </summary>
         protected async Task UpdateEditedItem()
         {
             if (_editingItem == null) return;
 
-            // Validate — skip barcode-duplicate check for the item being edited
+            // Pull values from the preview row the user edited
+            var row = PreviewItems.FirstOrDefault();
+            if (row == null)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Nothing to update",
+                    "The preview grid is empty.");
+                return;
+            }
+
+            // Sync preview row values back to CurrentItem so existing validation/build logic works
+            CurrentItem.ItemId = row.ItemId;
+            CurrentItem.ItemName = row.ItemName;
+            CurrentItem.Barcode = row.Barcode;
+            CurrentItem.ColorId = row.ColorId;
+            CurrentItem.SizeId = row.SizeId;
+            CurrentItem.BrandId = row.BrandId;
+            CurrentItem.BrandName = row.BrandName;
+            CurrentItem.OriginId = row.OriginId;
+            CurrentItem.OriginName = row.OriginName;
+            CurrentItem.FeatureIds = row.FeatureIds;
+            CurrentItem.FeaturesDisplay = row.FeaturesDisplay;
+            CurrentItem.Quantity = row.Quantity;
+            CurrentItem.PurchasePrice = row.PurchasePrice;
+            CurrentItem.SalePrice = row.SalePrice;
+            CurrentItem.OtherCost = row.OtherCost;
+            CurrentItem.CarryingCost = row.CarryingCost;
+            CurrentItem.TransportCost = row.TransportCost;
+            CurrentItem.OperationalCost = row.OperationalCost;
+            CurrentItem.VatPercentage = row.VatPercentage;
+            CurrentItem.TotalAmount = row.TotalAmount;
+            CurrentItem.ImageBase64 = row.ImageBase64;
+
+            // --- rest of your existing UpdateEditedItem logic unchanged ---
             var validation = ValidateEditedItem();
             if (!validation.IsValid)
             {
@@ -1205,25 +1277,17 @@ namespace JM.UI.Client.Pages.Purchases
                 return;
             }
 
-            // Resolve any new brand / origin / catalogue / features
             if (IsNewBrand) CurrentItem.BrandName = BrandSearchText;
             bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
             if (!resolved) return;
 
-            // Recalculate total
             CalculateItemTotal();
 
-            // Update the existing item in PurchaseItems in-place
             var idx = PurchaseItems.IndexOf(_editingItem);
             if (idx < 0)
-            {
-                // Safety: was removed externally — just add it back
                 PurchaseItems.Add(BuildUpdatedItem());
-            }
             else
-            {
                 PurchaseItems[idx] = BuildUpdatedItem();
-            }
 
             await ItemsGrid.Reload();
             CalculateTotals();
@@ -1232,11 +1296,6 @@ namespace JM.UI.Client.Pages.Purchases
             notificationService.Notify(NotificationSeverity.Success, "Updated",
                 $"'{CurrentItem.ItemName}' updated successfully.");
         }
-
-        /// <summary>
-        /// Builds the updated PurchaseItemDTO from CurrentItem, preserving
-        /// the original Id and PurchaseId so the server can do an UPDATE not INSERT.
-        /// </summary>
         private PurchaseItemDTO BuildUpdatedItem() => new PurchaseItemDTO
         {
             Id = _editingItem!.Id,
