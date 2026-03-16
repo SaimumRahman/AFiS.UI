@@ -218,6 +218,14 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
+                        <!-- System.Bill No -->
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                            <RadzenColumn Size="4"><RadzenLabel Text="Invoice No" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                            <RadzenColumn Size="8">
+                                <RadzenTextBox @bind-Value="Purchase.SystemInvoiceNo" Disabled="true"
+                                               Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
+                            </RadzenColumn>
+                        </RadzenRow>
                         <!-- S.Bill No -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                             <RadzenColumn Size="4"><RadzenLabel Text="S.Bill No" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>

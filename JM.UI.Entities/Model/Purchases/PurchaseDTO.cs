@@ -9,6 +9,7 @@ namespace JM.UI.Entities.Model.Purchases
         public int Id { get; set; }
         public int? SupplierId { get; set; }
         public string? SupplierName { get; set; }
+        public string? SystemInvoiceNo { get; set; }
         public string? BillInvoiceNumber { get; set; }
         public string? BillInvoiceName { get; set; }
         public DateTime PurchaseDate { get; set; }

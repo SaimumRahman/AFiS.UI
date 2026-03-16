@@ -15,7 +15,7 @@ namespace JM.UI.Service.Purchases
         Task<string> GenerateBarcode(BarcodeGenerationRequestDTO request);
         Task<BarcodeSearchResponseDTO> SearchByBarcode(string barcode);
         Task<(bool IsValid, string ErrorMessage)> ValidatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items);
-        PurchaseDTO CreateNewPurchase();
+        Task<PurchaseDTO> CreateNewPurchase();
         decimal CalculateItemTotal(PurchaseItemDTO item);
         decimal CalculatePurchaseTotal(List<PurchaseItemDTO> items);
         Task<IEnumerable<PurchaseDraftDTO>> GetPurchaseDrafts();

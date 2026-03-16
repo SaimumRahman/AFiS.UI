@@ -162,14 +162,15 @@ namespace JM.UI.Service.Purchases
         // =============================================
         // Create New Purchase
         // =============================================
-        public PurchaseDTO CreateNewPurchase()
+        public async Task<PurchaseDTO> CreateNewPurchase()
         {
             return new PurchaseDTO
             {
                 PurchaseDate = DateTime.Now,
                 IsActive = true,
                 IsVatIncluded = false,
-                PurchaseItems = new List<PurchaseItemDTO>()
+                PurchaseItems = new List<PurchaseItemDTO>(),
+                SystemInvoiceNo = (await GetSystemInvoiceNew()).SystemInvoiceNo
             };
         }
 

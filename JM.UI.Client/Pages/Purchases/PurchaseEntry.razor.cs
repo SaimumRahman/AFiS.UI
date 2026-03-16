@@ -133,15 +133,15 @@ namespace JM.UI.Client.Pages.Purchases
             else if (IsEditMode)
                 await LoadPurchase();
             else
-                InitializePurchase();
+                await InitializePurchase();
         }
 
         // ═══════════════════════════════════════════════════════════════
         // Initialization
         // ═══════════════════════════════════════════════════════════════
-        private void InitializePurchase()
+        private async Task InitializePurchase()
         {
-            Purchase = _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
+            Purchase = await _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
             PurchaseItems = new List<PurchaseItemDTO>();
             CurrentItem = CreateNewItem();
             PreviewItems = new List<PreviewItemRow>();
