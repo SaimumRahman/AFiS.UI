@@ -1,6 +1,7 @@
 @page "/StockOpeningEntry"
 
 @inherits JM.UI.Client.Pages.StockOpening.StockOpeningEntryComponent
+@using JM.UI.Entities.Model.Colors
 
 <PageTitle>@PageTitleOverride</PageTitle>
 
@@ -101,7 +102,20 @@
         <RadzenRow Gap="1rem" class="rz-mb-4">
              <RadzenColumn Size="12" SizeMD="3">
                 <RadzenLabel Text="Color" />
-                <RadzenDropDown @bind-Value="CurrentItem.ColorId" Data=@Colors TextProperty="Name" ValueProperty="Id" Style="width: 100%;" AllowClear="true" />
+                <RadzenDropDown @bind-Value="CurrentItem.ColorId" Data=@Colors TextProperty="Name" ValueProperty="Id" Style="width: 100%;" AllowClear="true">
+                    <Template Context="color">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; border-radius: 4px; border: 1px solid #ccc; background-color: @((color as ColorsDTO).HexCode ?? "#fff")"></div>
+                            <span>@((color as ColorsDTO).Name)</span>
+                        </div>
+                    </Template>
+                    <ValueTemplate Context="color">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 20px; border-radius: 4px; border: 1px solid #ccc; background-color: @((color as ColorsDTO).HexCode ?? "#fff")"></div>
+                            <span>@((color as ColorsDTO).Name)</span>
+                        </div>
+                    </ValueTemplate>
+                </RadzenDropDown>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenLabel Text="Size" />
@@ -138,7 +152,17 @@
             <Columns>
                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Property="Barcode" Title="Barcode" Width="120px" />
                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Property="ItemName" Title="Item Name" />
-                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Property="ColorName" Title="Color" Width="100px" />
+                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Title="Color" Width="150px">
+                    <Template Context="item">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            @if(!string.IsNullOrEmpty(item.HexCode))
+                            {
+                                <div style="width: 20px; height: 20px; border-radius: 4px; border: 1px solid #ccc; background-color: @item.HexCode"></div>
+                            }
+                            <span>@item.ColorName</span>
+                        </div>
+                    </Template>
+                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Property="SizeName" Title="Size" Width="100px" />
                 <RadzenDataGridColumn TItem="JM.UI.Entities.Model.StockOpening.StockOpeningItemDTO" Property="Quantity" Title="Qty" Width="90px">
                      <Template Context="item">

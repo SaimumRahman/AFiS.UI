@@ -1,4 +1,4 @@
-﻿using JM.UI.DataService.DAL.StockOpenings;
+using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.Accounts;
@@ -39,7 +39,7 @@ using JM.UI.Service.PurchaseReturnItems;
 using JM.UI.Service.PurchaseReturnItems;
 using JM.UI.Service.PurchaseReturns;
 using JM.UI.Service.PurchaseReturns;
-using JM.UI.Service.PurchaseReturns;
+using JM.UI.Service.StockOpenings;
 using JM.UI.Service.Purchases;
 using JM.UI.Service.Purchases;
 using JM.UI.Service.Purchases;
@@ -111,7 +111,7 @@ namespace JM.UI.Service.UnitOfWork
         IItemFeatureService ItemFeatureService { get; }
         IItemBrandService ItemBrandService { get; }
         IDesignService DesignService { get; }
-        IStockOpeningRepository StockOpeningService { get; }
+        IStockOpeningService StockOpeningService { get; }
         IItemCatalogueService ItemCatalogueService { get; }
     }
 }
