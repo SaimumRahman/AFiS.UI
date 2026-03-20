@@ -305,7 +305,7 @@
                                 <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
                                     <RadzenDropDown @bind-Value="CurrentItem.DesignId" Data="@Designs"
-                                                    TextProperty="Name" ValueProperty="Id" Placeholder="Select Design..."
+                                                    TextProperty="Name" ValueProperty="Id" Placeholder="Select Product..."
                                                     Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                     Change="@(args => OnDesignChanged(CurrentItem.DesignId))"
                                                     Disabled="@(IsProcessing || !CurrentItem.SubGroupId.HasValue)" />
@@ -593,12 +593,7 @@
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
                                                        Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
-                                    <RadzenColumn Size="6" SizeMD="2">
-                                        <RadzenLabel Text="S.Price" Style="font-weight:600; font-size:0.68rem;" />
-                                        <RadzenNumeric @bind-Value="SharedSalePrice"
-                                                       Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
-                                                       Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
-                                    </RadzenColumn>
+                                    
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="Op.Cost" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedOtherCost"
@@ -617,6 +612,12 @@
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
                                                        Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
+                                <RadzenColumn Size="6" SizeMD="2">
+                                    <RadzenLabel Text="S.Price" Style="font-weight:600; font-size:0.68rem;" />
+                                    <RadzenNumeric @bind-Value="SharedSalePrice"
+                                                   Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
+                                                   Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                </RadzenColumn>
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="QTY" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedQuantity"
@@ -871,16 +872,17 @@
                     <Columns>
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="Barcode" Title="Barcode" Width="120px" />
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="ItemName" Title="Product Name" Width="160px" />
+                        <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="ColorName" Title="Color" Width="80px" />
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="SizeName" Title="Size" Width="70px" />
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="MesurementUnitName" Title="UOM" Width="65px" />
-                        <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="ColorName" Title="Color" Width="80px" />
-                        <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="BrandName" Title="Brand" Width="85px" />
-                        <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="OriginName" Title="Origin" Width="85px" />
-                        <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="FeaturesDisplay" Title="Features" Width="130px" />
+         
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="Quantity" Title="Qty" Width="60px">
                             <Template Context="item">
                                 <span style="font-weight:600;">@item.Quantity.ToString("N2")</span>
                             </Template>
+                        <FooterTemplate>
+                            <span style="font-weight:600;">@PurchaseItems.Sum(i => i.Quantity).ToString("N2")</span>
+                        </FooterTemplate>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="PurchasePrice" Title="P.Rate" Width="70px">
                             <Template Context="item">@item.PurchasePrice.ToString("N2")</Template>
@@ -917,6 +919,9 @@
                                 }
                             </Template>
                         </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="BrandName" Title="Brand" Width="85px" />
+                    <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="OriginName" Title="Origin" Width="85px" />
+                    <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="FeaturesDisplay" Title="Features" Width="130px" Visible="false" />
                         <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="Actions" Width="85px" Sortable="false" Filterable="false">
                             <Template Context="item">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
@@ -925,6 +930,7 @@
                                               Click="@(() => DeleteItem(item))" Disabled="@IsProcessing" />
                             </Template>
                         </RadzenDataGridColumn>
+
                     </Columns>
                 </RadzenDataGrid>
             </RadzenCard>
@@ -935,37 +941,7 @@
             <RadzenCard Style="padding: 0.4rem;">
                 <RadzenRow Gap="0.4rem" AlignItems="AlignItems.End">
 
-                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
-                        <RadzenLabel Text="Total QTY" Style="font-weight:600; font-size:0.75rem;" />
-                        <RadzenNumeric Value="@PurchaseItems.Sum(x => x.Quantity)"
-                                       Style="width:100%; font-size:0.75rem;" ReadOnly="true" TValue="decimal" />
-                    </RadzenColumn>
-
-                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
-                        <RadzenLabel Text="Total Amount" Style="font-weight:600; font-size:0.75rem;" />
-                        <RadzenNumeric @bind-Value="Purchase.TotalAmount" Style="width:100%; font-size:0.75rem;"
-                                       ReadOnly="true" TValue="decimal" />
-                    </RadzenColumn>
-
-                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
-                        <RadzenLabel Text="Discount" Style="font-weight:600; font-size:0.75rem;" />
-                        <RadzenNumeric @bind-Value="Purchase.DiscountAmount" Style="width:100%; font-size:0.75rem;"
-                                       Min="0" TValue="decimal?" Change="@((decimal? _) => OnDiscountChanged())"
-                                       Disabled="@IsProcessing" />
-                    </RadzenColumn>
-
-                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
-                        <RadzenLabel Text="VAT Amount" Style="font-weight:600; font-size:0.75rem;" />
-                        <RadzenNumeric @bind-Value="Purchase.VatAmount" Style="width:100%; font-size:0.75rem;"
-                                       Min="0" TValue="decimal?" Change="@((decimal? _) => OnVatChanged())"
-                                       Disabled="@IsProcessing" />
-                    </RadzenColumn>
-
-                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
-                        <RadzenLabel Text="Net Amount" Style="font-weight:600; font-size:0.75rem;" />
-                        <RadzenNumeric @bind-Value="Purchase.NetAmount" Style="width:100%; font-size:0.75rem;"
-                                       ReadOnly="true" TValue="decimal" />
-                    </RadzenColumn>
+                   
 
                     <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                         <RadzenLabel Text="Remarks:" Style="font-weight:600; font-size:0.75rem;" />
