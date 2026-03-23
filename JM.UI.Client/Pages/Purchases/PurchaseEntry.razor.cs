@@ -1604,6 +1604,7 @@ namespace JM.UI.Client.Pages.Purchases
                     FeaturesDisplay = pi.FeaturesDisplay ?? string.Empty,
                     Barcode = pi.Barcode,
                     MesurementUnitId = pi.MesurementUnitId,
+                    MesurementUnitName = pi.MesurementUnitName,  // ← ADD THIS
                     Quantity = pi.Quantity,
                     PurchasePrice = pi.PurchasePrice,
                     ProductPricePercentage = pi.ProductPricePercentage,
