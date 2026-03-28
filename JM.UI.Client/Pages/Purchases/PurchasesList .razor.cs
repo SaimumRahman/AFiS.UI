@@ -1,10 +1,11 @@
-using System.Runtime.InteropServices.JavaScript;
 using JM.UI.Client.Pages.Dialog;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -14,11 +15,14 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     [Inject] public DialogService dialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public PurchaseReportService PurchaseReportService { get; set; } = default!;
 
     protected RadzenDataGrid<PurchaseSummaryDTO>? PurchasesGrid;
     protected IEnumerable<PurchaseSummaryDTO> Purchases = new List<PurchaseSummaryDTO>();
     protected Dictionary<int, List<PurchaseItemDTO>> PurchaseItemsCache = new();
     protected bool IsLoading;
+    protected bool IsPrinting;
 
     protected override async Task OnInitializedAsync()
     {
@@ -31,12 +35,13 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             $"Item Image — {itemName}",
             new Dictionary<string, object>
             {
-            { "ImageBase64", imageBase64 },
-            { "ItemName", itemName }
+                { "ImageBase64", imageBase64 },
+                { "ItemName", itemName }
             },
             new DialogOptions { Width = "600px", CloseDialogOnOverlayClick = true }
         );
     }
+
     protected async Task LoadPurchases()
     {
         try
@@ -56,13 +61,11 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
 
     protected List<PurchaseItemDTO> GetPurchaseItems(PurchaseSummaryDTO purchase)
     {
-        // Return cached items or empty list
         return PurchaseItemsCache.GetValueOrDefault(purchase.Id) ?? new List<PurchaseItemDTO>();
     }
 
     protected async Task OnRowExpand(PurchaseSummaryDTO purchase)
     {
-        // Skip if already loaded
         if (PurchaseItemsCache.ContainsKey(purchase.Id))
             return;
 
@@ -75,8 +78,57 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         catch (Exception ex)
         {
             NotifyError($"Failed to load purchase items: {ex.Message}");
-            // Add empty list to prevent repeated failed attempts
             PurchaseItemsCache[purchase.Id] = new List<PurchaseItemDTO>();
+        }
+    }
+
+    /// <summary>
+    /// Loads ALL purchase items for every purchase (needed for full report),
+    /// then generates and downloads the PDF.
+    /// </summary>
+    protected async Task PrintReport()
+    {
+        try
+        {
+            IsPrinting = true;
+            StateHasChanged();
+
+            // Load items for any purchases not yet in cache
+            foreach (var purchase in Purchases)
+            {
+                if (!PurchaseItemsCache.ContainsKey(purchase.Id))
+                {
+                    var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+                    PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+                }
+            }
+
+            // Determine date range from loaded purchases
+            DateTime? dateFrom = Purchases.Any() ? Purchases.Min(p => p.PurchaseDate) : null;
+            DateTime? dateTo = Purchases.Any() ? Purchases.Max(p => p.PurchaseDate) : null;
+
+            // Generate PDF bytes
+            var pdfBytes = PurchaseReportService.GeneratePurchaseDetailReport(
+                Purchases,
+                PurchaseItemsCache,
+                dateFrom: dateFrom,
+                dateTo: dateTo
+            );
+
+            // Trigger browser download via JS interop
+            var fileName = $"PurchaseDetailReport_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+
+            NotifySuccess("Report generated successfully.");
+        }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to generate report: {ex.Message}");
+        }
+        finally
+        {
+            IsPrinting = false;
+            StateHasChanged();
         }
     }
 

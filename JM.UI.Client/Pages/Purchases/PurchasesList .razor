@@ -20,6 +20,14 @@
 
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+
+                    <RadzenButton Icon="print"
+                                  Text="@(IsPrinting ? "Generating..." : "Print Report")"
+                                  Click="@PrintReport"
+                                  ButtonStyle="ButtonStyle.Info"
+                                  Disabled="@IsPrinting"
+                                  IsBusy="@IsPrinting" />
+
                     <RadzenButton Icon="add_circle_outline"
                                   Text="New Purchase"
                                   Click="@AddPurchase"
@@ -85,12 +93,13 @@
                                     else
                                     {
                                         <div style="width:40px; height:40px; border:1px dashed #ccc; border-radius:4px;
-                            display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
+                                            display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
                                             <RadzenIcon Icon="image_not_supported" Style="font-size:1rem; color:#bbb;" />
                                         </div>
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
+
                             <RadzenDataGridColumn TItem="PurchaseItemDTO"
                                                   Title="#"
                                                   Width="60px">
@@ -115,7 +124,7 @@
                             <RadzenDataGridColumn TItem="PurchaseItemDTO"
                                                   Property="PurchasePrice"
                                                   Title="Purchase Price"
-                                                  TextAlign="TextAlign.Right"/>
+                                                  TextAlign="TextAlign.Right" />
 
                             <RadzenDataGridColumn TItem="PurchaseItemDTO"
                                                   Property="VatAmount"
@@ -126,15 +135,14 @@
                             <RadzenDataGridColumn TItem="PurchaseItemDTO"
                                                   Property="TotalAmount"
                                                   Title="Total"
-                                                  TextAlign="TextAlign.Right"/>
-
+                                                  TextAlign="TextAlign.Right" />
                         </Columns>
                     </RadzenDataGrid>
 
                 </RadzenCard>
             </Template>
 
-            <!-- MASTER COLUMNS (THIS WAS MISSING 🔥) -->
+            <!-- MASTER COLUMNS -->
             <Columns>
 
                 <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
@@ -168,15 +176,7 @@
                 <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
                                       Width="120px"
                                       TextAlign="TextAlign.Center">
-                    @* <Template Context="purchase">
-                        <RadzenButton Icon="edit"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => EditPurchase(purchase))" />
-                        <RadzenButton Icon="delete"
-                                      ButtonStyle="ButtonStyle.Danger"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => DeletePurchase(purchase))" />
-                    </Template> *@
+                    @* Action buttons can be re-enabled here when needed *@
                 </RadzenDataGridColumn>
 
             </Columns>
