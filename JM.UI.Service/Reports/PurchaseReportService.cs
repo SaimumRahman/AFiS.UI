@@ -16,9 +16,6 @@ public class PurchaseReportService
     private const string GreyDarken1 = "#616161";   // small note text
     private const string GreyLighten1 = "#E0E0E0";   // separator line
 
-    /// <summary>
-    /// Generates a Purchase Detail Report PDF as a byte array.
-    /// </summary>
     public byte[] GeneratePurchaseDetailReport(
         IEnumerable<PurchaseSummaryDTO> purchases,
         Dictionary<int, List<PurchaseItemDTO>> purchaseItemsCache,
