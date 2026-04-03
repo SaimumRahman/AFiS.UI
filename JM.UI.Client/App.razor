@@ -43,6 +43,20 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script>
+            window.downloadFileFromBytes = function (fileName, mimeType, byteArray) {
+                const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            };
+    </script>
+
     <script src="_framework/blazor.web.js"></script>
     <script async src="js/highlight.pack.js"></script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.min.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>

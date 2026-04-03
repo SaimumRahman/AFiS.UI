@@ -17,14 +17,12 @@
                     <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Management</RadzenText>
                 </RadzenStack>
             </RadzenColumn>
-
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Icon="add_circle_outline"
                                   Text="New Purchase"
                                   Click="@AddPurchase"
                                   ButtonStyle="ButtonStyle.Primary" />
-
                     <RadzenButton Icon="refresh"
                                   Text="Refresh"
                                   Click="@LoadPurchases"
@@ -34,10 +32,74 @@
         </RadzenRow>
     </RadzenCard>
 
+    <!-- DATE FILTER + PRINT BAR -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.End" Gap="0.75rem">
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="From Date" />
+                    <RadzenDatePicker @bind-Value="FilterDateFrom"
+                                      DateFormat="dd-MMM-yyyy"
+                                      Placeholder="Select from date"
+                                      Style="width:100%" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="To Date" />
+                    <RadzenDatePicker @bind-Value="FilterDateTo"
+                                      DateFormat="dd-MMM-yyyy"
+                                      Placeholder="Select to date"
+                                      Style="width:100%" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+
+                    <RadzenButton Icon="filter_alt"
+                                  Text="Apply Filter"
+                                  Click="@ApplyDateFilter"
+                                  ButtonStyle="ButtonStyle.Secondary" />
+
+                    <RadzenButton Icon="filter_alt_off"
+                                  Text="Clear"
+                                  Click="@ClearDateFilter"
+                                  ButtonStyle="ButtonStyle.Light" />
+
+                    <RadzenButton Icon="print"
+                                  Text="@(IsPrinting ? "Generating..." : "Print Report")"
+                                  Click="@PrintReport"
+                                  ButtonStyle="ButtonStyle.Info"
+                                  Disabled="@(IsPrinting || !FilteredPurchases.Any())"
+                                  IsBusy="@IsPrinting" />
+
+                </RadzenStack>
+            </RadzenColumn>
+
+        </RadzenRow>
+
+        @if (IsFiltered)
+        {
+            <RadzenRow class="mt-2">
+                <RadzenColumn>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                 IsPill="true"
+                                 Text="@GetActiveFilterLabel()" />
+                    <RadzenText TagName="TagName.Span" class="ms-2" TextStyle="TextStyle.Caption">
+                        @FilteredPurchases.Count() record(s) found
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        }
+    </RadzenCard>
+
     <!-- MAIN GRID -->
     <RadzenCard>
         <RadzenDataGrid @ref="PurchasesGrid"
-                        Data="@Purchases"
+                        Data="@FilteredPurchases"
                         TItem="PurchaseSummaryDTO"
                         AllowFiltering="true"
                         AllowPaging="true"
@@ -53,7 +115,6 @@
             <!-- EXPANDED ROW -->
             <Template Context="purchase">
                 <RadzenCard class="m-3">
-
                     <RadzenText TextStyle="TextStyle.H6" class="mb-3">
                         Purchase Items — Invoice: @purchase.BillInvoiceNumber
                     </RadzenText>
@@ -67,120 +128,52 @@
                                     AllowFiltering="true"
                                     AllowSorting="true"
                                     Density="Density.Compact">
-
                         <Columns>
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Title="Image"
-                                                  Width="60px"
-                                                  Sortable="false"
-                                                  Filterable="false">
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="Image" Width="60px"
+                                                  Sortable="false" Filterable="false">
                                 <Template Context="item">
                                     @if (!string.IsNullOrWhiteSpace(item.ImageBase64))
                                     {
-                                        <img src="@item.ImageBase64"
-                                             alt="@item.ItemName"
-                                             style="width:40px; height:40px; object-fit:cover; border-radius:4px; border:1px solid #dee2e6; cursor:pointer;"
+                                        <img src="@item.ImageBase64" alt="@item.ItemName"
+                                             style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #dee2e6;cursor:pointer;"
                                              @onclick="@(() => OpenImagePreview(item.ImageBase64, item.ItemName))" />
                                     }
                                     else
                                     {
-                                        <div style="width:40px; height:40px; border:1px dashed #ccc; border-radius:4px;
-                            display:flex; align-items:center; justify-content:center; background:#f9f9f9;">
-                                            <RadzenIcon Icon="image_not_supported" Style="font-size:1rem; color:#bbb;" />
+                                        <div style="width:40px;height:40px;border:1px dashed #ccc;border-radius:4px;
+                                            display:flex;align-items:center;justify-content:center;background:#f9f9f9;">
+                                            <RadzenIcon Icon="image_not_supported" Style="font-size:1rem;color:#bbb;" />
                                         </div>
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Title="#"
-                                                  Width="60px">
-                                <Template Context="item">
-                                    @(items.IndexOf(item) + 1)
-                                </Template>
+
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Title="#" Width="60px">
+                                <Template Context="item">@(items.IndexOf(item) + 1)</Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="ItemName"
-                                                  Title="Item Name" />
-
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="Barcode"
-                                                  Title="Barcode" />
-
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="Quantity"
-                                                  Title="Qty"
-                                                  TextAlign="TextAlign.Right" />
-
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="PurchasePrice"
-                                                  Title="Purchase Price"
-                                                  TextAlign="TextAlign.Right"/>
-
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="VatAmount"
-                                                  Title="VAT"
-                                                  TextAlign="TextAlign.Right"
-                                                  FormatString="{0:C}" />
-
-                            <RadzenDataGridColumn TItem="PurchaseItemDTO"
-                                                  Property="TotalAmount"
-                                                  Title="Total"
-                                                  TextAlign="TextAlign.Right"/>
-
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="ItemName" Title="Item Name" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="Barcode" Title="Barcode" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="Quantity" Title="Qty" TextAlign="TextAlign.Right" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="PurchasePrice" Title="Purchase Price" TextAlign="TextAlign.Right" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="VatAmount" Title="VAT" TextAlign="TextAlign.Right" FormatString="{0:C}" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="TotalAmount" Title="Total" TextAlign="TextAlign.Right" />
                         </Columns>
                     </RadzenDataGrid>
-
                 </RadzenCard>
             </Template>
 
-            <!-- MASTER COLUMNS (THIS WAS MISSING 🔥) -->
+            <!-- MASTER COLUMNS -->
             <Columns>
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Property="BillInvoiceNumber"
-                                      Title="Invoice No"
-                                      Width="180px" />
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Property="PurchaseDate"
-                                      Title="Date"
-                                      Width="140px"
-                                      FormatString="{0:dd-MMM-yyyy}" />
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Property="SupplierName"
-                                      Width="140px"
-                                      Title="Supplier" />
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Property="TotalItems"
-                                      Title="Items"
-                                      Width="90px"
-                                      TextAlign="TextAlign.Center" />
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Property="NetAmount"
-                                      Title="Net Amount"
-                                      Width="150px"
-                                      TextAlign="TextAlign.Right" />
-
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO"
-                                      Width="120px"
-                                      TextAlign="TextAlign.Center">
-                    @* <Template Context="purchase">
-                        <RadzenButton Icon="edit"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => EditPurchase(purchase))" />
-                        <RadzenButton Icon="delete"
-                                      ButtonStyle="ButtonStyle.Danger"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => DeletePurchase(purchase))" />
-                    </Template> *@
-                </RadzenDataGridColumn>
-
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="BillInvoiceNumber" Title="Invoice No" Width="180px" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="PurchaseDate" Title="Date" Width="140px" FormatString="{0:dd-MMM-yyyy}" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="SupplierName" Title="Supplier" Width="140px" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="TotalItems" Title="Items" Width="90px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="NetAmount" Title="Net Amount" Width="150px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Width="120px" TextAlign="TextAlign.Center" />
             </Columns>
 
         </RadzenDataGrid>
     </RadzenCard>
+
 </RadzenContent>

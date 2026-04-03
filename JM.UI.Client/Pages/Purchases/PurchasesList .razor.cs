@@ -1,10 +1,11 @@
-using System.Runtime.InteropServices.JavaScript;
 using JM.UI.Client.Pages.Dialog;
 using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.Purchases;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -14,35 +15,43 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     [Inject] public DialogService dialogService { get; set; } = default!;
     [Inject] public NotificationService NotificationService { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public PurchaseReportService PurchaseReportService { get; set; } = default!;
 
     protected RadzenDataGrid<PurchaseSummaryDTO>? PurchasesGrid;
+
+    // All purchases loaded from server
     protected IEnumerable<PurchaseSummaryDTO> Purchases = new List<PurchaseSummaryDTO>();
+
+    // What the grid actually shows (after date filter)
+    protected IEnumerable<PurchaseSummaryDTO> FilteredPurchases = new List<PurchaseSummaryDTO>();
+
     protected Dictionary<int, List<PurchaseItemDTO>> PurchaseItemsCache = new();
+
     protected bool IsLoading;
+    protected bool IsPrinting;
+
+    // ── Date filter state ─────────────────────────────────────────────────────
+    protected DateTime? FilterDateFrom;
+    protected DateTime? FilterDateTo;
+    protected bool IsFiltered => FilterDateFrom.HasValue || FilterDateTo.HasValue;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override async Task OnInitializedAsync()
     {
         await LoadPurchases();
     }
 
-    protected async Task OpenImagePreview(string imageBase64, string itemName)
-    {
-        await dialogService.OpenAsync<ImagePreviewDialog>(
-            $"Item Image — {itemName}",
-            new Dictionary<string, object>
-            {
-            { "ImageBase64", imageBase64 },
-            { "ItemName", itemName }
-            },
-            new DialogOptions { Width = "600px", CloseDialogOnOverlayClick = true }
-        );
-    }
+    // ── Data loading ──────────────────────────────────────────────────────────
+
     protected async Task LoadPurchases()
     {
         try
         {
             IsLoading = true;
             Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases();
+            ApplyFilter();  // respect any active filter after refresh
         }
         catch (Exception ex)
         {
@@ -54,17 +63,67 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         }
     }
 
-    protected List<PurchaseItemDTO> GetPurchaseItems(PurchaseSummaryDTO purchase)
+    // ── Date filter ───────────────────────────────────────────────────────────
+
+    protected void ApplyDateFilter()
     {
-        // Return cached items or empty list
-        return PurchaseItemsCache.GetValueOrDefault(purchase.Id) ?? new List<PurchaseItemDTO>();
+        if (FilterDateFrom.HasValue && FilterDateTo.HasValue
+            && FilterDateFrom > FilterDateTo)
+        {
+            NotifyError("'From Date' cannot be later than 'To Date'.");
+            return;
+        }
+
+        ApplyFilter();
+        PurchaseItemsCache.Clear(); // clear cache so expanded rows reload for new range
+        StateHasChanged();
     }
+
+    protected void ClearDateFilter()
+    {
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        FilteredPurchases = Purchases;
+        PurchaseItemsCache.Clear();
+        StateHasChanged();
+    }
+
+    /// <summary>Filters Purchases into FilteredPurchases based on the current date range.</summary>
+    private void ApplyFilter()
+    {
+        var query = Purchases.AsEnumerable();
+
+        if (FilterDateFrom.HasValue)
+            query = query.Where(p => p.PurchaseDate.Date >= FilterDateFrom.Value.Date);
+
+        if (FilterDateTo.HasValue)
+            query = query.Where(p => p.PurchaseDate.Date <= FilterDateTo.Value.Date);
+
+        FilteredPurchases = query.ToList();
+    }
+
+    protected string GetActiveFilterLabel()
+    {
+        if (FilterDateFrom.HasValue && FilterDateTo.HasValue)
+            return $"{FilterDateFrom:dd-MMM-yyyy}  →  {FilterDateTo:dd-MMM-yyyy}";
+
+        if (FilterDateFrom.HasValue)
+            return $"From {FilterDateFrom:dd-MMM-yyyy}";
+
+        if (FilterDateTo.HasValue)
+            return $"Up to {FilterDateTo:dd-MMM-yyyy}";
+
+        return string.Empty;
+    }
+
+    // ── Row expand ────────────────────────────────────────────────────────────
+
+    protected List<PurchaseItemDTO> GetPurchaseItems(PurchaseSummaryDTO purchase)
+        => PurchaseItemsCache.GetValueOrDefault(purchase.Id) ?? new List<PurchaseItemDTO>();
 
     protected async Task OnRowExpand(PurchaseSummaryDTO purchase)
     {
-        // Skip if already loaded
-        if (PurchaseItemsCache.ContainsKey(purchase.Id))
-            return;
+        if (PurchaseItemsCache.ContainsKey(purchase.Id)) return;
 
         try
         {
@@ -75,20 +134,90 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         catch (Exception ex)
         {
             NotifyError($"Failed to load purchase items: {ex.Message}");
-            // Add empty list to prevent repeated failed attempts
             PurchaseItemsCache[purchase.Id] = new List<PurchaseItemDTO>();
         }
     }
 
-    protected void AddPurchase()
+    // ── Print / PDF ───────────────────────────────────────────────────────────
+
+    protected async Task PrintReport()
     {
-        NavigationManager.NavigateTo("/PurchaseEntry");
+        if (!FilteredPurchases.Any())
+        {
+            NotifyError("No records to print. Please adjust the date filter.");
+            return;
+        }
+
+        try
+        {
+            IsPrinting = true;
+            StateHasChanged();
+
+            // Load items for every purchase in the filtered set that isn't cached yet
+            foreach (var purchase in FilteredPurchases)
+            {
+                if (!PurchaseItemsCache.ContainsKey(purchase.Id))
+                {
+                    var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+                    PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+                }
+            }
+
+            // Use the active filter dates for the report header;
+            // fall back to the min/max dates in the current result set
+            var reportFrom = FilterDateFrom
+                ?? FilteredPurchases.Min(p => p.PurchaseDate);
+            var reportTo = FilterDateTo
+                ?? FilteredPurchases.Max(p => p.PurchaseDate);
+
+            // Build a cache slice containing only the filtered purchases
+            var filteredCache = FilteredPurchases
+                .ToDictionary(
+                    p => p.Id,
+                    p => PurchaseItemsCache.GetValueOrDefault(p.Id) ?? new List<PurchaseItemDTO>());
+
+            var pdfBytes = PurchaseReportService.GeneratePurchaseDetailReport(
+                FilteredPurchases,
+                filteredCache,
+                dateFrom: reportFrom,
+                dateTo: reportTo);
+
+            var fileName = $"PurchaseReport_{reportFrom:yyyyMMdd}_to_{reportTo:yyyyMMdd}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+
+            NotifySuccess($"Report generated — {FilteredPurchases.Count()} purchase(s).");
+        }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to generate report: {ex.Message}");
+        }
+        finally
+        {
+            IsPrinting = false;
+            StateHasChanged();
+        }
     }
 
-    protected void EditPurchase(PurchaseSummaryDTO purchase)
+    // ── Navigation ────────────────────────────────────────────────────────────
+
+    protected async Task OpenImagePreview(string imageBase64, string itemName)
     {
-        NavigationManager.NavigateTo($"/PurchaseEntry/Edit/{purchase.Id}");
+        await dialogService.OpenAsync<ImagePreviewDialog>(
+            $"Item Image — {itemName}",
+            new Dictionary<string, object>
+            {
+                { "ImageBase64", imageBase64 },
+                { "ItemName",    itemName }
+            },
+            new DialogOptions { Width = "600px", CloseDialogOnOverlayClick = true });
     }
+
+    protected void AddPurchase()
+        => NavigationManager.NavigateTo("/PurchaseEntry");
+
+    protected void EditPurchase(PurchaseSummaryDTO purchase)
+        => NavigationManager.NavigateTo($"/PurchaseEntry/Edit/{purchase.Id}");
 
     protected async Task DeletePurchase(PurchaseSummaryDTO purchase)
     {
@@ -104,7 +233,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
                 await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
                 PurchaseItemsCache.Remove(purchase.Id);
                 await LoadPurchases();
-                NotifySuccess("Purchase deleted successfully");
+                NotifySuccess("Purchase deleted successfully.");
             }
             catch (Exception ex)
             {
@@ -113,8 +242,9 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         }
     }
 
-    private void NotifyError(string message)
-    {
+    // ── Notifications ─────────────────────────────────────────────────────────
+
+    private void NotifyError(string message) =>
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Error,
@@ -122,10 +252,8 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             Detail = message,
             Duration = 4000
         });
-    }
 
-    private void NotifySuccess(string message)
-    {
+    private void NotifySuccess(string message) =>
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success,
@@ -133,7 +261,8 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             Detail = message,
             Duration = 3000
         });
-    }
+
+    // ── Dispose ───────────────────────────────────────────────────────────────
 
     public void Dispose()
     {

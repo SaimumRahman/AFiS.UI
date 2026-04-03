@@ -748,8 +748,14 @@ namespace JM.UI.Client.Pages.Purchases
             var baseAmount = row.PurchasePrice * row.Quantity;
             var extras = (row.OtherCost ?? 0) + (row.CarryingCost ?? 0)
                        + (row.TransportCost ?? 0) + (row.OperationalCost ?? 0);
-            var actualVat = Groups.Where(x => x.Id == row.GroupId).FirstOrDefault().VAT;
-            var vatAmt = baseAmount * (actualVat) / 100;
+
+            decimal vatAmt = 0;
+            if (Purchase.IsVatIncluded)
+            {
+                var actualVat = Groups.FirstOrDefault(x => x.Id == row.GroupId)?.VAT ?? 0;
+                vatAmt = baseAmount * actualVat / 100;
+            }
+
             row.TotalAmount = baseAmount + extras + vatAmt;
         }
 
@@ -1598,6 +1604,7 @@ namespace JM.UI.Client.Pages.Purchases
                     FeaturesDisplay = pi.FeaturesDisplay ?? string.Empty,
                     Barcode = pi.Barcode,
                     MesurementUnitId = pi.MesurementUnitId,
+                    MesurementUnitName = pi.MesurementUnitName,  // ← ADD THIS
                     Quantity = pi.Quantity,
                     PurchasePrice = pi.PurchasePrice,
                     ProductPricePercentage = pi.ProductPricePercentage,

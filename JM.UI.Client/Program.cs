@@ -1,16 +1,17 @@
 ﻿using JM.Infrastructure.ExceptionHandler;
 using JM.UI.Client.Services;
+using JM.UI.DataService;
 using JM.UI.Entities.Model;
 using JM.UI.Entities.Services;
+using JM.UI.Service;
+using JM.UI.Service.Reports;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Options;
 using Radzen;
 using RadzenBlazorDemos.Server.Data;
-using JM.UI.Service;
-using JM.UI.DataService;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Policy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +48,7 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ExampleService>();
+builder.Services.AddScoped<PurchaseReportService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
