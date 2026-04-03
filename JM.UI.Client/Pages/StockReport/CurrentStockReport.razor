@@ -1,0 +1,246 @@
+@page "/CurrentStockReport"
+@using JM.UI.Entities.Model.Stock
+@using JM.UI.Entities.Model.Stores
+@inherits JM.UI.Client.Pages.StockReport.CurrentStockReportComponent
+
+<PageTitle>Current Stock Report</PageTitle>
+
+<style>
+    .rz-dropdown-label {
+        height: 26px !important; min-height: 26px !important;
+        font-size: 0.75rem !important; padding: 2px 6px !important;
+        line-height: 22px !important;
+    }
+    .rz-dropdown .rz-dropdown-trigger { height: 26px !important; width: 26px !important; }
+    .compact-grid .rz-cell-data,
+    .compact-grid .rz-column-title,
+    .compact-grid .rz-footer { font-size: 0.68rem !important; padding: 2px 5px !important; }
+    .group-header-row {
+        background: linear-gradient(135deg, #1565c0, #1976d2);
+        color: #fff; font-weight: 700; font-size: 0.72rem;
+        padding: 5px 10px; cursor: pointer;
+        display: flex; justify-content: space-between; align-items: center;
+        border-radius: 4px; margin-bottom: 2px;
+    }
+    .grand-total-bar {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32);
+        color: #fff; font-weight: 700; font-size: 0.78rem;
+        padding: 6px 14px; border-radius: 5px;
+        display: flex; gap: 2rem; flex-wrap: wrap;
+    }
+    .filter-card {
+        background: #f8f9fa; border: 1px solid #dee2e6;
+        border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
+    }
+</style>
+
+@if (IsLoading)
+{
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate"
+                               Size="ProgressBarCircularSize.Large">
+        <Template>Loading...</Template>
+    </RadzenProgressBarCircular>
+}
+else
+{
+    <RadzenStack Gap="0.3rem">
+
+        <!-- Page Header -->
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H1"
+                            Style="margin:0; font-size:1rem; font-weight:700;">
+                    Current Stock Report
+                </RadzenText>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- ── Filter Bar ── -->
+        <div class="filter-card">
+            <RadzenRow Gap="0.4rem" AlignItems="AlignItems.End">
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenLabel Text="Store" Style="font-weight:600; font-size:0.75rem;" />
+                    <RadzenDropDown @bind-Value="Filter.StoreId"
+                                    Data="@Stores"
+                                    TextProperty="Name" ValueProperty="Id"
+                                    Placeholder="All Stores"
+                                    AllowClear="true" AllowFiltering="true"
+                                    Style="width:100%; font-size:0.75rem;" />
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenLabel Text="Group" Style="font-weight:600; font-size:0.75rem;" />
+                    <RadzenDropDown @bind-Value="Filter.GroupId"
+                                    Data="@Groups"
+                                    TextProperty="Name" ValueProperty="Id"
+                                    Placeholder="All Groups"
+                                    AllowClear="true" AllowFiltering="true"
+                                    Style="width:100%; font-size:0.75rem;" />
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenLabel Text="Product Type" Style="font-weight:600; font-size:0.75rem;" />
+                    <RadzenDropDown @bind-Value="Filter.ProductType"
+                                    Data="@ProductTypes"
+                                    Placeholder="All Types"
+                                    AllowClear="true"
+                                    Style="width:100%; font-size:0.75rem;" />
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.3rem">
+                        <RadzenButton Icon="search" Text="Apply" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small" Click="@ApplyFilter"
+                                      Style="height:26px; font-size:0.72rem;" />
+                        <RadzenButton Icon="refresh" Text="Reset" ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small" Click="@ResetFilter"
+                                      Style="height:26px; font-size:0.72rem;" />
+                    </RadzenStack>
+                </RadzenColumn>
+
+            </RadzenRow>
+        </div>
+
+        <!-- ── Report Body ── -->
+        @if (!ReportData.Groups.Any())
+        {
+            <div style="text-align:center; padding:2rem; color:#90a4ae; font-size:0.8rem;">
+                No stock data found for the selected filters.
+            </div>
+        }
+        else
+        {
+            @foreach (var group in ReportData.Groups)
+            {
+                <div class="group-header-row" @onclick="@(() => ToggleGroup(group))">
+                    <span>📦 @group.GroupName — @group.ProductType</span>
+                    <span>@(IsExpanded(group) ? "▲" : "▼")</span>
+                </div>
+
+                @if (IsExpanded(group))
+                {
+                    <div style="overflow-x:auto; margin-bottom:4px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.68rem;">
+
+                            <!-- Column headers -->
+                            <thead>
+                                <tr style="background:#e3f2fd; font-weight:700;">
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:40px;">SL</th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:110px;">Barcode</th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; min-width:160px;">Product</th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:75px;">Color</th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:100px;">Features</th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:50px;">UoM</th>
+
+                                    @* Dynamic store columns — only show all when no single store filtered *@
+                                    @if (!Filter.StoreId.HasValue)
+                                    {
+                                        @foreach (var branch in ReportData.StoreBranches)
+                                        {
+                                            <th style="padding:3px 6px; border:1px solid #ccc; width:62px; text-align:right;">
+                                                @branch
+                                            </th>
+                                        }
+                                    }
+
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:72px; text-align:right; color:#1565c0;">
+                                        Total Qty
+                                    </th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:72px; text-align:right;">
+                                        S.Rate
+                                    </th>
+                                    <th style="padding:3px 6px; border:1px solid #ccc; width:85px; text-align:right; color:#2e7d32;">
+                                        Total Tk
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <!-- Item rows -->
+                            <tbody>
+                                @foreach (var item in group.Items)
+                                {
+                                    <tr style="border-bottom:1px solid #eee;">
+                                        <td style="padding:2px 6px; border:1px solid #eee;">@item.SL</td>
+                                        <td style="padding:2px 6px; border:1px solid #eee; font-size:0.65rem;">@item.ProductCode</td>
+                                        <td style="padding:2px 6px; border:1px solid #eee;">@item.ItemName</td>
+                                        <td style="padding:2px 6px; border:1px solid #eee;">@item.Color</td>
+                                        <td style="padding:2px 6px; border:1px solid #eee; font-size:0.63rem;">@item.Features</td>
+                                        <td style="padding:2px 6px; border:1px solid #eee;">@item.UoM</td>
+
+                                        @if (!Filter.StoreId.HasValue)
+                                        {
+                                            @foreach (var branch in ReportData.StoreBranches)
+                                            {
+                                                <td style="padding:2px 6px; border:1px solid #eee; text-align:right;">
+                                                    @FormatQty(item.StoreQty.GetValueOrDefault(branch, 0), item.UoM)
+                                                </td>
+                                            }
+                                        }
+
+                                        <td style="padding:2px 6px; border:1px solid #eee; text-align:right; font-weight:600; color:#1565c0;">
+                                            @FormatQty(item.TotalQty, item.UoM)
+                                        </td>
+                                        <td style="padding:2px 6px; border:1px solid #eee; text-align:right;">
+                                            @FormatCurrency(item.SalePrice)
+                                        </td>
+                                        <td style="padding:2px 6px; border:1px solid #eee; text-align:right; font-weight:600; color:#2e7d32;">
+                                            @FormatCurrency(item.TotalTk)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <!-- Group subtotal row -->
+                            <tfoot>
+                                <tr style="background:#e8f5e9; font-weight:700; font-size:0.70rem;">
+                                    <td colspan="6" style="padding:3px 8px; border:1px solid #ccc;">
+                                        Subtotal — @group.GroupName
+                                    </td>
+
+                                    @if (!Filter.StoreId.HasValue)
+                                    {
+                                        @foreach (var branch in ReportData.StoreBranches)
+                                        {
+                                            <td style="padding:3px 6px; border:1px solid #ccc; text-align:right; color:#1565c0;">
+                                                @FormatQty(group.GroupTotal.StoreQty.GetValueOrDefault(branch, 0))
+                                            </td>
+                                        }
+                                    }
+
+                                    <td style="padding:3px 6px; border:1px solid #ccc; text-align:right; color:#1565c0;">
+                                        @FormatQty(group.GroupTotal.TotalQty)
+                                    </td>
+                                    <td style="padding:3px 6px; border:1px solid #ccc;"></td>
+                                    <td style="padding:3px 6px; border:1px solid #ccc; text-align:right; color:#2e7d32;">
+                                        @FormatCurrency(group.GroupTotal.TotalTk)
+                                    </td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </div>
+                }
+            }
+
+            <!-- Grand Total Bar -->
+            <div class="grand-total-bar">
+                <span>GRAND TOTAL</span>
+
+                @if (!Filter.StoreId.HasValue)
+                {
+                    @foreach (var branch in ReportData.StoreBranches)
+                    {
+                        <span>
+                            @branch: @FormatQty(ReportData.GrandTotalByStore.GetValueOrDefault(branch, 0))
+                        </span>
+                    }
+                }
+
+                <span>Total Qty: @FormatQty(ReportData.GrandTotalQty)</span>
+                <span>Total Tk: @FormatCurrency(ReportData.GrandTotalTk)</span>
+            </div>
+        }
+
+    </RadzenStack>
+}

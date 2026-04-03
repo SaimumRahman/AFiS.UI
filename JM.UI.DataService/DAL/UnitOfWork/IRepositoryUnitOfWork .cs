@@ -49,6 +49,7 @@ using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.StockOpenings;
+using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SubGroups;
@@ -111,5 +112,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IItemFeatureRepository ItemFeatureRepository { get; }
         IStockOpeningRepository StockOpeningRepository { get; }
         IItemCatalogueRepository ItemCatalogueRepository { get; }
+        ICurrentStockReportRepository CurrentStockReportRepository { get; }
     }
 }

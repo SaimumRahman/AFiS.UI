@@ -42,6 +42,7 @@ using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
@@ -103,6 +104,7 @@ namespace JM.UI.Service
             services.AddTransient<IItemOriginService, ItemOriginService>();
             services.AddTransient<IItemFeatureService, ItemFeatureService>();
             services.AddTransient<IItemCatalogueService, ItemCatalogueService>();
+            services.AddTransient<ICurrentStockReportService, CurrentStockReportService>();
             services.AddScoped<PurchaseReportService>();
         }
     }

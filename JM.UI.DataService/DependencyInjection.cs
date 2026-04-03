@@ -31,6 +31,7 @@ using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
+using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
@@ -94,6 +95,7 @@ namespace JM.UI.DataService
             services.AddScoped<IItemBrandRepository, ItemBrandRepository>();
             services.AddScoped<IItemFeatureRepository, ItemFeatureRepository>();
             services.AddScoped<IItemCatalogueRepository, ItemCatalogueRepository>();
+            services.AddScoped<ICurrentStockReportRepository, CurrentStockReportRepository>();
             #endregion
 
 

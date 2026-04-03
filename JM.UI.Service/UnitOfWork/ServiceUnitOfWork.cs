@@ -41,6 +41,7 @@ using JM.UI.Service.Purchases;
 using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SubGroups;
@@ -99,6 +100,7 @@ namespace JM.UI.Service.UnitOfWork
         public IItemBrandService ItemBrandService { get; private set; }
         public IStockOpeningRepository StockOpeningService { get; private set; }
         public IItemCatalogueService ItemCatalogueService { get; private set; }
+        public ICurrentStockReportService CurrentStockReportService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -144,6 +146,7 @@ namespace JM.UI.Service.UnitOfWork
             ItemBrandService = new ItemBrandService(_repoUow);
             StockOpeningService = _repoUow.StockOpeningRepository;
             ItemCatalogueService = new ItemCatalogueService(_repoUow);
+            CurrentStockReportService = new CurrentStockReportService(_repoUow);
         }
         public void Dispose()
         {
