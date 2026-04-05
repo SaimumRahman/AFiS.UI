@@ -194,13 +194,24 @@
                                 Style="margin:0; font-size:1rem; font-weight:700;">@PageTitle</RadzenText>
                 </RadzenColumn>
             </RadzenRow>
-
+        <!-- Reset Left Panel -->
+        <RadzenRow>
+            <RadzenColumn Size="12" Style="text-align:right; padding-top:4px;">
+                <RadzenButton Icon="restart_alt"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Size="ButtonSize.Small"
+                              Click="@ResetLeftPanel"
+                              Disabled="@IsProcessing"
+                              Text="Reset"
+                              Style="height:26px; font-size:0.72rem;" />
+            </RadzenColumn>
+        </RadzenRow>
             <!-- ============================================================
                  MAIN ENTRY SECTION
                  ============================================================ -->
             <RadzenCard Style="padding: 0.4rem;">
                 <RadzenRow Gap="0.4rem">
-
+              
                     <!-- ════════════════════════
                          LEFT PANEL
                          ════════════════════════ -->
@@ -857,7 +868,7 @@
             </RadzenCard>
 
             <!-- ============================================================
-                 ITEMS GRID (confirmed purchase items)
+                 LEFT PANEL (confirmed purchase items)
                  ============================================================ -->
             <RadzenCard Style="padding: 0.3rem;">
                 <RadzenDataGrid @ref="ItemsGrid"
