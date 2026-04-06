@@ -33,7 +33,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
         protected bool IsProductNameFieldChange { get; set; } = false;
 
-        // ─── Image Upload ────────────────────────────────────────────
+        // ─── Image Upload ──
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
@@ -46,7 +46,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected int? SelectedCatalogueId { get; set; }
         protected bool IsNewCatalogue { get; set; } = false;
 
-        // ─── Purchase Data ──────────────────────────────────────────────
+        // ─── Purchase Data ────
         protected PurchaseDTO Purchase { get; set; } = new();
         protected List<PurchaseItemDTO> PurchaseItems { get; set; } = new();
         protected PurchaseItemDTO CurrentItem { get; set; } = new();
@@ -66,7 +66,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected decimal? SharedOperationalCost { get; set; }
         protected int? SharedQuantity { get; set; }
 
-        // ─── Lookup Data ────────────────────────────────────────────────
+        // ─── Lookup Data ──────
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
@@ -100,7 +100,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected List<string> NewFeatureNames { get; set; } = new();
         protected string NewFeatureInput { get; set; } = string.Empty;
 
-        // ─── UI State ───────────────────────────────────────────────────
+        // ─── UI State ─────────
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -951,7 +951,8 @@ namespace JM.UI.Client.Pages.Purchases
                         ProductType = row.ProductType,
                         MaterialType = row.MaterialType,
                         MesurementUnitId = row.MesurementUnitId,
-                        MesurementUnitName = row.MesurementUnitName,
+                        MesurementUnitName = !string.IsNullOrWhiteSpace(row.MesurementUnitName)
+                        ? row.MesurementUnitName: Units.FirstOrDefault(u => u.Id == row.MesurementUnitId)?.Name,
                         CountStockByColor = row.CountStockByColor,
                         CountStockBySize = row.CountStockBySize,
                         IsNewItem = row.IsNewItem,
@@ -964,19 +965,42 @@ namespace JM.UI.Client.Pages.Purchases
                         IsActive = true
                     });
                 }
-
                 PreviewItems.Clear();
                 await PreviewGrid.Reload();
                 await ItemsGrid.Reload();
                 CalculateTotals();
                 ResetSharedPricing();
-                ResetItemFormSelections();
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
                 IsNewItemMode = false;
+
+                // Clear only Color, Size, ShadeNo — leave rest of left panel intact
+                CurrentItem.ColorId = null;
+                CurrentItem.SizeId = null;
+                CurrentItem.ShadeNo = null;
+                CurrentItem.Barcode = null;
+                CurrentItemImageBase64 = string.Empty;
+                CurrentItemImageMimeType = string.Empty;
+                CurrentItem.ImageBase64 = null;
+
                 notificationService.Notify(NotificationSeverity.Success, "Success",
                     $"{validRows.Count} item(s) added to purchase");
                 return;
+
+                #region Old
+                //PreviewItems.Clear();
+                //await PreviewGrid.Reload();
+                //await ItemsGrid.Reload();
+                //CalculateTotals();
+                //ResetSharedPricing();
+                //ResetItemFormSelections();
+                //BarcodeSearchText = string.Empty;
+                //DisableItemFields = false;
+                //IsNewItemMode = false;
+                //notificationService.Notify(NotificationSeverity.Success, "Success",
+                //    $"{validRows.Count} item(s) added to purchase");
+                //return;
+                #endregion
             }
 
             // Fallback: original single-item add logic
@@ -2207,7 +2231,65 @@ namespace JM.UI.Client.Pages.Purchases
             Purchase.DueAmount = Purchase.NetAmount - (Purchase.PaidAmount ?? 0);
             StateHasChanged();
         }
+        protected void ResetLeftPanel()
+        {
+            // ── Header fields 
+            Purchase.SupplierId = null;
+            //Purchase.SystemInvoiceNo = null;
+            Purchase.BillInvoiceNumber = null;
+            //Purchase.PurchaseDate = default;
+            Purchase.StoreId = null;
+            Purchase.IsVatIncluded = false;
 
+            // ── Item-type checkboxes 
+            CurrentItem.IsSaleable = false;
+            CurrentItem.IsConsume = false;
+            CurrentItem.IsRawMaterial = false;
+
+            // ── Cascade dropdowns ───
+            CurrentItem.GroupId = null;
+            CurrentItem.SubGroupId = null;
+            CurrentItem.DesignId = null;
+            SubGroups = new List<SubGroupModelDTO>();
+            Designs = new List<DesignModelDTO>();
+
+            // ── UoM ─────────
+            CurrentItem.MesurementUnitId = null;
+
+            // ── ShadeNo ─────
+            CurrentItem.ShadeNo = null;
+
+            // ── Brand ───────
+            BrandSearchText = string.Empty;
+            BrandSuggestions = new List<ItemBrandDTO>();
+            SelectedBrandId = null;
+            IsNewBrand = false;
+            CurrentItem.BrandId = null;
+            CurrentItem.BrandName = null;
+
+            // ── Catalogue ───
+            CatalogueSearchText = string.Empty;
+            CatalogueSuggestions = new List<ItemCatalogueDTO>();
+            SelectedCatalogueId = null;
+            IsNewCatalogue = false;
+            CurrentItem.CatalogueId = null;
+            CurrentItem.CatalogueName = null;
+
+            // ── Origin ──────
+            OriginSearchText = string.Empty;
+            OriginSuggestions = new List<ItemOriginDTO>();
+            SelectedOriginId = null;
+            IsNewOrigin = false;
+            CurrentItem.OriginId = null;
+            CurrentItem.OriginName = null;
+
+            // ── Features ────
+            SelectedFeatureIds = new List<int>();
+            NewFeatureNames = new List<string>();
+            NewFeatureInput = string.Empty;
+
+            StateHasChanged();
+        }
         protected void OnDiscountChanged() => CalculateTotals();
         protected void OnVatChanged() => CalculateTotals();
         protected void OnPaidAmountChanged() => CalculateTotals();
