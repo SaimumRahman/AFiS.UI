@@ -17,6 +17,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
         public int? BrandId { get; set; }
+        public decimal BasePurchasePrice { get; set; }
         public string BrandName { get; set; } = string.Empty;
         public int? OriginId { get; set; }
         public string OriginName { get; set; } = string.Empty;

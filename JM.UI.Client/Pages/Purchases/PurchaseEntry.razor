@@ -301,7 +301,7 @@
 
                             <!-- SubProduct -->
                             <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                                <RadzenColumn Size="4"><RadzenLabel Text="SubProduct" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                                <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
                                     <RadzenDropDown @bind-Value="CurrentItem.SubGroupId" Data="@SubGroups"
                                                     TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
@@ -313,7 +313,7 @@
 
                             <!-- Design -->
                             <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                                <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                                <RadzenColumn Size="4"><RadzenLabel Text="Sub Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
                                     <RadzenDropDown @bind-Value="CurrentItem.DesignId" Data="@Designs"
                                                     TextProperty="Name" ValueProperty="Id" Placeholder="Select Product..."

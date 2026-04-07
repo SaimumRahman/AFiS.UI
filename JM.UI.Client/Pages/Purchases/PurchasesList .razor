@@ -55,6 +55,14 @@
                                       Style="width:100%" />
                 </RadzenStack>
             </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Return Ref No" />
+                    <RadzenTextBox @bind-Value="ReferenceNo"
+                                   Placeholder="Enter Ref No"
+                                      Style="width:100%" />
+                </RadzenStack>
+            </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -158,6 +166,7 @@
                             <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="PurchasePrice" Title="Purchase Price" TextAlign="TextAlign.Right" />
                             <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="VatAmount" Title="VAT" TextAlign="TextAlign.Right" FormatString="{0:C}" />
                             <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="TotalAmount" Title="Total" TextAlign="TextAlign.Right" />
+                            <RadzenDataGridColumn TItem="PurchaseItemDTO" Property="ReturnRefNo" Title="Return Ref No" Width="140px" />
                         </Columns>
                     </RadzenDataGrid>
                 </RadzenCard>
