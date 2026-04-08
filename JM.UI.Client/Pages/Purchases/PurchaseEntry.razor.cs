@@ -91,7 +91,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         // Origin auto-complete
         protected string OriginSearchText { get; set; } = string.Empty;
-        protected IEnumerable<ItemOriginDTO> OriginSuggestions { get; set; } = new List<ItemOriginDTO>();
+        protected List<ItemOriginDTO> OriginSuggestions { get; set; } = new List<ItemOriginDTO>();
         protected int? SelectedOriginId { get; set; }
         protected bool IsNewOrigin { get; set; } = false;
 
@@ -492,16 +492,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                BrandSuggestions = new List<ItemBrandDTO>();
                 SelectedBrandId = null;
                 IsNewBrand = false;
                 CurrentItem.BrandId = null;
                 return;
             }
-
-            BrandSuggestions = Brands
-                .Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Brands.FirstOrDefault(b =>
                 b.BrandName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -520,6 +515,24 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             GenerateProductName();
+            StateHasChanged();
+        }
+        protected void OnOriginLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                OriginSuggestions = new List<ItemOriginDTO>();
+            }
+            else
+            {
+                OriginSuggestions = Origins
+                    .Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            StateHasChanged();
         }
 
         protected void OnBrandSelected(object value)
@@ -531,6 +544,7 @@ namespace JM.UI.Client.Pages.Purchases
                 BrandSearchText = brand.BrandName;
                 IsNewBrand = false;
                 GenerateProductName();
+                StateHasChanged();
             }
         }
 
@@ -544,17 +558,12 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                OriginSuggestions = new List<ItemOriginDTO>();
                 SelectedOriginId = null;
                 IsNewOrigin = false;
                 CurrentItem.OriginName = null;
                 CurrentItem.OriginId = null;
                 return;
             }
-
-            OriginSuggestions = Origins
-                .Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Origins.FirstOrDefault(o =>
                 o.OriginName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -575,6 +584,7 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             GenerateProductName();
+            StateHasChanged();
         }
 
         protected void OnOriginSelected(object value)
@@ -929,6 +939,7 @@ namespace JM.UI.Client.Pages.Purchases
                     // ── S.Rate validation (only if Saleable) ──
                     if (row.IsSaleable)
                     {
+                        var t = CurrentItem.IsSaleable;
                         if (row.SalePrice <= 0)
                         {
                             notificationService.Notify(NotificationSeverity.Warning, "Validation",
@@ -2321,6 +2332,23 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new List<string>();
             NewFeatureInput = string.Empty;
+
+            StateHasChanged();
+        }
+        protected void OnBrandLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                BrandSuggestions = new List<ItemBrandDTO>();
+            }
+            else
+            {
+                BrandSuggestions = Brands
+                    .Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             StateHasChanged();
         }

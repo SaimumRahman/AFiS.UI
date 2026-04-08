@@ -328,13 +328,16 @@
                                 <RadzenColumn Size="4"><RadzenLabel Text="Brand" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.1rem">
-                                        <RadzenAutoComplete @bind-Value="BrandSearchText" Data="@BrandSuggestions"
-                                                            TextProperty="BrandName" Style="width:100%; font-size:0.75rem;"
-                                                            Placeholder="Search or create brand"
-                                                            InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
-                                                            Change="OnBrandTextChanged"
-                                                            Select="@((object val) => OnBrandSelected(val))"
-                                                            Disabled="@(IsProcessing || DisableItemFields)" />
+                                    <RadzenAutoComplete @bind-Value="BrandSearchText"
+                                                        Data="@BrandSuggestions"
+                                                        TextProperty="BrandName"
+                                                        Style="width:100%; font-size:0.75rem;"
+                                                        Placeholder="Search or create brand"
+                                                        InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
+                                                        LoadData="@OnBrandLoadData"
+                                                        Change="OnBrandTextChanged"
+                                                        Select="@((object val) => OnBrandSelected(val))"
+                                                        Disabled="@(IsProcessing || DisableItemFields)" />
                                         @if (IsNewBrand)
                                         {
                                             <RadzenBadge Text="NEW — will be created on save" BadgeStyle="BadgeStyle.Warning" Style="font-size:0.65rem;" />
@@ -415,13 +418,16 @@
                                 <RadzenColumn Size="4"><RadzenLabel Text="Origin" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.1rem">
-                                        <RadzenAutoComplete @bind-Value="OriginSearchText" Data="@OriginSuggestions"
-                                                            TextProperty="OriginName" Style="width:100%; font-size:0.75rem;"
-                                                            Placeholder="Search or create origin"
-                                                            InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
-                                                            Change="OnOriginTextChanged"
-                                                            Select="@((object val) => OnOriginSelected(val))"
-                                                            Disabled="@(IsProcessing || DisableItemFields)" />
+                                    <RadzenAutoComplete @bind-Value="OriginSearchText"
+                                                        Data="@OriginSuggestions"
+                                                        TextProperty="OriginName"
+                                                        Style="width:100%; font-size:0.75rem;"
+                                                        Placeholder="Search or create origin"
+                                                        InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
+                                                        LoadData="@OnOriginLoadData"
+                                                        Change="OnOriginTextChanged"
+                                                        Select="@((object val) => OnOriginSelected(val))"
+                                                        Disabled="@(IsProcessing || DisableItemFields)" />
                                         @if (IsNewOrigin)
                                         {
                                             <RadzenBadge Text="NEW — will be created on save" BadgeStyle="BadgeStyle.Warning" Style="font-size:0.65rem;" />
