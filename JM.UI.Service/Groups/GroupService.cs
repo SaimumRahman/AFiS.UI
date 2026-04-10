@@ -64,5 +64,9 @@ namespace JM.UI.Service.Groups
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
         }
+        public async Task<string> GetNextGroupCode()
+        {
+            return await _unitOfWork.GroupRepository.GetNextGroupCode();
+        }
     }
 }
