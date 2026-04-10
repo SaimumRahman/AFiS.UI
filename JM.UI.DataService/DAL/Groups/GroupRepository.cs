@@ -89,5 +89,25 @@ namespace JM.UI.DataService.DAL.Groups
                 throw;
             }
         }
+
+        public async Task<string> GetNextGroupCode()
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("Groups/GetNextGroupCode");
+
+                if (!response.IsSuccessStatusCode)
+                    return string.Empty;
+
+                var result = await response.Content.ReadFromJsonAsync<GroupCodeDTO>();
+                return result?.Code ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching next group code");
+                throw;
+            }
+        }
     }
 }

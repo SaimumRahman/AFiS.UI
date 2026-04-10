@@ -7,3 +7,7 @@ public class GroupModelDTO
     public string Code { get; set; } = string.Empty;
     public decimal VAT { get; set; }
 }
+public class GroupCodeDTO
+{
+    public string? Code { get; set; }
+}
