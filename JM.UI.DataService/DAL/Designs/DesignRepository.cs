@@ -37,6 +37,23 @@ namespace JM.UI.DataService.DAL.Designs
                 throw;
             }
         }
+        public async Task<DesignModelDTO> GetDesignCode()
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("Designs/GetDesignCode");
+                response.EnsureSuccessStatusCode();
+
+                var designs = await response.Content.ReadFromJsonAsync<DesignModelDTO>();
+                return designs ?? new DesignModelDTO();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching design code");
+                throw;
+            }
+        }
 
         public async Task<DesignModelDTO?> GetDesignById(int id)
         {
