@@ -44,6 +44,7 @@ namespace JM.UI.Entities.Model.StockOpening
 
         // ── Pricing: S.Rate only ─────────────────────────────────────
         public decimal SalePrice { get; set; }
+        public decimal PurchasePrice { get; set; }
 
         // ── Quantity ─────────────────────────────────────────────────
         public decimal Quantity { get; set; }
