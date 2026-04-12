@@ -1,8 +1,4 @@
 ﻿using JM.UI.Entities.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace JM.UI.Client.Services
 {
     public class ExampleService
@@ -170,6 +166,15 @@ namespace JM.UI.Client.Services
                         Title = "Purchase Entry",
                         Description = "Create and track purchase entry",
                         Tags = new[] { "po", "order", "purchase" }
+                    },
+                    new Example
+                    {
+                        Name = "Item Transfer",
+                        Path = "/ItemTransfer",
+                        Icon = "\ue0d1",
+                        Title = "Item Transfer",
+                        Description = "Transfer items between stores",
+                        Tags = new[] { "transfer", "stock", "store", "issue" }
                     },
                     new Example
                     {
