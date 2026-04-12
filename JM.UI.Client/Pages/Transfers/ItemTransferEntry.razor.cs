@@ -18,19 +18,19 @@ namespace JM.UI.Client.Pages.Transfers
 {
     public partial class ItemTransferEntryComponent : PosComponentBase
     {
-        // ═══════════════════════════════════════════════════════════════
+        
         // Injections
-        // ═══════════════════════════════════════════════════════════════
+        
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Route Parameters
-        // ═══════════════════════════════════════════════════════════════
+        
         [Parameter] public int? Id { get; set; }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Transfer Data
-        // ═══════════════════════════════════════════════════════════════
+        
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
 
@@ -40,23 +40,23 @@ namespace JM.UI.Client.Pages.Transfers
         /// <summary>Reference to the item currently being edited in the confirmed grid.</summary>
         protected TransferDetailDTO? _editingItem = null;
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Preview Grid
-        // ═══════════════════════════════════════════════════════════════
+        
         protected List<TransferPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<TransferPreviewRow> PreviewGrid = new();
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Shared fields (propagated to all preview rows)
-        // ═══════════════════════════════════════════════════════════════
+        
         protected decimal SharedUnitPrice { get; set; }
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Lookup Data
-        // ═══════════════════════════════════════════════════════════════
+        
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
@@ -69,9 +69,9 @@ namespace JM.UI.Client.Pages.Transfers
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // UI State
-        // ═══════════════════════════════════════════════════════════════
+        
         protected bool IsLoading { get; set; } = false;
         protected bool IsProcessing { get; set; } = false;
         protected bool IsSearchingBarcode { get; set; } = false;
@@ -84,9 +84,9 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected RadzenDataGrid<TransferDetailDTO> ItemsGrid = default!;
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Lifecycle
-        // ═══════════════════════════════════════════════════════════════
+        
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
@@ -98,9 +98,9 @@ namespace JM.UI.Client.Pages.Transfers
                 await InitializeTransfer();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Initialization
-        // ═══════════════════════════════════════════════════════════════
+        
         private async Task InitializeTransfer()
         {
             // Generate a new transfer number from the service
@@ -144,9 +144,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Data Loading
-        // ═══════════════════════════════════════════════════════════════
+        
         private async Task LoadLookupData()
         {
             try
@@ -206,9 +206,9 @@ namespace JM.UI.Client.Pages.Transfers
             finally { IsLoading = false; }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Store Changed — exclude the From Store from To Store list
-        // ═══════════════════════════════════════════════════════════════
+        
         protected void OnFromStoreChanged(int? storeId)
         {
             Transfer.StoreId = storeId;
@@ -222,9 +222,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Shared Fields Changed → Propagate to all preview rows
-        // ═══════════════════════════════════════════════════════════════
+        
         protected void OnSharedFieldChanged()
         {
             foreach (var row in PreviewItems)
@@ -259,9 +259,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Cascade Dropdown Events
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
@@ -304,9 +304,9 @@ namespace JM.UI.Client.Pages.Transfers
                 await SearchSingleBarcodeAndAddToPreview(CurrentDetail.Barcode);
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Barcode Search
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task OnBarcodeDropdownChanged(object value)
         {
             var barcode = value?.ToString();
@@ -490,9 +490,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Barcode Generation
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task GenerateBarcode()
         {
             if (!CurrentDetail.GroupId.HasValue && CurrentDetail.ItemID == 0) return;
@@ -520,9 +520,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Add Items to Confirmed Grid
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task AddItemToGrid()
         {
             if (IsEditItemMode)
@@ -631,9 +631,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Edit Item in Confirmed Grid
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task EditItem(TransferDetailDTO item)
         {
             _editingItem = item;
@@ -801,9 +801,9 @@ namespace JM.UI.Client.Pages.Transfers
                 "Item removed from transfer.");
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Save Transfer
-        // ═══════════════════════════════════════════════════════════════
+        
         protected async Task SaveTransfer()
         {
             if (!ValidateTransfer()) return;
@@ -865,9 +865,9 @@ namespace JM.UI.Client.Pages.Transfers
             return true;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Cancel / Navigation
-        // ═══════════════════════════════════════════════════════════════
+        
         protected void Cancel()
         {
             if (IsEditItemMode)
@@ -882,9 +882,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Clear Barcode Search
-        // ═══════════════════════════════════════════════════════════════
+        
         protected void ClearBarcodeSearch()
         {
             BarcodeSearchText = string.Empty;
@@ -896,9 +896,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Reset Left Panel
-        // ═══════════════════════════════════════════════════════════════
+        
         protected void ResetLeftPanel()
         {
             Transfer.StoreId = null;
@@ -921,9 +921,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        
         // Helpers
-        // ═══════════════════════════════════════════════════════════════
+        
         private void ResetSharedFields()
         {
             SharedUnitPrice = 0;
