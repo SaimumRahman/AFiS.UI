@@ -8,6 +8,7 @@ using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.Transfer;
+using JM.UI.Service.Transfer;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -18,45 +19,51 @@ namespace JM.UI.Client.Pages.Transfers
 {
     public partial class ItemTransferEntryComponent : PosComponentBase
     {
-        
-        // Injections
-        
+
+        // ── Injections ────────────────────────────────────────────────
+
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-        
-        // Route Parameters
-        
+        /// <summary>
+        /// Dedicated transfer service — handles master/detail CRUD,
+        /// validation, and factory helpers.
+        /// </summary>
+        [Inject] public ITransferService TransferService { get; set; } = default!;
+
+
+        // ── Route Parameters ──────────────────────────────────────────
+
         [Parameter] public int? Id { get; set; }
 
-        
-        // Transfer Data
-        
+
+        // ── Transfer Data ─────────────────────────────────────────────
+
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
 
-        /// <summary>Current detail row being built / edited in the left panel.</summary>
+        /// <summary>Current detail row being built / edited in the entry panel.</summary>
         protected TransferDetailDTO CurrentDetail { get; set; } = new();
 
         /// <summary>Reference to the item currently being edited in the confirmed grid.</summary>
         protected TransferDetailDTO? _editingItem = null;
 
-        
-        // Preview Grid
-        
+
+        // ── Preview Grid ──────────────────────────────────────────────
+
         protected List<TransferPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<TransferPreviewRow> PreviewGrid = new();
 
-        
-        // Shared fields (propagated to all preview rows)
-        
+
+        // ── Shared fields (propagated to all preview rows) ────────────
+
         protected decimal SharedUnitPrice { get; set; }
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
 
-        
-        // Lookup Data
-        
+
+        // ── Lookup Data ───────────────────────────────────────────────
+
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
@@ -69,9 +76,9 @@ namespace JM.UI.Client.Pages.Transfers
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
-        
-        // UI State
-        
+
+        // ── UI State ──────────────────────────────────────────────────
+
         protected bool IsLoading { get; set; } = false;
         protected bool IsProcessing { get; set; } = false;
         protected bool IsSearchingBarcode { get; set; } = false;
@@ -84,9 +91,9 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected RadzenDataGrid<TransferDetailDTO> ItemsGrid = default!;
 
-        
-        // Lifecycle
-        
+
+        // ── Lifecycle ─────────────────────────────────────────────────
+
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
@@ -98,20 +105,19 @@ namespace JM.UI.Client.Pages.Transfers
                 await InitializeTransfer();
         }
 
-        
-        // Initialization
-        
+
+        // ── Initialization ────────────────────────────────────────────
+
         private async Task InitializeTransfer()
         {
-            // Generate a new transfer number from the service
-            Transfer = new TransferMasterDTO
-            {
-                TransferDate = DateTime.Today,
-                TransferNo = await GenerateTransferNumber()
-            };
+            // Use the service factory method so defaults (CompanyId, CreatedBy,
+            // auto-generated TransferNo, today's date, etc.) are applied consistently.
+            Transfer = TransferService.CreateNewTransfer(
+                companyId: 1,
+                createdBy:1);
 
             TransferDetails = new List<TransferDetailDTO>();
-            CurrentDetail = CreateNewDetail();
+            CurrentDetail = TransferService.CreateNewDetailLine();
             PreviewItems = new List<TransferPreviewRow>();
 
             // Auto-select default "Central" store if available
@@ -123,43 +129,31 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        private TransferDetailDTO CreateNewDetail() => new()
-        {
-            IssueQty = 0,
-            UnitPrice = 0,
-            TotalAmount = 0
-        };
+        private TransferDetailDTO CreateNewDetail() =>
+            TransferService.CreateNewDetailLine();
 
-        private async Task<string> GenerateTransferNumber()
-        {
-            try
-            {
-                // Replace with your actual service call
-                // return await _serviceUnitOfWork.TransferService.GenerateTransferNumber();
-                return $"TRF-{DateTime.Now:yyyy}-{DateTime.Now:MMdd}-{new Random().Next(1000, 9999)}";
-            }
-            catch
-            {
-                return $"TRF-{DateTime.Now:yyyyMMdd}-DRAFT";
-            }
-        }
 
-        
-        // Data Loading
-        
+        // ── Data Loading ──────────────────────────────────────────────
+
         private async Task LoadLookupData()
         {
             try
             {
-                var stores = await _serviceUnitOfWork.StoreService.GetStores() ?? new List<StoreDTO>();
+                var stores = await _serviceUnitOfWork.StoreService.GetStores()
+                             ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
-                Groups = await _serviceUnitOfWork.GroupService.GetGroups() ?? new List<GroupModelDTO>();
-                Colors = await _serviceUnitOfWork.ColorsService.GetColorss() ?? new List<ColorsDTO>();
-                Sizes = await _serviceUnitOfWork.SizesService.GetSizess() ?? new List<SizesDTO>();
+
+                Groups = await _serviceUnitOfWork.GroupService.GetGroups()
+                          ?? new List<GroupModelDTO>();
+                Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
+                          ?? new List<ColorsDTO>();
+                Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
+                          ?? new List<SizesDTO>();
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
-                        ?? new List<MesurementUnitModelDTO>();
-                AvailableItems = await _serviceUnitOfWork.ItemService.GetItems() ?? new List<ItemDTO>();
+                          ?? new List<MesurementUnitModelDTO>();
+                AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
+                                 ?? new List<ItemDTO>();
 
                 // Static lookup lists — replace with service calls if you have a DB table
                 TransferTypes = new List<LookupItemDTO>
@@ -183,19 +177,51 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
+        /// <summary>
+        /// Load an existing transfer for editing.
+        /// Uses <see cref="ITransferService.GetTransferById"/> so the component
+        /// no longer depends on a stub.
+        /// </summary>
         protected async Task LoadTransfer()
         {
             try
             {
                 IsLoading = true;
 
-                // Replace with your actual service call:
-                // var transfer = await _serviceUnitOfWork.TransferService.GetTransferById(Id!.Value);
-                // Transfer = transfer.Master;
-                // TransferDetails = transfer.Details.ToList();
+                var master = await TransferService.GetTransferById(Id!.Value);
+
+                if (master is null)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Not Found",
+                        $"Transfer #{Id} could not be found.");
+                    NavigationManager.NavigateTo("/TransferList");
+                    return;
+                }
+
+                Transfer = master;
+
+                // Details are carried inside the master DTO — flatten to the local list.
+                TransferDetails = master.Details?.ToList() ?? new List<TransferDetailDTO>();
+
+                // Restore cascaded dropdowns for the first detail (if any)
+                var firstDetail = TransferDetails.FirstOrDefault();
+                if (firstDetail is not null)
+                {
+                    if (firstDetail.GroupId.HasValue)
+                        SubGroups = await LoadSubGroupsByGroup(firstDetail.GroupId.Value);
+                    if (firstDetail.SubGroupId.HasValue)
+                        Designs = await LoadDesignsBySubGroup(firstDetail.SubGroupId.Value);
+                }
+
+                // Keep ToStores consistent with the loaded From Store
+                if (master.StoreId.HasValue)
+                    ToStores = Stores.Where(s => s.Id != master.StoreId.Value).ToList();
+
+                CurrentDetail = TransferService.CreateNewDetailLine();
+                PreviewItems = new List<TransferPreviewRow>();
 
                 notificationService.Notify(NotificationSeverity.Info, "Loaded",
-                    $"Transfer {Id} loaded for editing.");
+                    $"Transfer {master.TransferNo} loaded for editing.");
             }
             catch (Exception ex)
             {
@@ -203,28 +229,29 @@ namespace JM.UI.Client.Pages.Transfers
                     $"Failed to load transfer: {ex.Message}");
                 NavigationManager.NavigateTo("/TransferList");
             }
-            finally { IsLoading = false; }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
-        
-        // Store Changed — exclude the From Store from To Store list
-        
+
+        // ── Store Changed — exclude the From Store from the To Store list ──
+
         protected void OnFromStoreChanged(int? storeId)
         {
             Transfer.StoreId = storeId;
-            // Exclude the selected From Store from the To Store dropdown
             ToStores = Stores.Where(s => s.Id != storeId).ToList();
 
-            // Clear To Store if it is the same as From Store
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
 
             StateHasChanged();
         }
 
-        
-        // Shared Fields Changed → Propagate to all preview rows
-        
+
+        // ── Shared Fields Changed → Propagate to all preview rows ─────
+
         protected void OnSharedFieldChanged()
         {
             foreach (var row in PreviewItems)
@@ -247,10 +274,8 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        private void RecalculatePreviewRow(TransferPreviewRow row)
-        {
+        private static void RecalculatePreviewRow(TransferPreviewRow row) =>
             row.TotalAmount = row.IssueQty * row.UnitPrice;
-        }
 
         protected void RemovePreviewRow(TransferPreviewRow row)
         {
@@ -259,9 +284,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        
-        // Cascade Dropdown Events
-        
+
+        // ── Cascade Dropdown Events ───────────────────────────────────
+
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
@@ -304,9 +329,9 @@ namespace JM.UI.Client.Pages.Transfers
                 await SearchSingleBarcodeAndAddToPreview(CurrentDetail.Barcode);
         }
 
-        
-        // Barcode Search
-        
+
+        // ── Barcode Search ────────────────────────────────────────────
+
         protected async Task OnBarcodeDropdownChanged(object value)
         {
             var barcode = value?.ToString();
@@ -325,7 +350,6 @@ namespace JM.UI.Client.Pages.Transfers
                 {
                     DisableItemFields = true;
 
-                    // Populate CurrentDetail from first match
                     var first = result.ItemDetails.First();
                     CurrentDetail.ItemID = first.Id;
                     CurrentDetail.Barcode = barcode;
@@ -336,19 +360,20 @@ namespace JM.UI.Client.Pages.Transfers
                     CurrentDetail.DesignId = first.DesignId;
                     CurrentDetail.UnitID = first.MesurementUnitId ?? 0;
 
-                    // Load cascaded dropdowns
                     if (first.GroupId.HasValue)
                         SubGroups = await LoadSubGroupsByGroup(first.GroupId.Value);
                     if (first.SubGroupId.HasValue)
                         Designs = await LoadDesignsBySubGroup(first.SubGroupId.Value);
 
-                    // Build preview rows for each variant returned
                     foreach (var item in result.ItemDetails.Where(x => x != null))
                     {
-                        var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode) ? item.Barcode : barcode;
+                        var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
+                            ? item.Barcode
+                            : barcode;
+
                         if (PreviewItems.Any(p => p.Barcode == itemBarcode)) continue;
 
-                        var row = new TransferPreviewRow
+                        PreviewItems.Add(new TransferPreviewRow
                         {
                             ItemId = item.Id,
                             ItemName = item.Name ?? string.Empty,
@@ -372,8 +397,7 @@ namespace JM.UI.Client.Pages.Transfers
                             SerialNo = SharedSerialNo,
                             CreatedRemarks = SharedCreatedRemarks,
                             TotalAmount = 0
-                        };
-                        PreviewItems.Add(row);
+                        });
                     }
 
                     PreviewGrid?.Reload();
@@ -382,7 +406,6 @@ namespace JM.UI.Client.Pages.Transfers
                 }
                 else
                 {
-                    // Not found — allow creating a new transfer line with this barcode
                     CurrentDetail.Barcode = barcode;
                     DisableItemFields = false;
 
@@ -490,9 +513,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        
-        // Barcode Generation
-        
+
+        // ── Barcode Generation ────────────────────────────────────────
+
         protected async Task GenerateBarcode()
         {
             if (!CurrentDetail.GroupId.HasValue && CurrentDetail.ItemID == 0) return;
@@ -520,9 +543,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        
-        // Add Items to Confirmed Grid
-        
+
+        // ── Add Items to Confirmed Grid ───────────────────────────────
+
         protected async Task AddItemToGrid()
         {
             if (IsEditItemMode)
@@ -543,7 +566,6 @@ namespace JM.UI.Client.Pages.Transfers
 
             foreach (var row in validRows)
             {
-                // ── Validation ──
                 if (row.UnitPrice <= 0)
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Validation",
@@ -551,7 +573,6 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                // ── Stock check ──
                 if (row.IssueQty > row.StockQuantity && row.StockQuantity > 0)
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Stock Warning",
@@ -560,7 +581,6 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                // ── Duplicate barcode check ──
                 if (TransferDetails.Any(i => i.Barcode == row.Barcode))
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
@@ -568,32 +588,34 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                TransferDetails.Add(new TransferDetailDTO
-                {
-                    TransferID = Transfer.TransferId,
-                    ItemID = row.ItemId,
-                    Barcode = row.Barcode,
-                    ItemName = row.ItemName,
-                    ColorId = row.ColorId,
-                    ColorName = row.ColorName,
-                    SizeId = row.SizeId,
-                    SizeName = row.SizeName,
-                    GroupId = row.GroupId,
-                    SubGroupId = row.SubGroupId,
-                    DesignId = row.DesignId,
-                    UnitID = row.UnitId ?? 0,
-                    UnitName = !string.IsNullOrWhiteSpace(row.UnitName)
-                        ? row.UnitName
-                        : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name,
-                    IssueQty = row.IssueQty,
-                    UnitPrice = row.UnitPrice,
-                    TotalAmount = row.TotalAmount,
-                    SerialNo = row.SerialNo,
-                    CreatedRemarks = row.CreatedRemarks,
-                    IsNewItem = row.IsNewItem,
-                    CreatedAt = DateTime.Now
-                });
+                // Build the new detail line via the service factory so any
+                // default properties (audit fields, etc.) are set consistently.
+                var newLine = TransferService.CreateNewDetailLine();
 
+                newLine.TransferID = Transfer.TransferId;
+                newLine.ItemID = row.ItemId;
+                newLine.Barcode = row.Barcode;
+                newLine.ItemName = row.ItemName;
+                newLine.ColorId = row.ColorId;
+                newLine.ColorName = row.ColorName;
+                newLine.SizeId = row.SizeId;
+                newLine.SizeName = row.SizeName;
+                newLine.GroupId = row.GroupId;
+                newLine.SubGroupId = row.SubGroupId;
+                newLine.DesignId = row.DesignId;
+                newLine.UnitID = row.UnitId ?? 0;
+                newLine.UnitName = !string.IsNullOrWhiteSpace(row.UnitName)
+                                            ? row.UnitName
+                                            : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name;
+                newLine.IssueQty = row.IssueQty;
+                newLine.UnitPrice = row.UnitPrice;
+                newLine.TotalAmount = row.TotalAmount;
+                newLine.SerialNo = row.SerialNo;
+                newLine.CreatedRemarks = row.CreatedRemarks;
+                newLine.IsNewItem = row.IsNewItem;
+                newLine.CreatedAt = DateTime.Now;
+
+                TransferDetails.Add(newLine);
                 addedCount++;
             }
 
@@ -611,7 +633,7 @@ namespace JM.UI.Client.Pages.Transfers
                     $"{validRows.Count - addedCount} skipped due to errors.");
             }
 
-            // ── Reset preview and barcode ──
+            // Reset preview and barcode search
             PreviewItems.Clear();
             await PreviewGrid.Reload();
             await ItemsGrid.Reload();
@@ -619,7 +641,7 @@ namespace JM.UI.Client.Pages.Transfers
             BarcodeSearchText = string.Empty;
             DisableItemFields = false;
 
-            // Clear only Color, Size — preserve Group/Product selection for rapid entry
+            // Clear Color/Size/Barcode — preserve Group/Product for rapid entry
             CurrentDetail.ColorId = null;
             CurrentDetail.SizeId = null;
             CurrentDetail.Barcode = null;
@@ -631,9 +653,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        
-        // Edit Item in Confirmed Grid
-        
+
+        // ── Edit Item in Confirmed Grid ───────────────────────────────
+
         protected async Task EditItem(TransferDetailDTO item)
         {
             _editingItem = item;
@@ -642,7 +664,6 @@ namespace JM.UI.Client.Pages.Transfers
             PreviewItems.Clear();
             ResetSharedFields();
 
-            // Load into preview grid for editing
             PreviewItems.Add(new TransferPreviewRow
             {
                 ItemId = item.ItemID,
@@ -668,13 +689,11 @@ namespace JM.UI.Client.Pages.Transfers
 
             PreviewGrid?.Reload();
 
-            // Sync shared pricing bar to match this item
             SharedUnitPrice = item.UnitPrice;
             SharedIssueQty = item.IssueQty;
             SharedSerialNo = item.SerialNo ?? string.Empty;
             SharedCreatedRemarks = item.CreatedRemarks ?? string.Empty;
 
-            // Populate CurrentDetail
             CurrentDetail = new TransferDetailDTO
             {
                 TransferDetailID = item.TransferDetailID,
@@ -700,7 +719,6 @@ namespace JM.UI.Client.Pages.Transfers
             BarcodeSearchText = item.Barcode ?? string.Empty;
             DisableItemFields = true;
 
-            // Load cascaded dropdowns
             if (item.GroupId.HasValue)
                 SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
             if (item.SubGroupId.HasValue)
@@ -724,7 +742,6 @@ namespace JM.UI.Client.Pages.Transfers
                 return;
             }
 
-            // ── Validation ──
             if (row.IssueQty <= 0)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Validation",
@@ -757,8 +774,8 @@ namespace JM.UI.Client.Pages.Transfers
                 DesignId = row.DesignId,
                 UnitID = row.UnitId ?? _editingItem.UnitID,
                 UnitName = !string.IsNullOrWhiteSpace(row.UnitName)
-                    ? row.UnitName
-                    : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name,
+                                       ? row.UnitName
+                                       : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name,
                 IssueQty = row.IssueQty,
                 UnitPrice = row.UnitPrice,
                 TotalAmount = row.TotalAmount,
@@ -786,38 +803,81 @@ namespace JM.UI.Client.Pages.Transfers
             IsEditItemMode = false;
             DisableItemFields = false;
             BarcodeSearchText = string.Empty;
-            CurrentDetail = CreateNewDetail();
+            CurrentDetail = TransferService.CreateNewDetailLine();
             PreviewItems.Clear();
             PreviewGrid?.Reload();
             ResetSharedFields();
             StateHasChanged();
         }
 
-        protected void DeleteItem(TransferDetailDTO item)
+        /// <summary>
+        /// Removes a single detail line from the confirmed grid.
+        /// If the line has already been persisted (TransferDetailID > 0) it is
+        /// also soft-deleted on the server via <see cref="ITransferService.DeleteTransferDetail"/>.
+        /// </summary>
+        protected async Task DeleteItem(TransferDetailDTO item)
         {
+            // If the record was already saved to the database, delete it server-side first.
+            if (item.TransferDetailID > 0)
+            {
+                var result = await TransferService.DeleteTransferDetail(
+                    item.TransferDetailID, 1);
+
+                if (!result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Delete Failed",
+                        result.Message ?? "Could not delete the transfer detail.");
+                    return;
+                }
+            }
+
             TransferDetails.Remove(item);
             ItemsGrid?.Reload();
             notificationService.Notify(NotificationSeverity.Success, "Removed",
                 "Item removed from transfer.");
         }
 
-        
-        // Save Transfer
-        
+
+        // ── Save Transfer ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Validates and persists (create or update) the transfer via
+        /// <see cref="ITransferService.SaveUpdateTransfer"/>.
+        /// The service receives the master DTO with its Details collection
+        /// populated — it decides internally whether to INSERT or UPDATE.
+        /// </summary>
         protected async Task SaveTransfer()
         {
+            // ── Client-side structural validation ──
             if (!ValidateTransfer()) return;
+
+            // ── Service-side business validation ──
+            Transfer.Details = TransferDetails;
+
+            var (isValid, errorMessage) = await TransferService.ValidateTransfer(Transfer);
+            if (!isValid)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation", errorMessage);
+                return;
+            }
 
             try
             {
                 IsProcessing = true;
 
-                // Replace with your actual service call:
-                // var result = await _serviceUnitOfWork.TransferService.SaveTransfer(Transfer, TransferDetails);
+                var result = await TransferService.SaveUpdateTransfer(Transfer);
 
-                notificationService.Notify(NotificationSeverity.Success, "Success",
-                    "Transfer saved successfully.");
-                NavigationManager.NavigateTo("/TransferList");
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success",
+                        result.Message ?? "Transfer saved successfully.");
+                    NavigationManager.NavigateTo("/TransferList");
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Save Failed",
+                        result.Message ?? "An error occurred while saving the transfer.");
+                }
             }
             catch (Exception ex)
             {
@@ -830,6 +890,10 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
+        /// <summary>
+        /// Basic UI-level guard checks before we even hit the service layer.
+        /// Business rules are delegated to <see cref="ITransferService.ValidateTransfer"/>.
+        /// </summary>
         private bool ValidateTransfer()
         {
             if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
@@ -865,9 +929,9 @@ namespace JM.UI.Client.Pages.Transfers
             return true;
         }
 
-        
-        // Cancel / Navigation
-        
+
+        // ── Cancel / Navigation ───────────────────────────────────────
+
         protected void Cancel()
         {
             if (IsEditItemMode)
@@ -882,23 +946,23 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-        
-        // Clear Barcode Search
-        
+
+        // ── Clear Barcode Search ──────────────────────────────────────
+
         protected void ClearBarcodeSearch()
         {
             BarcodeSearchText = string.Empty;
             DisableItemFields = false;
-            CurrentDetail = CreateNewDetail();
+            CurrentDetail = TransferService.CreateNewDetailLine();
             PreviewItems.Clear();
             PreviewGrid?.Reload();
             ResetSharedFields();
             StateHasChanged();
         }
 
-        
-        // Reset Left Panel
-        
+
+        // ── Reset Left Panel ──────────────────────────────────────────
+
         protected void ResetLeftPanel()
         {
             Transfer.StoreId = null;
@@ -910,7 +974,7 @@ namespace JM.UI.Client.Pages.Transfers
             Transfer.Comments = null;
             ToStores = Stores.ToList();
 
-            CurrentDetail = CreateNewDetail();
+            CurrentDetail = TransferService.CreateNewDetailLine();
             SubGroups = new List<SubGroupModelDTO>();
             Designs = new List<DesignModelDTO>();
             BarcodeSearchText = string.Empty;
@@ -921,9 +985,9 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        
-        // Helpers
-        
+
+        // ── Helpers ───────────────────────────────────────────────────
+
         private void ResetSharedFields()
         {
             SharedUnitPrice = 0;

@@ -36,6 +36,7 @@ using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.Transfer;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
@@ -96,9 +97,8 @@ namespace JM.UI.DataService
             services.AddScoped<IItemFeatureRepository, ItemFeatureRepository>();
             services.AddScoped<IItemCatalogueRepository, ItemCatalogueRepository>();
             services.AddScoped<ICurrentStockReportRepository, CurrentStockReportRepository>();
+            services.AddScoped<ITransferRepository, TransferRepository>();
             #endregion
-
-
         }
 
     }

@@ -58,6 +58,7 @@ using JM.UI.DataService.DAL.SupplierPayments;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.Transfer;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
@@ -113,5 +114,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IStockOpeningRepository StockOpeningRepository { get; }
         IItemCatalogueRepository ItemCatalogueRepository { get; }
         ICurrentStockReportRepository CurrentStockReportRepository { get; }
+        ITransferRepository TransferRepository { get; }
     }
 }

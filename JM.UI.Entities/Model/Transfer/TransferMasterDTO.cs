@@ -24,6 +24,7 @@ public class TransferMasterDTO
 
     // ── Audit ──
     public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
     public string? CreatedRemarks { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -32,4 +33,6 @@ public class TransferMasterDTO
     public string? DeletedBy { get; set; }
     public DateTime? DeletedAt { get; set; }
     public string? DeleteRemarks { get; set; }
+
+    public List<TransferDetailDTO> Details { get; set; } = new();
 }
