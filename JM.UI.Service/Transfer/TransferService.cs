@@ -92,7 +92,7 @@ namespace JM.UI.Service.Transfer
             return new TransferMasterDTO
             {
                 TransferDate = DateTime.Now,
-                IsCompleted = false,
+                IsCompleted = 0,
                 ReceiveStatusId = 1,
                 CompanyID = companyId,
                 CreatedBy = createdBy,

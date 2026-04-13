@@ -83,15 +83,27 @@ namespace JM.UI.DataService.DAL.Transfer
                 var requestBody = new { Transfer = transfer };
                 var content = JsonContent.Create(requestBody);
                 var response = await httpClient.PostAsync("Transfer/insert-update", content);
-                response.EnsureSuccessStatusCode();
 
-                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                // ── Read body regardless of status ──────────────────────────
+                var rawBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Transfer save failed. Status: {Status} | Body: {Body}",
+                        (int)response.StatusCode, rawBody);
+
+                    return new ResponseResult
+                    {
+                        IsSuccessStatus = false,
+                        StatusCode = (int)response.StatusCode,
+                        Message = $"Server error ({(int)response.StatusCode}): {rawBody}"
+                    };
+                }
+
+                var result = System.Text.Json.JsonSerializer.Deserialize<ResponseResult>(rawBody,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
                 return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server." };
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed during save transfer");
-                throw new Exception("Failed to save transfer: " + ex.Message, ex);
             }
             catch (Exception ex)
             {

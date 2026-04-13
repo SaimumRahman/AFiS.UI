@@ -16,7 +16,7 @@ public class TransferMasterDTO
     public string? DeliveryAddress { get; set; }
     public string? Comments { get; set; }
     public int? RequisitionID { get; set; }
-    public bool IsCompleted { get; set; }
+    public int IsCompleted { get; set; }
     public int? ReceiveStatusId { get; set; }
     public string? RecievedBy { get; set; }
     public DateTime? RecievedDate { get; set; }
