@@ -648,6 +648,7 @@ namespace JM.UI.Client.Pages.StockOpening
                         GroupId = CurrentItem.GroupId,
                         SubGroupId = CurrentItem.SubGroupId,
                         BrandId = CurrentItem.BrandId,
+                        DesignId = CurrentItem.DesignId,
                         BrandName = BrandSearchText,
                         OriginId = CurrentItem.OriginId,
                         OriginName = OriginSearchText,
@@ -1436,6 +1437,7 @@ namespace JM.UI.Client.Pages.StockOpening
             PurchasePrice = SharedPurchasePrice,
             SalePrice = SharedSalePrice,
             TotalAmount = 0,
+            DesignId = CurrentItem.DesignId,
             ImageBase64 = null
         };
 

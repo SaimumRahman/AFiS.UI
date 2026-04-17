@@ -1,5 +1,6 @@
 ﻿using JM.Infrastructure.Models;
 using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Transfer;
 using System;
 using System.Collections.Generic;
@@ -133,5 +134,8 @@ namespace JM.UI.Service.Transfer
         {
             return value?.Length > maxChars ? value.Substring(0, maxChars) + "..." : value ?? string.Empty;
         }
+
+        public Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId)
+        => _repositoryUnitOfWork.TransferRepository.SearchByBarcodeExact(barcode,storeId);
     }
 }

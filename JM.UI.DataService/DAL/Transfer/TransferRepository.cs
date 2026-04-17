@@ -1,4 +1,5 @@
 ﻿using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Transfer;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
@@ -159,6 +160,30 @@ namespace JM.UI.DataService.DAL.Transfer
             {
                 _logger.LogError(ex, "Unexpected error during delete transfer detail: {DetailId}", detailId);
                 throw new Exception($"Unexpected error deleting transfer detail: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching item by exact barcode: {Barcode}", barcode);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Transfer/search-barcode-exact/{Uri.EscapeDataString(barcode)}/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<ItemDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during barcode search");
+                throw new Exception("Failed to fetch item by barcode: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during barcode search");
+                throw new Exception("Unexpected error fetching item by barcode: " + ex.Message, ex);
             }
         }
     }

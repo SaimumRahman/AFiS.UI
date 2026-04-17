@@ -1,4 +1,5 @@
 ﻿using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Transfer;
 using System;
 using System.Collections.Generic;
@@ -13,5 +14,6 @@ namespace JM.UI.DataService.DAL.Transfer
         Task<ResponseResult> SaveUpdateTransfer(TransferMasterDTO transfer);
         Task<ResponseResult> DeleteTransfer(long id, int deletedBy);
         Task<ResponseResult> DeleteTransferDetail(long detailId, int deletedBy);
+        Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Transfer;
 using System;
 using System.Collections.Generic;
@@ -19,5 +20,6 @@ namespace JM.UI.Service.Transfer
         string GetCompletedBadgeStyle(int isCompleted);
         string GetReceiveStatusBadgeStyle(int statusId);
         string Truncate(string? value, int maxChars);
+        Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId);
     }
 }

@@ -869,6 +869,7 @@ namespace JM.UI.Client.Pages.Purchases
                         MesurementUnitId = CurrentItem.MesurementUnitId,
                         CatalogueId = CurrentItem.CatalogueId,
                         CatalogueName = CatalogueSearchText,
+                        DesignId = CurrentItem.DesignId,          // ← ADD THIS
                         IsNewItem = true,
                         IsSaleable = CurrentItem.IsSaleable,
                         ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -1802,6 +1803,7 @@ namespace JM.UI.Client.Pages.Purchases
                             MesurementUnitId = CurrentItem.MesurementUnitId,
                             CatalogueId = CurrentItem.CatalogueId,
                             CatalogueName = CatalogueSearchText,
+                            DesignId = CurrentItem.DesignId,   // ← ADD THIS LINE to each block
                             IsNewItem = true,
                             IsSaleable = CurrentItem.IsSaleable,
                             ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -1817,6 +1819,7 @@ namespace JM.UI.Client.Pages.Purchases
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
+                           
                             // Image is null — user must upload for this new color
                             ImageBase64 = null
                         };
@@ -1839,6 +1842,7 @@ namespace JM.UI.Client.Pages.Purchases
                             SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
                             GroupId = item.GroupId,
                             SubGroupId = item.SubGroupId,
+
                             BrandId = item.BrandId,
                             BrandName = Brands.FirstOrDefault(b => b.BrandId == item.BrandId)?.BrandName ?? item.BrandColor ?? string.Empty,
                             OriginId = item.OriginId,
@@ -1906,6 +1910,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
+                        DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
                         // Image is null — user must upload for this new color
                         ImageBase64 = null
                     };

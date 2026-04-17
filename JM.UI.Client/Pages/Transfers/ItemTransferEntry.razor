@@ -108,7 +108,7 @@
         min-width: 60px;
     }
 
-    .shared-pricing-bar {
+    .shared-fields-bar {
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
         border: 1px solid #90caf9;
         border-radius: 6px;
@@ -116,7 +116,7 @@
         margin-bottom: 4px;
     }
 
-        .shared-pricing-bar .bar-label {
+        .shared-fields-bar .bar-label {
             font-size: 0.68rem;
             font-weight: 700;
             color: #1565c0;
@@ -179,7 +179,7 @@ else
                               Style="border-right: 1px solid #dee2e6; padding-right: 0.4rem;">
                     <RadzenStack Gap="0.2rem">
 
-                        <!-- Transfer No (system generated) -->
+                        <!-- Transfer No -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                             <RadzenColumn Size="4">
                                 <RadzenLabel Text="Transfer No" Style="font-weight:600; font-size:0.75rem;" />
@@ -330,6 +330,7 @@ else
                                     <Columns>
                                         <RadzenDropDownDataGridColumn Property="Barcode" Title="Barcode" Width="140px" />
                                         <RadzenDropDownDataGridColumn Property="Name" Title="Item Name" Width="200px" />
+                                        <RadzenDropDownDataGridColumn Property="CurrentStock" Title="Stock" Width="100px" />
                                     </Columns>
                                 </RadzenDropDownDataGrid>
                             </RadzenColumn>
@@ -383,7 +384,7 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <!-- Color / Size / ShadeNo -->
+                        <!-- Color / Size / Barcode -->
                         <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Color" Style="font-weight:600; font-size:0.75rem;" />
@@ -426,31 +427,25 @@ else
                         </RadzenRow>
 
                         <!-- ════════════════════════════════════════════════════
-                             SHARED PRICING BAR
+                             SHARED FIELDS BAR
                              ════════════════════════════════════════════════════ -->
-                        <div class="shared-pricing-bar">
+                        <div class="shared-fields-bar">
                             <div class="bar-label">📋 Shared fields — changes apply to all preview rows</div>
                             <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
-                                <RadzenColumn Size="6" SizeMD="3">
-                                    <RadzenLabel Text="Unit Price" Style="font-weight:600; font-size:0.68rem;" />
-                                    <RadzenNumeric @bind-Value="SharedUnitPrice"
-                                                   Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
-                                                   Change="@OnSharedFieldChanged" Disabled="@IsProcessing" />
-                                </RadzenColumn>
-                                <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenColumn Size="6" SizeMD="4">
                                     <RadzenLabel Text="Issue QTY" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenNumeric @bind-Value="SharedIssueQty"
                                                    Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
                                                    Change="@OnSharedFieldChanged" Disabled="@IsProcessing" />
                                 </RadzenColumn>
-                                <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenColumn Size="6" SizeMD="4">
                                     <RadzenLabel Text="Serial No" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenTextBox @bind-Value="SharedSerialNo"
                                                    Placeholder="Serial no"
                                                    Style="width:100%; font-size:0.68rem; height:26px; padding:2px 6px;"
                                                    Disabled="@IsProcessing" />
                                 </RadzenColumn>
-                                <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenLabel Text="Remarks" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenTextBox @bind-Value="SharedCreatedRemarks"
                                                    Placeholder="Remarks"
@@ -538,17 +533,11 @@ else
                                                                Change="@(() => OnPreviewRowChanged(row))"
                                                                Disabled="@IsProcessing" />
                                             </Template>
-                                        </RadzenDataGridColumn>
-
-                                        <!-- Unit Price — editable -->
-                                        <RadzenDataGridColumn TItem="TransferPreviewRow" Title="Unit Price" Width="80px">
-                                            <Template Context="row">
-                                                <RadzenNumeric @bind-Value="row.UnitPrice"
-                                                               TValue="decimal" Min="0"
-                                                               Style="width:100%; font-size:0.65rem; height:22px;"
-                                                               Change="@(() => OnPreviewRowChanged(row))"
-                                                               Disabled="@IsProcessing" />
-                                            </Template>
+                                            <FooterTemplate>
+                                                <span style="font-size:0.65rem; font-weight:700; color:#1565c0;">
+                                                    @PreviewItems.Sum(r => r.IssueQty).ToString("N2")
+                                                </span>
+                                            </FooterTemplate>
                                         </RadzenDataGridColumn>
 
                                         <!-- Serial No — editable -->
@@ -571,20 +560,6 @@ else
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <!-- Total Amount — calculated, read-only -->
-                                        <RadzenDataGridColumn TItem="TransferPreviewRow" Title="Total" Width="85px">
-                                            <Template Context="row">
-                                                <span style="font-size:0.65rem; font-weight:600; color:#2e7d32;">
-                                                    @row.TotalAmount.ToString("N2")
-                                                </span>
-                                            </Template>
-                                            <FooterTemplate>
-                                                <span style="font-size:0.65rem; font-weight:700; color:#1565c0;">
-                                                    @PreviewItems.Sum(r => r.TotalAmount).ToString("N2")
-                                                </span>
-                                            </FooterTemplate>
-                                        </RadzenDataGridColumn>
-
                                         <!-- Remove row -->
                                         <RadzenDataGridColumn TItem="TransferPreviewRow" Title="" Width="38px"
                                                               Sortable="false">
@@ -601,12 +576,11 @@ else
                                 </RadzenDataGrid>
 
                                 <!-- Preview totals bar -->
-                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;
                                     background:#e8f5e9; padding:4px 10px; font-size:0.7rem; font-weight:700;
                                     border-top:1px solid #a5d6a7;">
                                     <span>Rows: @PreviewItems.Count</span>
                                     <span>Total Qty: @PreviewItems.Sum(r => r.IssueQty).ToString("N2")</span>
-                                    <span>Total Amt: @PreviewItems.Sum(r => r.TotalAmount).ToString("N2")</span>
                                 </div>
                             </div>
                         }
@@ -667,17 +641,6 @@ else
                         </Template>
                         <FooterTemplate>
                             <span style="font-weight:600;">@TransferDetails.Sum(i => i.IssueQty).ToString("N2")</span>
-                        </FooterTemplate>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitPrice" Title="Unit Price" Width="80px">
-                        <Template Context="item">@item.UnitPrice.ToString("N2")</Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TransferDetailDTO" Property="TotalAmount" Title="Total" Width="85px">
-                        <Template Context="item">
-                            <span style="font-weight:600; color:#1b5e20;">@item.TotalAmount.ToString("N2")</span>
-                        </Template>
-                        <FooterTemplate>
-                            <span style="font-weight:700;">@TransferDetails.Sum(i => i.TotalAmount).ToString("N2")</span>
                         </FooterTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SerialNo" Title="Serial No" Width="100px" />
