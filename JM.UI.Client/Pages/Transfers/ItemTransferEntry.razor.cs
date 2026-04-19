@@ -300,14 +300,47 @@ namespace JM.UI.Client.Pages.Transfers
             if (string.IsNullOrWhiteSpace(barcode))
                 return;
 
+            // ── Guard: From Store must be selected before searching ──────────
+            if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Warning,
+                    "Store Not Selected",
+                    "Please select a 'From Store' before searching for items.",
+                    duration: 5000);
+
+                BarcodeSearchText = string.Empty;
+                StateHasChanged();
+                return;
+            }
+
             try
             {
                 IsSearchingBarcode = true;
                 BarcodeSearchText = barcode;
 
-                var item = await _serviceUnitOfWork.TransferService.SearchByBarcodeExact(barcode, Transfer.StoreId.Value);
+                var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
+                                ?? $"Store #{Transfer.StoreId}";
+
+                ItemDTO? item = null;
+
+                try
+                {
+                    item = await _serviceUnitOfWork.TransferService
+                               .SearchByBarcodeExact(barcode, Transfer.StoreId.Value);
+                }
+                catch (Exception innerEx) when (
+                    innerEx.Message.Contains("does not contain any JSON") ||
+                    innerEx.Message.Contains("isFinalBlock") ||
+                    innerEx.Message.Contains("Unexpected error") ||
+                    innerEx.Message.Contains("JSON"))
+                {
+                    // API returned empty / non-JSON body — treat as not found
+                    item = null;
+                }
 
                 PreviewItems.Clear();
+                PreviewGrid?.Reload();
 
                 if (item != null)
                 {
@@ -341,34 +374,36 @@ namespace JM.UI.Client.Pages.Transfers
                     });
 
                     PreviewGrid?.Reload();
-                    notificationService.Notify(NotificationSeverity.Success, "Loaded",
-                        "Item found and added to preview.");
+
+                    notificationService.Notify(
+                        NotificationSeverity.Success,
+                        "Item Found",
+                        $"'{item.Name}' loaded from '{storeName}'.");
                 }
                 else
                 {
                     CurrentDetail.Barcode = barcode;
                     DisableItemFields = false;
 
-                    PreviewItems.Add(new TransferPreviewRow
-                    {
-                        ItemId = 0,
-                        Barcode = barcode,
-                        ItemName = string.Empty,
-                        IsNewItem = true,
-                        IssueQty = 0,
-                        SerialNo = SharedSerialNo,
-                        CreatedRemarks = SharedCreatedRemarks
-                    });
-
-                    PreviewGrid?.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Not Found",
-                        $"Barcode '{barcode}' not found. Please verify.");
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Item Not Found",
+                        $"Barcode '{barcode}' was not found in '{storeName}'. " +
+                        $"Please verify the barcode or select the correct From Store.",
+                        duration: 6000);
                 }
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
-                    $"Search failed: {ex.Message}");
+                PreviewItems.Clear();
+                PreviewGrid?.Reload();
+                DisableItemFields = false;
+
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Search Failed",
+                    $"An unexpected error occurred while searching: {ex.Message}",
+                    duration: 7000);
             }
             finally
             {
@@ -376,7 +411,6 @@ namespace JM.UI.Client.Pages.Transfers
                 StateHasChanged();
             }
         }
-
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
