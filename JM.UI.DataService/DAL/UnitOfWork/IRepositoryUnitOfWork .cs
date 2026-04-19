@@ -1,4 +1,7 @@
-﻿using JM.UI.DataService.DAL.Accounts;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.AccountsGroups;
@@ -48,6 +51,7 @@ using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
@@ -66,9 +70,6 @@ using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -115,5 +116,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IItemCatalogueRepository ItemCatalogueRepository { get; }
         ICurrentStockReportRepository CurrentStockReportRepository { get; }
         ITransferRepository TransferRepository { get; }
+        IStockRepository StockRepository { get; }
     }
 }

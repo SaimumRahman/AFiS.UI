@@ -178,6 +178,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name = "Stock Ledger",
+                        Path = "/StockLedger",
+                        Icon = "\ue8f9",
+                        Title = "Stock Ledger",
+                        Description = "View opening stock, receipts, issues and closing stock by store",
+                        Tags = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
+                    },
+                    new Example
+                    {
                         Name = "Purchase Draft",
                         Path = "/PurchaseDraftList",
                         Icon = "\ue8cc",

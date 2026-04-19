@@ -48,6 +48,7 @@ using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
 using JM.UI.Service.SubGroups;
@@ -117,5 +118,6 @@ namespace JM.UI.Service.UnitOfWork
         IItemCatalogueService ItemCatalogueService { get; }
         ICurrentStockReportService CurrentStockReportService { get; }
         ITransferService TransferService { get; }
+        IStockService StockService { get; }
     }
 }
