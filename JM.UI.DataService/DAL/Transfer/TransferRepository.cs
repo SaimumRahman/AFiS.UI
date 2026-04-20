@@ -186,5 +186,27 @@ namespace JM.UI.DataService.DAL.Transfer
                 throw new Exception("Unexpected error fetching item by barcode: " + ex.Message, ex);
             }
         }
+        public async Task<IEnumerable<ItemDTO?>> SearchByBarcodeUptoColor(string barcode, int storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching item by barcode up to color: {Barcode}", barcode);
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Transfer/search-barcode-upto-color/{Uri.EscapeDataString(barcode)}/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<IEnumerable<ItemDTO?>>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during barcode search");
+                throw new Exception("Failed to fetch item by barcode: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during barcode search");
+                throw new Exception("Unexpected error fetching item by barcode: " + ex.Message, ex);
+            }
+        }
     }
 }

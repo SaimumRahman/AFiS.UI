@@ -21,5 +21,6 @@ namespace JM.UI.Service.Transfer
         string GetReceiveStatusBadgeStyle(int statusId);
         string Truncate(string? value, int maxChars);
         Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId);
+        Task<IEnumerable<ItemDTO?>> SearchByBarcodeUptoColor(string barcode, int storeId);
     }
 }

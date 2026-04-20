@@ -28,6 +28,7 @@ public class TransferDetailDTO
     public decimal IssueQty { get; set; }
     public int UnitID { get; set; }
     public decimal UnitPrice { get; set; }
+    public decimal SalePrice { get; set; }
     public decimal TotalAmount { get; set; }
     public string? SerialNo { get; set; }
 

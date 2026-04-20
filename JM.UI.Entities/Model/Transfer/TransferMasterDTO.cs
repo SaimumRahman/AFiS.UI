@@ -34,5 +34,15 @@ public class TransferMasterDTO
     public DateTime? DeletedAt { get; set; }
     public string? DeleteRemarks { get; set; }
 
+    public bool IsDispatched { get; set; }
+    public int? DispatchedBy { get; set; }
+    public DateTime? DispatchedDate { get; set; }
+    public bool IsReceived { get; set; }
+    public int? ReceivedBy { get; set; }
+    public DateTime? ReceivedDate { get; set; }
+    public bool IsCancelled { get; set; }
+    public int? CancelledBy { get; set; }
+    public DateTime? CancelledDate { get; set; }
+
     public List<TransferDetailDTO> Details { get; set; } = new();
 }

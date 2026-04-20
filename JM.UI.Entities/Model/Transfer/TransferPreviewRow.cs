@@ -29,6 +29,7 @@ public class TransferPreviewRow
     // ── Editable fields ──
     public decimal IssueQty { get; set; }
     public decimal UnitPrice { get; set; }
+    public decimal SalePrice { get; set; }
     public string? SerialNo { get; set; }
     public string? CreatedRemarks { get; set; }
 

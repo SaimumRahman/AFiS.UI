@@ -1,12 +1,9 @@
 using JM.UI.Entities.Model.Colors;
-using JM.UI.Entities.Model.Designs;
-using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
-using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.Transfer;
 using JM.UI.Service.Transfer;
 using JM.UI.Service.UnitOfWork;
@@ -49,10 +46,6 @@ namespace JM.UI.Client.Pages.Transfers
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
-        protected IEnumerable<LookupItemDTO> DeliveryTypes { get; set; } = new List<LookupItemDTO>();
-        protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
-        protected IEnumerable<SubGroupModelDTO> SubGroups { get; set; } = new List<SubGroupModelDTO>();
-        protected IEnumerable<DesignModelDTO> Designs { get; set; } = new List<DesignModelDTO>();
         protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
         protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
@@ -64,9 +57,13 @@ namespace JM.UI.Client.Pages.Transfers
         protected bool IsLoading { get; set; } = false;
         protected bool IsProcessing { get; set; } = false;
         protected bool IsSearchingBarcode { get; set; } = false;
+        protected bool IsScanningBarcode { get; set; } = false;
         protected bool DisableItemFields { get; set; } = false;
         protected bool IsEditItemMode { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
+
+        // ── Scan textbox (direct-to-grid, qty = 1) ────────────────────
+        protected string ScanBarcodeText { get; set; } = string.Empty;
 
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Item Transfer" : "New Item Transfer";
@@ -92,10 +89,7 @@ namespace JM.UI.Client.Pages.Transfers
 
         private async Task InitializeTransfer()
         {
-            Transfer = TransferService.CreateNewTransfer(
-                companyId: 1,
-                createdBy: 1);
-
+            Transfer = TransferService.CreateNewTransfer(companyId: 1, createdBy: 1);
             TransferDetails = new List<TransferDetailDTO>();
             CurrentDetail = TransferService.CreateNewDetailLine();
             PreviewItems = new List<TransferPreviewRow>();
@@ -107,9 +101,6 @@ namespace JM.UI.Client.Pages.Transfers
                 if (central != null) Transfer.StoreId = central.Id;
             }
         }
-
-        private TransferDetailDTO CreateNewDetail() =>
-            TransferService.CreateNewDetailLine();
 
 
         // ── Data Loading ──────────────────────────────────────────────
@@ -123,8 +114,6 @@ namespace JM.UI.Client.Pages.Transfers
                 Stores = stores;
                 ToStores = stores;
 
-                Groups = await _serviceUnitOfWork.GroupService.GetGroups()
-                          ?? new List<GroupModelDTO>();
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
@@ -139,13 +128,6 @@ namespace JM.UI.Client.Pages.Transfers
                     new() { Id = 1, Name = "Internal Transfer" },
                     new() { Id = 2, Name = "Requisition" },
                     new() { Id = 3, Name = "Return" }
-                };
-
-                DeliveryTypes = new List<LookupItemDTO>
-                {
-                    new() { Id = 1, Name = "Own Vehicle" },
-                    new() { Id = 2, Name = "Courier" },
-                    new() { Id = 3, Name = "Hand Carry" }
                 };
             }
             catch (Exception ex)
@@ -173,15 +155,6 @@ namespace JM.UI.Client.Pages.Transfers
 
                 Transfer = master;
                 TransferDetails = master.Details?.ToList() ?? new List<TransferDetailDTO>();
-
-                var firstDetail = TransferDetails.FirstOrDefault();
-                if (firstDetail is not null)
-                {
-                    if (firstDetail.GroupId.HasValue)
-                        SubGroups = await LoadSubGroupsByGroup(firstDetail.GroupId.Value);
-                    if (firstDetail.SubGroupId.HasValue)
-                        Designs = await LoadDesignsBySubGroup(firstDetail.SubGroupId.Value);
-                }
 
                 if (master.StoreId.HasValue)
                     ToStores = Stores.Where(s => s.Id != master.StoreId.Value).ToList();
@@ -214,6 +187,7 @@ namespace JM.UI.Client.Pages.Transfers
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
+
             StateHasChanged();
         }
 
@@ -247,60 +221,13 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Cascade Dropdown Events ───────────────────────────────────
-
-        protected async Task OnGroupChanged(int? groupId)
-        {
-            if (!groupId.HasValue) return;
-            CurrentDetail.GroupId = groupId;
-            CurrentDetail.SubGroupId = null;
-            CurrentDetail.DesignId = null;
-            SubGroups = await LoadSubGroupsByGroup(groupId.Value);
-            Designs = new List<DesignModelDTO>();
-            StateHasChanged();
-        }
-
-        protected async Task OnSubGroupChanged(int? subGroupId)
-        {
-            if (!subGroupId.HasValue) return;
-            CurrentDetail.SubGroupId = subGroupId;
-            CurrentDetail.DesignId = null;
-            Designs = await LoadDesignsBySubGroup(subGroupId.Value);
-            await GenerateBarcode();
-        }
-
-        protected async Task OnColorChanged(int? colorId)
-        {
-            if (!colorId.HasValue) return;
-            CurrentDetail.ColorId = colorId;
-            await GenerateBarcode();
-
-            if (!string.IsNullOrWhiteSpace(CurrentDetail.Barcode))
-                await SearchSingleBarcodeAndAddToPreview(CurrentDetail.Barcode);
-
-            StateHasChanged();
-        }
-
-        protected async Task OnSizeChanged(int? sizeId)
-        {
-            if (!sizeId.HasValue) return;
-            CurrentDetail.SizeId = sizeId;
-            await GenerateBarcode();
-
-            if (!string.IsNullOrWhiteSpace(CurrentDetail.Barcode))
-                await SearchSingleBarcodeAndAddToPreview(CurrentDetail.Barcode);
-        }
-
-
-        // ── Barcode Search ────────────────────────────────────────────
+        // ── Barcode Dropdown Search → loads preview grid ──────────────
 
         protected async Task OnBarcodeDropdownChanged(object value)
         {
             var barcode = value?.ToString();
-            if (string.IsNullOrWhiteSpace(barcode))
-                return;
+            if (string.IsNullOrWhiteSpace(barcode)) return;
 
-            // ── Guard: From Store must be selected before searching ──────────
             if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
             {
                 notificationService.Notify(
@@ -322,63 +249,60 @@ namespace JM.UI.Client.Pages.Transfers
                 var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
                                 ?? $"Store #{Transfer.StoreId}";
 
-                ItemDTO? item = null;
+                List<ItemDTO>? items = null;
 
                 try
                 {
-                    item = await _serviceUnitOfWork.TransferService
-                               .SearchByBarcodeExact(barcode, Transfer.StoreId.Value);
+                    items = (await _serviceUnitOfWork.TransferService
+                                .SearchByBarcodeUptoColor(barcode, Transfer.StoreId.Value)).ToList();
                 }
                 catch (Exception innerEx) when (
                     innerEx.Message.Contains("does not contain any JSON") ||
                     innerEx.Message.Contains("isFinalBlock") ||
                     innerEx.Message.Contains("Unexpected error") ||
-                    innerEx.Message.Contains("JSON"))
+                    innerEx.Message.Contains("JSON"))   
                 {
-                    // API returned empty / non-JSON body — treat as not found
-                    item = null;
+                    items = null;
                 }
 
                 PreviewItems.Clear();
                 PreviewGrid?.Reload();
 
-                if (item != null)
+                if (items != null && items.Any())
                 {
                     DisableItemFields = true;
 
-                    CurrentDetail.ItemID = item.Id;
-                    CurrentDetail.Barcode = barcode;
-                    CurrentDetail.ColorId = item.ColorId;
-                    CurrentDetail.SizeId = item.SizeId;
-                    CurrentDetail.GroupId = item.GroupId;
-                    CurrentDetail.SubGroupId = item.SubGroupId;
-                    CurrentDetail.DesignId = item.DesignId;
-                    CurrentDetail.UnitID = item.MesurementUnitId ?? 0;
-
-                    if (item.GroupId.HasValue)
-                        SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
-
-                    if (item.SubGroupId.HasValue)
-                        Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
-
-                    PreviewItems.Add(new TransferPreviewRow
+                    foreach (var item in items)
                     {
-                        ItemId = item.Id,
-                        Barcode = item.Barcode ?? barcode,
-                        ItemName = item.Name ?? string.Empty,
-                        IsNewItem = false,
-                        IssueQty = 0,
-                        SerialNo = SharedSerialNo,
-                        CreatedRemarks = SharedCreatedRemarks,
-                        StockQuantity = item.CurrentStock
-                    });
+                        PreviewItems.Add(new TransferPreviewRow
+                        {
+                            ItemId = item.Id,
+                            Barcode = item.Barcode ?? barcode,
+                            ItemName = item.Name ?? string.Empty,
+                            ColorId = item.ColorId,
+                            ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
+                            SizeId = item.SizeId,
+                            SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
+                            GroupId = item.GroupId,
+                            SubGroupId = item.SubGroupId,
+                            DesignId = item.DesignId,
+                            UnitId = item.MesurementUnitId,
+                            UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty,
+                            IsNewItem = false,
+                            IssueQty = 0,
+                            SerialNo = SharedSerialNo,
+                            CreatedRemarks = SharedCreatedRemarks,
+                            StockQuantity = item.CurrentStock,
+                            SalePrice = item.SalePrice.Value
+                        });
+                    }
 
                     PreviewGrid?.Reload();
 
                     notificationService.Notify(
                         NotificationSeverity.Success,
-                        "Item Found",
-                        $"'{item.Name}' loaded from '{storeName}'.");
+                        "Items Found",
+                        $"{items.Count} item(s) loaded from '{storeName}'.");
                 }
                 else
                 {
@@ -411,108 +335,145 @@ namespace JM.UI.Client.Pages.Transfers
                 StateHasChanged();
             }
         }
-        private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
+
+
+        // ── Scan Barcode Textbox → direct add to final list (qty = 1) ─
+
+        protected async Task OnScanBarcodeKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
         {
+            if (e.Key != "Enter") return;
+            await ProcessScannedBarcode();
+        }
+
+        protected async Task OnScanBarcodeChange(string value)
+        {
+            ScanBarcodeText = value;
+        }
+
+        protected async Task ProcessScannedBarcode()
+        {
+            var barcode = ScanBarcodeText?.Trim();
+            if (string.IsNullOrWhiteSpace(barcode)) return;
+
+            if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Warning,
+                    "Store Not Selected",
+                    "Please select a 'From Store' before scanning items.",
+                    duration: 5000);
+                ScanBarcodeText = string.Empty;
+                StateHasChanged();
+                return;
+            }
+
             try
             {
-                if (PreviewItems.Any(p => p.Barcode == barcode)) return;
-
-                var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
-
-                TransferPreviewRow newRow;
-
-                if (response.Found && response.ItemDetails != null && response.ItemDetails.Any())
-                {
-                    var item = response.ItemDetails.FirstOrDefault(x => x.Barcode == barcode)
-                               ?? response.ItemDetails.First();
-
-                    newRow = new TransferPreviewRow
-                    {
-                        ItemId = item.Id,
-                        ItemName = item.Name ?? string.Empty,
-                        Barcode = barcode,
-                        ColorId = item.ColorId,
-                        ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
-                        SizeId = item.SizeId,
-                        SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
-                        GroupId = item.GroupId,
-                        SubGroupId = item.SubGroupId,
-                        DesignId = item.DesignId,
-                        UnitId = item.MesurementUnitId,
-                        UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty,
-                        StockQuantity = response.Stock?.Quantity ?? 0,
-                        IsNewItem = false,
-                        ProductType = item.ProductType ?? string.Empty,
-                        CountStockByColor = item.CountStockByColor,
-                        CountStockBySize = item.CountStockBySize,
-                        IssueQty = 0,
-                        SerialNo = SharedSerialNo,
-                        CreatedRemarks = SharedCreatedRemarks
-                    };
-                }
-                else
-                {
-                    newRow = new TransferPreviewRow
-                    {
-                        ItemId = 0,
-                        Barcode = barcode,
-                        ItemName = string.Empty,
-                        ColorId = CurrentDetail.ColorId,
-                        ColorName = Colors.FirstOrDefault(c => c.Id == CurrentDetail.ColorId)?.Name ?? string.Empty,
-                        SizeId = CurrentDetail.SizeId,
-                        SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentDetail.SizeId)?.Name ?? string.Empty,
-                        GroupId = CurrentDetail.GroupId,
-                        SubGroupId = CurrentDetail.SubGroupId,
-                        IsNewItem = true,
-                        IssueQty = 0,
-                        SerialNo = SharedSerialNo,
-                        CreatedRemarks = SharedCreatedRemarks
-                    };
-                }
-
-                PreviewItems.Add(newRow);
-                PreviewGrid?.Reload();
+                IsScanningBarcode = true;
                 StateHasChanged();
+
+                var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
+                                ?? $"Store #{Transfer.StoreId}";
+
+                ItemDTO? item = null;
+
+                try
+                {
+                    item = await _serviceUnitOfWork.TransferService
+                               .SearchByBarcodeExact(barcode, Transfer.StoreId.Value);
+                }
+                catch (Exception innerEx) when (
+                    innerEx.Message.Contains("does not contain any JSON") ||
+                    innerEx.Message.Contains("isFinalBlock") ||
+                    innerEx.Message.Contains("Unexpected error") ||
+                    innerEx.Message.Contains("JSON"))
+                {
+                    item = null;
+                }
+
+                if (item == null)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Item Not Found",
+                        $"Barcode '{barcode}' was not found in '{storeName}'.",
+                        duration: 5000);
+                    ScanBarcodeText = string.Empty;
+                    StateHasChanged();
+                    return;
+                }
+
+                // Check duplicate
+                if (TransferDetails.Any(d => d.Barcode == item.Barcode))
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Duplicate",
+                        $"Barcode '{item.Barcode}' is already in the transfer list.");
+                    ScanBarcodeText = string.Empty;
+                    StateHasChanged();
+                    return;
+                }
+
+                // Stock check
+                if (item.CurrentStock > 0 && 1 > item.CurrentStock)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Error,
+                        "Insufficient Stock",
+                        $"'{item.Name}': no stock available in '{storeName}'.");
+                    ScanBarcodeText = string.Empty;
+                    StateHasChanged();
+                    return;
+                }
+
+                var newLine = TransferService.CreateNewDetailLine();
+                newLine.TransferID = Transfer.TransferId;
+                newLine.ItemID = item.Id;
+                newLine.Barcode = item.Barcode ?? barcode;
+                newLine.ItemName = item.Name ?? string.Empty;
+                newLine.ColorId = item.ColorId;
+                newLine.ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty;
+                newLine.SizeId = item.SizeId;
+                newLine.SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty;
+                newLine.GroupId = item.GroupId;
+                newLine.SubGroupId = item.SubGroupId;
+                newLine.DesignId = item.DesignId;
+                newLine.UnitID = item.MesurementUnitId ?? 0;
+                newLine.UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name;
+                newLine.IssueQty = 1;
+                newLine.SerialNo = string.Empty;
+                newLine.CreatedRemarks = string.Empty;
+                newLine.IsNewItem = false;
+                newLine.CreatedAt = DateTime.Now;
+                newLine.SalePrice = item.SalePrice ?? 0;
+
+                TransferDetails.Add(newLine);
+                await ItemsGrid.Reload();
+
+                notificationService.Notify(
+                    NotificationSeverity.Success,
+                    "Item Added",
+                    $"'{item.Name}' scanned and added with qty = 1.");
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
-                    $"Preview load failed: {ex.Message}");
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Scan Failed",
+                    $"An unexpected error occurred: {ex.Message}",
+                    duration: 7000);
+            }
+            finally
+            {
+                ScanBarcodeText = string.Empty;
+                IsScanningBarcode = false;
+                StateHasChanged();
             }
         }
 
 
-        // ── Barcode Generation ────────────────────────────────────────
-
-        protected async Task GenerateBarcode()
-        {
-            if (!CurrentDetail.GroupId.HasValue && CurrentDetail.ItemID == 0) return;
-
-            try
-            {
-                var request = new BarcodeGenerationRequestDTO
-                {
-                    ColorName = Colors.FirstOrDefault(c => c.Id == CurrentDetail.ColorId)?.ColorCode,
-                    SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentDetail.SizeId)?.Name,
-                    ItemId = CurrentDetail.ItemID,
-                    GroupId = CurrentDetail.GroupId,
-                    ExistingBarcode = CurrentDetail.Barcode
-                };
-
-                var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
-                CurrentDetail.Barcode = barcode;
-                BarcodeSearchText = barcode;
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
-                    $"Failed to generate barcode: {ex.Message}");
-            }
-        }
-
-
-        // ── Add Items to Confirmed Grid ───────────────────────────────
+        // ── Add Items to Confirmed Grid (from preview) ────────────────
 
         protected async Task AddItemToGrid()
         {
@@ -564,13 +525,14 @@ namespace JM.UI.Client.Pages.Transfers
                 newLine.DesignId = row.DesignId;
                 newLine.UnitID = row.UnitId ?? 0;
                 newLine.UnitName = !string.IsNullOrWhiteSpace(row.UnitName)
-                                            ? row.UnitName
-                                            : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name;
+                                        ? row.UnitName
+                                        : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name;
                 newLine.IssueQty = row.IssueQty;
                 newLine.SerialNo = row.SerialNo;
                 newLine.CreatedRemarks = row.CreatedRemarks;
                 newLine.IsNewItem = row.IsNewItem;
                 newLine.CreatedAt = DateTime.Now;
+                newLine.SalePrice = row.SalePrice;
 
                 TransferDetails.Add(newLine);
                 addedCount++;
@@ -596,7 +558,6 @@ namespace JM.UI.Client.Pages.Transfers
             ResetSharedFields();
             BarcodeSearchText = string.Empty;
             DisableItemFields = false;
-
             CurrentDetail.ColorId = null;
             CurrentDetail.SizeId = null;
             CurrentDetail.Barcode = null;
@@ -637,7 +598,8 @@ namespace JM.UI.Client.Pages.Transfers
                 IssueQty = item.IssueQty,
                 SerialNo = item.SerialNo,
                 CreatedRemarks = item.CreatedRemarks,
-                StockQuantity = 0
+                StockQuantity = 0,
+                SalePrice = item.SalePrice
             });
 
             PreviewGrid?.Reload();
@@ -663,16 +625,12 @@ namespace JM.UI.Client.Pages.Transfers
                 UnitID = item.UnitID,
                 IssueQty = item.IssueQty,
                 SerialNo = item.SerialNo,
-                CreatedRemarks = item.CreatedRemarks
+                CreatedRemarks = item.CreatedRemarks,
+                SalePrice = item.SalePrice
             };
 
             BarcodeSearchText = item.Barcode ?? string.Empty;
             DisableItemFields = true;
-
-            if (item.GroupId.HasValue)
-                SubGroups = await LoadSubGroupsByGroup(item.GroupId.Value);
-            if (item.SubGroupId.HasValue)
-                Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
 
             notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
                 $"Editing '{item.ItemName}' — make changes then click Update.");
@@ -722,6 +680,7 @@ namespace JM.UI.Client.Pages.Transfers
                 SerialNo = row.SerialNo,
                 CreatedRemarks = row.CreatedRemarks,
                 IsNewItem = row.IsNewItem,
+                SalePrice = row.SalePrice,
                 UpdatedAt = DateTime.Now
             };
 
@@ -750,17 +709,11 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
-        /// <summary>
-        /// Removes a single detail line from the confirmed grid.
-        /// If the line has already been persisted (TransferDetailID > 0) it is
-        /// also soft-deleted on the server via <see cref="ITransferService.DeleteTransferDetail"/>.
-        /// </summary>
         protected async Task DeleteItem(TransferDetailDTO item)
         {
             if (item.TransferDetailID > 0)
             {
-                var result = await TransferService.DeleteTransferDetail(
-                    item.TransferDetailID, 1);
+                var result = await TransferService.DeleteTransferDetail(item.TransferDetailID, 1);
 
                 if (!result.IsSuccessStatus)
                 {
@@ -874,7 +827,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Clear Barcode Search ──────────────────────────────────────
+        // ── Clear / Reset ─────────────────────────────────────────────
 
         protected void ClearBarcodeSearch()
         {
@@ -886,9 +839,6 @@ namespace JM.UI.Client.Pages.Transfers
             ResetSharedFields();
             StateHasChanged();
         }
-
-
-        // ── Reset Left Panel ──────────────────────────────────────────
 
         protected void ResetLeftPanel()
         {
@@ -902,9 +852,8 @@ namespace JM.UI.Client.Pages.Transfers
             ToStores = Stores.ToList();
 
             CurrentDetail = TransferService.CreateNewDetailLine();
-            SubGroups = new List<SubGroupModelDTO>();
-            Designs = new List<DesignModelDTO>();
             BarcodeSearchText = string.Empty;
+            ScanBarcodeText = string.Empty;
             DisableItemFields = false;
             PreviewItems.Clear();
             PreviewGrid?.Reload();
@@ -921,14 +870,6 @@ namespace JM.UI.Client.Pages.Transfers
             SharedSerialNo = string.Empty;
             SharedCreatedRemarks = string.Empty;
         }
-
-        private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId) =>
-            await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId)
-            ?? new List<SubGroupModelDTO>();
-
-        private async Task<IEnumerable<DesignModelDTO>> LoadDesignsBySubGroup(int subGroupId) =>
-            await _serviceUnitOfWork.DesignService.LoadDesignsBySubGroup(subGroupId)
-            ?? new List<DesignModelDTO>();
 
         public void Dispose() => ItemsGrid?.Dispose();
     }

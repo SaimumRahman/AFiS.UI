@@ -132,6 +132,25 @@
         font-weight: 700;
         padding: 1px 4px;
     }
+
+    .scan-bar {
+        background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+        border: 1px solid #ffe082;
+        border-radius: 6px;
+        padding: 6px 10px;
+    }
+
+        .scan-bar .bar-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 3px;
+        }
+
+    .sale-price-cell {
+        color: #1b5e20;
+        font-weight: 600;
+    }
 </style>
 
 @if (IsLoading)
@@ -178,17 +197,6 @@ else
                 <RadzenColumn Size="12" SizeLG="4"
                               Style="border-right: 1px solid #dee2e6; padding-right: 0.4rem;">
                     <RadzenStack Gap="0.2rem">
-
-                        <!-- Transfer No -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4">
-                                <RadzenLabel Text="Transfer No" Style="font-weight:600; font-size:0.75rem;" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="8">
-                                <RadzenTextBox @bind-Value="Transfer.TransferNo" Disabled="true"
-                                               Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
-                            </RadzenColumn>
-                        </RadzenRow>
 
                         <!-- Transfer Date -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
@@ -248,34 +256,6 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        <!-- Delivery Type -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4">
-                                <RadzenLabel Text="Delivery Type" Style="font-weight:600; font-size:0.75rem;" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="8">
-                                <RadzenDropDown @bind-Value="Transfer.DeliveryTypeId"
-                                                Data="@DeliveryTypes"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Disabled="@IsProcessing" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Delivery Address -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4">
-                                <RadzenLabel Text="Delivery Addr" Style="font-weight:600; font-size:0.75rem;" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="8">
-                                <RadzenTextBox @bind-Value="Transfer.DeliveryAddress"
-                                               Placeholder="Delivery address"
-                                               Disabled="@IsProcessing"
-                                               Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
                         <!-- Requisition ID -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                             <RadzenColumn Size="4">
@@ -289,20 +269,6 @@ else
                                                Style="width:100%; font-size:0.75rem;" />
                             </RadzenColumn>
                         </RadzenRow>
-
-                        <!-- Comments -->
-                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4">
-                                <RadzenLabel Text="Comments" Style="font-weight:600; font-size:0.75rem;" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="8">
-                                <RadzenTextArea @bind-Value="Transfer.Comments"
-                                                Placeholder="Enter comments..."
-                                                Disabled="@IsProcessing"
-                                                Style="width:100%; font-size:0.75rem;" Rows="2" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
                     </RadzenStack>
                 </RadzenColumn>
 
@@ -312,16 +278,50 @@ else
                 <RadzenColumn Size="12" SizeLG="8">
                     <RadzenStack Gap="0.3rem">
 
-                        <!-- Barcode search row -->
+                        <!-- ════════════════════════════════════════════════════
+                             SCAN BARCODE BAR — direct add with qty = 1
+                             ════════════════════════════════════════════════════ -->
+                        <div class="scan-bar">
+                            <div class="bar-label">🔫 Scan Barcode — adds item directly to transfer list with qty = 1</div>
+                            <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenTextBox Value="@ScanBarcodeText"
+                                                   ValueChanged="@OnScanBarcodeChange"
+                                                   Placeholder="Scan or type barcode then press Enter..."
+                                                   Style="width:100%; font-size:0.75rem; height:28px; background:#fffde7;"
+                                                   @onkeyup="OnScanBarcodeKeyUp"
+                                                   Disabled="@(IsProcessing || IsScanningBarcode)" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="3" Style="display:flex; align-items:center; gap:4px;">
+                                    <RadzenButton Icon="qr_code_scanner"
+                                                  ButtonStyle="ButtonStyle.Warning"
+                                                  Size="ButtonSize.Small"
+                                                  Click="@ProcessScannedBarcode"
+                                                  Disabled="@(IsProcessing || IsScanningBarcode || string.IsNullOrWhiteSpace(ScanBarcodeText))"
+                                                  Text="Add"
+                                                  Style="height:26px; font-size:0.72rem; font-weight:700;" />
+                                    @if (IsScanningBarcode)
+                                    {
+                                        <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate"
+                                                                   Size="ProgressBarCircularSize.ExtraSmall"
+                                                                   Style="width:20px; height:20px;" />
+                                    }
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </div>
+
+                        <!-- ════════════════════════════════════════════════════
+                             BARCODE DROPDOWN SEARCH — loads preview grid
+                             ════════════════════════════════════════════════════ -->
                         <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenLabel Text="Search Barcode / Item"
+                                <RadzenLabel Text="Search Barcode / Item (Preview)"
                                              Style="width:100%; font-size:0.65rem;" />
                                 <RadzenDropDownDataGrid @bind-Value="BarcodeSearchText"
                                                         Data="@AvailableItems"
                                                         TextProperty="Barcode" ValueProperty="Barcode"
-                                                        Placeholder="Select barcode..."
-                                                        Style="width:100%; background:#fffde7; font-size:0.75rem;"
+                                                        Placeholder="Select barcode to preview variants..."
+                                                        Style="width:100%; background:#e8f5e9; font-size:0.75rem;"
                                                         AllowFiltering="true"
                                                         AllowFilteringByAllStringColumns="true"
                                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -330,7 +330,8 @@ else
                                     <Columns>
                                         <RadzenDropDownDataGridColumn Property="Barcode" Title="Barcode" Width="140px" />
                                         <RadzenDropDownDataGridColumn Property="Name" Title="Item Name" Width="200px" />
-                                        <RadzenDropDownDataGridColumn Property="CurrentStock" Title="Stock" Width="100px" />
+                                        <RadzenDropDownDataGridColumn Property="CurrentStock" Title="Stock" Width="80px" />
+                                        <RadzenDropDownDataGridColumn Property="SalePrice" Title="Sale Price" Width="90px" />
                                     </Columns>
                                 </RadzenDropDownDataGrid>
                             </RadzenColumn>
@@ -339,90 +340,6 @@ else
                                               Size="ButtonSize.Small"
                                               Click="@ClearBarcodeSearch"
                                               Disabled="@IsProcessing" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="5">
-                                <RadzenLabel Text="Group" Style="font-size:0.65rem;" />
-                                <RadzenDropDown @bind-Value="CurrentDetail.GroupId"
-                                                Data="@Groups"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select group..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Change="@(args => OnGroupChanged((int?)args))"
-                                                Disabled="@IsProcessing" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Product / Sub Product / UoM -->
-                        <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Product" Style="font-size:0.65rem;" />
-                                <RadzenDropDown @bind-Value="CurrentDetail.SubGroupId"
-                                                Data="@SubGroups"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Change="@(args => OnSubGroupChanged((int?)args))"
-                                                Disabled="@(IsProcessing || DisableItemFields)" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Sub Product" Style="font-size:0.65rem;" />
-                                <RadzenDropDown @bind-Value="CurrentDetail.DesignId"
-                                                Data="@Designs"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Disabled="@(IsProcessing || !CurrentDetail.SubGroupId.HasValue)" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="UoM" Style="font-size:0.65rem;" />
-                                <RadzenDropDown @bind-Value="CurrentDetail.UnitID"
-                                                Data="@Units"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Disabled="@(IsProcessing || DisableItemFields)" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Color / Size / Barcode -->
-                        <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Color" Style="font-weight:600; font-size:0.75rem;" />
-                                <RadzenDropDownDataGrid @bind-Value="CurrentDetail.ColorId"
-                                                        Data="@Colors" ValueProperty="Id" TextProperty="Name"
-                                                        AllowFiltering="true"
-                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                        AllowFilteringByAllStringColumns="true"
-                                                        Style="width:100%;" Placeholder="Select"
-                                                        Change="@(args => OnColorChanged((int?)args))"
-                                                        Disabled="@IsProcessing">
-                                    <Columns>
-                                        <RadzenDropDownDataGridColumn Width="40px" Filterable="false">
-                                            <Template Context="color">
-                                                <div style="width:14px;height:14px;border-radius:3px;border:1px solid #ccc;
-                                                    background-color:@(string.IsNullOrWhiteSpace(color.HexCode) ? "#fff" : color.HexCode)">
-                                                </div>
-                                            </Template>
-                                        </RadzenDropDownDataGridColumn>
-                                        <RadzenDropDownDataGridColumn Property="Name" Title="Color Name" />
-                                        <RadzenDropDownDataGridColumn Property="ColorCode" Title="Code" />
-                                    </Columns>
-                                </RadzenDropDownDataGrid>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Size" Style="font-weight:600; font-size:0.75rem;" />
-                                <RadzenDropDown @bind-Value="CurrentDetail.SizeId"
-                                                Data="@Sizes"
-                                                TextProperty="Name" ValueProperty="Id" Placeholder="Select"
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Change="@(args => OnSizeChanged((int?)args))"
-                                                Disabled="@IsProcessing" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <RadzenLabel Text="Barcode" Style="font-weight:600; font-size:0.65rem;" />
-                                <RadzenTextBox @bind-Value="CurrentDetail.Barcode"
-                                               Style="width:100%; font-size:0.65rem; height:26px; padding:2px 6px;"
-                                               ReadOnly="true" Placeholder="Auto-generated" />
                             </RadzenColumn>
                         </RadzenRow>
 
@@ -515,7 +432,17 @@ else
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <!-- Stock QTY (read-only) -->
+                                        <!-- Sale Price — read-only -->
+                                        <RadzenDataGridColumn TItem="TransferPreviewRow" Property="SalePrice"
+                                                              Title="Sale Price" Width="80px">
+                                            <Template Context="row">
+                                                <span class="sale-price-cell" style="font-size:0.65rem;">
+                                                    @row.SalePrice.ToString("N2")
+                                                </span>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
+                                        <!-- Stock QTY — read-only -->
                                         <RadzenDataGridColumn TItem="TransferPreviewRow" Title="Stock QTY" Width="75px">
                                             <Template Context="row">
                                                 <span style="font-size:0.65rem; color:#1565c0; font-weight:600;">
@@ -576,11 +503,12 @@ else
                                 </RadzenDataGrid>
 
                                 <!-- Preview totals bar -->
-                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;
+                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;
                                     background:#e8f5e9; padding:4px 10px; font-size:0.7rem; font-weight:700;
                                     border-top:1px solid #a5d6a7;">
                                     <span>Rows: @PreviewItems.Count</span>
                                     <span>Total Qty: @PreviewItems.Sum(r => r.IssueQty).ToString("N2")</span>
+                                    <span>Total Sale: @PreviewItems.Sum(r => r.SalePrice).ToString("N2")</span>
                                 </div>
                             </div>
                         }
@@ -588,7 +516,7 @@ else
                         {
                             <div style="border:1px dashed #b0bec5; border-radius:6px; padding:10px;
                                 text-align:center; color:#90a4ae; font-size:0.7rem; background:#fafafa;">
-                                Select a barcode, color, or size to load items into the preview grid
+                                Select a barcode from the dropdown above to load items into the preview grid
                             </div>
                         }
 
@@ -600,7 +528,7 @@ else
                             </RadzenAlert>
                         }
 
-                        <!-- Add Item Button -->
+                        <!-- Add Item Button (from preview) -->
                         <div style="text-align:right; padding-top:2px;">
                             <RadzenButton Icon="add"
                                           ButtonStyle="ButtonStyle.Success"
@@ -635,6 +563,12 @@ else
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="ColorName" Title="Color" Width="80px" />
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SizeName" Title="Size" Width="70px" />
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitName" Title="UoM" Width="65px" />
+                    <!-- Sale Price — read-only -->
+                    <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SalePrice" Title="Sale Price" Width="85px">
+                        <Template Context="item">
+                            <span class="sale-price-cell">@item.SalePrice.ToString("N2")</span>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="IssueQty" Title="Issue Qty" Width="75px">
                         <Template Context="item">
                             <span style="font-weight:600;">@item.IssueQty.ToString("N2")</span>
