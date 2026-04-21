@@ -15,6 +15,8 @@ public class TransferMasterDTO
     public int DeliveryTypeId { get; set; }
     public string? DeliveryAddress { get; set; }
     public string? Comments { get; set; }
+    public string? StoreName { get; set; }
+    public string? ToStoreName { get; set; }
     public int? RequisitionID { get; set; }
     public int IsCompleted { get; set; }
     public int? ReceiveStatusId { get; set; }

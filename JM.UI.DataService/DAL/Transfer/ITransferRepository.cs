@@ -16,5 +16,8 @@ namespace JM.UI.DataService.DAL.Transfer
         Task<ResponseResult> DeleteTransferDetail(long detailId, int deletedBy);
         Task<ItemDTO?> SearchByBarcodeExact(string barcode, int storeId);
         Task<IEnumerable<ItemDTO?>> SearchByBarcodeUptoColor(string barcode, int storeId);
+        Task<IEnumerable<TransferDetailDTO>> GetDetailsByTransferId(long transferId);
+        Task<IEnumerable<TransferMasterDTO>> GetUndispatchedTransfers(int storeId);
+        Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy);
     }
 }
