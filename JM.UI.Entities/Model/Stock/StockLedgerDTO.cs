@@ -13,4 +13,5 @@ public class StockLedgerDTO
     public decimal ReceiveQty { get; set; }
     public decimal IssueQty { get; set; }
     public decimal ClosingStock { get; set; }
+    public DateTime LastTransactionDate { get; set; }
 }
