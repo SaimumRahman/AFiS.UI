@@ -18,6 +18,8 @@ namespace JM.UI.DataService.DAL.Transfer
         Task<IEnumerable<ItemDTO?>> SearchByBarcodeUptoColor(string barcode, int storeId);
         Task<IEnumerable<TransferDetailDTO>> GetDetailsByTransferId(long transferId);
         Task<IEnumerable<TransferMasterDTO>> GetUndispatchedTransfers(int storeId);
+        Task<IEnumerable<TransferMasterDTO>> GetDispatchedTransfers(int storeId);
         Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy);
+        Task<ResponseResult> UpdateReceivedStatus(List<int> transferIds, int updatedBy);
     }
 }

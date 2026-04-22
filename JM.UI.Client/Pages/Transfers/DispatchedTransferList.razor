@@ -1,0 +1,230 @@
+@page "/DispatchedTransferList"
+@using JM.UI.Client.Pages.Transfer
+@using JM.UI.Client.Pages.Dialog
+@using JM.UI.Entities.Model.Transfer
+@inherits DispatchedTransferListComponent
+@attribute [Authorize]
+<PageTitle>Undispatched Transfer List</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="swap_horiz" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Transfer Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenDropDown @bind-Value="StoreId"
+                                    Data="@Stores"
+                                    TextProperty="Name" ValueProperty="Id"
+                                    Placeholder="Select store..."
+                                    Style="width:200px; font-size:0.75rem;" AllowFiltering="true"
+                                    Change="@(args => OnStoreChanged((int)args))"
+                                    Disabled="@IsLoading" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Dispatch Button -->
+    @if (HasSelection)
+    {
+        <RadzenCard class="mb-3">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    <strong>@SelectedTransferIds.Count</strong> transfer(s) selected
+                </RadzenText>
+                <RadzenButton Text="Dispatch Selected"
+                              Icon="local_shipping"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@UpdateDispatchStatus" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="TransferGrid"
+                        Data="@Transfers"
+                        TItem="TransferMasterDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact"
+                        RowExpand="@OnRowExpand"
+                        ExpandMode="DataGridExpandMode.Single">
+
+            <Columns>
+
+                <!-- Checkbox Column -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Width="50px" Frozen="true"
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+                    <HeaderTemplate>
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@(Transfers.Any() && SelectedTransferIds.Count == Transfers.Count())"
+                                        Change="@(val => ToggleSelectAll(val))" />
+                    </HeaderTemplate>
+                    <Template Context="transfer">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@(SelectedTransferIds.Contains(transfer.TransferId))"
+                                        Change="@(val => ToggleSelection(transfer.TransferId, val))" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Transfer No -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="TransferNo" Title="Transfer No" Width="140px" Frozen="true">
+                    <Template Context="transfer">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="receipt_long" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @transfer.TransferNo
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Transfer Date -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="TransferDate" Title="Date" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="transfer">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @(transfer.TransferDate.ToString("dd MMM yyyy"))
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- From Store -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="StoreName" Title="From Store" Width="160px">
+                    <Template Context="transfer">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            <RadzenIcon Icon="store" Style="color: var(--rz-info);" />
+                            <span>@(transfer.StoreName ?? "N/A")</span>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- To Store -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="ToStoreName" Title="To Store" Width="160px">
+                    <Template Context="transfer">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            <RadzenIcon Icon="store" Style="color: var(--rz-success);" />
+                            <span>@(transfer.ToStoreName ?? "N/A")</span>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Receive Status -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="ReceiveStatusId" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="transfer">
+                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(transfer.ReceiveStatusId)"
+                                     Text="@GetStatusLabel(transfer.ReceiveStatusId)" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Is Completed -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsCompleted" Title="Completed" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="transfer">
+                        <RadzenBadge BadgeStyle="@(transfer.IsCompleted == 1 ? BadgeStyle.Success : BadgeStyle.Warning)"
+                                     Text="@(transfer.IsCompleted == 1 ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Comments -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="Comments" Title="Comments" Width="200px">
+                    <Template Context="transfer">
+                        <div title="@transfer.Comments">
+                            @(Truncate(transfer.Comments, 40))
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+            </Columns>
+
+            <!-- Expandable Detail Grid -->
+            <Template Context="master">
+                <RadzenCard class="m-2" Style="background: var(--rz-base-background-color);">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="mb-2">
+                        <RadzenIcon Icon="list_alt" Style="color: var(--rz-primary); vertical-align: middle;" />
+                        Items for <strong>@master.TransferNo</strong>
+                    </RadzenText>
+
+                    @if (master.Details == null)
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="p-2">
+                            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                            <RadzenText>Loading items...</RadzenText>
+                        </RadzenStack>
+                    }
+                    else if (!master.Details.Any())
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                            No items found for this transfer.
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        <RadzenDataGrid Data="@master.Details"
+                                        TItem="TransferDetailDTO"
+                                        GridLines="DataGridGridLines.Both"
+                                        Density="Density.Compact"
+                                        AllowAlternatingRows="true"
+                                        AllowSorting="true">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="ItemName" Title="Item Name" Width="200px">
+                                    <Template Context="detail">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                                            <RadzenIcon Icon="inventory_2" Style="color: var(--rz-primary);" />
+                                            <span>@detail.ItemName</span>
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="Barcode" Title="Barcode" Width="130px" TextAlign="TextAlign.Center">
+                                    <Template Context="detail">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@(detail.Barcode ?? "N/A")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="IssueQty" Title="Qty" Width="90px" TextAlign="TextAlign.Center">
+                                    <Template Context="detail">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@detail.IssueQty.ToString()" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitName" Title="Unit" Width="100px" TextAlign="TextAlign.Center" />
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitPrice" Title="Unit Price" Width="110px" TextAlign="TextAlign.Right">
+                                    <Template Context="detail">
+                                        @(detail.UnitPrice.ToString("N2"))
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="TotalAmount" Title="Total Amount" Width="120px" TextAlign="TextAlign.Right">
+                                    <Template Context="detail">
+                                        <strong>@(detail.TotalAmount.ToString("N2"))</strong>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SerialNo" Title="Serial No" Width="120px" TextAlign="TextAlign.Center">
+                                    <Template Context="detail">
+                                        @(detail.SerialNo ?? "—")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </RadzenCard>
+            </Template>
+
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

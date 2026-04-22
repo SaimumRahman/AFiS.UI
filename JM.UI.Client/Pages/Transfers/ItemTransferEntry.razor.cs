@@ -149,7 +149,7 @@ namespace JM.UI.Client.Pages.Transfers
                 {
                     notificationService.Notify(NotificationSeverity.Error, "Not Found",
                         $"Transfer #{Id} could not be found.");
-                    NavigationManager.NavigateTo("/TransferList");
+                    NavigationManager.NavigateTo("/ItemsTransferList");
                     return;
                 }
 

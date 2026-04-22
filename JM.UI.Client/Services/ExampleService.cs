@@ -149,6 +149,26 @@ namespace JM.UI.Client.Services
                         Icon = "\ue40a",
                         Tags = new[] { "purchase", "return", "finance" }
                     },
+                   new Example {
+                        Toc = [ new () { Text = "UndispatchedTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Undispatched Transfers",
+                        Path = "/UndispatchedTransferList",
+                        Updated = false,
+                        Title = "Undispatched Transfer List",
+                        Description = "Manage undispatched transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "transfer", "undispatched", "inventory" }
+                    },
+                   new Example {
+                        Toc = [ new () { Text = "DispatchedTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Dispatched Transfers",
+                        Path = "/DispatchedTransferList",
+                        Updated = false,
+                        Title = "Dispatched Transfer List",
+                        Description = "Manage dispatched transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "transfer", "dispatched", "inventory" }
+                    },
                     new Example
                     {
                         Name = "Purchase Orders",
@@ -175,6 +195,16 @@ namespace JM.UI.Client.Services
                         Title = "Item Transfer",
                         Description = "Transfer items between stores",
                         Tags = new[] { "transfer", "stock", "store", "issue" }
+                    },
+                    new Example {
+                        Toc = [ new () { Text = "ItemsTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Items Transfers",
+                        Path = "/ItemsTransferList",
+                        Updated = false,
+                        Title = "Items Transfer List",
+                        Description = "Manage items transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "items", "transfer", "inventory" }
                     },
                     new Example
                     {
