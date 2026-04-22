@@ -25,6 +25,10 @@ namespace JM.UI.Client.Pages.Groups
             {
                 await LoadGroup();
             }
+            else
+            {
+                await LoadNextCode();
+            }
         }
 
         private async Task LoadGroup()
@@ -81,7 +85,18 @@ namespace JM.UI.Client.Pages.Groups
                 IsProcessing = false;
             }
         }
-
+        private async Task LoadNextCode()
+        {
+            try
+            {
+                Group.Code = await _serviceUnitOfWork.GroupService.GetNextGroupCode();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning",
+                    $"Could not generate code: {ex.Message}");
+            }
+        }
         protected void Cancel()
         {
             NavigationManager.NavigateTo("/GroupsList");

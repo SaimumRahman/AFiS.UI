@@ -50,7 +50,8 @@ namespace JM.UI.Client.Pages.StockOpening
         protected List<StockOpeningPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<StockOpeningPreviewRow> PreviewGrid = new();
 
-        // ─── Shared price fields (S.Rate + QTY only for Stock Opening) ───
+        // ─── Shared price fields (P.Rate + S.Rate + QTY for Stock Opening) ───
+        protected decimal SharedPurchasePrice { get; set; } = 0;
         protected decimal SharedSalePrice { get; set; } = 0;
         protected int? SharedQuantity { get; set; }
 
@@ -76,7 +77,7 @@ namespace JM.UI.Client.Pages.StockOpening
         protected bool IsNewBrand { get; set; } = false;
 
         protected string OriginSearchText { get; set; } = string.Empty;
-        protected IEnumerable<ItemOriginDTO> OriginSuggestions { get; set; } = new List<ItemOriginDTO>();
+        protected List<ItemOriginDTO> OriginSuggestions { get; set; } = new();
         protected int? SelectedOriginId { get; set; }
         protected bool IsNewOrigin { get; set; } = false;
 
@@ -298,6 +299,15 @@ namespace JM.UI.Client.Pages.StockOpening
         // ═══════════════════════════════════════════════════════════════
         // Brand Handlers
         // ═══════════════════════════════════════════════════════════════
+        protected void OnBrandLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+            BrandSuggestions = string.IsNullOrWhiteSpace(text)
+                ? new List<ItemBrandDTO>()
+                : Brands.Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+            StateHasChanged();
+        }
+
         protected void OnBrandTextChanged(object value)
         {
             var text = value?.ToString();
@@ -311,10 +321,6 @@ namespace JM.UI.Client.Pages.StockOpening
                 CurrentItem.BrandId = null;
                 return;
             }
-
-            BrandSuggestions = Brands
-                .Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Brands.FirstOrDefault(b =>
                 b.BrandName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -333,6 +339,7 @@ namespace JM.UI.Client.Pages.StockOpening
             }
 
             GenerateProductName();
+            StateHasChanged();
         }
 
         protected void OnBrandSelected(object value)
@@ -344,12 +351,22 @@ namespace JM.UI.Client.Pages.StockOpening
                 BrandSearchText = brand.BrandName;
                 IsNewBrand = false;
                 GenerateProductName();
+                StateHasChanged();
             }
         }
 
         // ═══════════════════════════════════════════════════════════════
         // Origin Handlers
         // ═══════════════════════════════════════════════════════════════
+        protected void OnOriginLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+            OriginSuggestions = string.IsNullOrWhiteSpace(text)
+                ? new List<ItemOriginDTO>()
+                : Origins.Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+            StateHasChanged();
+        }
+
         protected void OnOriginTextChanged(object value)
         {
             var text = value?.ToString();
@@ -364,10 +381,6 @@ namespace JM.UI.Client.Pages.StockOpening
                 CurrentItem.OriginId = null;
                 return;
             }
-
-            OriginSuggestions = Origins
-                .Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Origins.FirstOrDefault(o =>
                 o.OriginName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -386,6 +399,8 @@ namespace JM.UI.Client.Pages.StockOpening
                 CurrentItem.OriginName = text;
                 IsNewOrigin = true;
             }
+
+            StateHasChanged();
         }
 
         protected void OnOriginSelected(object value)
@@ -533,6 +548,7 @@ namespace JM.UI.Client.Pages.StockOpening
         {
             foreach (var row in PreviewItems)
             {
+                row.PurchasePrice = SharedPurchasePrice;
                 row.SalePrice = SharedSalePrice;
                 row.Quantity = SharedQuantity ?? 0;
                 RecalculatePreviewRow(row);
@@ -548,10 +564,10 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // Stock Opening total = SalePrice * Quantity only
+        // Stock Opening total = PurchasePrice * Quantity
         private void RecalculatePreviewRow(StockOpeningPreviewRow row)
         {
-            row.TotalAmount = row.SalePrice * row.Quantity;
+            row.TotalAmount = row.PurchasePrice * row.Quantity;
         }
 
         protected void RemovePreviewRow(StockOpeningPreviewRow row)
@@ -609,6 +625,7 @@ namespace JM.UI.Client.Pages.StockOpening
                         CountStockBySize = item.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = response.Stock?.Quantity ?? 0,
+                        PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                         SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
                         TotalAmount = 0,
                         ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null
@@ -631,6 +648,7 @@ namespace JM.UI.Client.Pages.StockOpening
                         GroupId = CurrentItem.GroupId,
                         SubGroupId = CurrentItem.SubGroupId,
                         BrandId = CurrentItem.BrandId,
+                        DesignId = CurrentItem.DesignId,
                         BrandName = BrandSearchText,
                         OriginId = CurrentItem.OriginId,
                         OriginName = OriginSearchText,
@@ -643,6 +661,7 @@ namespace JM.UI.Client.Pages.StockOpening
                         CountStockBySize = CurrentItem.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = 0,
+                        PurchasePrice = SharedPurchasePrice,
                         SalePrice = SharedSalePrice,
                         TotalAmount = 0,
                         ImageBase64 = CurrentItemImageBase64
@@ -674,6 +693,8 @@ namespace JM.UI.Client.Pages.StockOpening
                     return;
                 }
 
+                int addedCount = 0;
+
                 foreach (var row in validRows)
                 {
                     if (StockOpeningItems.Any(i => i.Barcode == row.Barcode))
@@ -686,7 +707,7 @@ namespace JM.UI.Client.Pages.StockOpening
                     if (row.IsSaleable && row.SalePrice <= 0)
                     {
                         notificationService.Notify(NotificationSeverity.Warning, "Validation",
-                            $"Sale price required for '{row.ItemName}'.");
+                            $"Sale price required for saleable item '{row.ItemName}'.");
                         continue;
                     }
 
@@ -710,12 +731,15 @@ namespace JM.UI.Client.Pages.StockOpening
                         FeaturesDisplay = row.FeaturesDisplay,
                         Barcode = row.Barcode,
                         Quantity = row.Quantity,
+                        PurchasePrice = row.PurchasePrice,
                         SalePrice = row.SalePrice,
                         TotalAmount = row.TotalAmount,
                         IsSaleable = row.IsSaleable,
                         IsConsume = row.IsConsume,
                         MesurementUnitId = row.MesurementUnitId,
-                        MesurementUnitName = row.MesurementUnitName,
+                        MesurementUnitName = !string.IsNullOrWhiteSpace(row.MesurementUnitName)
+                            ? row.MesurementUnitName
+                            : Units.FirstOrDefault(u => u.Id == row.MesurementUnitId)?.Name,
                         CountStockByColor = row.CountStockByColor,
                         CountStockBySize = row.CountStockBySize,
                         IsNewItem = row.IsNewItem,
@@ -725,18 +749,46 @@ namespace JM.UI.Client.Pages.StockOpening
                         ImageBase64 = row.ImageBase64,
                         IsActive = true
                     });
+
+                    addedCount++;
+                }
+
+                if (addedCount == 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
+                        "No items were added. Please fix the validation errors and try again.");
+                    return;
+                }
+
+                if (addedCount < validRows.Count)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "Partial Add",
+                        $"{addedCount} of {validRows.Count} item(s) added. " +
+                        $"{validRows.Count - addedCount} item(s) skipped due to validation errors.");
                 }
 
                 PreviewItems.Clear();
                 await PreviewGrid.Reload();
                 await ItemsGrid.Reload();
                 ResetSharedPricing();
-                ResetItemFormSelections();
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
                 IsNewItemMode = false;
-                notificationService.Notify(NotificationSeverity.Success, "Success",
-                    $"{validRows.Count} item(s) added to stock opening");
+
+                CurrentItem.ColorId = null;
+                CurrentItem.SizeId = null;
+                CurrentItem.ShadeNo = null;
+                CurrentItem.Barcode = null;
+                CurrentItemImageBase64 = string.Empty;
+                CurrentItemImageMimeType = string.Empty;
+                CurrentItem.ImageBase64 = null;
+
+                if (addedCount == validRows.Count)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success",
+                        $"{addedCount} item(s) added to stock opening.");
+                }
+
                 return;
             }
 
@@ -748,7 +800,7 @@ namespace JM.UI.Client.Pages.StockOpening
                 return;
             }
 
-            CurrentItem.TotalAmount = (CurrentItem.SalePrice ?? 0) * CurrentItem.Quantity;
+            CurrentItem.TotalAmount = CurrentItem.PurchasePrice * CurrentItem.Quantity;
 
             if (IsNewBrand) CurrentItem.BrandName = BrandSearchText;
             bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
@@ -779,6 +831,7 @@ namespace JM.UI.Client.Pages.StockOpening
                 FeaturesDisplay = CurrentItem.FeaturesDisplay,
                 Barcode = CurrentItem.Barcode,
                 Quantity = CurrentItem.Quantity,
+                PurchasePrice = CurrentItem.PurchasePrice,
                 SalePrice = CurrentItem.SalePrice,
                 TotalAmount = CurrentItem.TotalAmount,
                 IsSaleable = CurrentItem.IsSaleable,
@@ -804,6 +857,7 @@ namespace JM.UI.Client.Pages.StockOpening
 
         private void ResetSharedPricing()
         {
+            SharedPurchasePrice = 0;
             SharedSalePrice = 0;
             SharedQuantity = null;
         }
@@ -848,6 +902,7 @@ namespace JM.UI.Client.Pages.StockOpening
                 CountStockBySize = item.CountStockBySize,
                 Quantity = item.Quantity,
                 StockQuantity = 0,
+                PurchasePrice = item.PurchasePrice,
                 SalePrice = item.SalePrice ?? 0,
                 TotalAmount = item.TotalAmount,
                 ImageBase64 = item.ImageBase64,
@@ -879,6 +934,7 @@ namespace JM.UI.Client.Pages.StockOpening
                 FeaturesDisplay = item.FeaturesDisplay,
                 Barcode = item.Barcode,
                 Quantity = item.Quantity,
+                PurchasePrice = item.PurchasePrice,
                 SalePrice = item.SalePrice,
                 TotalAmount = item.TotalAmount,
                 IsSaleable = item.IsSaleable,
@@ -911,6 +967,7 @@ namespace JM.UI.Client.Pages.StockOpening
             IsNewItemMode = item.IsNewItem;
             IsProductNameFieldChange = false;
 
+            SharedPurchasePrice = item.PurchasePrice;
             SharedSalePrice = item.SalePrice ?? 0;
 
             if (item.GroupId.HasValue)
@@ -951,6 +1008,7 @@ namespace JM.UI.Client.Pages.StockOpening
             CurrentItem.FeatureIds = row.FeatureIds;
             CurrentItem.FeaturesDisplay = row.FeaturesDisplay;
             CurrentItem.Quantity = row.Quantity;
+            CurrentItem.PurchasePrice = row.PurchasePrice;
             CurrentItem.SalePrice = row.SalePrice;
             CurrentItem.TotalAmount = row.TotalAmount;
             CurrentItem.ImageBase64 = row.ImageBase64;
@@ -966,7 +1024,7 @@ namespace JM.UI.Client.Pages.StockOpening
             bool resolved = await ResolveNewLookupEntriesAsync(CurrentItem);
             if (!resolved) return;
 
-            CurrentItem.TotalAmount = (CurrentItem.SalePrice ?? 0) * CurrentItem.Quantity;
+            CurrentItem.TotalAmount = CurrentItem.PurchasePrice * CurrentItem.Quantity;
 
             var idx = StockOpeningItems.IndexOf(_editingItem);
             if (idx < 0) StockOpeningItems.Add(BuildUpdatedItem());
@@ -1007,6 +1065,7 @@ namespace JM.UI.Client.Pages.StockOpening
             FeaturesDisplay = CurrentItem.FeaturesDisplay,
             Barcode = CurrentItem.Barcode,
             Quantity = CurrentItem.Quantity,
+            PurchasePrice = CurrentItem.PurchasePrice,
             SalePrice = CurrentItem.SalePrice,
             TotalAmount = CurrentItem.TotalAmount,
             IsSaleable = CurrentItem.IsSaleable,
@@ -1045,6 +1104,8 @@ namespace JM.UI.Client.Pages.StockOpening
                 return (false, "Barcode is required");
             if (CurrentItem.Quantity <= 0)
                 return (false, "Quantity must be greater than 0");
+            if (CurrentItem.PurchasePrice <= 0)
+                return (false, "Purchase price must be greater than 0");
             if (CurrentItem.IsSaleable && (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0))
                 return (false, "Sale price is required for saleable items");
 
@@ -1111,6 +1172,8 @@ namespace JM.UI.Client.Pages.StockOpening
                 return (false, "Barcode is required");
             if (CurrentItem.Quantity <= 0)
                 return (false, "Quantity must be greater than 0");
+            if (CurrentItem.PurchasePrice <= 0)
+                return (false, "Purchase price must be greater than 0");
             if (CurrentItem.IsSaleable && (!CurrentItem.SalePrice.HasValue || CurrentItem.SalePrice.Value <= 0))
                 return (false, "Sale price is required for saleable items");
 
@@ -1247,26 +1310,25 @@ namespace JM.UI.Client.Pages.StockOpening
             string subProduct = Designs.FirstOrDefault(s => s.Id == CurrentItem.DesignId)?.Name ?? "";
             string brand = BrandSearchText ?? "";
             string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
-            string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
             string catalogue = CatalogueSearchText ?? "";
 
             if (IsProductNameFieldChange)
             {
                 var parts = (CurrentItem.ItemName ?? "")
                     .Split(" - ")
-                    .TakeWhile(p => p != color && p != size)
+                    .TakeWhile(p => p != color)
                     .ToList();
 
-                parts.AddRange(new[] { color, size }.Where(p => !string.IsNullOrWhiteSpace(p)));
+                parts.AddRange(new[] { color }.Where(p => !string.IsNullOrWhiteSpace(p)));
                 CurrentItem.ItemName = string.Join(" - ", parts);
             }
             else
             {
                 List<string> parts;
                 if (!string.IsNullOrWhiteSpace(catalogue))
-                    parts = new List<string> { catalogue, color, size };
+                    parts = new List<string> { catalogue, color };
                 else
-                    parts = new List<string> { subProduct, brand, color, size };
+                    parts = new List<string> { subProduct, brand, color };
 
                 CurrentItem.ItemName = string.Join(" - ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
             }
@@ -1326,6 +1388,7 @@ namespace JM.UI.Client.Pages.StockOpening
                             CountStockBySize = item.CountStockBySize,
                             Quantity = 0,
                             StockQuantity = response.Stock?.Quantity ?? 0,
+                            PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                             SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
                             TotalAmount = 0,
                             ImageBase64 = null
@@ -1371,8 +1434,10 @@ namespace JM.UI.Client.Pages.StockOpening
             CountStockBySize = CurrentItem.CountStockBySize,
             Quantity = 0,
             StockQuantity = 0,
+            PurchasePrice = SharedPurchasePrice,
             SalePrice = SharedSalePrice,
             TotalAmount = 0,
+            DesignId = CurrentItem.DesignId,
             ImageBase64 = null
         };
 
@@ -1403,7 +1468,7 @@ namespace JM.UI.Client.Pages.StockOpening
                         notificationService.Notify(NotificationSeverity.Success, "Success",
                             $"Item loaded! {PreviewItems.Count} variant(s) in preview.");
 
-                        var itemData = AvailableItems.Where(x => x.Barcode == barcode).FirstOrDefault();
+                        var itemData = AvailableItems.FirstOrDefault(x => x.Barcode == barcode);
                         if (itemData != null)
                         {
                             CurrentItem.ColorId = itemData.ColorId;
@@ -1457,6 +1522,7 @@ namespace JM.UI.Client.Pages.StockOpening
             CurrentItem.ColorId = item.ColorId;
             CurrentItem.SizeId = item.SizeId;
             CurrentItem.SalePrice = item.SalePrice;
+            CurrentItem.PurchasePrice = item.PurchasePrice ?? 0;
             CurrentItem.Barcode = BarcodeSearchText;
             CurrentItem.IsNewItem = false;
             CurrentItem.MesurementUnitId = item.MesurementUnitId;
@@ -1469,6 +1535,7 @@ namespace JM.UI.Client.Pages.StockOpening
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
 
+            SharedPurchasePrice = item.PurchasePrice ?? 0;
             SharedSalePrice = item.SalePrice ?? 0;
 
             if (item.GroupId.HasValue)
@@ -1509,6 +1576,7 @@ namespace JM.UI.Client.Pages.StockOpening
             CurrentItem.ColorId = item.ColorId;
             CurrentItem.SizeId = item.SizeId;
             CurrentItem.SalePrice = item.SalePrice;
+            CurrentItem.PurchasePrice = item.PurchasePrice;
             CurrentItem.Barcode = BarcodeSearchText;
             CurrentItem.IsNewItem = false;
             CurrentItem.CatalogueName = item.CatalogueName;
@@ -1516,6 +1584,7 @@ namespace JM.UI.Client.Pages.StockOpening
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
 
+            SharedPurchasePrice = item.PurchasePrice;
             SharedSalePrice = item.SalePrice ?? 0;
 
             BrandSearchText = item.BrandName ?? string.Empty;
@@ -1587,6 +1656,54 @@ namespace JM.UI.Client.Pages.StockOpening
             PreviewGrid?.Reload();
             ResetSharedPricing();
             ResetItemFormSelections();
+            StateHasChanged();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // Reset Left Panel
+        // ═══════════════════════════════════════════════════════════════
+        protected void ResetLeftPanel()
+        {
+            StockOpening.StoreId = 1;
+
+            CurrentItem.IsSaleable = false;
+            CurrentItem.IsConsume = false;
+            CurrentItem.IsRawMaterial = false;
+
+            CurrentItem.GroupId = null;
+            CurrentItem.SubGroupId = null;
+            CurrentItem.DesignId = null;
+            SubGroups = new List<SubGroupModelDTO>();
+            Designs = new List<DesignModelDTO>();
+
+            CurrentItem.MesurementUnitId = null;
+            CurrentItem.ShadeNo = null;
+
+            BrandSearchText = string.Empty;
+            BrandSuggestions = new List<ItemBrandDTO>();
+            SelectedBrandId = null;
+            IsNewBrand = false;
+            CurrentItem.BrandId = null;
+            CurrentItem.BrandName = null;
+
+            CatalogueSearchText = string.Empty;
+            CatalogueSuggestions = new List<ItemCatalogueDTO>();
+            SelectedCatalogueId = null;
+            IsNewCatalogue = false;
+            CurrentItem.CatalogueId = null;
+            CurrentItem.CatalogueName = null;
+
+            OriginSearchText = string.Empty;
+            OriginSuggestions = new List<ItemOriginDTO>();
+            SelectedOriginId = null;
+            IsNewOrigin = false;
+            CurrentItem.OriginId = null;
+            CurrentItem.OriginName = null;
+
+            SelectedFeatureIds = new List<int>();
+            NewFeatureNames = new List<string>();
+            NewFeatureInput = string.Empty;
+
             StateHasChanged();
         }
 

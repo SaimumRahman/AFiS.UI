@@ -48,6 +48,7 @@ using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
@@ -58,6 +59,7 @@ using JM.UI.DataService.DAL.SupplierPayments;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.Transfer;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
@@ -121,6 +123,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IStockOpeningRepository StockOpeningRepository { get; }
         public IItemCatalogueRepository ItemCatalogueRepository { get; }
         public ICurrentStockReportRepository CurrentStockReportRepository { get; }
+        public ITransferRepository TransferRepository { get; }
+        public IStockRepository StockRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -172,6 +176,8 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             StockOpeningRepository = new StockOpeningRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockOpeningRepository>());
             ItemCatalogueRepository = new ItemCatalogueRepository(factory, tokenProvider, loggerFactory.CreateLogger<ItemCatalogueRepository>());
             CurrentStockReportRepository = new CurrentStockReportRepository(factory, tokenProvider, loggerFactory.CreateLogger<CurrentStockReportRepository>());
+            TransferRepository = new TransferRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferRepository>());
+            StockRepository = new StockRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockRepository>());
         }
 
         public void Dispose()

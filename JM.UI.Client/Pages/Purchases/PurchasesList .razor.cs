@@ -34,6 +34,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     // ── Date filter state ─────────────────────────────────────────────────────
     protected DateTime? FilterDateFrom;
     protected DateTime? FilterDateTo;
+    protected string ReferenceNo;
     protected bool IsFiltered => FilterDateFrom.HasValue || FilterDateTo.HasValue;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -65,7 +66,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
 
     // ── Date filter ───────────────────────────────────────────────────────────
 
-    protected void ApplyDateFilter()
+    protected async Task ApplyDateFilter()
     {
         if (FilterDateFrom.HasValue && FilterDateTo.HasValue
             && FilterDateFrom > FilterDateTo)
@@ -74,8 +75,33 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             return;
         }
 
+        // If searching by ReturnRefNo, we must pre-load ALL purchase items
+        // so the in-memory filter can inspect them.
+        if (!string.IsNullOrWhiteSpace(ReferenceNo))
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            foreach (var purchase in Purchases)
+            {
+                if (!PurchaseItemsCache.ContainsKey(purchase.Id))
+                {
+                    try
+                    {
+                        var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+                        PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+                    }
+                    catch
+                    {
+                        PurchaseItemsCache[purchase.Id] = new List<PurchaseItemDTO>();
+                    }
+                }
+            }
+
+            IsLoading = false;
+        }
+
         ApplyFilter();
-        PurchaseItemsCache.Clear(); // clear cache so expanded rows reload for new range
         StateHasChanged();
     }
 
@@ -84,6 +110,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         FilterDateFrom = null;
         FilterDateTo = null;
         FilteredPurchases = Purchases;
+        ReferenceNo = string.Empty;
         PurchaseItemsCache.Clear();
         StateHasChanged();
     }
@@ -98,6 +125,19 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
 
         if (FilterDateTo.HasValue)
             query = query.Where(p => p.PurchaseDate.Date <= FilterDateTo.Value.Date);
+
+        // ReferenceNo filter — match against purchase items' ReturnRefNo
+        if (!string.IsNullOrWhiteSpace(ReferenceNo))
+        {
+            var refTrimmed = ReferenceNo.Trim();
+
+            // We need to check cached items. For purchases not yet loaded,
+            // we load them synchronously via a helper list built during search.
+            query = query.Where(p =>
+                PurchaseItemsCache.TryGetValue(p.Id, out var items) &&
+                items.Any(i => i.ReturnRefNo != null &&
+                               i.ReturnRefNo.Contains(refTrimmed, StringComparison.OrdinalIgnoreCase)));
+        }
 
         FilteredPurchases = query.ToList();
     }

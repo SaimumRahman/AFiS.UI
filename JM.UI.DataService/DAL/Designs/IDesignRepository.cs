@@ -12,5 +12,6 @@ namespace JM.UI.DataService.DAL.Designs
         Task<IEnumerable<DesignModelDTO>> LoadDesignsBySubGroup(int subGroupId);
         Task<ResponseResult> SaveUpdateDesign(DesignModelDTO design);
         Task DeleteDesign(int id);
+        Task<DesignModelDTO> GetDesignCode();
     }
 }

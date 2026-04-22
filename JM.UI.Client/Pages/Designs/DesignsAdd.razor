@@ -29,20 +29,20 @@
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Parent Sub Product" Component="SubGroupId" />
+                            <RadzenLabel Text="Parent Product" Component="SubGroupId" />
                             <RadzenDropDown TValue="int" @bind-Value="@Design.SubGroupId"
                                             Data="@SubGroups" TextProperty="Name" ValueProperty="Id"
-                                            Placeholder="Select Sub Product..." class="w-100" Name="SubGroupId"
+                                            Placeholder="Select Parent Product..." class="w-100" Name="SubGroupId"
                                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
-                            <RadzenRequiredValidator Component="SubGroupId" Text="Sub Product is required" DefaultValue="0" />
+                            <RadzenRequiredValidator Component="SubGroupId" Text="Parent Product is required" DefaultValue="0" />
                         </RadzenStack>
                     </RadzenColumn>
 
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Name" Component="Name" />
+                            <RadzenLabel Text="Sub Product" Component="Name" />
                             <RadzenTextBox Name="Name" @bind-Value="@Design.Name" class="w-100" />
-                            <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                            <RadzenRequiredValidator Component="Name" Text="Sub Product is required" />
                         </RadzenStack>
                     </RadzenColumn>
 

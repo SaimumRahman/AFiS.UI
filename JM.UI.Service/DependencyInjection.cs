@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using JM.Infrastructure.Base;
+﻿using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Routes;
@@ -42,17 +36,25 @@ using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
+using JM.UI.Service.Transfer;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.Users;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.Vouchers;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace JM.UI.Service
 {
@@ -105,7 +107,9 @@ namespace JM.UI.Service
             services.AddTransient<IItemFeatureService, ItemFeatureService>();
             services.AddTransient<IItemCatalogueService, ItemCatalogueService>();
             services.AddTransient<ICurrentStockReportService, CurrentStockReportService>();
+            services.AddTransient<ITransferService, TransferService>();
             services.AddScoped<PurchaseReportService>();
+            services.AddScoped<StockService>();
         }
     }
 }

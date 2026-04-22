@@ -192,6 +192,19 @@ else
             </RadzenColumn>
         </RadzenRow>
 
+        <!-- Reset Left Panel -->
+        <RadzenRow>
+            <RadzenColumn Size="12" Style="text-align:right; padding-top:4px;">
+                <RadzenButton Icon="restart_alt"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Size="ButtonSize.Small"
+                              Click="@ResetLeftPanel"
+                              Disabled="@IsProcessing"
+                              Text="Reset"
+                              Style="height:26px; font-size:0.72rem;" />
+            </RadzenColumn>
+        </RadzenRow>
+
         <!-- ============================================================
              MAIN ENTRY SECTION
              ============================================================ -->
@@ -258,7 +271,7 @@ else
 
                         <!-- SubProduct -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4"><RadzenLabel Text="SubProduct" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                            <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                             <RadzenColumn Size="8">
                                 <RadzenDropDown @bind-Value="CurrentItem.SubGroupId" Data="@SubGroups"
                                                 TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
@@ -270,7 +283,7 @@ else
 
                         <!-- Design -->
                         <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                            <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                            <RadzenColumn Size="4"><RadzenLabel Text="Sub Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                             <RadzenColumn Size="8">
                                 <RadzenDropDown @bind-Value="CurrentItem.DesignId" Data="@Designs"
                                                 TextProperty="Name" ValueProperty="Id" Placeholder="Select Product..."
@@ -289,6 +302,7 @@ else
                                                         TextProperty="BrandName" Style="width:100%; font-size:0.75rem;"
                                                         Placeholder="Search or create brand"
                                                         InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
+                                                        LoadData="@OnBrandLoadData"
                                                         Change="OnBrandTextChanged"
                                                         Select="@((object val) => OnBrandSelected(val))"
                                                         Disabled="@(IsProcessing || DisableItemFields)" />
@@ -376,6 +390,7 @@ else
                                                         TextProperty="OriginName" Style="width:100%; font-size:0.75rem;"
                                                         Placeholder="Search or create origin"
                                                         InputAttributes="@(new Dictionary<string,object>{ {"autocomplete","off"} })"
+                                                        LoadData="@OnOriginLoadData"
                                                         Change="OnOriginTextChanged"
                                                         Select="@((object val) => OnOriginSelected(val))"
                                                         Disabled="@(IsProcessing || DisableItemFields)" />
@@ -522,6 +537,7 @@ else
                                 }
                                 else
                                 {
+                                    <RadzenCheckBox @bind-Value="IsProductNameFieldChange" Style="display:none" />
                                     <RadzenTextBox @bind-Value="CurrentItem.ItemName"
                                                    Style="width:100%; font-size:0.65rem; height:24px; padding:2px 6px;"
                                                    Placeholder="Enter product name"
@@ -532,11 +548,17 @@ else
                         </RadzenRow>
 
                         <!-- ════════════════════════════════════════════════════
-                             SHARED PRICING BAR — Stock Opening: S.Rate + QTY only
+                             SHARED PRICING BAR — Stock Opening: P.Rate + S.Rate + QTY only
                              ════════════════════════════════════════════════════ -->
                         <div class="shared-pricing-bar">
                             <div class="bar-label">📋 Shared Pricing — changes apply to all preview rows</div>
                             <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="6" SizeMD="4">
+                                    <RadzenLabel Text="P.Rate" Style="font-weight:600; font-size:0.68rem;" />
+                                    <RadzenNumeric @bind-Value="SharedPurchasePrice"
+                                                   Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
+                                                   Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                </RadzenColumn>
                                 <RadzenColumn Size="6" SizeMD="4">
                                     <RadzenLabel Text="S.Rate" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenNumeric @bind-Value="SharedSalePrice"
@@ -621,6 +643,17 @@ else
                                         <RadzenDataGridColumn TItem="StockOpeningPreviewRow" Title="Qty *" Width="70px">
                                             <Template Context="row">
                                                 <RadzenNumeric @bind-Value="row.Quantity"
+                                                               TValue="decimal" Min="0"
+                                                               Style="width:100%; font-size:0.65rem; height:22px;"
+                                                               Change="@(() => OnPreviewRowChanged(row))"
+                                                               Disabled="@IsProcessing" />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
+                                        <!-- P.Rate — editable -->
+                                        <RadzenDataGridColumn TItem="StockOpeningPreviewRow" Title="P.Rate" Width="72px">
+                                            <Template Context="row">
+                                                <RadzenNumeric @bind-Value="row.PurchasePrice"
                                                                TValue="decimal" Min="0"
                                                                Style="width:100%; font-size:0.65rem; height:22px;"
                                                                Change="@(() => OnPreviewRowChanged(row))"
@@ -780,6 +813,9 @@ else
                         <FooterTemplate>
                             <span style="font-weight:600;">@StockOpeningItems.Sum(i => i.Quantity).ToString("N2")</span>
                         </FooterTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="StockOpeningItemDTO" Property="PurchasePrice" Title="P.Rate" Width="70px">
+                        <Template Context="item">@(item.PurchasePrice > 0 ? item.PurchasePrice.ToString("N2") : "-")</Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="StockOpeningItemDTO" Property="SalePrice" Title="S.Rate" Width="70px">
                         <Template Context="item">@(item.SalePrice.HasValue? item.SalePrice.Value.ToString("N2") : "-")</Template>

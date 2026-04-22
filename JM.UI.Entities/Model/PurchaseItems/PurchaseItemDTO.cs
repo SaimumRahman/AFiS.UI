@@ -55,4 +55,5 @@ public class PurchaseItemDTO
     public string OriginName { get; set; }
     public List<int> FeatureIds { get; set; }
     public string FeaturesDisplay { get; set; }
+    public string ReturnRefNo { get; set; }
 }

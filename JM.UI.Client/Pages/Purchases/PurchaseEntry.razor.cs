@@ -33,7 +33,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
         protected bool IsProductNameFieldChange { get; set; } = false;
 
-        // ─── Image Upload ────────────────────────────────────────────
+        // ─── Image Upload ──
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
@@ -46,7 +46,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected int? SelectedCatalogueId { get; set; }
         protected bool IsNewCatalogue { get; set; } = false;
 
-        // ─── Purchase Data ──────────────────────────────────────────────
+        // ─── Purchase Data ────
         protected PurchaseDTO Purchase { get; set; } = new();
         protected List<PurchaseItemDTO> PurchaseItems { get; set; } = new();
         protected PurchaseItemDTO CurrentItem { get; set; } = new();
@@ -66,7 +66,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected decimal? SharedOperationalCost { get; set; }
         protected int? SharedQuantity { get; set; }
 
-        // ─── Lookup Data ────────────────────────────────────────────────
+        // ─── Lookup Data ──────
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
@@ -91,7 +91,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         // Origin auto-complete
         protected string OriginSearchText { get; set; } = string.Empty;
-        protected IEnumerable<ItemOriginDTO> OriginSuggestions { get; set; } = new List<ItemOriginDTO>();
+        protected List<ItemOriginDTO> OriginSuggestions { get; set; } = new List<ItemOriginDTO>();
         protected int? SelectedOriginId { get; set; }
         protected bool IsNewOrigin { get; set; } = false;
 
@@ -100,7 +100,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected List<string> NewFeatureNames { get; set; } = new();
         protected string NewFeatureInput { get; set; } = string.Empty;
 
-        // ─── UI State ───────────────────────────────────────────────────
+        // ─── UI State ─────────
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -492,16 +492,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                BrandSuggestions = new List<ItemBrandDTO>();
                 SelectedBrandId = null;
                 IsNewBrand = false;
                 CurrentItem.BrandId = null;
                 return;
             }
-
-            BrandSuggestions = Brands
-                .Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Brands.FirstOrDefault(b =>
                 b.BrandName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -520,6 +515,24 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             GenerateProductName();
+            StateHasChanged();
+        }
+        protected void OnOriginLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                OriginSuggestions = new List<ItemOriginDTO>();
+            }
+            else
+            {
+                OriginSuggestions = Origins
+                    .Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            StateHasChanged();
         }
 
         protected void OnBrandSelected(object value)
@@ -531,6 +544,7 @@ namespace JM.UI.Client.Pages.Purchases
                 BrandSearchText = brand.BrandName;
                 IsNewBrand = false;
                 GenerateProductName();
+                StateHasChanged();
             }
         }
 
@@ -544,17 +558,12 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                OriginSuggestions = new List<ItemOriginDTO>();
                 SelectedOriginId = null;
                 IsNewOrigin = false;
                 CurrentItem.OriginName = null;
                 CurrentItem.OriginId = null;
                 return;
             }
-
-            OriginSuggestions = Origins
-                .Where(o => o.OriginName.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var exactMatch = Origins.FirstOrDefault(o =>
                 o.OriginName.Equals(text, StringComparison.OrdinalIgnoreCase));
@@ -575,6 +584,7 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             GenerateProductName();
+            StateHasChanged();
         }
 
         protected void OnOriginSelected(object value)
@@ -723,14 +733,14 @@ namespace JM.UI.Client.Pages.Purchases
         {
             foreach (var row in PreviewItems)
             {
-                row.PurchasePrice = SharedPurchasePrice;
+                row.BasePurchasePrice = SharedPurchasePrice;  // raw price
                 row.SalePrice = SharedSalePrice;
                 row.OtherCost = SharedOtherCost;
                 row.CarryingCost = SharedCarryingCost;
                 row.Quantity = SharedQuantity ?? 0;
                 row.TransportCost = SharedTransportCost;
                 row.OperationalCost = SharedOperationalCost;
-                RecalculatePreviewRow(row);
+                RecalculatePreviewRow(row);  // this sets row.PurchasePrice
             }
             PreviewGrid?.Reload();
             StateHasChanged();
@@ -745,9 +755,14 @@ namespace JM.UI.Client.Pages.Purchases
 
         private void RecalculatePreviewRow(PreviewItemRow row)
         {
+            // Recalculate P.Rate from components
+            row.PurchasePrice = row.BasePurchasePrice
+                              + (row.OtherCost ?? 0)
+                              + (row.CarryingCost ?? 0)
+                              + (row.TransportCost ?? 0)
+                              + (row.OperationalCost ?? 0);
+
             var baseAmount = row.PurchasePrice * row.Quantity;
-            var extras = (row.OtherCost ?? 0) + (row.CarryingCost ?? 0)
-                       + (row.TransportCost ?? 0) + (row.OperationalCost ?? 0);
 
             decimal vatAmt = 0;
             if (Purchase.IsVatIncluded)
@@ -756,7 +771,7 @@ namespace JM.UI.Client.Pages.Purchases
                 vatAmt = baseAmount * actualVat / 100;
             }
 
-            row.TotalAmount = baseAmount + extras + vatAmt;
+            row.TotalAmount = baseAmount + vatAmt;
         }
 
         protected void RemovePreviewRow(PreviewItemRow row)
@@ -769,9 +784,7 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         // Build PreviewItemRow from BarcodeSearchResponseDTO
         // ═══════════════════════════════════════════════════════════════
-        private List<PreviewItemRow> BuildPreviewRowsFromResponse(
-            BarcodeSearchResponseDTO response,
-            string barcode)
+        private List<PreviewItemRow> BuildPreviewRowsFromResponse(BarcodeSearchResponseDTO response, string barcode)
         {
             var rows = new List<PreviewItemRow>();
 
@@ -818,7 +831,6 @@ namespace JM.UI.Client.Pages.Purchases
                         CountStockBySize = item.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = response.Stock?.Quantity ?? 0,
-                        PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                         SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
                         OtherCost = SharedOtherCost,
                         CarryingCost = SharedCarryingCost,
@@ -827,7 +839,9 @@ namespace JM.UI.Client.Pages.Purchases
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
                         // Carry current image if this row's color matches the currently selected color
-                        ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null
+                        ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null,
+                        BasePurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
+                        PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                     };
 
                     rows.Add(row);
@@ -855,6 +869,7 @@ namespace JM.UI.Client.Pages.Purchases
                         MesurementUnitId = CurrentItem.MesurementUnitId,
                         CatalogueId = CurrentItem.CatalogueId,
                         CatalogueName = CatalogueSearchText,
+                        DesignId = CurrentItem.DesignId,          // ← ADD THIS
                         IsNewItem = true,
                         IsSaleable = CurrentItem.IsSaleable,
                         ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -901,8 +916,20 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
 
+                int addedCount = 0;
+
                 foreach (var row in validRows)
                 {
+                    // ── P.Rate validation (calculated value) ──
+                    if (row.PurchasePrice <= 0)
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Validation",
+                            $"Purchase price must be greater than 0 for '{row.ItemName}'. " +
+                            $"(Base: {row.BasePurchasePrice:N2} + costs = {row.PurchasePrice:N2})");
+                        continue;
+                    }
+
+                    // ── Duplicate barcode check ──
                     if (PurchaseItems.Any(i => i.Barcode == row.Barcode))
                     {
                         notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
@@ -910,11 +937,23 @@ namespace JM.UI.Client.Pages.Purchases
                         continue;
                     }
 
-                    if (row.IsSaleable && (row.SalePrice <= 0))
+                    // ── S.Rate validation (only if Saleable) ──
+                    if (row.IsSaleable)
                     {
-                        notificationService.Notify(NotificationSeverity.Warning, "Validation",
-                            $"Sale price required for '{row.ItemName}'.");
-                        continue;
+                        var t = CurrentItem.IsSaleable;
+                        if (row.SalePrice <= 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Validation",
+                                $"Sale price required for saleable item '{row.ItemName}'.");
+                            continue;
+                        }
+                        if (row.SalePrice <= row.PurchasePrice)
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Validation",
+                                $"Sale price ({row.SalePrice:N2}) must be greater than " +
+                                $"calculated purchase price ({row.PurchasePrice:N2}) for '{row.ItemName}'.");
+                            continue;
+                        }
                     }
 
                     PurchaseItems.Add(new PurchaseItemDTO
@@ -951,7 +990,9 @@ namespace JM.UI.Client.Pages.Purchases
                         ProductType = row.ProductType,
                         MaterialType = row.MaterialType,
                         MesurementUnitId = row.MesurementUnitId,
-                        MesurementUnitName = row.MesurementUnitName,
+                        MesurementUnitName = !string.IsNullOrWhiteSpace(row.MesurementUnitName)
+                            ? row.MesurementUnitName
+                            : Units.FirstOrDefault(u => u.Id == row.MesurementUnitId)?.Name,
                         CountStockByColor = row.CountStockByColor,
                         CountStockBySize = row.CountStockBySize,
                         IsNewItem = row.IsNewItem,
@@ -959,10 +1000,27 @@ namespace JM.UI.Client.Pages.Purchases
                         DesignName = Designs.FirstOrDefault(d => d.Id == row.DesignId)?.Name,
                         CatalogueId = row.CatalogueId,
                         CatalogueName = row.CatalogueName,
-                        // Use the per-row image (set when color matched on upload)
                         ImageBase64 = row.ImageBase64,
                         IsActive = true
                     });
+
+                    addedCount++;
+                }
+
+                // ── Nothing passed validation — keep preview grid intact ──
+                if (addedCount == 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
+                        "No items were added. Please fix the validation errors and try again.");
+                    return;
+                }
+
+                // ── Partial success — notify how many were skipped ──
+                if (addedCount < validRows.Count)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "Partial Add",
+                        $"{addedCount} of {validRows.Count} item(s) added. " +
+                        $"{validRows.Count - addedCount} item(s) skipped due to validation errors.");
                 }
 
                 PreviewItems.Clear();
@@ -970,16 +1028,29 @@ namespace JM.UI.Client.Pages.Purchases
                 await ItemsGrid.Reload();
                 CalculateTotals();
                 ResetSharedPricing();
-                ResetItemFormSelections();
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
                 IsNewItemMode = false;
-                notificationService.Notify(NotificationSeverity.Success, "Success",
-                    $"{validRows.Count} item(s) added to purchase");
+
+                // Clear only Color, Size, ShadeNo — leave rest of left panel intact
+                CurrentItem.ColorId = null;
+                CurrentItem.SizeId = null;
+                CurrentItem.ShadeNo = null;
+                CurrentItem.Barcode = null;
+                CurrentItemImageBase64 = string.Empty;
+                CurrentItemImageMimeType = string.Empty;
+                CurrentItem.ImageBase64 = null;
+
+                if (addedCount == validRows.Count)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success",
+                        $"{addedCount} item(s) added to purchase.");
+                }
+
                 return;
             }
 
-            // Fallback: original single-item add logic
+            // ── Fallback: original single-item add logic ──
             var validation = ValidateCurrentItem();
             if (!validation.IsValid)
             {
@@ -1058,7 +1129,6 @@ namespace JM.UI.Client.Pages.Purchases
 
             notificationService.Notify(NotificationSeverity.Success, "Success", "Item added – ready for next entry");
         }
-
         private void ResetSharedPricing()
         {
             SharedPurchasePrice = 0;
@@ -1733,6 +1803,7 @@ namespace JM.UI.Client.Pages.Purchases
                             MesurementUnitId = CurrentItem.MesurementUnitId,
                             CatalogueId = CurrentItem.CatalogueId,
                             CatalogueName = CatalogueSearchText,
+                            DesignId = CurrentItem.DesignId,   // ← ADD THIS LINE to each block
                             IsNewItem = true,
                             IsSaleable = CurrentItem.IsSaleable,
                             ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -1748,6 +1819,7 @@ namespace JM.UI.Client.Pages.Purchases
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
+                           
                             // Image is null — user must upload for this new color
                             ImageBase64 = null
                         };
@@ -1770,6 +1842,7 @@ namespace JM.UI.Client.Pages.Purchases
                             SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
                             GroupId = item.GroupId,
                             SubGroupId = item.SubGroupId,
+
                             BrandId = item.BrandId,
                             BrandName = Brands.FirstOrDefault(b => b.BrandId == item.BrandId)?.BrandName ?? item.BrandColor ?? string.Empty,
                             OriginId = item.OriginId,
@@ -1837,6 +1910,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
+                        DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
                         // Image is null — user must upload for this new color
                         ImageBase64 = null
                     };
@@ -1908,17 +1982,17 @@ namespace JM.UI.Client.Pages.Purchases
             string subProduct = Designs.FirstOrDefault(s => s.Id == CurrentItem.DesignId)?.Name ?? "";
             string brand = BrandSearchText ?? "";
             string color = Colors.FirstOrDefault(c => c.Id == CurrentItem.ColorId)?.Name ?? "";
-            string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
+            //string size = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name ?? "";
             string catalogue = CatalogueSearchText ?? "";
 
             if (IsProductNameFieldChange)
             {
                 var parts = (CurrentItem.ItemName ?? "")
                     .Split(" - ")
-                    .TakeWhile(p => p != color && p != size)
+                    .TakeWhile(p => p != color /*&& p != size*/)
                     .ToList();
 
-                parts.AddRange(new[] { color, size }
+                parts.AddRange(new[] { color/*, size */}
                     .Where(p => !string.IsNullOrWhiteSpace(p)));
 
                 CurrentItem.ItemName = string.Join(" - ", parts);
@@ -1928,9 +2002,9 @@ namespace JM.UI.Client.Pages.Purchases
                 List<string> parts;
 
                 if (!string.IsNullOrWhiteSpace(catalogue))
-                    parts = new List<string> { catalogue, color, size };
+                    parts = new List<string> { catalogue, color/*, size*/ };
                 else
-                    parts = new List<string> { subProduct, brand, color, size };
+                    parts = new List<string> { subProduct, brand, color/*, size*/ };
 
                 CurrentItem.ItemName = string.Join(" - ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
             }
@@ -2207,7 +2281,82 @@ namespace JM.UI.Client.Pages.Purchases
             Purchase.DueAmount = Purchase.NetAmount - (Purchase.PaidAmount ?? 0);
             StateHasChanged();
         }
+        protected void ResetLeftPanel()
+        {
+            // ── Header fields 
+            Purchase.SupplierId = null;
+            //Purchase.SystemInvoiceNo = null;
+            Purchase.BillInvoiceNumber = null;
+            //Purchase.PurchaseDate = default;
+            Purchase.StoreId = null;
+            Purchase.IsVatIncluded = false;
 
+            // ── Item-type checkboxes 
+            CurrentItem.IsSaleable = false;
+            CurrentItem.IsConsume = false;
+            CurrentItem.IsRawMaterial = false;
+
+            // ── Cascade dropdowns ───
+            CurrentItem.GroupId = null;
+            CurrentItem.SubGroupId = null;
+            CurrentItem.DesignId = null;
+            SubGroups = new List<SubGroupModelDTO>();
+            Designs = new List<DesignModelDTO>();
+
+            // ── UoM ─────────
+            CurrentItem.MesurementUnitId = null;
+
+            // ── ShadeNo ─────
+            CurrentItem.ShadeNo = null;
+
+            // ── Brand ───────
+            BrandSearchText = string.Empty;
+            BrandSuggestions = new List<ItemBrandDTO>();
+            SelectedBrandId = null;
+            IsNewBrand = false;
+            CurrentItem.BrandId = null;
+            CurrentItem.BrandName = null;
+
+            // ── Catalogue ───
+            CatalogueSearchText = string.Empty;
+            CatalogueSuggestions = new List<ItemCatalogueDTO>();
+            SelectedCatalogueId = null;
+            IsNewCatalogue = false;
+            CurrentItem.CatalogueId = null;
+            CurrentItem.CatalogueName = null;
+
+            // ── Origin ──────
+            OriginSearchText = string.Empty;
+            OriginSuggestions = new List<ItemOriginDTO>();
+            SelectedOriginId = null;
+            IsNewOrigin = false;
+            CurrentItem.OriginId = null;
+            CurrentItem.OriginName = null;
+
+            // ── Features ────
+            SelectedFeatureIds = new List<int>();
+            NewFeatureNames = new List<string>();
+            NewFeatureInput = string.Empty;
+
+            StateHasChanged();
+        }
+        protected void OnBrandLoadData(LoadDataArgs args)
+        {
+            var text = args.Filter;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                BrandSuggestions = new List<ItemBrandDTO>();
+            }
+            else
+            {
+                BrandSuggestions = Brands
+                    .Where(b => b.BrandName.Contains(text, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            StateHasChanged();
+        }
         protected void OnDiscountChanged() => CalculateTotals();
         protected void OnVatChanged() => CalculateTotals();
         protected void OnPaidAmountChanged() => CalculateTotals();

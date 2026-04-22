@@ -48,6 +48,7 @@ using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
 using JM.UI.Service.SubGroups;
@@ -57,6 +58,7 @@ using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
+using JM.UI.Service.Transfer;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.VoucherDetails;
@@ -115,5 +117,7 @@ namespace JM.UI.Service.UnitOfWork
         IStockOpeningRepository StockOpeningService { get; }
         IItemCatalogueService ItemCatalogueService { get; }
         ICurrentStockReportService CurrentStockReportService { get; }
+        ITransferService TransferService { get; }
+        IStockService StockService { get; }
     }
 }

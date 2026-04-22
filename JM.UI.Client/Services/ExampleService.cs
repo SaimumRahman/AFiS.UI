@@ -1,8 +1,4 @@
 ﻿using JM.UI.Entities.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace JM.UI.Client.Services
 {
     public class ExampleService
@@ -87,6 +83,23 @@ namespace JM.UI.Client.Services
                     }
                 }
             },
+            new Example
+            {
+                Name = "Stock Report",
+                Icon = "\ue7fd",  // people / group
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name = "Current Stock",
+                        Path = "/CurrentStockReport",
+                        Icon = "\ue7fd",
+                        Title = "Employees",
+                        Description = "Manage employee records, profiles and assignments",
+                        Tags = new[] { "employee", "hr", "staff" }
+                    }
+                }
+            },
 
            
             // 4. Chart of Accounts & Finance Setup
@@ -136,6 +149,26 @@ namespace JM.UI.Client.Services
                         Icon = "\ue40a",
                         Tags = new[] { "purchase", "return", "finance" }
                     },
+                   new Example {
+                        Toc = [ new () { Text = "UndispatchedTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Undispatched Transfers",
+                        Path = "/UndispatchedTransferList",
+                        Updated = false,
+                        Title = "Undispatched Transfer List",
+                        Description = "Manage undispatched transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "transfer", "undispatched", "inventory" }
+                    },
+                   new Example {
+                        Toc = [ new () { Text = "DispatchedTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Dispatched Transfers",
+                        Path = "/DispatchedTransferList",
+                        Updated = false,
+                        Title = "Dispatched Transfer List",
+                        Description = "Manage dispatched transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "transfer", "dispatched", "inventory" }
+                    },
                     new Example
                     {
                         Name = "Purchase Orders",
@@ -156,6 +189,34 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name = "Item Transfer",
+                        Path = "/ItemTransfer",
+                        Icon = "\ue0d1",
+                        Title = "Item Transfer",
+                        Description = "Transfer items between stores",
+                        Tags = new[] { "transfer", "stock", "store", "issue" }
+                    },
+                    new Example {
+                        Toc = [ new () { Text = "ItemsTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Items Transfers",
+                        Path = "/ItemsTransferList",
+                        Updated = false,
+                        Title = "Items Transfer List",
+                        Description = "Manage items transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "items", "transfer", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name = "Stock Ledger",
+                        Path = "/StockLedger",
+                        Icon = "\ue8f9",
+                        Title = "Stock Ledger",
+                        Description = "View opening stock, receipts, issues and closing stock by store",
+                        Tags = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
+                    },
+                    new Example
+                    {
                         Name = "Purchase Draft",
                         Path = "/PurchaseDraftList",
                         Icon = "\ue8cc",
@@ -172,6 +233,7 @@ namespace JM.UI.Client.Services
                         Description = "Record and manage received invoices",
                         Tags = new[] { "invoice", "bill", "purchase" }
                     },
+                     new Example { Name = "Stock Opening", Path = "/StockOpeningList", Icon = "\ue14f", Title = "Stock Opening", Description = "Add new opening stock", Tags = new[] { "stock", "opening", "inventory" } },
                 }
             },
 
@@ -350,7 +412,7 @@ namespace JM.UI.Client.Services
                             new Example { Name = "Designs", Path = "/DesignsList", Icon = "\ue41f", Title = "Designs", Description = "Manage product designs per sub-product", Tags = new[] { "design", "attribute", "style" } },
                             new Example { Name = "MesurementUnits", Path = "/MesurementUnitsList", Icon = "\ue41c", Title = "Measurement Units", Description = "Manage measurement units", Tags = new[] { "unit", "attribute" } },
                             new Example { Name = "Items", Path = "/ItemsList", Icon = "\ue1bd", Title = "Items", Description = "Manage inventory items", Tags = new[] { "item", "inventory", "product" } },
-                            new Example { Name = "Stock Opening", Path = "/StockOpeningList", Icon = "\ue14f", Title = "Stock Opening", Description = "Add new opening stock", Tags = new[] { "stock", "opening", "inventory" } },
+                           
                         }
                     },
                     new Example

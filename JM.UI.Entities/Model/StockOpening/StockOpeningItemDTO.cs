@@ -46,6 +46,7 @@ namespace JM.UI.Entities.Model.StockOpening
         // ── Quantity / Total ─────────────────────────────────────────
         public decimal Quantity { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal PurchasePrice { get; set; }
 
         // ── Flags ────────────────────────────────────────────────────
         public bool IsSaleable { get; set; }

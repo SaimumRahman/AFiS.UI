@@ -1,4 +1,9 @@
-﻿using JM.Infrastructure.Base;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.AccountsGroups;
@@ -31,22 +36,19 @@ using JM.UI.DataService.DAL.PurchaseReturns;
 using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
+using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
 using JM.UI.DataService.DAL.Suppliers;
+using JM.UI.DataService.DAL.Transfer;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.Vouchers;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JM.UI.DataService
 {
@@ -96,9 +98,9 @@ namespace JM.UI.DataService
             services.AddScoped<IItemFeatureRepository, ItemFeatureRepository>();
             services.AddScoped<IItemCatalogueRepository, ItemCatalogueRepository>();
             services.AddScoped<ICurrentStockReportRepository, CurrentStockReportRepository>();
+            services.AddScoped<ITransferRepository, TransferRepository>();
+            services.AddScoped<IStockRepository, StockRepository>();
             #endregion
-
-
         }
 
     }
