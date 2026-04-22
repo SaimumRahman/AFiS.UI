@@ -285,5 +285,55 @@ namespace JM.UI.DataService.DAL.Transfer
                 throw new Exception($"Unexpected error updating dispatch status: {ex.Message}", ex);
             }
         }
+        public async Task<IEnumerable<TransferMasterDTO>> GetDispatchedTransfers(int storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching all dispatched transfers for store: {StoreId}", storeId);
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Transfer/dispatched-transfers-by-store/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                var transfers = await response.Content.ReadFromJsonAsync<List<TransferMasterDTO>>();
+                return transfers ?? new List<TransferMasterDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get transfers");
+                throw new Exception("Failed to fetch transfers: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get transfers");
+                throw new Exception("Unexpected error fetching transfers: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<ResponseResult> UpdateReceivedStatus(List<int> transferIds, int updatedBy)
+        {
+            try
+            {
+                _logger.LogInformation("Updating dispatch status for transfers: {TransferIds}", string.Join(", ", transferIds));
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+
+                var command = new { TransferIds = transferIds, UpdatedBy = updatedBy };
+                var response = await httpClient.PatchAsJsonAsync("Transfer/update-received-status", command);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = true, Message = "Dispatch status updated successfully." };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during dispatch status update for transfers: {TransferIds}", string.Join(", ", transferIds));
+                throw new Exception($"Failed to update dispatch status: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during dispatch status update for transfers: {TransferIds}", string.Join(", ", transferIds));
+                throw new Exception($"Unexpected error updating dispatch status: {ex.Message}", ex);
+            }
+        }
     }
 }

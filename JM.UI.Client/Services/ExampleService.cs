@@ -159,6 +159,16 @@ namespace JM.UI.Client.Services
                         Icon = "\ue40a",
                         Tags = new[] { "transfer", "undispatched", "inventory" }
                     },
+                   new Example {
+                        Toc = [ new () { Text = "DispatchedTransferList", Anchor = "#text-tag-name" } ],
+                        Name = "Dispatched Transfers",
+                        Path = "/DispatchedTransferList",
+                        Updated = false,
+                        Title = "Dispatched Transfer List",
+                        Description = "Manage dispatched transfers",
+                        Icon = "\ue40a",
+                        Tags = new[] { "transfer", "dispatched", "inventory" }
+                    },
                     new Example
                     {
                         Name = "Purchase Orders",

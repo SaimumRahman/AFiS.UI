@@ -17,11 +17,15 @@ namespace JM.UI.Service.Transfer
 
         public async Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy)
             => await _repositoryUnitOfWork.TransferRepository.UpdateDispatchStatus(transferIds, updatedBy);
+        public async Task<ResponseResult> UpdateReceivedStatus(List<int> transferIds, int updatedBy)
+            => await _repositoryUnitOfWork.TransferRepository.UpdateReceivedStatus(transferIds, updatedBy);
 
         public async Task<IEnumerable<TransferMasterDTO>> GetTransfers()
             => await _repositoryUnitOfWork.TransferRepository.GetTransfers();
         public async Task<IEnumerable<TransferMasterDTO>> GetUndispatchedTransfers(int storeId)
             => await _repositoryUnitOfWork.TransferRepository.GetUndispatchedTransfers(storeId);
+        public async Task<IEnumerable<TransferMasterDTO>> GetDispatchedTransfers(int storeId)
+            => await _repositoryUnitOfWork.TransferRepository.GetDispatchedTransfers(storeId);
 
         public async Task<TransferMasterDTO?> GetTransferById(long id)
             => await _repositoryUnitOfWork.TransferRepository.GetTransferById(id);
