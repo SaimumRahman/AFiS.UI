@@ -32,7 +32,8 @@ namespace JM.UI.Client.Pages.Transfer
         /// but the master itself is not yet fully received — i.e. there is unsaved receive work.
         /// </summary>
         protected bool HasPendingReceivedDetails =>
-            Transfers.Any(t => t.Details != null && t.Details.Any(d => d.IsReceived == true) && t.IsReceived != true);
+            Transfers.Any(t => t.Details != null &&
+                          t.Details.Any(d => d.IsReceived == true));
 
         protected override async Task OnInitializedAsync()
         {

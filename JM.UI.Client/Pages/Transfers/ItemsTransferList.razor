@@ -92,18 +92,15 @@
                 </RadzenDataGridColumn>
 
                 <!-- Receive Status -->
-                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="ReceiveStatusId" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsReceived" Title="Received" Width="120px" TextAlign="TextAlign.Center">
                     <Template Context="transfer">
-                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(transfer.ReceiveStatusId)"
-                                     Text="@GetStatusLabel(transfer.ReceiveStatusId)" />
+                        <RadzenBadge Text="@(transfer.IsReceived ? "Yes" : "No")" />
                     </Template>
                 </RadzenDataGridColumn>
 
-                <!-- Is Completed -->
-                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsCompleted" Title="Completed" Width="110px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsDispatched" Title="Dispatched" Width="120px" TextAlign="TextAlign.Center">
                     <Template Context="transfer">
-                        <RadzenBadge BadgeStyle="@(transfer.IsCompleted == 1 ? BadgeStyle.Success : BadgeStyle.Warning)"
-                                     Text="@(transfer.IsCompleted == 1 ? "Yes" : "No")" />
+                        <RadzenBadge Text="@(transfer.IsDispatched ? "Yes" : "No")" />
                     </Template>
                 </RadzenDataGridColumn>
 

@@ -204,19 +204,9 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitName" Title="Unit" Width="100px" TextAlign="TextAlign.Center" />
-                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="UnitPrice" Title="Unit Price" Width="110px" TextAlign="TextAlign.Right">
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SalePrice" Title="Price" Width="110px" TextAlign="TextAlign.Right">
                                     <Template Context="detail">
-                                        @(detail.UnitPrice.ToString("N2"))
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="TotalAmount" Title="Total Amount" Width="120px" TextAlign="TextAlign.Right">
-                                    <Template Context="detail">
-                                        <strong>@(detail.TotalAmount.ToString("N2"))</strong>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SerialNo" Title="Serial No" Width="120px" TextAlign="TextAlign.Center">
-                                    <Template Context="detail">
-                                        @(detail.SerialNo ?? "—")
+                                        @(detail.SalePrice.ToString("N2"))
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
