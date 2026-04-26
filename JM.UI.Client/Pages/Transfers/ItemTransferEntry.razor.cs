@@ -265,8 +265,8 @@ namespace JM.UI.Client.Pages.Transfers
                     items = null;
                 }
 
-                PreviewItems.Clear();
-                PreviewGrid?.Reload();
+                //PreviewItems.Clear();
+                //PreviewGrid?.Reload();
 
                 if (items != null && items.Any())
                 {
@@ -274,10 +274,22 @@ namespace JM.UI.Client.Pages.Transfers
 
                     foreach (var item in items)
                     {
+                        var itemBarcode = item.Barcode ?? barcode;
+
+                        // Skip if this exact barcode already exists in preview
+                        if (PreviewItems.Any(r => r.Barcode == itemBarcode))
+                        {
+                            notificationService.Notify(
+                                NotificationSeverity.Info,
+                                "Already in Preview",
+                                $"'{item.Name}' ({itemBarcode}) is already in the preview list.");
+                            continue;
+                        }
+
                         PreviewItems.Add(new TransferPreviewRow
                         {
                             ItemId = item.Id,
-                            Barcode = item.Barcode ?? barcode,
+                            Barcode = itemBarcode,
                             ItemName = item.Name ?? string.Empty,
                             ColorId = item.ColorId,
                             ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
@@ -296,7 +308,6 @@ namespace JM.UI.Client.Pages.Transfers
                             SalePrice = item.SalePrice.Value
                         });
                     }
-
                     PreviewGrid?.Reload();
 
                     notificationService.Notify(
