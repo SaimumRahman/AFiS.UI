@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using JM.UI.DataService.DAL.Accounts;
+﻿using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.AccountsGroups;
@@ -11,6 +8,7 @@ using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcode;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Barcodes;
@@ -70,6 +68,9 @@ using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.DataService.DAL.Vouchers;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace JM.UI.DataService.DAL.UnitOfWork
 {
@@ -117,5 +118,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICurrentStockReportRepository CurrentStockReportRepository { get; }
         ITransferRepository TransferRepository { get; }
         IStockRepository StockRepository { get; }
+        IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
     }
 }

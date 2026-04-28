@@ -11,6 +11,7 @@ using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
+using JM.UI.Service.Barcode;
 using JM.UI.Service.Barcodes;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Colors;
@@ -108,6 +109,7 @@ namespace JM.UI.Service
             services.AddTransient<IItemCatalogueService, ItemCatalogueService>();
             services.AddTransient<ICurrentStockReportService, CurrentStockReportService>();
             services.AddTransient<ITransferService, TransferService>();
+            services.AddTransient<IBarcodePrintConfigService, BarcodePrintConfigService>();
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
         }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JM.Infrastructure.Base;
+﻿using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Accounts;
 using JM.UI.DataService.DAL.AccountsGroups;
 using JM.UI.DataService.DAL.AccountsGroups;
@@ -12,6 +7,7 @@ using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcode;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
@@ -49,6 +45,11 @@ using JM.UI.DataService.DAL.Users;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.Vouchers;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace JM.UI.DataService
 {
@@ -100,6 +101,7 @@ namespace JM.UI.DataService
             services.AddScoped<ICurrentStockReportRepository, CurrentStockReportRepository>();
             services.AddScoped<ITransferRepository, TransferRepository>();
             services.AddScoped<IStockRepository, StockRepository>();
+            services.AddScoped<IBarcodePrintConfigRepository, BarcodePrintConfigRepository>();
             #endregion
         }
 

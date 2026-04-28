@@ -161,7 +161,7 @@
                         <RadzenLabel Text="Select Barcode" Component="SingleBarcode" />
                         <RadzenDropDown @bind-Value="SelectedBarcodeId"
                                         Data="@AllBarcodes"
-                                        TextProperty="DisplayLabel"
+                                        TextProperty="Name"
                                         ValueProperty="Id"
                                         Name="SingleBarcode"
                                         Placeholder="-- Search and select barcode --"
@@ -198,7 +198,7 @@
                         var bc = AllBarcodes.FirstOrDefault(b => b.Id == SelectedBarcodeId);
                         @if (bc != null)
                         {
-                            <RadzenBadge BadgeStyle="@(bc.GroupId == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
+                            <RadzenBadge BadgeStyle="@(bc.GroupName == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
                                          Text="@bc.GroupName"
                                          Style="font-size:0.85rem;" />
                         }

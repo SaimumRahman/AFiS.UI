@@ -24,7 +24,10 @@ namespace JM.UI.Service.Purchases
         {
             return await _repositoryUnitOfWork.PurchaseRepository.GetPurchases();
         }
-
+        public async Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate)
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchasesByDateRange(fromDate, toDate);
+        }
         // =============================================
         // Get Purchase By Id
         // =============================================

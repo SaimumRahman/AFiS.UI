@@ -8,6 +8,7 @@ using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
+using JM.UI.DataService.DAL.Barcode;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Barcodes;
@@ -125,6 +126,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICurrentStockReportRepository CurrentStockReportRepository { get; }
         public ITransferRepository TransferRepository { get; }
         public IStockRepository StockRepository { get; }
+        public IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -178,6 +180,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CurrentStockReportRepository = new CurrentStockReportRepository(factory, tokenProvider, loggerFactory.CreateLogger<CurrentStockReportRepository>());
             TransferRepository = new TransferRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferRepository>());
             StockRepository = new StockRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockRepository>());
+            BarcodePrintConfigRepository = new BarcodePrintConfigRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodePrintConfigRepository>());
         }
 
         public void Dispose()

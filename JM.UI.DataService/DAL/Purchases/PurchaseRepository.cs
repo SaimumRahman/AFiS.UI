@@ -22,7 +22,35 @@ namespace JM.UI.DataService.DAL.Purchases
             : base(httpClientFactory, tokenProvider, logger)
         {
         }
+        public async Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch purchases from {FromDate} to {ToDate}", fromDate, toDate);
 
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Purchase/by-date-range?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("No purchases found for date range {FromDate} to {ToDate}", fromDate, toDate);
+                    return new List<PurchaseInvoiceDTO>();
+                }
+
+                var purchases = await response.Content.ReadFromJsonAsync<List<PurchaseInvoiceDTO>>();
+                return purchases ?? new List<PurchaseInvoiceDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get purchases by date range");
+                throw new Exception($"Failed to fetch purchases by date range: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get purchases by date range");
+                throw new Exception($"Unexpected error fetching purchases by date range: {ex.Message}", ex);
+            }
+        }
         // =============================================
         // Get All Purchases
         // =============================================

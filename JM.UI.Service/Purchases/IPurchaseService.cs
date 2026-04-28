@@ -27,6 +27,7 @@ namespace JM.UI.Service.Purchases
         string FormatDate(DateTime? date);
         Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId);
         Task<SystemInVoiceDTO?> GetSystemInvoiceNew();
+        Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate);
 
     }
 }
