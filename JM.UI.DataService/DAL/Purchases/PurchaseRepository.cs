@@ -29,7 +29,7 @@ namespace JM.UI.DataService.DAL.Purchases
                 _logger.LogInformation("Starting to fetch purchases from {FromDate} to {ToDate}", fromDate, toDate);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"Purchase/by-date-range?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
+                var response = await httpClient.GetAsync($"api/Purchase/by-date-range?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
 
                 if (!response.IsSuccessStatusCode)
                 {

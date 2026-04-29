@@ -233,6 +233,15 @@ namespace JM.UI.Client.Services
                         Description = "Record and manage received invoices",
                         Tags = new[] { "invoice", "bill", "purchase" }
                     },
+                    new Example
+                    {
+                        Name = "Barcode Print",
+                        Path = "/BarcodePrint",
+                        Icon = "\ue873",  // receipt
+                        Title = "Barcode Print",
+                        Description = "BarcodePrint",
+                        Tags = new[] { "Barcode", "print", "purchase" }
+                    },
                      new Example { Name = "Stock Opening", Path = "/StockOpeningList", Icon = "\ue14f", Title = "Stock Opening", Description = "Add new opening stock", Tags = new[] { "stock", "opening", "inventory" } },
                 }
             },
