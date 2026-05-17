@@ -10,6 +10,7 @@
 @inject NavigationManager navigationManager
 @inject ProtectedLocalStorage sessionStorage
 @implements IDisposable
+
 <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Routes).Assembly">
         <Found Context="routeData">
@@ -45,95 +46,131 @@
     </Router>
 </CascadingAuthenticationState>
 
-
 @code {
-    private bool _hasRoutePermission = true;
-    private bool _isCheckingPermission = false;
+    // Track an ongoing check so we can cancel stale ones
+    private CancellationTokenSource _cts = new();
+
     protected override void OnInitialized()
     {
-        navigationManager.LocationChanged += OnLocationChangedAsync;
+        navigationManager.LocationChanged += OnLocationChanged;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await CheckRoutePermissionAsync();
+        await CheckRoutePermissionAsync(_cts.Token);
     }
 
-    private async void OnLocationChangedAsync(object? sender, LocationChangedEventArgs e)
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // Fire-and-forget is okay here, but wrap in try/catch to avoid unhandled exceptions
+        // Cancel any previous in-flight check
+        await _cts.CancelAsync();
+        _cts = new CancellationTokenSource();
+
         try
         {
-            await CheckRoutePermissionAsync();
-            StateHasChanged();
+            await CheckRoutePermissionAsync(_cts.Token);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation changed again before this check finished — safe to ignore
         }
         catch
         {
-            // log or ignore
+            // log if needed
         }
     }
 
-    private async Task CheckRoutePermissionAsync()
+    private async Task CheckRoutePermissionAsync(CancellationToken ct)
     {
-        _isCheckingPermission = true;
-        _hasRoutePermission = true;
-        int userId = 0;
         try
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            ct.ThrowIfCancellationRequested();
+
             var user = authState.User;
-
             if (user.Identity?.IsAuthenticated != true)
-            {
-                _isCheckingPermission = false;
                 return;
-            }
 
-            userId = (await GetUserInfoAsync());
+            var userId = await GetUserInfoAsync();
+            ct.ThrowIfCancellationRequested();
 
-            // Get current route
+            // Admins always have access
+            if (userId == 1)
+                return;
+
             var relativePath = navigationManager.ToBaseRelativePath(navigationManager.Uri);
             var routePath = "/" + relativePath.Split('?')[0];
 
-            // // Check permission using your service
-            if (userId == 1)
-            {
-                _hasRoutePermission = true;
-                return;
-            }
-            if (routePath != "/" && routePath != "/dashboard")
-            {
-                _hasRoutePermission = await permissionService.CanAccessRoute(routePath);
-                if (_hasRoutePermission == false)
-                {
-                    navigationManager.NavigateTo("/UnAuthorized");
-                }
-            }
+            // Normalize dynamic segments before checking permission
+                routePath = NormalizeRoutePath(routePath);
 
+            if (routePath == "/" || routePath == "/dashboard")
+                return;
+
+            var hasAccess = await permissionService.CanAccessRoute(routePath);
+            ct.ThrowIfCancellationRequested();
+
+            if (!hasAccess)
+            {
+                await InvokeAsync(() => navigationManager.NavigateTo("/UnAuthorized"));
+            }
         }
-        finally
+        catch (OperationCanceledException)
         {
-            _isCheckingPermission = false;
+            throw; // let caller handle
         }
     }
+
     private async Task<int> GetUserInfoAsync()
     {
-        // Try to get UserId from claims
         var userInfoResult = await sessionStorage.GetAsync<string>("UserId");
-
 
         if (!string.IsNullOrEmpty(userInfoResult.Value))
         {
             var userInfo = JsonConvert.DeserializeObject<string>(userInfoResult.Value);
-            var sd = userInfo.ToString();
-            return Convert.ToInt32(sd);
+            return Convert.ToInt32(userInfo);
         }
 
         return 0;
     }
+    private string NormalizeRoutePath(string path)
+    {
+        // Handle /PurchaseEntry/Edit/5  --> /PurchaseEntry/Edit/{Id:int}
+        // Handle /PurchaseEntry/Draft/5 --> /PurchaseEntry/Draft/{DraftId:int}
+        // Handle /ItemTransfer/Edit/5   --> /ItemTransfer/Edit/{Id:int}
+        // Handle all other /SomePage/5  --> /SomePage/{Id:int}
 
+        return System.Text.RegularExpressions.Regex.Replace(
+                path,
+                @"/\d+$",
+                match =>
+                {
+                    // Check which parameter name to use based on path
+                    if (path.Contains("/GroupRoutePermissionAdd") || path.Contains("/GroupActionPermissionsAdd"))
+                        return "/{GroupId:int}";
+                    if (path.Contains("/PurchaseEntry/Draft"))
+                        return "/{DraftId:int}";
+                    if (path.Contains("/AccountsGroupsAdd"))
+                        return "/{AccountsGroupsID:int}";
+                    if (path.Contains("/BanksAdd"))
+                        return "/{BanksID:int}";
+                    if (path.Contains("/DesignationAdd"))
+                        return "/{DesignationID:int}";
+                    if (path.Contains("/SizesAdd"))
+                        return "/{SizesID:int}";
+                    if (path.Contains("/ActionAdd"))
+                        return "/{ActionId:int}";
+
+                    // Default for all others
+                    return "/{Id:int}";
+                }
+            );
+    }
     public void Dispose()
     {
-        navigationManager.LocationChanged -= OnLocationChangedAsync;
+        navigationManager.LocationChanged -= OnLocationChanged;
+        _cts.Cancel();
+        _cts.Dispose();
     }
 }
