@@ -20,5 +20,6 @@ namespace JM.UI.DataService.DAL.Purchases
         Task DeletePurchaseDraft(int id);
         Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId);
         Task<SystemInVoiceDTO?> GetSystemInvoiceNew();
+        Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate);
     }
 }

@@ -1,3 +1,6 @@
+using JM.UI.Entities.Model.Barcodes;
+using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.Purchases;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -21,12 +24,12 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected DateTime ToDate { get; set; } = DateTime.Today;
 
     // ── Purchase Dropdown ────────────────────────────────────────
-    protected List<PurchaseNoDTO> PurchaseList { get; set; } = new();
+    protected List<PurchaseInvoiceDTO> PurchaseList { get; set; } = new();
     protected int? SelectedPurchaseId { get; set; }
-    protected PurchaseNoDTO? SelectedPurchase { get; set; }
+    protected PurchaseInvoiceDTO? SelectedPurchase { get; set; }
 
     // ── Single-Barcode Dropdown ──────────────────────────────────
-    protected List<BarcodeItemDTO> AllBarcodes { get; set; } = new();
+    protected List<ItemDTO> AllBarcodes { get; set; } = new();
     protected int? SelectedBarcodeId { get; set; }
     protected int SinglePrintQty { get; set; } = 1;
 
@@ -62,7 +65,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         {
             IsLoadingConfig = true;
             // TODO: Call service → GET /api/barcode/print-config
-            // PrintConfig = await _serviceUnitOfWork.BarcodeService.GetPrintConfiguration();
+             PrintConfig = (await _serviceUnitOfWork.BarcodePrintConfigService.GetAllBarcodePrintConfigs()).FirstOrDefault();
 
             // Stub until wired:
             PrintConfig = new BarcodePrintConfigDTO
@@ -91,14 +94,8 @@ public partial class BarcodePrintComponent : PosComponentBase
         {
             IsLoadingPurchases = true;
             // TODO: Call service → GET /api/purchase/list?from={FromDate}&to={ToDate}
-            // PurchaseList = await _serviceUnitOfWork.PurchaseService.GetPurchaseNosByDateRange(FromDate, ToDate);
+             PurchaseList = (await _serviceUnitOfWork.PurchaseService.GetPurchasesByDateRange(FromDate, ToDate)).ToList();
 
-            // Stub:
-            PurchaseList = new List<PurchaseNoDTO>
-            {
-                new() { Id = 1, PurchaseNo = "PO-2025-001", PurchaseDate = DateTime.Today, ItemCount = 5  },
-                new() { Id = 2, PurchaseNo = "PO-2025-002", PurchaseDate = DateTime.Today, ItemCount = 12 },
-            };
         }
         catch (Exception ex)
         {
@@ -133,21 +130,16 @@ public partial class BarcodePrintComponent : PosComponentBase
             yield return rng.Next(0, 3) == 0 ? 2 : 1; // mostly thin bars, occasional wide
     }
     // ── Barcode Dropdown (all barcodes for single-add) ───────────
-
+    private async Task<IEnumerable<ItemDTO>> LoadAllItems() =>
+    await _serviceUnitOfWork.ItemService.GetItems() ?? new List<ItemDTO>();
     private async Task LoadAllBarcodes()
     {
         try
         {
             IsLoadingBarcodes = true;
             // TODO: Call service → GET /api/barcode/all
-            // AllBarcodes = await _serviceUnitOfWork.BarcodeService.GetAllBarcodes();
-
-            AllBarcodes = new List<BarcodeItemDTO>
-            {
-                new() { Id = 1, BarcodeValue = "BC-10001", ProductName = "Cotton Fabric Roll",  GroupId = "FABRIC", GroupName = "Fabric" },
-                new() { Id = 2, BarcodeValue = "BC-10002", ProductName = "Blue Denim Jeans",    GroupId = "GARMENT",GroupName = "Garment"},
-                new() { Id = 3, BarcodeValue = "BC-10003", ProductName = "Polyester Thread",    GroupId = "FABRIC", GroupName = "Fabric" },
-            };
+            AllBarcodes = (await LoadAllItems())?.ToList() ?? new List<ItemDTO>();
+        
         }
         catch (Exception ex)
         {
@@ -176,14 +168,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         try
         {
             // TODO: Call service → GET /api/purchase/{purchaseId}/barcodes
-            // var barcodes = await _serviceUnitOfWork.BarcodeService.GetBarcodesByPurchaseId(purchaseId);
-
-            // Stub response:
-            var barcodes = new List<BarcodeItemDTO>
-            {
-                new() { Id = 1, BarcodeValue = "BC-10001", ProductName = "Cotton Fabric Roll", GroupId = "FABRIC",  GroupName = "Fabric"  },
-                new() { Id = 2, BarcodeValue = "BC-10002", ProductName = "Blue Denim Jeans",   GroupId = "GARMENT", GroupName = "Garment" },
-            };
+             var barcodes = await _serviceUnitOfWork.BarcodePrintConfigService.GetBarcodeItemsByPurchaseId(purchaseId);
 
             foreach (var barcode in barcodes)
             {
@@ -196,7 +181,7 @@ public partial class BarcodePrintComponent : PosComponentBase
             }
 
             notificationService.Notify(NotificationSeverity.Info, "Barcodes Loaded",
-                $"{barcodes.Count} barcode(s) added from purchase.");
+                $"{barcodes.Count()} barcode(s) added from purchase.");
         }
         catch (Exception ex)
         {
@@ -227,9 +212,9 @@ public partial class BarcodePrintComponent : PosComponentBase
         var barcode = AllBarcodes.FirstOrDefault(b => b.Id == SelectedBarcodeId);
         if (barcode == null) return;
 
-        AddOrUpdatePrintItem(barcode, SinglePrintQty);
+        AddOrUpdatePrintItemForUpdate(barcode, SinglePrintQty);
         notificationService.Notify(NotificationSeverity.Success, "Added",
-            $"Barcode {barcode.BarcodeValue} added ({SinglePrintQty}×).");
+            $"Barcode {barcode.Barcode} added ({SinglePrintQty}×).");
     }
 
     // ── Print Item Helpers ───────────────────────────────────────
@@ -248,7 +233,28 @@ public partial class BarcodePrintComponent : PosComponentBase
                 BarcodeId = barcode.Id,
                 BarcodeValue = barcode.BarcodeValue,
                 ProductName = barcode.ProductName,
-                GroupId = barcode.GroupId,
+                GroupName = barcode.GroupName,
+                PrintQty = qty,
+                LabelWidthMm = PrintConfig.LabelWidthMm,
+                LabelHeightMm = PrintConfig.LabelHeightMm
+            });
+        }
+        StateHasChanged();
+    }
+    private void AddOrUpdatePrintItemForUpdate(ItemDTO barcode, int qty)
+    {
+        var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
+        if (existing != null)
+        {
+            existing.PrintQty += qty;
+        }
+        else
+        {
+            PrintItems.Add(new BarcodePrintItemDTO
+            {
+                BarcodeId = barcode.Id,
+                BarcodeValue = barcode.Barcode,
+                ProductName = barcode.Name,
                 GroupName = barcode.GroupName,
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
@@ -324,28 +330,6 @@ public partial class BarcodePrintComponent : PosComponentBase
     }
 }
 
-public class PurchaseNoDTO
-{
-    public int Id { get; set; }
-    public string PurchaseNo { get; set; } = string.Empty;
-    public DateTime PurchaseDate { get; set; }
-    public int ItemCount { get; set; }
-}
-public class BarcodeItemDTO
-{
-    public int Id { get; set; }
-    public string BarcodeValue { get; set; } = string.Empty;
-    public string ProductName { get; set; } = string.Empty;
-    public string GroupId { get; set; } = string.Empty;
-    public string GroupName { get; set; } = string.Empty;
-    public string DisplayLabel => $"{BarcodeValue}  —  {ProductName} ({GroupName})";
-}
-public class BarcodePrintConfigDTO
-{
-    public decimal LabelWidthMm { get; set; } = 50;
-    public decimal LabelHeightMm { get; set; } = 30;
-    public int FabricRepeatCount { get; set; } = 2;
-}
 public class BarcodePrintItemDTO
 {
     public int BarcodeId { get; set; }

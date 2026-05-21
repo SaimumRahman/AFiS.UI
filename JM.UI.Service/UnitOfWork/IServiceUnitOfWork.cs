@@ -9,6 +9,7 @@ using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
+using JM.UI.Service.Barcode;
 using JM.UI.Service.Barcodes;
 using JM.UI.Service.Barcodes;
 using JM.UI.Service.Barcodes;
@@ -119,5 +120,6 @@ namespace JM.UI.Service.UnitOfWork
         ICurrentStockReportService CurrentStockReportService { get; }
         ITransferService TransferService { get; }
         IStockService StockService { get; }
+        IBarcodePrintConfigService BarcodePrintConfigService { get; }
     }
 }

@@ -1,55 +1,160 @@
 @using JM.UI.Client.Services
+@using JM.UI.Entities.Model.GroupRoutePermission
 @using JM.UI.Entities.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Newtonsoft.Json
 
 @inject ExampleService ExampleService
+@inject ProtectedLocalStorage _localStorage
 
 <div style="padding: 1rem">
-    <RadzenTextBox id="find" Placeholder="Find component ..." type="search" @oninput="@FilterPanelMenu" style="width: 100%" class="rz-search-input" aria-label="find" />
+    <RadzenTextBox id="find"
+                   Placeholder="Find component ..."
+                   type="search"
+                   @oninput="@FilterPanelMenu"
+                   style="width: 100%"
+                   class="rz-search-input"
+                   aria-label="find" />
 </div>
+
 <div style="flex: 1; overflow: auto">
     <RadzenPanelMenu Match="NavLinkMatch.Prefix">
-        @foreach (var category in examples)
+
+        @if (examples != null)
         {
-            @if (category.Children != null)
+            @foreach (var category in examples)
             {
-            <NavigationItem @key=category Example=@category>
-            @foreach (var example in category.Children)
-            {
-                if (example.Children != null)
+                if (category.Children != null)
                 {
-                    <NavigationItem @key=example Example=@example>
-                    @foreach (var child in example.Children)
-                    {
-                        <NavigationItem @key=child Example=@child />
-                    }
+                    <NavigationItem @key=category Example=@category>
+
+                        @foreach (var example in category.Children)
+                        {
+                            if (example.Children != null)
+                            {
+                                <NavigationItem @key=example Example=@example>
+
+                                    @foreach (var child in example.Children)
+                                    {
+                                        <NavigationItem @key=child Example=@child />
+                                    }
+
+                                </NavigationItem>
+                            }
+                            else
+                            {
+                                <NavigationItem @key=example Example=@example />
+                            }
+                        }
+
                     </NavigationItem>
                 }
                 else
                 {
-                    <NavigationItem @key=example Example=@example />
+                    <NavigationItem @key=category Example=@category />
                 }
             }
-            </NavigationItem>
-            }
-            else
-            {
-                <NavigationItem @key=category Example=@category />
-            }
         }
+
     </RadzenPanelMenu>
 </div>
-@code {
-    IEnumerable<Example> examples;
 
-    protected override void OnInitialized()
+@code {
+
+    IEnumerable<Example> examples;
+    private bool _firstRender = true;
+
+    protected override async Task OnInitializedAsync()
     {
+        // Set examples to all examples during initialization
+        // Permission filtering will happen in OnAfterRenderAsync when JS interop is available
         examples = ExampleService.Examples;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _firstRender = false;
+
+            if (await GetUserInfoAsync() == 1)
+            {
+                return;
+            }
+
+            var storageResult = await _localStorage.GetAsync<string>("Permissions");
+
+            if (string.IsNullOrWhiteSpace(storageResult.Value))
+            {
+                return;
+            }
+
+            var permissions = JsonConvert.DeserializeObject<List<GroupRoutePermissionModelDTO>>(storageResult.Value);
+
+            if (permissions != null && permissions.Any())
+            {
+                var permittedRoutes = permissions
+                    .Select(p => p.Route)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var allExamples = ExampleService.Examples;
+
+                examples = FilterExamples(allExamples, permittedRoutes).ToList();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+
+    private IEnumerable<Example> FilterExamples(IEnumerable<Example> source, HashSet<string> permittedRoutes)
+    {
+        foreach (var item in source)
+        {
+            var filteredChildren = item.Children != null
+                ? FilterExamples(item.Children, permittedRoutes).ToList()
+                : new List<Example>();
+
+            if (permittedRoutes.Contains(item.Path) || filteredChildren.Any())
+            {
+                yield return new Example
+                {
+                    New = item.New,
+                    Updated = item.Updated,
+                    Pro = item.Pro,
+                    Name = item.Name,
+                    Icon = item.Icon,
+                    Path = item.Path,
+                    Title = item.Title,
+                    Description = item.Description,
+                    Expanded = item.Expanded,
+                    Tags = item.Tags,
+                    Toc = item.Toc,
+                    Children = filteredChildren
+                };
+            }
+        }
+    }
+
+
     void FilterPanelMenu(ChangeEventArgs args)
     {
-        var term = args.Value.ToString();
+        var term = args.Value?.ToString();
 
-        examples = string.IsNullOrEmpty(term) ? ExampleService.Examples : ExampleService.Filter(term);
+        examples = string.IsNullOrWhiteSpace(term)
+            ? ExampleService.Examples
+            : ExampleService.Filter(term);
+    }
+    private async Task<int> GetUserInfoAsync()
+    {
+        // Try to get UserId from claims
+        var userInfoResult = await _localStorage.GetAsync<string>("UserId");
+
+        if (!string.IsNullOrEmpty(userInfoResult.Value))
+        {
+            var userInfo = JsonConvert.DeserializeObject<string>(userInfoResult.Value);
+            var sd = userInfo.ToString();
+            return Convert.ToInt32(sd);
+        }
+
+        return 0;
     }
 }

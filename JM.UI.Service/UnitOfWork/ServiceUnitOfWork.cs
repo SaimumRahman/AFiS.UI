@@ -11,6 +11,7 @@ using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
 using JM.UI.Service.Banks;
 using JM.UI.Service.Bankss;
+using JM.UI.Service.Barcode;
 using JM.UI.Service.Barcodes;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Colors;
@@ -96,7 +97,6 @@ namespace JM.UI.Service.UnitOfWork
         public IPurchaseReturnItemService PurchaseReturnItemService { get; private set; }
         public ISupplierPaymentService SupplierPaymentService { get; private set; }
         public IDesignService DesignService { get; private set; }
-
         public IItemOriginService ItemOriginService { get; private set; }
         public IItemFeatureService ItemFeatureService { get; private set; }
         public IItemBrandService ItemBrandService { get; private set; }
@@ -105,6 +105,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICurrentStockReportService CurrentStockReportService { get; private set; }
         public ITransferService TransferService { get; private set; }
         public IStockService StockService { get; private set; }
+        public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -153,6 +154,7 @@ namespace JM.UI.Service.UnitOfWork
             CurrentStockReportService = new CurrentStockReportService(_repoUow);
             TransferService = new TransferService(_repoUow);
             StockService = new StockService(_repoUow);
+            BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
         }
         public void Dispose()
         {
