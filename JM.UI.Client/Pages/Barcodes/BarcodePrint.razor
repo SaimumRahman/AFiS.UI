@@ -121,7 +121,30 @@
                                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                             IsLoading="@IsLoadingPurchases"
                                             Change="@OnPurchaseSelected">
-                                @* TODO: Customize item template if needed *@
+                                <HeaderTemplate>
+                                    <RadzenRow Style="width:100%; padding: 4px 8px; border-bottom: 1px solid var(--rz-border-color);">
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                                Purchase No
+                                            </RadzenText>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                                Purchase Date
+                                            </RadzenText>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </HeaderTemplate>
+                                <Template Context="purchase">
+                                    <RadzenRow Style="width:100%;">
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseNo</RadzenText>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseDate.ToString("dd MMM yyyy")</RadzenText>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </Template>
                             </RadzenDropDown>
                             <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
                                 Showing purchases from @FromDate.ToString("dd MMM yyyy") to @ToDate.ToString("dd MMM yyyy")
