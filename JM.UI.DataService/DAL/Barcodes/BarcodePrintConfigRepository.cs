@@ -101,5 +101,57 @@ namespace JM.UI.DataService.DAL.Barcode
                 throw new Exception($"Unexpected error fetching barcode items: {ex.Message}", ex);
             }
         }
+        public async Task<IEnumerable<BarcodeTemplateDTO>> GetAllBarcodeTemplates()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching all barcode templates");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("BarcodePrintConfig/getallTemplate");
+                response.EnsureSuccessStatusCode();
+
+                var templates = await response.Content.ReadFromJsonAsync<List<BarcodeTemplateDTO>>();
+                return templates ?? new List<BarcodeTemplateDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during GetAllBarcodeTemplates");
+                throw new Exception("Failed to fetch barcode templates: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during GetAllBarcodeTemplates");
+                throw new Exception("Unexpected error fetching barcode templates: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<BarcodeTemplateDTO?> GetBarcodeTemplateById(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching barcode template id={Id}", id);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"BarcodePrintConfig/getbyid/{id}");
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return null;
+
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<BarcodeTemplateDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during GetBarcodeTemplateById id={Id}", id);
+                throw new Exception($"Failed to fetch barcode template {id}: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during GetBarcodeTemplateById id={Id}", id);
+                throw new Exception($"Unexpected error fetching barcode template {id}: " + ex.Message, ex);
+            }
+        }
     }
 }

@@ -24,5 +24,14 @@ namespace JM.UI.Service.Barcode
         {
             return await _repositoryUnitOfWork.BarcodePrintConfigRepository.GetBarcodeItemsByPurchaseId(purchaseId);
         }
+        public async Task<IEnumerable<BarcodeTemplateDTO>> GetAllBarcodeTemplates()
+        {
+            return await _repositoryUnitOfWork.BarcodePrintConfigRepository.GetAllBarcodeTemplates();
+        }
+
+        public async Task<BarcodeTemplateDTO?> GetBarcodeTemplateById(int id)
+        {
+            return await _repositoryUnitOfWork.BarcodePrintConfigRepository.GetBarcodeTemplateById(id);
+        }
     }
 }
