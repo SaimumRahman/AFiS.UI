@@ -86,71 +86,18 @@ namespace JM.UI.Client.Pages.Employees
                     await LoadEmployees();
             }
         }
-        protected async Task ToggleStatus(EmployeeModelDTO employee)
+        protected async Task ToggleStatus(EmployeeModelDTO employee, bool value)
         {
-            try
+            var result = await _userAuthService.UpdateActiveInactiveUser(employee.Surname, value);
+
+            if (result)
             {
-                if (employee.Id <= 0)
+                notificationService.Notify(new NotificationMessage
                 {
-                    notificationService.Notify(new NotificationMessage   // ← lowercase
-                    {
-                        Severity = NotificationSeverity.Warning,
-                        Summary = "No User Account",
-                        Detail = $"'{employee.Name}' has no linked user account.",
-                        Duration = 4000
-                    });
-                    return;
-                }
-
-                var confirmResult = await dialogService.Confirm(
-                    $"Are you sure you want to {(employee.IsActive ? "deactivate" : "activate")} '{employee.Surname}'?",
-                    "Confirm Status Change",
-                    new ConfirmOptions
-                    {
-                        OkButtonText = "Yes",
-                        CancelButtonText = "No",
-                        AutoFocusFirstElement = true
-                    }
-                );
-
-                if (confirmResult != true) return;
-
-                bool newStatus = !employee.IsActive;
-
-                var success = await _userAuthService.UpdateActiveInactiveUser(employee.Surname, newStatus);
-
-                if (success)
-                {
-                    notificationService.Notify(new NotificationMessage   // ← lowercase
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "Success",
-                        Detail = $"'{employee.Name}' has been {(newStatus ? "activated" : "deactivated")} successfully.",
-                        Duration = 4000
-                    });
-
-                    await LoadEmployees();
-                    await EmployeesGrid.Reload();
-                }
-                else
-                {
-                    notificationService.Notify(new NotificationMessage   // ← lowercase
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Error",
-                        Detail = "Failed to update employee status.",
-                        Duration = 4000
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(new NotificationMessage       // ← lowercase
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = $"An error occurred: {ex.Message}",
-                    Duration = 4000
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = $"Status updated successfully.",
+                    Duration = 3000
                 });
             }
         }

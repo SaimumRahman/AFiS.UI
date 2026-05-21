@@ -175,20 +175,19 @@
                 </RadzenDataGridColumn>
 
                 <!-- Actions -->
-                <RadzenDataGridColumn TItem="EmployeeModelDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Title="Actions" Width="160px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="employee">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
 
-                            <RadzenButton Icon="@(employee.IsActive ? "lock_open" : "lock")"
-                                          ButtonStyle="@(employee.IsActive ? ButtonStyle.Success : ButtonStyle.Warning)"
-                                          Size="ButtonSize.Small"
-                                          Variant="Variant.Flat"
-                                          
-                                          Click="@(() => ToggleStatus(employee))"
-                                          MouseEnter="@(args => ShowTooltip(args,
-                                                            employee.Id <= 0 ? "No user account" :
-                                                            employee.IsActive ? "Deactivate Login" : "Activate Login"))" />
-                            <RadzenButton Icon="edit"
+                            <RadzenToggleButton @bind-Value="@employee.IsActive"
+                                                ToggleButtonStyle="ButtonStyle.Success"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Icon="@(employee.IsActive ? "lock_open" : "lock")"
+                                                Text="@(employee.IsActive ? "Active" : "Inactive")"
+                                                Size="ButtonSize.Small"
+                                                Change="@((value) => ToggleStatus(employee, value))" />
+
+                                          <RadzenButton Icon="edit"7
                                           ButtonStyle="ButtonStyle.Info"
                                           Size="ButtonSize.Small"
                                           Variant="Variant.Flat"
