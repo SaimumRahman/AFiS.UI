@@ -283,7 +283,7 @@
                                     <RadzenDropDown @bind-Value="Purchase.StoreId" Data="@Stores"
                                                     TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
                                                     Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                    Disabled="@IsProcessing" />
+                                                    Disabled="true" />
                                 </RadzenColumn>
                             </RadzenRow>
 
@@ -446,6 +446,43 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
+                        <!-- Color / Size / ShadeNo -->
+                        <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Color" Style="font-weight:600; font-size:0.75rem;" />
+                                <RadzenDropDownDataGrid @bind-Value="CurrentItem.ColorId"
+                                                        Data="@Colors" ValueProperty="Id" TextProperty="Name"
+                                                        AllowFiltering="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        Style="width:100%" Placeholder="Select"
+                                                        Change="@(args => OnColorChanged((int?)args))"
+                                                        AllowFilteringByAllStringColumns="true">
+                                    <Columns>
+                                        <RadzenDropDownDataGridColumn Width="40px" Filterable="false">
+                                            <Template Context="color">
+                                                <div style="width:14px;height:14px;border-radius:3px;border:1px solid #ccc;background-color:@(string.IsNullOrWhiteSpace(color.HexCode) ? "#fff" : color.HexCode)"></div>
+                                            </Template>
+                                        </RadzenDropDownDataGridColumn>
+                                        <RadzenDropDownDataGridColumn Property="Name" Title="Color Name" />
+                                        <RadzenDropDownDataGridColumn Property="ColorCode" Title="Code" />
+                                    </Columns>
+                                </RadzenDropDownDataGrid>
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Size" Style="font-weight:600; font-size:0.75rem;" />
+                                <RadzenDropDown @bind-Value="CurrentItem.SizeId" Data="@Sizes"
+                                                TextProperty="Name" ValueProperty="Id" Placeholder="Select"
+                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
+                                                Change="@(args => OnSizeChanged((int?)args))" />
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="ShadeNo" Style="font-weight:600; font-size:0.65rem;" />
+                                <RadzenTextBox @bind-Value="CurrentItem.ShadeNo" Placeholder="Shade No"
+                                               Style="width:100%; font-size:0.65rem; height:26px; padding:2px 6px;" />
+                            </RadzenColumn>
+                        </RadzenRow>
 
                             <!-- ═══════════════════════════════════════════════════════
                                  Search Barcode  +  Image Upload  (same row)
@@ -523,44 +560,7 @@
                                 </RadzenColumn>
                             </RadzenRow>
 
-                            <!-- Color / Size / ShadeNo -->
-                            <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenLabel Text="Color" Style="font-weight:600; font-size:0.75rem;" />
-                                    <RadzenDropDownDataGrid @bind-Value="CurrentItem.ColorId"
-                                                            Data="@Colors" ValueProperty="Id" TextProperty="Name"
-                                                            AllowFiltering="true"
-                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                            Style="width:100%" Placeholder="Select"
-                                                            Change="@(args => OnColorChanged((int?)args))"
-                                                            AllowFilteringByAllStringColumns="true">
-                                        <Columns>
-                                            <RadzenDropDownDataGridColumn Width="40px" Filterable="false">
-                                                <Template Context="color">
-                                                    <div style="width:14px;height:14px;border-radius:3px;border:1px solid #ccc;background-color:@(string.IsNullOrWhiteSpace(color.HexCode) ? "#fff" : color.HexCode)"></div>
-                                                </Template>
-                                            </RadzenDropDownDataGridColumn>
-                                            <RadzenDropDownDataGridColumn Property="Name" Title="Color Name" />
-                                            <RadzenDropDownDataGridColumn Property="ColorCode" Title="Code" />
-                                        </Columns>
-                                    </RadzenDropDownDataGrid>
-                                </RadzenColumn>
-
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenLabel Text="Size" Style="font-weight:600; font-size:0.75rem;" />
-                                    <RadzenDropDown @bind-Value="CurrentItem.SizeId" Data="@Sizes"
-                                                    TextProperty="Name" ValueProperty="Id" Placeholder="Select"
-                                                    Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                    Change="@(args => OnSizeChanged((int?)args))" />
-                                </RadzenColumn>
-
-                                <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenLabel Text="ShadeNo" Style="font-weight:600; font-size:0.65rem;" />
-                                    <RadzenTextBox @bind-Value="CurrentItem.ShadeNo" Placeholder="Shade No"
-                                                   Style="width:100%; font-size:0.65rem; height:26px; padding:2px 6px;" />
-                                </RadzenColumn>
-                            </RadzenRow>
-
+                          
                         </RadzenStack>
                     </RadzenColumn>
 

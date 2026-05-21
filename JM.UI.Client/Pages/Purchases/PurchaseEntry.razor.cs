@@ -127,7 +127,7 @@ namespace JM.UI.Client.Pages.Purchases
         {
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
-
+            Purchase.StoreId = Stores.FirstOrDefault()?.Id;
             if (IsDraftMode)
                 await LoadDraft();
             else if (IsEditMode)
@@ -245,7 +245,7 @@ namespace JM.UI.Client.Pages.Purchases
             try
             {
                 Suppliers = await LoadSuppliers();
-                Stores = await LoadStores();
+                Stores = (await LoadStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase));
                 Groups = await LoadGroups();
                 Colors = await LoadColors();
                 Sizes = await LoadSizes();
