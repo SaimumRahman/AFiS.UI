@@ -59,5 +59,7 @@ namespace JM.UI.Entities.Model.Employees
         public int EmpId { get; set; }
 
         public bool IsUserCreate { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
 }
