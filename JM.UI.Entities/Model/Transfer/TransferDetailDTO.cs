@@ -31,6 +31,7 @@ public class TransferDetailDTO
     public decimal SalePrice { get; set; }
     public decimal TotalAmount { get; set; }
     public string? SerialNo { get; set; }
+    public bool IsReceived { get; set; }
 
     // ── Audit ──
     public DateTime CreatedAt { get; set; }

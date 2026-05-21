@@ -17,8 +17,8 @@ namespace JM.UI.Service.Transfer
 
         public async Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy)
             => await _repositoryUnitOfWork.TransferRepository.UpdateDispatchStatus(transferIds, updatedBy);
-        public async Task<ResponseResult> UpdateReceivedStatus(List<int> transferIds, int updatedBy)
-            => await _repositoryUnitOfWork.TransferRepository.UpdateReceivedStatus(transferIds, updatedBy);
+        public async Task UpdateReceivedStatus(List<int> receivedDetailIds, List<int> fullyReceivedMasterIds, DateTime now, int userId)
+            => await _repositoryUnitOfWork.TransferRepository.UpdateReceivedStatus(receivedDetailIds, fullyReceivedMasterIds, now, userId);
 
         public async Task<IEnumerable<TransferMasterDTO>> GetTransfers()
             => await _repositoryUnitOfWork.TransferRepository.GetTransfers();

@@ -309,30 +309,42 @@ namespace JM.UI.DataService.DAL.Transfer
             }
         }
 
-        public async Task<ResponseResult> UpdateReceivedStatus(List<int> transferIds, int updatedBy)
+        public async Task UpdateReceivedStatus(List<int> receivedDetailIds, List<int> fullyReceivedMasterIds, DateTime now, int userId)
         {
             try
             {
-                _logger.LogInformation("Updating dispatch status for transfers: {TransferIds}", string.Join(", ", transferIds));
+                _logger.LogInformation("Updating received status. Details: {DetailCount}, Masters: {MasterCount}",
+                    receivedDetailIds.Count, fullyReceivedMasterIds.Count);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
 
-                var command = new { TransferIds = transferIds, UpdatedBy = updatedBy };
-                var response = await httpClient.PatchAsJsonAsync("Transfer/update-received-status", command);
-                response.EnsureSuccessStatusCode();
+                var requestBody = new
+                {
+                    DetailIds = receivedDetailIds,
+                    MasterIds = fullyReceivedMasterIds,
+                    ReceivedDate = now,
+                    ReceivedBy = userId
+                };
 
-                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
-                return result ?? new ResponseResult { IsSuccessStatus = true, Message = "Dispatch status updated successfully." };
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed during dispatch status update for transfers: {TransferIds}", string.Join(", ", transferIds));
-                throw new Exception($"Failed to update dispatch status: {ex.Message}", ex);
+                var content = JsonContent.Create(requestBody);
+                var response = await httpClient.PatchAsync("Transfer/update-received-status", content);
+
+                var rawBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Update received status failed. Status: {Status} | Body: {Body}",
+                        (int)response.StatusCode, rawBody);
+
+                    throw new Exception($"Server error ({(int)response.StatusCode}): {rawBody}");
+                }
+
+                _logger.LogInformation("Received status updated successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during dispatch status update for transfers: {TransferIds}", string.Join(", ", transferIds));
-                throw new Exception($"Unexpected error updating dispatch status: {ex.Message}", ex);
+                _logger.LogError(ex, "Unexpected error during UpdateMasterReceivedStatus");
+                throw new Exception("Unexpected error updating received status: " + ex.Message, ex);
             }
         }
     }

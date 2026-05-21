@@ -18,7 +18,7 @@ namespace JM.UI.Client.Pages.Transfers
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Inject] public ITransferService TransferService { get; set; } = default!;
-
+        [Inject] public DialogService dialogService { get; set; } = default!;
         [Parameter] public int? Id { get; set; }
 
         protected TransferMasterDTO Transfer { get; set; } = new();
@@ -265,8 +265,8 @@ namespace JM.UI.Client.Pages.Transfers
                     items = null;
                 }
 
-                PreviewItems.Clear();
-                PreviewGrid?.Reload();
+                //PreviewItems.Clear();
+                //PreviewGrid?.Reload();
 
                 if (items != null && items.Any())
                 {
@@ -274,10 +274,22 @@ namespace JM.UI.Client.Pages.Transfers
 
                     foreach (var item in items)
                     {
+                        var itemBarcode = item.Barcode ?? barcode;
+
+                        // Skip if this exact barcode already exists in preview
+                        if (PreviewItems.Any(r => r.Barcode == itemBarcode))
+                        {
+                            notificationService.Notify(
+                                NotificationSeverity.Info,
+                                "Already in Preview",
+                                $"'{item.Name}' ({itemBarcode}) is already in the preview list.");
+                            continue;
+                        }
+
                         PreviewItems.Add(new TransferPreviewRow
                         {
                             ItemId = item.Id,
-                            Barcode = item.Barcode ?? barcode,
+                            Barcode = itemBarcode,
                             ItemName = item.Name ?? string.Empty,
                             ColorId = item.ColorId,
                             ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
@@ -296,7 +308,6 @@ namespace JM.UI.Client.Pages.Transfers
                             SalePrice = item.SalePrice.Value
                         });
                     }
-
                     PreviewGrid?.Reload();
 
                     notificationService.Notify(
@@ -403,18 +414,60 @@ namespace JM.UI.Client.Pages.Transfers
                     return;
                 }
 
-                // Check duplicate
-                if (TransferDetails.Any(d => d.Barcode == item.Barcode))
+                // Check duplicate in confirmed list
+                var existingLine = TransferDetails.FirstOrDefault(d => d.Barcode == item.Barcode);
+
+                if (existingLine != null)
                 {
+                    // Ask user
+                    bool confirmed = await dialogService.Confirm(
+                        $"'{item.Name}' ({item.Barcode}) is already in the transfer list " +
+                        $"with qty {existingLine.IssueQty:N2}. " +
+                        $"Do you want to add 1 more?",
+                        "Item Already Added",
+                        new ConfirmOptions
+                        {
+                            OkButtonText = "Yes, Add More",
+                            CancelButtonText = "No"
+                        }) ?? false;
+
+                    if (!confirmed)
+                    {
+                        ScanBarcodeText = string.Empty;
+                        StateHasChanged();
+                        return;
+                    }
+
+                    var totalQty = existingLine.IssueQty + 1;
+
+                    // Stock check against combined qty
+                    if (item.CurrentStock > 0 && totalQty > item.CurrentStock)
+                    {
+                        notificationService.Notify(
+                            NotificationSeverity.Error,
+                            "Insufficient Stock",
+                            $"'{item.Name}' ({item.Barcode}): Combined qty ({totalQty:N2}) " +
+                            $"exceeds available stock ({item.CurrentStock:N0}). Cannot add.");
+                        ScanBarcodeText = string.Empty;
+                        StateHasChanged();
+                        return;
+                    }
+
+                    // Update qty in confirmed list
+                    existingLine.IssueQty = totalQty;
+                    existingLine.UpdatedAt = DateTime.Now;
+                    await ItemsGrid.Reload();
+
                     notificationService.Notify(
-                        NotificationSeverity.Warning,
-                        "Duplicate",
-                        $"Barcode '{item.Barcode}' is already in the transfer list.");
+                        NotificationSeverity.Success,
+                        "Quantity Updated",
+                        $"'{item.Name}' qty updated to {totalQty:N2}.");
+
                     ScanBarcodeText = string.Empty;
+                    IsScanningBarcode = false;
                     StateHasChanged();
                     return;
                 }
-
                 // Stock check
                 if (item.CurrentStock > 0 && 1 > item.CurrentStock)
                 {
@@ -492,9 +545,11 @@ namespace JM.UI.Client.Pages.Transfers
             }
 
             int addedCount = 0;
+            int updatedCount = 0;
 
             foreach (var row in validRows)
             {
+                // ── Stock check (preview qty vs available stock) ──────────
                 if (row.StockQuantity > 0 && row.IssueQty > row.StockQuantity)
                 {
                     notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
@@ -503,13 +558,44 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                if (TransferDetails.Any(i => i.Barcode == row.Barcode))
+                // ── Duplicate check — already in confirmed list ───────────
+                var existingLine = TransferDetails.FirstOrDefault(i => i.Barcode == row.Barcode);
+
+                if (existingLine != null)
                 {
-                    notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
-                        $"Barcode '{row.Barcode}' already added. Skipping.");
+                    // Ask user
+                    bool confirmed = await dialogService.Confirm(
+                        $"'{row.ItemName}' ({row.Barcode}) is already in the transfer list " +
+                        $"with qty {existingLine.IssueQty:N2}. " +
+                        $"Do you want to add {row.IssueQty:N2} more?",
+                        "Item Already Added",
+                        new ConfirmOptions
+                        {
+                            OkButtonText = "Yes, Add More",
+                            CancelButtonText = "No"
+                        }) ?? false;
+
+                    if (!confirmed) continue;   // user said No — skip silently
+
+                    var totalQty = existingLine.IssueQty + row.IssueQty;
+
+                    // Stock check against combined qty
+                    if (row.StockQuantity > 0 && totalQty > row.StockQuantity)
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                            $"'{row.ItemName}' ({row.Barcode}): Combined qty ({totalQty:N2}) " +
+                            $"exceeds available stock ({row.StockQuantity:N0}). Cannot add.");
+                        continue;
+                    }
+
+                    // Update qty in confirmed list
+                    existingLine.IssueQty = totalQty;
+                    existingLine.UpdatedAt = DateTime.Now;
+                    updatedCount++;
                     continue;
                 }
 
+                // ── Fresh add ─────────────────────────────────────────────
                 var newLine = TransferService.CreateNewDetailLine();
 
                 newLine.TransferID = Transfer.TransferId;
@@ -525,8 +611,8 @@ namespace JM.UI.Client.Pages.Transfers
                 newLine.DesignId = row.DesignId;
                 newLine.UnitID = row.UnitId ?? 0;
                 newLine.UnitName = !string.IsNullOrWhiteSpace(row.UnitName)
-                                        ? row.UnitName
-                                        : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name;
+                                              ? row.UnitName
+                                              : Units.FirstOrDefault(u => u.Id == row.UnitId)?.Name;
                 newLine.IssueQty = row.IssueQty;
                 newLine.SerialNo = row.SerialNo;
                 newLine.CreatedRemarks = row.CreatedRemarks;
@@ -538,23 +624,12 @@ namespace JM.UI.Client.Pages.Transfers
                 addedCount++;
             }
 
-            if (addedCount == 0)
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
-                    "No items were added. Please fix the validation errors and try again.");
-                return;
-            }
+            // ── Reload confirmed grid ─────────────────────────────────────
+            await ItemsGrid.Reload();
 
-            if (addedCount < validRows.Count)
-            {
-                notificationService.Notify(NotificationSeverity.Info, "Partial Add",
-                    $"{addedCount} of {validRows.Count} item(s) added. " +
-                    $"{validRows.Count - addedCount} skipped due to errors.");
-            }
-
+            // ── Clear preview ─────────────────────────────────────────────
             PreviewItems.Clear();
             await PreviewGrid.Reload();
-            await ItemsGrid.Reload();
             ResetSharedFields();
             BarcodeSearchText = string.Empty;
             DisableItemFields = false;
@@ -562,13 +637,21 @@ namespace JM.UI.Client.Pages.Transfers
             CurrentDetail.SizeId = null;
             CurrentDetail.Barcode = null;
 
-            if (addedCount == validRows.Count)
+            // ── Notification ──────────────────────────────────────────────
+            if (addedCount == 0 && updatedCount == 0)
             {
-                notificationService.Notify(NotificationSeverity.Success, "Success",
-                    $"{addedCount} item(s) added to transfer.");
+                notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
+                    "No items were added. Please fix the validation errors and try again.");
+                return;
             }
-        }
 
+            var parts = new List<string>();
+            if (addedCount > 0) parts.Add($"{addedCount} new item(s) added");
+            if (updatedCount > 0) parts.Add($"{updatedCount} existing item(s) updated");
+
+            notificationService.Notify(NotificationSeverity.Success, "Done",
+                string.Join(", ", parts) + ".");
+        }
 
         // ── Edit Item in Confirmed Grid ───────────────────────────────
 
@@ -755,7 +838,7 @@ namespace JM.UI.Client.Pages.Transfers
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
                         result.Message ?? "Transfer saved successfully.");
-                    NavigationManager.NavigateTo("/TransferList");
+                    NavigationManager.NavigateTo("/ItemsTransferList");
                 }
                 else
                 {

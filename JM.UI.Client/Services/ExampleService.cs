@@ -198,7 +198,7 @@ namespace JM.UI.Client.Services
                     },
                     new Example {
                         Toc = [ new () { Text = "ItemsTransferList", Anchor = "#text-tag-name" } ],
-                        Name = "Items Transfers",
+                        Name = "Transfer List",
                         Path = "/ItemsTransferList",
                         Updated = false,
                         Title = "Items Transfer List",

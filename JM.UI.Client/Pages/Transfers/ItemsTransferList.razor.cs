@@ -69,15 +69,6 @@ namespace JM.UI.Client.Pages.Transfer
             NavigationManager.NavigateTo($"/TransferAdd/{transfer.TransferId}");
         }
 
-        protected BadgeStyle GetStatusBadgeStyle(int? statusId) => statusId switch
-        {
-            1 => BadgeStyle.Warning,   // Pending
-            2 => BadgeStyle.Info,      // In Transit
-            3 => BadgeStyle.Success,   // Received
-            4 => BadgeStyle.Danger,    // Cancelled
-            _ => BadgeStyle.Secondary
-        };
-
         protected string GetStatusLabel(int? statusId) => statusId switch
         {
             1 => "Pending",
