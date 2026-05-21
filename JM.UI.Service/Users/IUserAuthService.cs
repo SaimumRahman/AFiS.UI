@@ -11,5 +11,6 @@ namespace JM.UI.Service.Users
         public Task<AuthenticatedUserResponse> Login(LoginRequest loginRequest);
         Task<LoggedInfo> GetCompanyIdByUserId(int Userid);
         Task<List<User>> GetAllUsers();
+        Task<bool> UpdateActiveInactiveUser(string surname, bool isActive);
     }
 }

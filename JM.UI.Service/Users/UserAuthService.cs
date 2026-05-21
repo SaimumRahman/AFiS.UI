@@ -34,5 +34,9 @@ namespace JM.UI.Service.Users
         {
             return await _UserauthRepo.GetAllUsers();
         }
+        public async Task<bool> UpdateActiveInactiveUser(string surname, bool isActive)
+        {
+            return await _UserauthRepo.UpdateActiveInactiveUser(surname, isActive);
+        }
     }
 }

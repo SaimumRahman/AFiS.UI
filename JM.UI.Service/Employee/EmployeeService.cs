@@ -30,6 +30,7 @@ namespace JM.UI.Service.Employee
             {
                 Id = e.Id,
                 Name = e.Name,
+                Surname = e.Surname,
                 EmployeeCode = e.EmployeeCode,
                 DateOfBirth = e.DateOfBirth,
                 Gender = e.Gender,

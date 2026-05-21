@@ -177,6 +177,43 @@ namespace JM.UI.DataService.DAL.Users
                 throw;
             }
         }
+        public async Task<bool> UpdateActiveInactiveUser(string surname, bool isActive)
+        {
+            try
+            {
+                _logger.LogInformation(
+                    "Updating active status for UserId: {UserId}, IsActive: {IsActive}",
+                    surname, isActive);
 
+                var response = await _httpClient
+                    .GetAsync($"api/auth/Active-Inactive-User?userId={surname}&isActive={isActive}");
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "Failed to update status for UserId: {UserId}. Status: {StatusCode}, Response: {Response}",
+                        surname, response.StatusCode, responseContent);
+                    return false;
+                }
+
+                _logger.LogInformation(
+                    "Successfully updated status for UserId: {UserId}", surname);
+                return true;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex,
+                    "HTTP request exception while updating status for UserId: {UserId}", surname);
+                throw new Exception($"Failed to update user status: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Unexpected error while updating status for UserId: {UserId}", surname);
+                throw;
+            }
+        }
     }
 }
