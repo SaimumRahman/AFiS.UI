@@ -117,35 +117,37 @@ namespace JM.UI.Client.Pages.Transfers
         {
             try
             {
-                // Get the result object, not the value directly
                 var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
 
-                // Check if the value exists and extract it
                 int storeId = 0;
                 if (storeIdResult.Success && !string.IsNullOrEmpty(storeIdResult.Value))
-                {
                     storeId = Convert.ToInt32(storeIdResult.Value);
-                }
+
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
+
+                // Resolve actual StoreId
                 Transfer.StoreId = stores.FirstOrDefault(s => s.Id == storeId)?.Id
-                                    ?? stores.FirstOrDefault()?.Id?? 0;
+                                   ?? stores.FirstOrDefault()?.Id ?? 0;
+
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
                           ?? new List<SizesDTO>();
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
                           ?? new List<MesurementUnitModelDTO>();
-                AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId)?? new List<ItemDTO>();
+
+                // ✅ Use resolved StoreId with Head Office check
+                await LoadItemsForStore(Transfer.StoreId);
 
                 TransferTypes = new List<LookupItemDTO>
-                {
-                    new() { Id = 1, Name = "Internal Transfer" },
-                    new() { Id = 2, Name = "Requisition" },
-                    new() { Id = 3, Name = "Return" }
-                };
+        {
+            new() { Id = 1, Name = "Internal Transfer" },
+            new() { Id = 2, Name = "Requisition" },
+            new() { Id = 3, Name = "Return" }
+        };
             }
             catch (Exception ex)
             {
@@ -153,7 +155,6 @@ namespace JM.UI.Client.Pages.Transfers
                     $"Failed to load lookup data: {ex.Message}");
             }
         }
-
         protected async Task LoadTransfer()
         {
             try
@@ -204,6 +205,9 @@ namespace JM.UI.Client.Pages.Transfers
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
+
+            // ✅ Reload items based on Head Office or branch store
+            _ = LoadItemsForStore(storeId);
 
             StateHasChanged();
         }
@@ -970,7 +974,49 @@ namespace JM.UI.Client.Pages.Transfers
             SharedSerialNo = string.Empty;
             SharedCreatedRemarks = string.Empty;
         }
+        // ── Helper: check if a store is Head Office ───────────────────────────────
+        private bool IsHeadOfficeStore(int? storeId)
+        {
+            if (!storeId.HasValue) return false;
+            var store = Stores.FirstOrDefault(s => s.Id == storeId.Value);
+            return store != null &&
+                   store.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase);
+        }
 
+        // ── Load items based on store type ───────────────────────────────────────
+        private async Task LoadItemsForStore(int? storeId)
+        {
+            if (!storeId.HasValue || storeId.Value == 0)
+            {
+                AvailableItems = new List<ItemDTO>();
+                StateHasChanged();
+                return;
+            }
+
+            try
+            {
+                if (IsHeadOfficeStore(storeId))
+                {
+                    // Head Office → load ALL items
+                    AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
+                                     ?? new List<ItemDTO>();
+                }
+                else
+                {
+                    // Other stores → load only their stock
+                    AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId.Value)
+                                     ?? new List<ItemDTO>();
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to load items: {ex.Message}");
+                AvailableItems = new List<ItemDTO>();
+            }
+
+            StateHasChanged();
+        }
         public void Dispose() => ItemsGrid?.Dispose();
     }
 }
