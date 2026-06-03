@@ -47,7 +47,7 @@ namespace JM.UI.Client.Pages.Users
                     Console.WriteLine("🔐 Attempting login...");
 
                     response = await userAuthService.Login(loginRequestDAO);
-
+                    var dataUser = await serviceUnitOfWork.EmployeeService.GetEmployeeBySurname(loginRequestDAO.LoginId);
                     if (response == null || string.IsNullOrEmpty(response.Token))
                     {
                         Console.WriteLine("❌ Login failed - no token received");
@@ -74,6 +74,7 @@ namespace JM.UI.Client.Pages.Users
                         await sessionStorage.SetAsync("UserId", response.UserId.ToString());
                         await sessionStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
                         await _localStorage.SetAsync("UserId", response.UserId.ToString());
+                        await _localStorage.SetAsync("StoreId", dataUser?.StoreId.ToString() ?? "0");
                         await _localStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
 
                         if (response.CompanyId > 0)

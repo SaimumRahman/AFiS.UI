@@ -20,6 +20,10 @@ public class ItemService : IItemService
     {
         return await _unitOfWork.ItemRepository.GetItems();
     }
+    public async Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId)
+    {
+        return await _unitOfWork.ItemRepository.GetItemsByStoreId(storeId);
+    }
 
     public async Task<ItemDTO?> GetItemById(int id)
     {

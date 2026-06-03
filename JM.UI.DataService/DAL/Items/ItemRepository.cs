@@ -38,6 +38,23 @@ namespace JM.UI.DataService.DAL.Items
                 throw;
             }
         }
+        public async Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Items/GetItemsByStoreId/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                var items = await response.Content.ReadFromJsonAsync<List<ItemDTO>>();
+                return items ?? new List<ItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching items for store: {StoreId}", storeId);
+                throw;
+            }
+        }
 
         public async Task<ItemDTO?> GetItemById(int id)
         {

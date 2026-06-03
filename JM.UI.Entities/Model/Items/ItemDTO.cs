@@ -14,6 +14,7 @@ namespace JM.UI.Entities.Model.Items
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
         public string? DesignName { get; set; }
+        public string? StoreName { get; set; }
         public string? SubGroupName { get; set; }
         public int? UnitId { get; set; }
         public int? ColorId { get; set; }

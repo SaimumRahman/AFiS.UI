@@ -1558,6 +1558,7 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         protected async Task SavePurchase()
         {
+            Purchase.StoreId = (await _serviceUnitOfWork.StoreService.GetStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Id;
             if (!ValidatePurchase()) return;
 
             try

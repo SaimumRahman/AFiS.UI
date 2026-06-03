@@ -64,7 +64,7 @@ namespace JM.UI.Client.Pages.Transfers
 
         // ── Scan textbox (direct-to-grid, qty = 1) ────────────────────
         protected string ScanBarcodeText { get; set; } = string.Empty;
-
+        private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Item Transfer" : "New Item Transfer";
 
@@ -76,7 +76,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
-            await LoadLookupData();
+            //await LoadLookupData();
 
             if (IsEditMode)
                 await LoadTransfer();
@@ -84,7 +84,15 @@ namespace JM.UI.Client.Pages.Transfers
                 await InitializeTransfer();
         }
 
-
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && _isFirstRender)
+            {
+                _isFirstRender = false;
+                await LoadLookupData();
+                StateHasChanged(); // Refresh UI after loading data
+            }
+        }
         // ── Initialization ────────────────────────────────────────────
 
         private async Task InitializeTransfer()
@@ -109,19 +117,28 @@ namespace JM.UI.Client.Pages.Transfers
         {
             try
             {
+                // Get the result object, not the value directly
+                var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+
+                // Check if the value exists and extract it
+                int storeId = 0;
+                if (storeIdResult.Success && !string.IsNullOrEmpty(storeIdResult.Value))
+                {
+                    storeId = Convert.ToInt32(storeIdResult.Value);
+                }
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
-
+                Transfer.StoreId = stores.FirstOrDefault(s => s.Id == storeId)?.Id
+                                    ?? stores.FirstOrDefault()?.Id?? 0;
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
                           ?? new List<SizesDTO>();
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
                           ?? new List<MesurementUnitModelDTO>();
-                AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
-                                 ?? new List<ItemDTO>();
+                AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId)?? new List<ItemDTO>();
 
                 TransferTypes = new List<LookupItemDTO>
                 {

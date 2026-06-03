@@ -12,5 +12,6 @@ namespace JM.UI.DataService.DAL.Items
         Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
         Task<ResponseResult> SaveUpdateItem(ItemDTO item);
         Task DeleteItem(int id);
+        Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);
     }
 }

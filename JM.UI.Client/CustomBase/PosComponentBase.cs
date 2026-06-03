@@ -18,6 +18,8 @@ namespace JM.UIWeb.CustomBase
         [Inject] public NavigationManager NavigationManager { get; set; } = default!;
         [Inject]
         protected ProtectedSessionStorage sessionStorage { get; set; }
+        [Inject]
+        protected ProtectedLocalStorage _localStorage { get; set; }
 
         [Inject]
         protected NotificationService notificationService { get; set; }
