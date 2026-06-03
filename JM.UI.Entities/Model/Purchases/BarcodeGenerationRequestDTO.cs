@@ -12,5 +12,7 @@ namespace JM.UI.Entities.Model.Purchases
         public string? ExistingBarcode { get; set; }
         public int? ItemId { get; set; }
         public int? GroupId { get; set; }
+        public int? SubGroupId { get; set; }
+        public int? DesignId { get; set; }
     }
 }
