@@ -231,13 +231,27 @@ else
                                 <RadzenLabel Text="From Store" Style="font-weight:600; font-size:0.75rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
-                                <RadzenDropDown @bind-Value="Transfer.StoreId"
-                                                Data="@Stores"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select store..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Change="@(args => OnFromStoreChanged((int?)args))"
-                                                Disabled="@IsProcessing" />
+                                @if (IsFromStoreReadOnly)
+                                {
+                                    <!-- ✅ Branch user — show as plain text, not editable -->
+                                    <div style="font-size:0.75rem; font-weight:600; color:#1565c0;
+                                        padding: 4px 8px; background:#f5f5f5;
+                                        border:1px solid #dee2e6; border-radius:4px;
+                                        height:32px; display:flex; align-items:center;">
+                                        🏪 @(Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name ?? "—")
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- ✅ Head Office user — editable dropdown -->
+                                    <RadzenDropDown @bind-Value="Transfer.StoreId"
+                                                    Data="@Stores"
+                                                    TextProperty="Name" ValueProperty="Id"
+                                                    Placeholder="Select store..."
+                                                    Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
+                                                    Change="@(args => OnFromStoreChanged((int?)args))"
+                                                    Disabled="@IsProcessing" />
+                                }
                             </RadzenColumn>
                         </RadzenRow>
 

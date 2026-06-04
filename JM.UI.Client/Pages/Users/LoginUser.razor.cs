@@ -13,7 +13,7 @@ namespace JM.UI.Client.Pages.Users
     public partial class LoginUserComponent : ComponentBase
     {
         [Inject] IUserAuthService userAuthService { get; set; }
-        [Inject] IServiceUnitOfWork  serviceUnitOfWork { get; set; }
+        [Inject] IServiceUnitOfWork serviceUnitOfWork { get; set; }
         [Inject] ITokenService tokenService { get; set; }
         [Inject] ProtectedSessionStorage sessionStorage { get; set; }
 
@@ -26,7 +26,6 @@ namespace JM.UI.Client.Pages.Users
         private AuthenticatedUserResponse response { get; set; }
         protected bool isLoading = false;
 
-        // ✅ Add error message properties
         protected string errorMessage { get; set; }
         protected bool showError { get; set; } = false;
 
@@ -40,19 +39,20 @@ namespace JM.UI.Client.Pages.Users
                 try
                 {
                     isLoading = true;
-                    showError = false; // ✅ Reset error state
+                    showError = false;
                     errorMessage = string.Empty;
                     StateHasChanged();
 
                     Console.WriteLine("🔐 Attempting login...");
 
                     response = await userAuthService.Login(loginRequestDAO);
-                    var dataUser = await serviceUnitOfWork.EmployeeService.GetEmployeeBySurname(loginRequestDAO.LoginId);
+                    var dataUser = await serviceUnitOfWork.EmployeeService
+                                       .GetEmployeeBySurname(loginRequestDAO.LoginId);
+
                     if (response == null || string.IsNullOrEmpty(response.Token))
                     {
                         Console.WriteLine("❌ Login failed - no token received");
 
-                        // ✅ Show error message
                         errorMessage = "Invalid username or password. Please try again.";
                         showError = true;
 
@@ -74,14 +74,32 @@ namespace JM.UI.Client.Pages.Users
                         await sessionStorage.SetAsync("UserId", response.UserId.ToString());
                         await sessionStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
                         await _localStorage.SetAsync("UserId", response.UserId.ToString());
-                        await _localStorage.SetAsync("StoreId", dataUser?.StoreId.ToString() ?? "0");
                         await _localStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
+
+                        // ✅ FIXED: Save StoreId safely with null/zero check
+                        if (dataUser == null)
+                        {
+                            Console.WriteLine($"❌ No employee found for LoginId: {loginRequestDAO.LoginId}");
+                            await _localStorage.SetAsync("StoreId", "0");
+                        }
+                        else if (dataUser.StoreId == null || dataUser.StoreId == 0)
+                        {
+                            Console.WriteLine($"❌ Employee {dataUser.Id} has no StoreId assigned in DB");
+                            await _localStorage.SetAsync("StoreId", "0");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"✅ StoreId = {dataUser.StoreId} saved for UserId = {response.UserId}");
+                            await _localStorage.SetAsync("StoreId", dataUser.StoreId.ToString());
+                        }
 
                         if (response.CompanyId > 0)
                         {
                             await sessionStorage.SetAsync("CompanyId", response.CompanyId.ToString());
                         }
-                        var permissions = await serviceUnitOfWork.GroupRoutePermissionService.GetRouteListByUserId(response.UserId);
+
+                        var permissions = await serviceUnitOfWork.GroupRoutePermissionService
+                                              .GetRouteListByUserId(response.UserId);
 
                         await _localStorage.SetAsync(
                             "Permissions",
@@ -90,18 +108,15 @@ namespace JM.UI.Client.Pages.Users
 
                         Console.WriteLine("✅ All credentials saved successfully");
 
-                        // 🔐 Notify authentication state changed
                         ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication();
 
                         Console.WriteLine("🚀 Navigating to dashboard...");
 
-                        // Navigate to dashboard
                         navigationManager.NavigateTo("/Dashboard", true);
                     }
                 }
                 catch (HttpRequestException httpEx)
                 {
-                    // ✅ Handle network/HTTP errors
                     Console.WriteLine("═══════════════════════════════════");
                     Console.WriteLine($"❌ Network error: {httpEx.Message}");
                     Console.WriteLine("═══════════════════════════════════");
@@ -113,7 +128,6 @@ namespace JM.UI.Client.Pages.Users
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    // ✅ Handle unauthorized access
                     errorMessage = "Invalid username or password. Please try again.";
                     showError = true;
                     isLoading = false;
@@ -121,7 +135,6 @@ namespace JM.UI.Client.Pages.Users
                 }
                 catch (Exception e)
                 {
-                    // ✅ Handle general errors
                     Console.WriteLine("═══════════════════════════════════");
                     Console.WriteLine($"❌ Login error: {e.Message}");
                     Console.WriteLine($"Stack trace: {e.StackTrace}");

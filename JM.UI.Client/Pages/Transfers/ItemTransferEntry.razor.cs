@@ -9,6 +9,7 @@ using JM.UI.Service.Transfer;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Radzen;
 using Radzen.Blazor;
 
@@ -16,11 +17,17 @@ namespace JM.UI.Client.Pages.Transfers
 {
     public partial class ItemTransferEntryComponent : PosComponentBase
     {
-        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
-        [Inject] public ITransferService TransferService { get; set; } = default!;
-        [Inject] public DialogService dialogService { get; set; } = default!;
-        [Parameter] public int? Id { get; set; }
-
+        [Inject]
+        public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] 
+        public ITransferService TransferService { get; set; } = default!;
+        [Inject] 
+        public DialogService dialogService { get; set; } = default!;
+        [Inject] ProtectedLocalStorage _localStorage { get; set; }
+        [Parameter] 
+        public int? Id { get; set; }
+        protected bool IsFromStoreReadOnly { get; set; } = false;
+        protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
         protected TransferDetailDTO CurrentDetail { get; set; } = new();
@@ -112,26 +119,58 @@ namespace JM.UI.Client.Pages.Transfers
 
 
         // ── Data Loading ──────────────────────────────────────────────
-
         private async Task LoadLookupData()
         {
             try
             {
-                var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+                // ── Read from localStorage safely ─────────────────────────────
+                int storeId = await GetLocalStorageInt("StoreId");
+                CurrentUserId = await GetLocalStorageInt("UserId");
 
-                int storeId = 0;
-                if (storeIdResult.Success && !string.IsNullOrEmpty(storeIdResult.Value))
-                    storeId = Convert.ToInt32(storeIdResult.Value);
+                Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
+                // ── Load Stores ───────────────────────────────────────────────
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
 
-                // Resolve actual StoreId
-                Transfer.StoreId = stores.FirstOrDefault(s => s.Id == storeId)?.Id
-                                   ?? stores.FirstOrDefault()?.Id ?? 0;
+                // ── Assign From Store based on User ───────────────────────────
+                if (CurrentUserId == 1)
+                {
+                    var headOfficeStore = stores.FirstOrDefault(s =>
+                        s.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase));
 
+                    Transfer.StoreId = headOfficeStore?.Id
+                                          ?? stores.FirstOrDefault(s => s.Id == storeId)?.Id
+                                          ?? 0;
+                    IsFromStoreReadOnly = false;
+                }
+                else
+                {
+                    var matchedStore = stores.FirstOrDefault(s => s.Id == storeId);
+
+                    if (matchedStore == null)
+                    {
+                        notificationService.Notify(
+                            NotificationSeverity.Warning,
+                            "Store Not Found",
+                            $"Your assigned store (Id = {storeId}) was not found. Please contact admin.",
+                            duration: 7000);
+                        Transfer.StoreId = 0;
+                    }
+                    else
+                    {
+                        Transfer.StoreId = matchedStore.Id; // ✅ e.g. 1004
+                    }
+
+                    IsFromStoreReadOnly = true;
+                }
+
+                // ── Exclude From Store from To Store list ─────────────────────
+                ToStores = stores.Where(s => s.Id != Transfer.StoreId).ToList();
+
+                // ── Load Lookup Lists ─────────────────────────────────────────
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
@@ -139,9 +178,10 @@ namespace JM.UI.Client.Pages.Transfers
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
                           ?? new List<MesurementUnitModelDTO>();
 
-                // ✅ Use resolved StoreId with Head Office check
+                // ── Load Items based on store type ────────────────────────────
                 await LoadItemsForStore(Transfer.StoreId);
 
+                // ── Transfer Types ────────────────────────────────────────────
                 TransferTypes = new List<LookupItemDTO>
         {
             new() { Id = 1, Name = "Internal Transfer" },
@@ -151,7 +191,9 @@ namespace JM.UI.Client.Pages.Transfers
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
                     $"Failed to load lookup data: {ex.Message}");
             }
         }
@@ -200,13 +242,15 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected void OnFromStoreChanged(int? storeId)
         {
+            // Branch users cannot change From Store
+            if (IsFromStoreReadOnly) return;
+
             Transfer.StoreId = storeId;
             ToStores = Stores.Where(s => s.Id != storeId).ToList();
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
 
-            // ✅ Reload items based on Head Office or branch store
             _ = LoadItemsForStore(storeId);
 
             StateHasChanged();
@@ -975,6 +1019,7 @@ namespace JM.UI.Client.Pages.Transfers
             SharedCreatedRemarks = string.Empty;
         }
         // ── Helper: check if a store is Head Office ───────────────────────────────
+        // ── Helper: check if a store is Head Office ───────────────────────────────
         private bool IsHeadOfficeStore(int? storeId)
         {
             if (!storeId.HasValue) return false;
@@ -983,7 +1028,7 @@ namespace JM.UI.Client.Pages.Transfers
                    store.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase);
         }
 
-        // ── Load items based on store type ───────────────────────────────────────
+        // ── Load items — all for Head Office, filtered for branch ────────────────
         private async Task LoadItemsForStore(int? storeId)
         {
             if (!storeId.HasValue || storeId.Value == 0)
@@ -1003,19 +1048,39 @@ namespace JM.UI.Client.Pages.Transfers
                 }
                 else
                 {
-                    // Other stores → load only their stock
+                    // Branch store → load only their stock
                     AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId.Value)
                                      ?? new List<ItemDTO>();
                 }
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
                     $"Failed to load items: {ex.Message}");
                 AvailableItems = new List<ItemDTO>();
             }
 
             StateHasChanged();
+        }
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && !string.IsNullOrEmpty(result.Value))
+                {
+                    if (int.TryParse(result.Value, out int parsed) && parsed > 0)
+                        return parsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
         }
         public void Dispose() => ItemsGrid?.Dispose();
     }
