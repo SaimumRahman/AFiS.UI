@@ -308,6 +308,29 @@ namespace JM.UI.DataService.DAL.Transfer
                 throw new Exception("Unexpected error fetching transfers: " + ex.Message, ex);
             }
         }
+        public async Task<IEnumerable<TransferMasterDTO>> GetAllByStoreIdAsync(int storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching all transfers for store: {StoreId}", storeId);
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Transfer/by-store/{storeId}");
+                response.EnsureSuccessStatusCode();
+
+                var transfers = await response.Content.ReadFromJsonAsync<List<TransferMasterDTO>>();
+                return transfers ?? new List<TransferMasterDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get transfers");
+                throw new Exception("Failed to fetch transfers: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get transfers");
+                throw new Exception("Unexpected error fetching transfers: " + ex.Message, ex);
+            }
+        }
 
         public async Task UpdateReceivedStatus(List<int> receivedDetailIds, List<int> fullyReceivedMasterIds, DateTime now, int userId)
         {
