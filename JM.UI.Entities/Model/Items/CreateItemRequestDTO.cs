@@ -4,7 +4,7 @@ using System.Text;
 
 namespace JM.UI.Entities.Model.Items
 {
-    public class CreateItemRequestDTO
+    public class  CreateItemRequestDTO
     {
         public string Name { get; set; } = string.Empty;
         public int GroupId { get; set; }
@@ -25,5 +25,13 @@ namespace JM.UI.Entities.Model.Items
         public decimal PurchasePrice { get; set; }
         public string? ProductType { get; set; }
         public string? Catalogue { get; set; }
+        public int BrandId { get; set; }
+        public int OriginId { get; set; }
+        public int DesignId { get; set; }
+        public bool RawMaterial { get; set; }
+        public bool IsSaleable { get; set; }
+        public bool IsConsume { get; set; }
+        public int? CatalogueId { get; set; }
+        public string Barcode { get; set; }
     }
 }

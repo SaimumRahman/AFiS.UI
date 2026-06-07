@@ -1,5 +1,6 @@
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.PurchaseItems;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,8 +11,8 @@ namespace JM.UI.Service.Items
         Task<IEnumerable<ItemDTO>> GetItems();
         Task<ItemDTO?> GetItemById(int id);
         Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
-        Task<ResponseResult> SaveUpdateItem(ItemDTO item);
         Task<ResponseResult> DeleteItem(int id);
         Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);
+        Task<int> CreateItem(PreviewItemRow createItemRequest);
     }
 }

@@ -774,9 +774,11 @@ namespace JM.UI.Client.Pages.Purchases
             row.TotalAmount = baseAmount + vatAmt;
         }
 
-        protected void RemovePreviewRow(PreviewItemRow row)
+        protected async Task RemovePreviewRow(PreviewItemRow row)
         {
+            await _serviceUnitOfWork.ItemService.DeleteItem(row.ItemId);
             PreviewItems.Remove(row);
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
@@ -1913,10 +1915,12 @@ namespace JM.UI.Client.Pages.Purchases
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
                         // Image is null — user must upload for this new color
-                        ImageBase64 = null
+                        ImageBase64 = null,
+                        FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
-
+                var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
+                newRow.ItemId = newItemId;
                 PreviewItems.Add(newRow);
                 PreviewGrid?.Reload();
                 StateHasChanged();

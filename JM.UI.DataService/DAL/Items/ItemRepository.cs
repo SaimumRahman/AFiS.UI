@@ -1,13 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.Items
 {
@@ -75,12 +76,16 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
-        public async Task<ResponseResult> SaveUpdateItem(ItemDTO item)
+        public async Task<ResponseResult> CreateItem(CreateItemRequestDTO createItemRequest)
         {
             try
             {
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.PostAsJsonAsync("Items/SaveUpdateItem", item);
+                var request = new
+                {
+                    CreateItemRequest = createItemRequest
+                };
+                var response = await httpClient.PostAsJsonAsync("Items/SaveUpdateItem", request);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
@@ -93,13 +98,17 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
-        public async Task DeleteItem(int id)
+        public async Task<ResponseResult> DeleteItem(int id)
         {
             try
             {
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.DeleteAsync($"Items/DeleteItem/{id}");
                 response.EnsureSuccessStatusCode();
+
+                // Read and deserialize the response content
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<ResponseResult>(content);
             }
             catch (Exception ex)
             {
