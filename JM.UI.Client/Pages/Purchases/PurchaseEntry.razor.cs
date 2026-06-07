@@ -774,9 +774,11 @@ namespace JM.UI.Client.Pages.Purchases
             row.TotalAmount = baseAmount + vatAmt;
         }
 
-        protected void RemovePreviewRow(PreviewItemRow row)
+        protected async Task RemovePreviewRow(PreviewItemRow row)
         {
+            await _serviceUnitOfWork.ItemService.DeleteItem(row.ItemId);
             PreviewItems.Remove(row);
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
@@ -1730,7 +1732,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = null;
             CurrentItem.ItemId = 0;
             GenerateProductName();
-            await GenerateBarcode();
+           // await GenerateBarcode();
         }
 
         // ─── Color Change: clear image, then load barcode preview ────────────
@@ -1913,10 +1915,12 @@ namespace JM.UI.Client.Pages.Purchases
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
                         // Image is null — user must upload for this new color
-                        ImageBase64 = null
+                        ImageBase64 = null,
+                        FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
-
+                var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
+                newRow.ItemId = newItemId;
                 PreviewItems.Add(newRow);
                 PreviewGrid?.Reload();
                 StateHasChanged();
@@ -1959,13 +1963,14 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = subGroupId;
             CurrentItem.DesignId = null;
             CurrentItem.ItemId = 0;
-            await GenerateBarcode();
+           // await GenerateBarcode();
         }
 
-        protected void OnDesignChanged(int? designId)
+        protected async Task OnDesignChanged(int? designId)
         {
             CurrentItem.DesignId = designId;
             GenerateProductName();
+            await GenerateBarcode();
         }
 
         protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
@@ -2213,7 +2218,9 @@ namespace JM.UI.Client.Pages.Purchases
                     SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
                     ItemId = CurrentItem.ItemId,
                     GroupId = CurrentItem.GroupId,
-                    ExistingBarcode = CurrentItem.Barcode
+                    ExistingBarcode = CurrentItem.Barcode,
+                    SubGroupId = CurrentItem.SubGroupId,
+                    DesignId = CurrentItem.DesignId
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);

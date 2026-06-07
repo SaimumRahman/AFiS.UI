@@ -46,5 +46,6 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public decimal? OperationalCost { get; set; }
         public decimal? VatPercentage { get; set; }
         public decimal TotalAmount { get; set; } = 0;
+        public string ShadeNo { get; set; }
     }
 }

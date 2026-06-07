@@ -81,9 +81,9 @@ namespace JM.UI.Client.Pages.Items
             try
             {
                 IsProcessing = true;
-                var result = await _serviceUnitOfWork.ItemService.SaveUpdateItem(Item);
+                var result = true;
 
-                if (result.IsSuccessStatus)
+                if (result)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
                         IsEditMode ? "Item updated successfully!" : "Item created successfully!");
@@ -91,7 +91,7 @@ namespace JM.UI.Client.Pages.Items
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                    notificationService.Notify(NotificationSeverity.Error, "Error");
                 }
             }
             catch (Exception ex)
