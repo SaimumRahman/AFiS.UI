@@ -18,7 +18,8 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected int NameFontSizePx => Math.Max(7, (int)(LabelHeightPx * 0.14));
     protected int BarcodeFontSizePx => Math.Max(5, (int)(LabelHeightPx * 0.09));
     protected int SmallFontPx => Math.Max(5, (int)(LabelHeightPx * 0.09));
-
+    protected bool ShowPreview { get; set; } = false;
+    protected bool ShowPrinterConfig { get; set; } = false;
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
     // ── Template State ───────────────────────────────────────────
@@ -163,7 +164,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         {
             IsLoadingPurchases = true;
             // TODO: wire to real service
-            // PurchaseList = (await _serviceUnitOfWork.PurchaseService.GetPurchasesByDateRange(FromDate, ToDate)).ToList();
+             PurchaseList = (await _serviceUnitOfWork.PurchaseService.GetPurchasesByDateRange(FromDate, ToDate)).ToList();
         }
         catch (Exception ex)
         {
@@ -429,6 +430,51 @@ public partial class BarcodePrintComponent : PosComponentBase
                 $"Failed to print: {ex.Message}");
         }
         finally { IsPrinting = false; }
+    }
+    // ── Preview ──────────────────────────────────────────────────────────────
+    protected void OpenPreview()
+    {
+        if (!PrintItems.Any())
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Empty Queue",
+                "Add items to the queue before opening the preview.");
+            return;
+        }
+        ShowPreview = true;
+        StateHasChanged();
+    }
+
+    // ── Printer Config Dialog ────────────────────────────────────────────────
+    protected void OpenPrinterConfig()
+    {
+        if (!PrintItems.Any())
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Nothing to Print",
+                "Please add barcodes to the print queue first.");
+            return;
+        }
+        ShowPrinterConfig = true;
+        StateHasChanged();
+    }
+
+    protected async Task OnPrinterConfigClose(bool didPrint)
+    {
+        ShowPrinterConfig = false;
+        if (didPrint)
+        {
+            // Optionally clear queue after successful print
+            // PrintItems.Clear();
+        }
+        StateHasChanged();
+    }
+
+    protected void OnPrinterNotify(string message)
+    {
+        bool isError = message.StartsWith("❌");
+        notificationService.Notify(
+            isError ? NotificationSeverity.Error : NotificationSeverity.Success,
+            isError ? "Print Error" : "Print",
+            message);
     }
 }
 

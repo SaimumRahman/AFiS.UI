@@ -35,7 +35,7 @@
                     <RadzenButton Text="Print Barcodes"
                                   Icon="print"
                                   ButtonStyle="ButtonStyle.Primary"
-                                  Click="@PrintBarcodes"
+                                  Click="@OpenPrinterConfig"
                                   IsBusy="@IsPrinting"
                                   BusyText="Sending to Printer..."
                                   Disabled="@(!PrintItems.Any() || IsPrinting)" />
@@ -318,6 +318,17 @@
                         }
                     </RadzenStack>
                 </RadzenColumn>
+                <RadzenColumn>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Preview"
+                                      Icon="open_in_full"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      Variant="Variant.Outlined"
+                                      Size="ButtonSize.Small"
+                                      Click="@OpenPreview"
+                                      Disabled="@(!PrintItems.Any())" />
+                    </RadzenStack>
+                </RadzenColumn>
                 @if (PrintItems.Any())
                 {
                     <RadzenColumn>
@@ -517,8 +528,11 @@
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                 <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
-                                <RadzenButton Text="Print Barcodes" Icon="print" ButtonStyle="ButtonStyle.Primary"
-                                              Click="@PrintBarcodes" IsBusy="@IsPrinting"
+                                <RadzenButton Text="Print Barcodes"
+                                              Icon="print"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@OpenPrinterConfig"
+                                              IsBusy="@IsPrinting"
                                               BusyText="Sending to Printer..."
                                               Disabled="@(!PrintItems.Any() || IsPrinting)" />
                             </RadzenStack>
@@ -677,8 +691,11 @@
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                 <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
-                                <RadzenButton Text="Print Barcodes" Icon="print" ButtonStyle="ButtonStyle.Primary"
-                                              Click="@PrintBarcodes" IsBusy="@IsPrinting"
+                                <RadzenButton Text="Print Barcodes"
+                                              Icon="print"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@OpenPrinterConfig"
+                                              IsBusy="@IsPrinting"
                                               BusyText="Sending to Printer..."
                                               Disabled="@(!PrintItems.Any() || IsPrinting)" />
                             </RadzenStack>
@@ -688,5 +705,19 @@
             }
         </RadzenCard>
     }
+    @* ── Print Preview Overlay ──────────────────────────────────── *@
+    <BarcodePrintPreview IsVisible="@ShowPreview"
+                         Items="@PrintItems"
+                         TemplateFields="@TemplateFields"
+                         TemplateName="@SelectedTemplate?.TemplateName"
+                         LabelWidthMm="@PrintConfig.LabelWidthMm"
+                         LabelHeightMm="@PrintConfig.LabelHeightMm"
+                         OnClose="@(() => { ShowPreview = false; StateHasChanged(); })" />
 
+    @* ── Printer Config Dialog ──────────────────────────────────── *@
+    <PrinterConfigDialog IsVisible="@ShowPrinterConfig"
+                         Items="@PrintItems"
+                         TemplateFields="@TemplateFields"
+                         OnClose="@OnPrinterConfigClose"
+                         OnNotify="@OnPrinterNotify" />
 </RadzenContent>
