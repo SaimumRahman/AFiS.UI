@@ -1,0 +1,110 @@
+@page "/MembershipTypeList"
+@using JM.UI.Entities.Model.MembershipType
+@inherits MembershipTypeListComponent
+@attribute [Authorize]
+<PageTitle>Membership Types</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="card_membership" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Membership Type Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Membership Type"
+                                  Click="@AddMembershipType"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="MembershipTypesGrid"
+                        Data="@MembershipTypes"
+                        TItem="MembershipTypeDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="MembershipTypeDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{item.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Name -->
+                <RadzenDataGridColumn TItem="MembershipTypeDTO" Property="Name" Title="Name" Width="250px">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="badge" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @item.Name
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Duration in Months -->
+                <RadzenDataGridColumn TItem="MembershipTypeDTO" Property="DurationInMonths" Title="Duration (Months)" Width="160px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                     Text="@(item.DurationInMonths.HasValue ? $"{item.DurationInMonths} Months" : "N/A")"
+                                     Icon="calendar_month" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Discount Rate -->
+                <RadzenDataGridColumn TItem="MembershipTypeDTO" Property="DiscountRate" Title="Discount Rate" Width="160px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary"
+                                     Text="@(item.DiscountRate.HasValue ? $"{item.DiscountRate}%" : "N/A")"
+                                     Icon="percent" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="MembershipTypeDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditMembershipType(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Membership Type"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteMembershipType(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Membership Type"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

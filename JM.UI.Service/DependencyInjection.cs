@@ -27,6 +27,7 @@ using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
+using JM.UI.Service.MembershipType;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
 using JM.UI.Service.PurchaseReturnItems;
@@ -110,6 +111,7 @@ namespace JM.UI.Service
             services.AddTransient<ICurrentStockReportService, CurrentStockReportService>();
             services.AddTransient<ITransferService, TransferService>();
             services.AddTransient<IBarcodePrintConfigService, BarcodePrintConfigService>();
+            services.AddScoped<IMembershipTypeService, MembershipTypeService>();
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
         }

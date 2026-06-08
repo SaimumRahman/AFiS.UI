@@ -31,6 +31,7 @@ using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
+using JM.UI.Service.MembershipType;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
@@ -121,5 +122,6 @@ namespace JM.UI.Service.UnitOfWork
         ITransferService TransferService { get; }
         IStockService StockService { get; }
         IBarcodePrintConfigService BarcodePrintConfigService { get; }
+        IMembershipTypeService MembershipTypeService { get; }
     }
 }

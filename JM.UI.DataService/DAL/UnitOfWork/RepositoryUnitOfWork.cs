@@ -31,6 +31,7 @@ using JM.UI.DataService.DAL.ItemFeatures;
 using JM.UI.DataService.DAL.ItemOrigin;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.MembershipType;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.PurchaseOrders;
@@ -127,6 +128,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ITransferRepository TransferRepository { get; }
         public IStockRepository StockRepository { get; }
         public IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
+        public IMembershipTypeRepository MembershipTypeRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -181,6 +183,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             TransferRepository = new TransferRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferRepository>());
             StockRepository = new StockRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockRepository>());
             BarcodePrintConfigRepository = new BarcodePrintConfigRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodePrintConfigRepository>());
+            MembershipTypeRepository = new MembershipTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<MembershipTypeRepository>());
         }
 
         public void Dispose()

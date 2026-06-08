@@ -32,6 +32,7 @@ using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
 using JM.UI.Service.Items;
+using JM.UI.Service.MembershipType;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
@@ -106,6 +107,7 @@ namespace JM.UI.Service.UnitOfWork
         public ITransferService TransferService { get; private set; }
         public IStockService StockService { get; private set; }
         public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
+        public IMembershipTypeService MembershipTypeService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -155,6 +157,7 @@ namespace JM.UI.Service.UnitOfWork
             TransferService = new TransferService(_repoUow);
             StockService = new StockService(_repoUow);
             BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
+            MembershipTypeService = new MembershipTypeService(_repoUow);
         }
         public void Dispose()
         {

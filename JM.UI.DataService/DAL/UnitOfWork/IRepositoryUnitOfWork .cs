@@ -31,6 +31,7 @@ using JM.UI.DataService.DAL.ItemFeatures;
 using JM.UI.DataService.DAL.ItemOrigin;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.MembershipType;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.PurchaseOrders;
@@ -119,5 +120,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ITransferRepository TransferRepository { get; }
         IStockRepository StockRepository { get; }
         IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
+        IMembershipTypeRepository MembershipTypeRepository { get; }
     }
 }
