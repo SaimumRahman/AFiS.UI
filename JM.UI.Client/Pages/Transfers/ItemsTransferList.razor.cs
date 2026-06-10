@@ -101,12 +101,12 @@ namespace JM.UI.Client.Pages.Transfer
 
         protected void AddTransfer()
         {
-            NavigationManager.NavigateTo("/TransferAdd");
+            NavigationManager.NavigateTo("/ItemTransferEntry");
         }
 
         protected void EditTransfer(TransferMasterDTO transfer)
         {
-            NavigationManager.NavigateTo($"/TransferAdd/{transfer.TransferId}");
+            NavigationManager.NavigateTo($"/ItemTransferEntry/{transfer.TransferId}");
         }
 
         protected string GetStatusLabel(int? statusId) => statusId switch

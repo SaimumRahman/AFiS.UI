@@ -3,6 +3,7 @@ using JM.UI.Entities.Model.Transfer;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
 using Radzen;
 using Radzen.Blazor;
 
@@ -23,8 +24,20 @@ namespace JM.UI.Client.Pages.Transfer
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
-            await LoadStores();
-            await LoadTransfers(0);
+
+            if(await GetUserInfoAsync() == 1)
+            {
+                await LoadStores();
+                await LoadTransfers(0);
+            }
+            else
+            {
+                await LoadStores();
+                int storeId = await GetLoggedInUserStoreId();
+                Stores = Stores.Where(x => x.Id == storeId).ToList();
+                StoreId = Stores.FirstOrDefault(x => x.Id == storeId)?.Id;
+                await LoadTransfers(await GetLoggedInUserStoreId());
+            }
         }
         // Add checkbox toggle method
         protected void ToggleSelection(int transferId, bool isChecked)
@@ -173,6 +186,20 @@ namespace JM.UI.Client.Pages.Transfer
         public void Dispose()
         {
             TransferGrid?.Dispose();
+        }
+        private async Task<int> GetUserInfoAsync()
+        {
+            var userIdResult = await _localStorage.GetAsync<string>("UserId");
+            if (userIdResult.Success && !string.IsNullOrEmpty(userIdResult.Value))
+                int.TryParse(userIdResult.Value, out var uid);
+            return int.TryParse(userIdResult.Value, out var parsedUid) ? parsedUid : 0;
+           
+        }
+        private async Task<int> GetLoggedInUserStoreId()
+        {
+            var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+            return int.TryParse(storeIdResult.Success ? storeIdResult.Value : "0",
+                                     out var parsedSid) ? parsedSid : 0;
         }
     }
 }
