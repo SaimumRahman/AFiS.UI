@@ -80,6 +80,15 @@ namespace JM.UI.Client.Services
                         Title = "Work Shifts",
                         Description = "Manage shift patterns and schedules",
                         Tags = new[] { "shift", "schedule", "roster" }
+                    },
+                    new Example
+                    {
+                        Name = "Membership Type",
+                        Path = "/MembershipTypeList",
+                        Icon = "\ue8d6",  // schedule
+                        Title = "Work Shifts",
+                        Description = "Manage shift patterns and schedules",
+                        Tags = new[] { "shift", "schedule", "roster" }
                     }
                 }
             },

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text;
+using System.Xml.Linq;
 
 namespace JM.UI.DataService.DAL.MembershipType
 {
@@ -80,9 +81,18 @@ namespace JM.UI.DataService.DAL.MembershipType
             try
             {
                 _logger.LogInformation("Starting to save membership type");
-
+                var command = new
+                {
+                    MembershipTypeDTO = new
+                    {
+                        Id = membershipType.Id,
+                        Name = membershipType.Name,
+                        DurationInMonths = membershipType.DurationInMonths,
+                        DiscountRate = membershipType.DiscountRate
+                    }
+                };
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.PostAsJsonAsync("MembershipTypes/insert-update", membershipType);
+                var response = await httpClient.PostAsJsonAsync("MembershipTypes/insert-update", command);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
