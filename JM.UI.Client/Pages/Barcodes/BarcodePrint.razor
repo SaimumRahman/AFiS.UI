@@ -237,16 +237,25 @@
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Gap="0.25rem">
                         <RadzenLabel Text="Select Barcode" Component="SingleBarcode" />
-                        <RadzenDropDown @bind-Value="SelectedBarcodeId"
-                                        Data="@AllBarcodes"
-                                        TextProperty="Name"
-                                        ValueProperty="Id"
-                                        Name="SingleBarcode"
-                                        Placeholder="-- Search and select barcode --"
-                                        Style="width:100%;"
-                                        AllowFiltering="true"
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                        IsLoading="@IsLoadingBarcodes" />
+                        <RadzenDropDownDataGrid @bind-Value="SelectedBarcodeId"
+                                                Data="@AllBarcodes"
+                                                TextProperty="Name"
+                                                ValueProperty="Id"
+                                                Name="SingleBarcode"
+                                                Placeholder="-- Search and select barcode --"
+                                                Style="width:100%;"
+                                                AllowFiltering="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                IsLoading="@IsLoadingBarcodes">
+                            <Columns>
+                                <RadzenDropDownDataGridColumn Property="Name"
+                                                              Title="Name"
+                                                              Width="150px" />
+                                <RadzenDropDownDataGridColumn Property="Barcode"
+                                                              Title="Barcode"
+                                                              Width="120px" />
+                            </Columns>
+                        </RadzenDropDownDataGrid>
                     </RadzenStack>
                 </RadzenColumn>
 
