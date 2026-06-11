@@ -148,7 +148,7 @@ public partial class BarcodePrintComponent : PosComponentBase
             // Clear queue so labels re-render with new template
             if (PrintItems.Any())
             {
-                PrintItems.Clear();
+                PrintItems = new List<BarcodePrintItemDTO>(); 
                 notificationService.Notify(NotificationSeverity.Info, "Template Changed",
                     "Print queue cleared. Please re-add items for the new template.");
             }
@@ -321,72 +321,76 @@ public partial class BarcodePrintComponent : PosComponentBase
         if (existing != null)
         {
             existing.PrintQty += qty;
+            PrintItems = new List<BarcodePrintItemDTO>(PrintItems); // new reference
         }
         else
         {
-            PrintItems.Add(new BarcodePrintItemDTO
+            PrintItems = new List<BarcodePrintItemDTO>(PrintItems)
+        {
+            new BarcodePrintItemDTO
             {
                 BarcodeId = barcode.Id,
                 BarcodeValue = barcode.BarcodeValue,
                 ProductName = barcode.ProductName,
-                //Brand = barcode.Brand,
-                //Price = barcode.Price,
-                //UoM = barcode.UoM,
+                Brand = barcode.BrandName,
+                Price = barcode.SalesPrice,
+                UoM = barcode.UnitName,
                 GroupId = barcode.GroupId,
                 GroupName = barcode.GroupName,
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
-                TemplateId = SelectedTemplateId ?? 0
-            });
+                TemplateId = SelectedTemplateId ?? 0,
+                ReturnRefNo = barcode.ReturnRefNo,
+            }
+        };
         }
         StateHasChanged();
     }
-
     private void AddOrUpdatePrintItemFromItem(ItemDTO barcode, int qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
         {
             existing.PrintQty += qty;
+            PrintItems = new List<BarcodePrintItemDTO>(PrintItems); // new reference
         }
         else
         {
-            PrintItems.Add(new BarcodePrintItemDTO
+            PrintItems = new List<BarcodePrintItemDTO>(PrintItems)
+        {
+            new BarcodePrintItemDTO
             {
                 BarcodeId = barcode.Id,
                 BarcodeValue = barcode.Barcode,
                 ProductName = barcode.Name,
-                //Brand = barcode.Brand,
-                //Price = barcode.Price,
-                //UoM = barcode.UoM,
-                //GroupId = barcode.GroupId,
                 GroupName = barcode.GroupName,
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
                 TemplateId = SelectedTemplateId ?? 0
-            });
+            }
+        };
         }
         StateHasChanged();
     }
-
     protected void RemovePrintItem(BarcodePrintItemDTO item)
     {
-        PrintItems.Remove(item);
+        PrintItems = PrintItems.Where(p => p != item).ToList();
         StateHasChanged();
     }
+
 
     protected void UpdateQty(BarcodePrintItemDTO item, int qty)
     {
         if (qty < 1) qty = 1;
         item.PrintQty = qty;
+        PrintItems = new List<BarcodePrintItemDTO>(PrintItems); // trigger re-render
         StateHasChanged();
     }
-
     protected void ClearAll()
     {
-        PrintItems.Clear();
+        PrintItems = new List<BarcodePrintItemDTO>();
         SelectedPurchaseId = null;
         StateHasChanged();
     }
@@ -504,6 +508,12 @@ public class BarcodePrintItemDTO
     public decimal LabelWidthMm { get; set; }
     public decimal LabelHeightMm { get; set; }
     public int TemplateId { get; set; }
+    public int Id { get; set; }
+    public string SalesPrice { get; set; } = string.Empty;
+    public string UnitName { get; set; } = string.Empty;
+    public string BrandName { get; set; } = string.Empty;
+    public string ReturnRefNo { get; set; } = string.Empty;
+    public string DisplayLabel => $"{BarcodeValue}  —  {ProductName} ({GroupName})";
 }
 
 public class BarcodePrintRequestDTO

@@ -49,5 +49,6 @@ namespace JM.UI.Entities.Model.Items
         public bool CountStockBySize { get; set; }
         public string? ProductType { get; set; }
         public string? Catalogue { get; set; }
+        public string? ReturnRefNo { get; set; }
     }
 }

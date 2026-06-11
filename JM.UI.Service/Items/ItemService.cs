@@ -21,6 +21,10 @@ public class ItemService : IItemService
     {
         return await _unitOfWork.ItemRepository.GetItems();
     }
+    public async Task<IEnumerable<ItemDTO>> GetItemByPurchaseId(int purchaseId)
+    {
+        return await _unitOfWork.ItemRepository.GetItemByPurchaseId(purchaseId);
+    }
     public async Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId)
     {
         return await _unitOfWork.ItemRepository.GetItemsByStoreId(storeId);
@@ -91,4 +95,5 @@ public class ItemService : IItemService
             throw;
         }
     }
+
 }

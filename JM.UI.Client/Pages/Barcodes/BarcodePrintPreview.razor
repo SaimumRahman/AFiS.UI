@@ -198,6 +198,17 @@
         font-family: sans-serif;
     }
 
+    .bp-label-serial {
+        font-size: 4.5pt;
+        color: #555;
+        font-family: sans-serif;
+        text-align: center;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .bp-label-footer {
         display: flex;
         justify-content: space-between;
@@ -354,13 +365,21 @@
                                         }
 
                                         <div class="bp-label-bottom">
-                                            <div class="bp-label-qr" style="width:@(qrPt)pt; height:@(qrPt)pt;">
-                                                <svg width="@(qrPt - 4)" height="@(qrPt - 4)" viewBox="0 0 21 21">
-                                                    @foreach (var cell in GetQrCells(item.BarcodeValue))
-                                                    {
-                                                        <rect x="@cell.X" y="@cell.Y" width="1" height="1" fill="#c0392b" />
-                                                    }
-                                                </svg>
+                                            <div style="display:flex; flex-direction:column; align-items:center; gap:1pt; flex-shrink:0;">
+                                                <div class="bp-label-qr" style="width:@(qrPt)pt; height:@(qrPt)pt;">
+                                                    <svg width="@(qrPt - 4)" height="@(qrPt - 4)" viewBox="0 0 21 21">
+                                                        @foreach (var cell in GetQrCells(item.BarcodeValue))
+                                                        {
+                                                            <rect x="@cell.X" y="@cell.Y" width="1" height="1" fill="#c0392b" />
+                                                        }
+                                                    </svg>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(item.ReturnRefNo))
+                                                {
+                                                    <div class="bp-label-serial" style="max-width:@(qrPt)pt;">
+                                                        S/N: @item.ReturnRefNo
+                                                    </div>
+                                                }
                                             </div>
                                             <div class="bp-label-details">
                                                 <div class="bp-label-barcode-val">@item.BarcodeValue</div>
