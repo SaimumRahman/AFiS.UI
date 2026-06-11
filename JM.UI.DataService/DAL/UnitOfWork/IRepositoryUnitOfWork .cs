@@ -25,6 +25,7 @@ using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
@@ -121,5 +122,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IStockRepository StockRepository { get; }
         IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
         IMembershipTypeRepository MembershipTypeRepository { get; }
+        ICustomerDetailsRepository CustomerDetailsRepository { get; }
     }
 }

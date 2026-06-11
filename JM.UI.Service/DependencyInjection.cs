@@ -22,6 +22,7 @@ using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -112,6 +113,7 @@ namespace JM.UI.Service
             services.AddTransient<ITransferService, TransferService>();
             services.AddTransient<IBarcodePrintConfigService, BarcodePrintConfigService>();
             services.AddScoped<IMembershipTypeService, MembershipTypeService>();
+            services.AddScoped<ICustomerDetailsService, CustomerDetailsService>();
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
         }

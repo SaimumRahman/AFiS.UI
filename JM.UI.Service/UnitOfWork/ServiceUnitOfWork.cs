@@ -26,6 +26,7 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -108,6 +109,7 @@ namespace JM.UI.Service.UnitOfWork
         public IStockService StockService { get; private set; }
         public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
         public IMembershipTypeService MembershipTypeService { get; private set; }
+        public ICustomerDetailsService CustomerDetailsService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -158,6 +160,7 @@ namespace JM.UI.Service.UnitOfWork
             StockService = new StockService(_repoUow);
             BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
             MembershipTypeService = new MembershipTypeService(_repoUow);
+            CustomerDetailsService = new CustomerDetailsService(_repoUow);
         }
         public void Dispose()
         {

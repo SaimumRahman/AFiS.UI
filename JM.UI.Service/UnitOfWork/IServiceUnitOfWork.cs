@@ -26,6 +26,7 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -123,5 +124,6 @@ namespace JM.UI.Service.UnitOfWork
         IStockService StockService { get; }
         IBarcodePrintConfigService BarcodePrintConfigService { get; }
         IMembershipTypeService MembershipTypeService { get; }
+        ICustomerDetailsService CustomerDetailsService { get; }
     }
 }
