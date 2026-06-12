@@ -27,6 +27,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
+using JM.UI.Service.Discount_D;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -110,6 +111,7 @@ namespace JM.UI.Service.UnitOfWork
         public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
         public IMembershipTypeService MembershipTypeService { get; private set; }
         public ICustomerDetailsService CustomerDetailsService { get; private set; }
+        public IDiscountManagerService DiscountManagerService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -161,6 +163,7 @@ namespace JM.UI.Service.UnitOfWork
             BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
             MembershipTypeService = new MembershipTypeService(_repoUow);
             CustomerDetailsService = new CustomerDetailsService(_repoUow);
+            DiscountManagerService = new DiscountManagerService(_repoUow);
         }
         public void Dispose()
         {

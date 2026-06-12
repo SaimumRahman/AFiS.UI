@@ -26,6 +26,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
+using JM.UI.DataService.DAL.Discount_D;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
@@ -131,6 +132,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
         public IMembershipTypeRepository MembershipTypeRepository { get; }
         public ICustomerDetailsRepository CustomerDetailsRepository { get; }
+        public IDiscountManagerRepository DiscountManagerRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -187,6 +189,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             BarcodePrintConfigRepository = new BarcodePrintConfigRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodePrintConfigRepository>());
             MembershipTypeRepository = new MembershipTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<MembershipTypeRepository>());
             CustomerDetailsRepository = new CustomerDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<CustomerDetailsRepository>());
+            DiscountManagerRepository = new DiscountManagerRepository(factory, tokenProvider, loggerFactory.CreateLogger<DiscountManagerRepository>());
         }
 
         public void Dispose()

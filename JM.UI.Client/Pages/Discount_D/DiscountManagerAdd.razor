@@ -1,0 +1,259 @@
+@page "/DiscountManagerAdd"
+@page "/DiscountManagerAdd/{Id:int}"
+@attribute [Authorize]
+@inherits DiscountManagerAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    @if (IsLoading)
+    {
+        <RadzenCard class="text-center p-5">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body1" class="mt-3">Loading campaign editor...</RadzenText>
+        </RadzenCard>
+    }
+    else
+    {
+        <!-- Header -->
+        <RadzenCard class="mb-4">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenButton Icon="arrow_back"
+                                      Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@Cancel"
+                                      Size="ButtonSize.Medium" />
+                        <RadzenIcon Icon="@PageIcon" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H4" class="mb-0">@PageTitle</RadzenText>
+                        @if (IsEditMode)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"#{Campaign.Id}")" />
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                        <RadzenButton Text="Reset"
+                                      Icon="refresh"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Outlined"
+                                      Click="@Reset"
+                                      Disabled="@IsProcessing" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- Campaign Details -->
+        <RadzenCard class="mb-4">
+            <RadzenFieldset Text="Campaign Details" Icon="speakerphone">
+                <RadzenStack Gap="1rem">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Campaign Name *" Component="DiscountName" />
+                                <RadzenTextBox @bind-Value="Campaign.DiscountName"
+                                               Name="DiscountName"
+                                               Placeholder="e.g. Summer Sale 2026"
+                                               Style="width: 100%;" MaxLength="200" />
+                                <RadzenRequiredValidator Component="DiscountName" Text="Campaign name is required" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Start Date *" Component="StartDate" />
+                                <RadzenDatePicker @bind-Value="Campaign.StartDate" Name="StartDate" Style="width: 100%;" />
+                                <RadzenRequiredValidator Component="StartDate" Text="Start date is required" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="End Date *" Component="EndDate" />
+                                <RadzenDatePicker @bind-Value="Campaign.EndDate" Name="EndDate" Style="width: 100%;" />
+                                <RadzenRequiredValidator Component="EndDate" Text="End date is required" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                    @if (IsEditMode)
+                    {
+                        <RadzenRow>
+                            <RadzenColumn Size="12">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                                    <RadzenLabel Text="Active" Component="IsActive" />
+                                    <RadzenSwitch @bind-Value="Campaign.IsActive" Name="IsActive" />
+                                    <RadzenBadge BadgeStyle="@(Campaign.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
+                                                 Text="@(Campaign.IsActive ? "Active" : "Inactive")" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+                </RadzenStack>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- Scan / Search -->
+        <RadzenCard class="mb-4">
+            <RadzenFieldset Text="Scan or Search Products" Icon="barcode">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <span style="width:8px;height:8px;border-radius:50%;background:@(Scanning ? "#22c55e" : "#ccc");display:inline-block;transition:background 0.3s;" />
+                    <RadzenTextBox @bind-Value="SearchText"
+                                   Placeholder="Scan barcode / QR or type product name..."
+                                   Style="flex:1;"
+                                   @onkeydown="@OnSearchKeyDown" />
+                    <RadzenButton Icon="scan"
+                                  Text="Simulate Scan"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@SimulateScan" />
+                    <RadzenButton Icon="search"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="@SearchByBarcode" />
+                </RadzenStack>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- Product List -->
+        <RadzenCard>
+            <RadzenFieldset Text="Product List" Icon="package">
+                <!-- Global discount banner -->
+                @if (ShowGlobalDiscount)
+                {
+                    <div style="display:flex;align-items:center;gap:8px;background:var(--rz-success-light);border:1px solid var(--rz-success);border-radius:var(--rz-border-radius);padding:8px 12px;margin-bottom:12px;font-size:13px;">
+                        <i class="ti ti-discount-2" aria-hidden="true"></i>
+                        <span>All @GridItems.Count products selected — discount applies to all.</span>
+                    </div>
+                }
+
+                <!-- Bulk discount bar -->
+                <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:10px 12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);margin-bottom:12px;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="font-size:12px;color:var(--rz-text-secondary);font-weight:500;">Count</label>
+                        <RadzenNumeric Value="@SelectedCount" Disabled="true" Style="width:72px;" />
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="font-size:12px;color:var(--rz-text-secondary);font-weight:500;">Discount for selected</label>
+                        <div style="display:flex;align-items:center;gap:0;">
+                            <RadzenNumeric @bind-Value="BulkDiscountValue" Min="0" Style="width:80px;border-radius:var(--rz-border-radius) 0 0 var(--rz-border-radius);" />
+                            <span style="height:var(--rz-input-height);padding:0 8px;display:flex;align-items:center;font-size:13px;color:var(--rz-text-secondary);border:1px solid var(--rz-border);background:var(--rz-surface);border-left:none;">
+                                @(BulkDiscountTypeId == 2 ? "৳" : "%")
+                            </span>
+                            <select style="height:var(--rz-input-height);border-radius:0 var(--rz-border-radius) var(--rz-border-radius) 0;border-left:none;font-size:12px;padding:0 8px;cursor:pointer;background:var(--rz-surface);color:var(--rz-text-secondary);border:1px solid var(--rz-border);"
+                                    @bind="BulkDiscountTypeId"
+                                    @bind:after="() => ApplyBulkDiscount()">
+                                @foreach (var dt in DiscountTypes)
+                                {
+                                    <option value="@dt.Id">@dt.TypeName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <RadzenButton Text="Apply to Selected"
+                                  Icon="check"
+                                  ButtonStyle="ButtonStyle.Info"
+                                  Size="ButtonSize.Small"
+                                  Click="@ApplyBulkDiscount"
+                                  Disabled="@(SelectedCount == 0)" />
+                </div>
+
+                <!-- Product table -->
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:var(--rz-surface);">
+                                <th style="width:36px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;">
+                                    <input type="checkbox" checked="@AllSelected" @onchange="() => ToggleAll()" title="Select all" />
+                                </th>
+                                <th style="padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Product</th>
+                                <th style="padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Barcode</th>
+                                <th style="padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Category</th>
+                                <th style="width:80px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Price</th>
+                                <th style="width:220px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Discount</th>
+                                <th style="width:90px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Final Price</th>
+                                <th style="width:80px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var gi in GridItems)
+                            {
+                                var finalPrice = CalcFinalPrice(gi);
+                                <tr style="@(gi.Selected ? "background:var(--rz-info-light);" : "") @(gi.Source == "all" ? "background:var(--rz-success-light);" : "")">
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">
+                                        <input type="checkbox" checked="@gi.Selected" @onchange="() => ToggleItem(gi)" disabled="@(AllSelected && gi.Source == "all")" />
+                                    </td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;font-weight:500;">@gi.Item.Name</td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;color:var(--rz-text-secondary);font-family:var(--rz-font-mono);font-size:12px;">@gi.Item.Barcode</td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;color:var(--rz-text-secondary);">@(gi.Item.GroupName ?? gi.Item.ProductType ?? "-")</td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">@($"৳{gi.CurrentSalePrice:N0}")</td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">
+                                        @if (gi.Selected)
+                                        {
+                                            <div style="display:flex;align-items:center;gap:0;">
+                                                <input type="number"
+                                                       style="width:58px;text-align:center;border:1px solid var(--rz-border);border-radius:var(--rz-border-radius) 0 0 var(--rz-border-radius);padding:4px;font-size:12px;"
+                                                       min="0"
+                                                       max="@(gi.DiscountTypeId == 1 ? 100 : 999999)"
+                                                       value="@gi.DiscountValue"
+                                                       @onchange="(ChangeEventArgs e) => { if (decimal.TryParse(e.Value?.ToString(), out var v)) OnDiscountValueChanged(gi, v); }" />
+                                                <span style="height:28px;padding:0 6px;display:flex;align-items:center;font-size:12px;color:var(--rz-text-secondary);border:1px solid var(--rz-border);background:var(--rz-surface);border-left:none;white-space:nowrap;">
+                                                    @(gi.DiscountTypeId == 2 ? "৳" : "%")
+                                                </span>
+                                                <select style="height:28px;border-radius:0 var(--rz-border-radius) var(--rz-border-radius) 0;border-left:none;font-size:11px;padding:0 4px;cursor:pointer;background:var(--rz-surface);color:var(--rz-text-secondary);border:1px solid var(--rz-border);"
+                                                        value="@gi.DiscountTypeId"
+                                                        @onchange="(ChangeEventArgs e) => { if (int.TryParse(e.Value?.ToString(), out var id)) OnDiscountTypeChanged(gi, id); }">
+                                                    @foreach (var dt in DiscountTypes)
+                                                    {
+                                                        <option value="@dt.Id">@dt.TypeName</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:var(--rz-text-disabled);font-size:12px;">—</span>
+                                        }
+                                    </td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;font-weight:500;color:@(finalPrice < gi.CurrentSalePrice ? "var(--rz-success)" : "var(--rz-text-secondary)");">
+                                        @if (gi.Selected && gi.DiscountValue > 0)
+                                        {
+                                            <text>@($"৳{Math.Round(finalPrice):N0}")</text>
+                                        }
+                                        else
+                                        {
+                                            <text>-</text>
+                                        }
+                                    </td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">
+                                        @if (gi.Source == "scan")
+                                        {
+                                            <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--rz-border-radius);font-weight:500;background:var(--rz-info-light);color:var(--rz-info);">
+                                                <i class="ti ti-barcode" style="font-size:11px"></i> Scanned
+                                            </span>
+                                        }
+                                        else if (gi.Source == "all")
+                                        {
+                                            <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--rz-border-radius);font-weight:500;background:var(--rz-success-light);color:var(--rz-success);">
+                                                <i class="ti ti-check" style="font-size:11px"></i> All
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--rz-border);">
+                    <span style="font-size:13px;color:var(--rz-text-secondary);">@SelectedCount of @GridItems.Count products selected</span>
+                    <RadzenButton Text="@(IsEditMode ? "Update Campaign" : "Save Campaign")"
+                                  Icon="device_floppy"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  IsBusy="@IsProcessing"
+                                  BusyText="Saving..."
+                                  Click="@Save" />
+                </div>
+            </RadzenFieldset>
+        </RadzenCard>
+    }
+</RadzenContent>
