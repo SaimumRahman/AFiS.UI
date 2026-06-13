@@ -152,5 +152,10 @@ namespace JM.UI.Service.Transfer
         => _repositoryUnitOfWork.TransferRepository.SearchByBarcodeExact(barcode,storeId);
         public Task<IEnumerable<ItemDTO?>> SearchByBarcodeUptoColor(string barcode, int storeId)
         => _repositoryUnitOfWork.TransferRepository.SearchByBarcodeUptoColor(barcode,storeId);
+
+        public async Task<IEnumerable<TransferSummaryDTO>> GetTransferSummaryByNo(string transferNo)
+        {
+            return await _repositoryUnitOfWork.TransferRepository.GetTransferSummaryByNo(transferNo);
+        }
     }
 }

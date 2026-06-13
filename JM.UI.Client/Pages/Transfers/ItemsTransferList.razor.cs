@@ -1,8 +1,12 @@
+using JM.UI.DataService.DAL.Company;
+using JM.UI.DataService.DAL.Transfer;
 using JM.UI.Entities.Model.Transfer;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -14,13 +18,15 @@ namespace JM.UI.Client.Pages.Transfer
         public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Inject]
         public ProtectedLocalStorage _localStorage { get; set; } = default!;
+        [Inject]
+        public StockTransferChallanService _stockTransferChallanService { get; set; }
 
         protected RadzenDataGrid<TransferMasterDTO> TransferGrid = default!;
         protected IEnumerable<TransferMasterDTO> Transfers { get; set; } = new List<TransferMasterDTO>();
         protected bool IsLoading { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
         protected int CurrentStoreId { get; set; } = 0;
-
+        protected string? loadingTransferNo { get; set; }
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
@@ -132,6 +138,47 @@ namespace JM.UI.Client.Pages.Transfer
         public void Dispose()
         {
             TransferGrid?.Dispose();
+        }
+        protected async Task DownloadChallan(string transferNo)
+        {
+            if (string.IsNullOrWhiteSpace(transferNo)) return;
+
+            try
+            {
+                loadingTransferNo = transferNo;
+
+                var companies = await _serviceUnitOfWork.CompanyService.GetCompanies();
+                var company = companies.FirstOrDefault();
+
+                if (company is null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Company not found.");
+                    return;
+                }
+
+                var items = await _serviceUnitOfWork.TransferService.GetTransferSummaryByNo(transferNo);
+
+                if (!items.Any())
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "No transfer items found.");
+                    return;
+                }
+
+                byte[] pdf = _stockTransferChallanService.GenerateReport(company, items);
+
+                var base64 = Convert.ToBase64String(pdf);
+                var fileName = $"Challan_{transferNo}.pdf";
+
+                await jsRuntimes.InvokeVoidAsync("downloadFileFromBase64", fileName, "application/pdf", base64);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Failed to generate challan.", ex.Message);
+            }
+            finally
+            {
+                loadingTransferNo = null;
+            }
         }
     }
 }
