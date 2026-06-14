@@ -1,0 +1,25 @@
+@using Radzen
+
+<RadzenStack Gap="1rem">
+    <RadzenFormField Text="Rejection Notes" Variant="Variant.Outlined">
+        <RadzenTextArea @bind-Value="@Notes"
+                        Style="width: 100%; min-height: 120px;"
+                        Placeholder="Enter reason for rejection..."
+                        MaxLength="500" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Confirm Rejection"
+                      Click="@(() => dialogService.Close(Notes))"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Disabled="@(string.IsNullOrWhiteSpace(Notes))" />
+        <RadzenButton Text="Cancel"
+                      Click="@(() => dialogService.Close(null))"
+                      ButtonStyle="ButtonStyle.Light" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Inject] DialogService dialogService { get; set; } = default!;
+    public string Notes { get; set; } = string.Empty;
+}

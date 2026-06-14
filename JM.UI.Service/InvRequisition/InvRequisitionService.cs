@@ -16,6 +16,11 @@ namespace JM.UI.Service.InvRequisition
             return await _repositoryUnitOfWork.InvRequisitionRepository.GetAll();
         }
 
+        public async Task<IEnumerable<InvRequisitionMasterDTO>> GetAllByStoreId(int storeId)
+        {
+            return await _repositoryUnitOfWork.InvRequisitionRepository.GetAllByStoreId(storeId);
+        }
+
         public async Task<InvRequisitionMasterDTO?> GetById(int id)
         {
             return await _repositoryUnitOfWork.InvRequisitionRepository.GetById(id);
@@ -61,6 +66,13 @@ namespace JM.UI.Service.InvRequisition
             }
         }
 
+        public async Task<IEnumerable<RequisitionStatusDTO>> GetRequisitionStatuses()
+        {
+            return await _repositoryUnitOfWork.InvRequisitionRepository.GetRequisitionStatuses();
+        }
+        public async Task<ResponseResult> UpdateRequisitionStatus(int RequisitionId, int StatusId, int StatusBy, string StatusComments)
+            => await _repositoryUnitOfWork.InvRequisitionRepository.UpdateRequisitionStatus(RequisitionId, StatusId, StatusBy, StatusComments);
+        
         public Task<(bool IsValid, string ErrorMessage)> Validate(InvRequisitionMasterDTO requisition)
         {
             if (requisition.RequisitionDate == default)

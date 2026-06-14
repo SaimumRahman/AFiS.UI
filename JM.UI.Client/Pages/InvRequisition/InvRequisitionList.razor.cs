@@ -2,6 +2,7 @@ using JM.UI.Entities.Model.InvRequisition;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Radzen;
 using Radzen.Blazor;
 
@@ -10,16 +11,33 @@ namespace JM.UI.Client.Pages.InvRequisition
     public partial class InvRequisitionListComponent : PosComponentBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public ProtectedLocalStorage _localStorage { get; set; } = default!;
 
         protected RadzenDataGrid<InvRequisitionMasterDTO> RequisitionsGrid = default!;
         protected IEnumerable<InvRequisitionMasterDTO> Requisitions { get; set; } = new List<InvRequisitionMasterDTO>();
+        protected IEnumerable<RequisitionStatusDTO> Statuses { get; set; } = new List<RequisitionStatusDTO>();
         protected bool IsLoading { get; set; } = false;
         protected HashSet<int> LoadingDetails { get; set; } = new();
+        protected int CurrentUserId { get; set; }
+        protected int UserStoreId { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
+            await LoadUserContext();
             await LoadRequisitions();
+        }
+
+        private async Task LoadUserContext()
+        {
+            try
+            {
+                var userIdResult = await _localStorage.GetAsync<string>("UserId");
+                var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+                CurrentUserId = int.TryParse(userIdResult.Value, out var uid) ? uid : 0;
+                UserStoreId = int.TryParse(storeIdResult.Value, out var sid) ? sid : 0;
+            }
+            catch { }
         }
 
         private async Task LoadRequisitions()
@@ -27,7 +45,13 @@ namespace JM.UI.Client.Pages.InvRequisition
             try
             {
                 IsLoading = true;
-                Requisitions = await _serviceUnitOfWork.InvRequisitionService.GetAll();
+
+                if (CurrentUserId == 1)
+                    Requisitions = await _serviceUnitOfWork.InvRequisitionService.GetAll();
+                else
+                    Requisitions = await _serviceUnitOfWork.InvRequisitionService.GetAllByStoreId(UserStoreId);
+
+                Statuses = await _serviceUnitOfWork.InvRequisitionService.GetRequisitionStatuses();
             }
             catch (Exception ex)
             {
@@ -69,6 +93,32 @@ namespace JM.UI.Client.Pages.InvRequisition
         protected void AddRequisition()
         {
             NavigationManager.NavigateTo("/InvRequisitionAdd");
+        }
+
+        protected async Task OnStatusChanged(object args, InvRequisitionMasterDTO item)
+        {
+            var newStatusId = args as int?;
+            if (!newStatusId.HasValue || newStatusId.Value == item.StatusID) return;
+
+            var oldStatusId = item.StatusID;
+            var selectedStatus = Statuses.FirstOrDefault(s => s.Id == newStatusId.Value);
+            string? rejectNotes = null;
+
+            if (selectedStatus?.StatusName?.Equals("Rejected", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                rejectNotes = await dialogService.OpenAsync<RejectNotesDialog>("Rejection Notes");
+                if (string.IsNullOrWhiteSpace(rejectNotes))
+                {
+                    item.StatusID = oldStatusId;
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            await _serviceUnitOfWork.InvRequisitionService.UpdateRequisitionStatus(item.RequisitionID, selectedStatus.Id, CurrentUserId, rejectNotes);
+            notificationService.Notify(NotificationSeverity.Info, "Status Change",
+                $"Requisition {item.RequisitionNo} changed to {selectedStatus?.StatusName}" +
+                (rejectNotes != null ? $" — Notes: {rejectNotes}" : ""));
         }
 
         protected void EditRequisition(InvRequisitionMasterDTO requisition)

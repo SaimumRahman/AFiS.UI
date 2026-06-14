@@ -84,12 +84,6 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="RequisitionByName" Title="Requested By" Width="150px">
-                    <Template Context="item">
-                        <span>@(item.RequisitionByName ?? "N/A")</span>
-                    </Template>
-                </RadzenDataGridColumn>
-
                 <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="IsUrgent" Title="Urgent" Width="90px" TextAlign="TextAlign.Center">
                     <Template Context="item">
                         <RadzenBadge BadgeStyle="@(item.IsUrgent ? BadgeStyle.Danger : BadgeStyle.Secondary)"
@@ -110,9 +104,9 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Actions" Width="300px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="item">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
                             <RadzenButton Icon="edit"
                                           ButtonStyle="ButtonStyle.Info"
                                           Size="ButtonSize.Small"
@@ -126,6 +120,14 @@
                                           Variant="Variant.Flat"
                                           Click="@(() => DeleteRequisition(item))"
                                           MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
+
+                            <RadzenDropDown Data="@Statuses"
+                                            Value="@item.StatusID"
+                                            ValueProperty="Id"
+                                            TextProperty="StatusName"
+                                            Placeholder="Change Status"
+                                            Width="140px"
+                                            Change="@(args => OnStatusChanged(args, item))" />
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>

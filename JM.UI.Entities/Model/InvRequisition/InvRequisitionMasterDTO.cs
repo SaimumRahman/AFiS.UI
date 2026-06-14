@@ -27,7 +27,7 @@ namespace JM.UI.Entities.Model.InvRequisition
         public int? UpdateBy { get; set; }
         public DateTime? UpdateOn { get; set; }
         public bool IsDeleted { get; set; }
-
+        public string StatusComments { get; set; }
         public List<InvRequisitionDetailDTO> Details { get; set; } = new();
     }
 }
