@@ -1,11 +1,11 @@
-using JM.UI.Entities.Model.Discount_D;
+using JM.UI.Entities.Model.Discount;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
 
-namespace JM.UI.Client.Pages.Discount_D
+namespace JM.UI.Client.Pages.Discount
 {
     public partial class DiscountManagerListComponent : PosComponentBase
     {

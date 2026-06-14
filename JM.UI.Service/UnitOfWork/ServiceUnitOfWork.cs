@@ -27,7 +27,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
-using JM.UI.Service.Discount_D;
+using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;

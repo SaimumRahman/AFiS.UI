@@ -24,6 +24,7 @@ public partial class CustomerDetailsAddComponent : PosComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        NavigationGuard.IsGuardActive = true;
         await TokenService.InitializeTokenAsync();
 
         if (IsEditMode)
@@ -188,8 +189,13 @@ public partial class CustomerDetailsAddComponent : PosComponentBase
         }
         else
         {
-            InitializeCustomer();
+            await InitializeCustomer();
         }
         StateHasChanged();
+    }
+    public void Dispose()
+    {
+        // Deactivate when leaving the page
+        NavigationGuard.IsGuardActive = false;
     }
 }

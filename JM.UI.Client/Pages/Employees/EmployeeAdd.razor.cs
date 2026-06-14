@@ -61,6 +61,7 @@ namespace JM.UI.Client.Pages.Employees
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
             await LoadDropdowns();
 
@@ -300,6 +301,11 @@ namespace JM.UI.Client.Pages.Employees
             Employee.PermanentAddress = Employee.PresentAddress;
             StateHasChanged();
         }
+        public void Dispose()
+        {
+            // Deactivate when leaving the page
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 
     public class StatusOption
@@ -307,4 +313,5 @@ namespace JM.UI.Client.Pages.Employees
         public int Value { get; set; }
         public string Text { get; set; } = string.Empty;
     }
+
 }

@@ -1,10 +1,10 @@
 using JM.Infrastructure.Models;
-using JM.UI.Entities.Model.Discount_D;
+using JM.UI.Entities.Model.Discount;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JM.UI.Service.Discount_D
+namespace JM.UI.Service.Discount
 {
     public interface IDiscountManagerService
     {

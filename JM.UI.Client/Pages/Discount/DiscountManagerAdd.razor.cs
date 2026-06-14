@@ -1,11 +1,11 @@
-using JM.UI.Entities.Model.Discount_D;
+using JM.UI.Entities.Model.Discount;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
-namespace JM.UI.Client.Pages.Discount_D;
+namespace JM.UI.Client.Pages.Discount;
 
 public partial class DiscountManagerAddComponent : PosComponentBase
 {
@@ -40,6 +40,7 @@ public partial class DiscountManagerAddComponent : PosComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        NavigationGuard.IsGuardActive = true;
         await TokenService.InitializeTokenAsync();
         await LoadData();
     }
@@ -338,15 +339,10 @@ public partial class DiscountManagerAddComponent : PosComponentBase
             return "<span class='badge badge-all'><i class='ti ti-check' style='font-size:11px'></i> All</span>";
         return "";
     }
-
-    public class DiscountGridItem
+    public void Dispose()
     {
-        public ItemDTO Item { get; set; } = new();
-        public bool Selected { get; set; }
-        public string Source { get; set; } = "";
-        public decimal DiscountValue { get; set; }
-        public int DiscountTypeId { get; set; } = 1;
-        public string DiscountTypeName { get; set; } = "Percentage";
-        public decimal CurrentSalePrice { get; set; }
+        // Deactivate when leaving the page
+        NavigationGuard.IsGuardActive = false;
     }
+    
 }

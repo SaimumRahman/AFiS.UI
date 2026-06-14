@@ -37,6 +37,7 @@ namespace JM.UI.Client.Pages.Transfer
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
             await LoadStores();
             await LoadTransfers(0);
@@ -363,6 +364,10 @@ namespace JM.UI.Client.Pages.Transfer
                 new TooltipOptions { Position = TooltipPosition.Top });
         }
 
-        public void Dispose() => TransferGrid?.Dispose();
+        public void Dispose()
+        {
+            TransferGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 }

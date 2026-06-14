@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JM.UI.Entities.Model.Discount_D
+namespace JM.UI.Entities.Model.Discount
 {
     public class DiscountTypeDTO
     {

@@ -82,6 +82,7 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
             //await LoadLookupData();
 
@@ -1082,6 +1083,10 @@ namespace JM.UI.Client.Pages.Transfers
 
             return 0;
         }
-        public void Dispose() => ItemsGrid?.Dispose();
+        public void Dispose()
+        {
+            ItemsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 }
