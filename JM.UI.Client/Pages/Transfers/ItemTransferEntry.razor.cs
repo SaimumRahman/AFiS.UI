@@ -1,7 +1,6 @@
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MesurementUnits;
-using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Transfer;
@@ -1011,7 +1010,43 @@ namespace JM.UI.Client.Pages.Transfers
 
 
         // ── Helpers ───────────────────────────────────────────────────
+        private bool HasUnsavedData()
+        {
+            return PreviewItems.Any()
+                || TransferDetails.Any()
+                || Transfer.ToStoreId.HasValue
+                || Transfer.TransTypeID != 0
+                || Transfer.DeliveryTypeId != 0
+                || !string.IsNullOrWhiteSpace(Transfer.DeliveryAddress)
+                || !string.IsNullOrWhiteSpace(Transfer.Comments)
+                || Transfer.RequisitionID.HasValue
+                || !string.IsNullOrWhiteSpace(SharedSerialNo)
+                || !string.IsNullOrWhiteSpace(SharedCreatedRemarks)
+                || SharedIssueQty.HasValue
+                || !string.IsNullOrWhiteSpace(BarcodeSearchText)
+                || !string.IsNullOrWhiteSpace(ScanBarcodeText);
+        }
+        protected async Task TryResetLeftPanel()
+        {
+            if (!HasUnsavedData())
+            {
+                ResetLeftPanel();
+                return;
+            }
 
+            var confirmed = await dialogService.Confirm(
+                "All unsaved data will be lost. Are you sure you want to reset the form?",
+                "Reset Form?",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Yes, Reset",
+                    CancelButtonText = "No, Keep Data",
+                    CloseDialogOnOverlayClick = true
+                }) ?? false;
+
+            if (confirmed)
+                ResetLeftPanel();
+        }
         private void ResetSharedFields()
         {
             SharedIssueQty = null;
