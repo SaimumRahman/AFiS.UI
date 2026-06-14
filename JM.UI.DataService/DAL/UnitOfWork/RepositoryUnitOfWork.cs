@@ -64,6 +64,7 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
@@ -133,6 +134,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IMembershipTypeRepository MembershipTypeRepository { get; }
         public ICustomerDetailsRepository CustomerDetailsRepository { get; }
         public IDiscountManagerRepository DiscountManagerRepository { get; }
+        public IInvRequisitionRepository InvRequisitionRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -190,6 +192,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             MembershipTypeRepository = new MembershipTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<MembershipTypeRepository>());
             CustomerDetailsRepository = new CustomerDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<CustomerDetailsRepository>());
             DiscountManagerRepository = new DiscountManagerRepository(factory, tokenProvider, loggerFactory.CreateLogger<DiscountManagerRepository>());
+            InvRequisitionRepository = new InvRequisitionRepository(factory, tokenProvider, loggerFactory.CreateLogger<InvRequisitionRepository>());
         }
 
         public void Dispose()

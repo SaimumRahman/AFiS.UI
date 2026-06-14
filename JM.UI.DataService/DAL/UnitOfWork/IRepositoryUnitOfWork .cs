@@ -64,6 +64,7 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
@@ -125,5 +126,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IMembershipTypeRepository MembershipTypeRepository { get; }
         ICustomerDetailsRepository CustomerDetailsRepository { get; }
         IDiscountManagerRepository DiscountManagerRepository { get; }
+        IInvRequisitionRepository InvRequisitionRepository { get; }
     }
 }

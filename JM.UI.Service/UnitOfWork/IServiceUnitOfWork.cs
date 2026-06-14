@@ -63,6 +63,7 @@ using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.VoucherDetails;
@@ -127,5 +128,6 @@ namespace JM.UI.Service.UnitOfWork
         IMembershipTypeService MembershipTypeService { get; }
         ICustomerDetailsService CustomerDetailsService { get; }
         IDiscountManagerService DiscountManagerService { get; }
+        IInvRequisitionService InvRequisitionService { get; }
     }
 }

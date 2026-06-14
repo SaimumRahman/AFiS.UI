@@ -1,0 +1,50 @@
+@using JM.UI.Entities.Model.InvRequisition
+@inherits InvRequisitionItemEditDialogComponent
+
+<RadzenDialog IsOpen="true">
+    <RadzenCard Style="width: 500px;">
+        <RadzenText TextStyle="TextStyle.H5" Style="margin-bottom:1rem;">
+            <RadzenIcon Icon="edit" Style="margin-right:0.25rem;" /> Edit Item
+        </RadzenText>
+
+        <RadzenTemplateForm TItem="InvRequisitionDetailDTO" Data="@Detail" Submit="@(() => DialogService.Close(true))">
+            <RadzenStack Gap="0.75rem">
+                <RadzenRow>
+                    <RadzenColumn Size="6">
+                        <RadzenTextBox @bind-Value="@Detail.ItemName" Name="ItemName" Placeholder="Item name">
+                            <LabelTemplate>Item Name</LabelTemplate>
+                        </RadzenTextBox>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6">
+                        <RadzenTextBox @bind-Value="@Detail.Barcode" Name="Barcode" Placeholder="Barcode">
+                            <LabelTemplate>Barcode</LabelTemplate>
+                        </RadzenTextBox>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenColumn Size="6">
+                        <RadzenNumeric @bind-Value="@Detail.Qty" Name="Qty" Min="1">
+                            <LabelTemplate>Quantity</LabelTemplate>
+                        </RadzenNumeric>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6">
+                        <RadzenNumeric @bind-Value="@Detail.UnitPrice" Name="UnitPrice" Min="0">
+                            <LabelTemplate>Unit Price</LabelTemplate>
+                        </RadzenNumeric>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenColumn Size="12">
+                        <RadzenTextBox @bind-Value="@Detail.Remarks" Name="Remarks" Placeholder="Remarks">
+                            <LabelTemplate>Remarks</LabelTemplate>
+                        </RadzenTextBox>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@(() => DialogService.Close(null))" />
+                    <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenCard>
+</RadzenDialog>

@@ -54,6 +54,7 @@ using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.Vouchers;
@@ -112,6 +113,7 @@ namespace JM.UI.Service.UnitOfWork
         public IMembershipTypeService MembershipTypeService { get; private set; }
         public ICustomerDetailsService CustomerDetailsService { get; private set; }
         public IDiscountManagerService DiscountManagerService { get; private set; }
+        public IInvRequisitionService InvRequisitionService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -164,6 +166,7 @@ namespace JM.UI.Service.UnitOfWork
             MembershipTypeService = new MembershipTypeService(_repoUow);
             CustomerDetailsService = new CustomerDetailsService(_repoUow);
             DiscountManagerService = new DiscountManagerService(_repoUow);
+            InvRequisitionService = new InvRequisitionService(_repoUow);
         }
         public void Dispose()
         {
