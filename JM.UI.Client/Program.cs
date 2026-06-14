@@ -51,6 +51,7 @@ builder.Services.AddScoped<ExampleService>();
 builder.Services.AddScoped<PurchaseReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
+builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
 

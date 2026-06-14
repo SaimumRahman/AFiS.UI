@@ -125,6 +125,7 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
             Purchase.StoreId = Stores.FirstOrDefault()?.Id;
@@ -2368,6 +2369,10 @@ namespace JM.UI.Client.Pages.Purchases
         protected void OnDiscountChanged() => CalculateTotals();
         protected void OnVatChanged() => CalculateTotals();
         protected void OnPaidAmountChanged() => CalculateTotals();
-        public void Dispose() => ItemsGrid?.Dispose();
+        public void Dispose() 
+        {
+            ItemsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        } 
     }
 }
