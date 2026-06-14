@@ -2345,8 +2345,55 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new List<string>();
             NewFeatureInput = string.Empty;
-
+            DisableItemFields = false;
+            IsEditItemMode = false;
+            IsProcessing = false;
             StateHasChanged();
+        }
+        private bool HasUnsavedData()
+        {
+            return Purchase.SupplierId.HasValue
+                || !string.IsNullOrWhiteSpace(Purchase.BillInvoiceNumber)
+                || Purchase.StoreId.HasValue
+                || Purchase.IsVatIncluded
+                || CurrentItem.IsSaleable
+                || CurrentItem.IsConsume
+                || CurrentItem.IsRawMaterial
+                || CurrentItem.GroupId.HasValue
+                || CurrentItem.SubGroupId.HasValue
+                || CurrentItem.DesignId.HasValue
+                || CurrentItem.MesurementUnitId.HasValue
+                || !string.IsNullOrWhiteSpace(CurrentItem.ShadeNo)
+                || !string.IsNullOrWhiteSpace(BrandSearchText)
+                || SelectedBrandId.HasValue
+                || !string.IsNullOrWhiteSpace(CatalogueSearchText)
+                || SelectedCatalogueId.HasValue
+                || !string.IsNullOrWhiteSpace(OriginSearchText)
+                || SelectedOriginId.HasValue
+                || SelectedFeatureIds.Any()
+                || NewFeatureNames.Any()
+                || !string.IsNullOrWhiteSpace(NewFeatureInput);
+        }
+        protected async Task TryResetLeftPanel()
+        {
+            if (!HasUnsavedData())
+            {
+                ResetLeftPanel();
+                return;
+            }
+
+            var confirmed = await dialogService.Confirm(
+                "All unsaved data will be lost. Are you sure you want to reset the form?",
+                "Reset Form?",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Yes, Reset",
+                    CancelButtonText = "No, Keep Data",
+                    CloseDialogOnOverlayClick = true
+                }) ?? false;
+
+            if (confirmed)
+                ResetLeftPanel();
         }
         protected void OnBrandLoadData(LoadDataArgs args)
         {

@@ -198,12 +198,12 @@
         <RadzenRow>
             <RadzenColumn Size="12" Style="text-align:right; padding-top:4px;">
                 <RadzenButton Icon="restart_alt"
-                              ButtonStyle="ButtonStyle.Secondary"
-                              Size="ButtonSize.Small"
-                              Click="@ResetLeftPanel"
-                              Disabled="@IsProcessing"
-                              Text="Reset"
-                              Style="height:26px; font-size:0.72rem;" />
+              ButtonStyle="ButtonStyle.Secondary"
+              Size="ButtonSize.Small"
+              Click="@(async () => await TryResetLeftPanel())"
+              Disabled="@IsProcessing"
+              Text="Reset"
+              Style="height:26px; font-size:0.72rem;" />
             </RadzenColumn>
         </RadzenRow>
             <!-- ============================================================
