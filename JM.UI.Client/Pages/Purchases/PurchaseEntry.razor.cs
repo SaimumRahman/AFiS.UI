@@ -1914,17 +1914,21 @@ namespace JM.UI.Client.Pages.Purchases
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
-                        DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
+                        DesignId = CurrentItem.DesignId,  
                         // Image is null — user must upload for this new color
                         ImageBase64 = null,
                         FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
                 var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
-                newRow.ItemId = newItemId;
-                PreviewItems.Add(newRow);
-                PreviewGrid?.Reload();
-                StateHasChanged();
+                if (newItemId > 0)
+                {
+                    newRow.ItemId = newItemId;
+                    PreviewItems.Add(newRow);
+                    PreviewGrid?.Reload();
+                    StateHasChanged();
+                }
+                
             }
             catch (Exception ex)
             {
