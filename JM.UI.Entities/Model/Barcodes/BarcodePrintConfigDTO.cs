@@ -14,5 +14,4 @@ namespace JM.UI.Entities.Model.Barcodes
 
         public int FabricRepeatCount { get; set; }
     }
-
 }

@@ -1,0 +1,187 @@
+@page "/InvRequisitionList"
+@using JM.UI.Entities.Model.InvRequisition
+@inherits InvRequisitionListComponent
+@attribute [Authorize]
+<PageTitle>Requisition List</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Inventory Requisition</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="New Requisition"
+                                  Click="@AddRequisition"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="RequisitionsGrid"
+                        Data="@Requisitions"
+                        TItem="InvRequisitionMasterDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        AllowRowExpand="true"
+                        RowExpand="@OnRowExpand"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="RequisitionNo" Title="Requisition No" Width="160px" Frozen="true">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="receipt_long" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @item.RequisitionNo
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="RequisitionDate" Title="Date" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @item.RequisitionDate.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="FromStoreName" Title="From Store" Width="160px">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            <RadzenIcon Icon="store" Style="color: var(--rz-info);" />
+                            <span>@(item.FromStoreName ?? "N/A")</span>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="ToStoreName" Title="To Store" Width="160px">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                            <RadzenIcon Icon="store" Style="color: var(--rz-success);" />
+                            <span>@(item.ToStoreName ?? "N/A")</span>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="IsUrgent" Title="Urgent" Width="90px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@(item.IsUrgent ? BadgeStyle.Danger : BadgeStyle.Secondary)"
+                                     Text="@(item.IsUrgent ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="IsComplete" Title="Complete" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@(item.IsComplete ? BadgeStyle.Success : BadgeStyle.Warning)"
+                                     Text="@(item.IsComplete ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="StatusName" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge Text="@(item.StatusName ?? "N/A")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Actions" Width="300px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditRequisition(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Requisition"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteRequisition(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
+
+                            <RadzenDropDown Data="@Statuses"
+                                            Value="@item.StatusID"
+                                            ValueProperty="Id"
+                                            TextProperty="StatusName"
+                                            Placeholder="Change Status"
+                                            Width="140px"
+                                            Change="@(args => OnStatusChanged(args, item))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+
+            <Template Context="item">
+                @if (LoadingDetails.Contains(item.RequisitionID))
+                {
+                    <div style="padding:16px;text-align:center;">
+                        <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="height:24px;width:24px;" />
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin-left:8px;color:var(--rz-text-secondary);">Loading details...</RadzenText>
+                    </div>
+                }
+                else if (item.Details?.Count > 0)
+                {
+                    <RadzenCard Style="margin:8px 0;padding:12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom:8px;">
+                            <RadzenIcon Icon="inventory_2" Style="margin-right:4px;" /> Items (@item.Details.Count)
+                        </RadzenText>
+                        <RadzenDataGrid Data="@item.Details"
+                                        TItem="InvRequisitionDetailDTO"
+                                        AllowPaging="false"
+                                        AllowSorting="false"
+                                        AllowFiltering="false"
+                                        GridLines="DataGridGridLines.Horizontal"
+                                        Density="Density.Compact">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="Barcode" Title="Barcode" Width="130px" TextAlign="TextAlign.Center" />
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="ItemName" Title="Item" Width="200px" />
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="Qty" Title="Qty" Width="90px" TextAlign="TextAlign.Center">
+                                    <Template Context="d">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@d.Qty.ToString("N0")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="UnitPrice" Title="Unit Price" Width="110px" TextAlign="TextAlign.Right">
+                                    <Template Context="d">
+                                        @(d.UnitPrice?.ToString("N2") ?? "—")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="Amount" Title="Total" Width="110px" TextAlign="TextAlign.Right">
+                                    <Template Context="d">
+                                        <strong>@(d.Amount?.ToString("N2") ?? "—")</strong>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="Remarks" Title="Remarks" Width="160px" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="padding:12px;color:var(--rz-text-secondary);">No item details found.</RadzenText>
+                }
+            </Template>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

@@ -26,12 +26,15 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.CustomerDetails;
+using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
 using JM.UI.Service.Items;
+using JM.UI.Service.MembershipType;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
@@ -51,6 +54,7 @@ using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.Vouchers;
@@ -106,6 +110,10 @@ namespace JM.UI.Service.UnitOfWork
         public ITransferService TransferService { get; private set; }
         public IStockService StockService { get; private set; }
         public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
+        public IMembershipTypeService MembershipTypeService { get; private set; }
+        public ICustomerDetailsService CustomerDetailsService { get; private set; }
+        public IDiscountManagerService DiscountManagerService { get; private set; }
+        public IInvRequisitionService InvRequisitionService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -155,6 +163,10 @@ namespace JM.UI.Service.UnitOfWork
             TransferService = new TransferService(_repoUow);
             StockService = new StockService(_repoUow);
             BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
+            MembershipTypeService = new MembershipTypeService(_repoUow);
+            CustomerDetailsService = new CustomerDetailsService(_repoUow);
+            DiscountManagerService = new DiscountManagerService(_repoUow);
+            InvRequisitionService = new InvRequisitionService(_repoUow);
         }
         public void Dispose()
         {

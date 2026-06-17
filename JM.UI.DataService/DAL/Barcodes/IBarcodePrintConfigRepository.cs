@@ -7,5 +7,9 @@ namespace JM.UI.DataService.DAL.Barcode
         Task<IEnumerable<BarcodePrintConfigDTO>> GetAllBarcodePrintConfigs();
         Task<IEnumerable<BarcodeItemDTO>> GetBarcodeItemsByPurchaseId(int purchaseId);
         Task<BarcodePrintConfigDTO?> GetTopBarcodePrintConfig();
+
+        // ── Barcode Template ─────────────────────────────────────────
+        Task<IEnumerable<BarcodeTemplateDTO>> GetAllBarcodeTemplates();
+        Task<BarcodeTemplateDTO?> GetBarcodeTemplateById(int id);
     }
 }

@@ -125,9 +125,10 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
-
+            Purchase.StoreId = Stores.FirstOrDefault()?.Id;
             if (IsDraftMode)
                 await LoadDraft();
             else if (IsEditMode)
@@ -245,7 +246,7 @@ namespace JM.UI.Client.Pages.Purchases
             try
             {
                 Suppliers = await LoadSuppliers();
-                Stores = await LoadStores();
+                Stores = (await LoadStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase));
                 Groups = await LoadGroups();
                 Colors = await LoadColors();
                 Sizes = await LoadSizes();
@@ -774,9 +775,11 @@ namespace JM.UI.Client.Pages.Purchases
             row.TotalAmount = baseAmount + vatAmt;
         }
 
-        protected void RemovePreviewRow(PreviewItemRow row)
+        protected async Task RemovePreviewRow(PreviewItemRow row)
         {
+            await _serviceUnitOfWork.ItemService.DeleteItem(row.ItemId);
             PreviewItems.Remove(row);
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
@@ -1558,6 +1561,7 @@ namespace JM.UI.Client.Pages.Purchases
         // ═══════════════════════════════════════════════════════════════
         protected async Task SavePurchase()
         {
+            Purchase.StoreId = (await _serviceUnitOfWork.StoreService.GetStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Id;
             if (!ValidatePurchase()) return;
 
             try
@@ -1729,7 +1733,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = null;
             CurrentItem.ItemId = 0;
             GenerateProductName();
-            await GenerateBarcode();
+           // await GenerateBarcode();
         }
 
         // ─── Color Change: clear image, then load barcode preview ────────────
@@ -1912,10 +1916,12 @@ namespace JM.UI.Client.Pages.Purchases
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,   // ← ADD THIS (currently missing)
                         // Image is null — user must upload for this new color
-                        ImageBase64 = null
+                        ImageBase64 = null,
+                        FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
-
+                var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
+                newRow.ItemId = newItemId;
                 PreviewItems.Add(newRow);
                 PreviewGrid?.Reload();
                 StateHasChanged();
@@ -1958,13 +1964,14 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.SubGroupId = subGroupId;
             CurrentItem.DesignId = null;
             CurrentItem.ItemId = 0;
-            await GenerateBarcode();
+           // await GenerateBarcode();
         }
 
-        protected void OnDesignChanged(int? designId)
+        protected async Task OnDesignChanged(int? designId)
         {
             CurrentItem.DesignId = designId;
             GenerateProductName();
+            await GenerateBarcode();
         }
 
         protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
@@ -2212,7 +2219,9 @@ namespace JM.UI.Client.Pages.Purchases
                     SizeName = Sizes.FirstOrDefault(s => s.Id == CurrentItem.SizeId)?.Name,
                     ItemId = CurrentItem.ItemId,
                     GroupId = CurrentItem.GroupId,
-                    ExistingBarcode = CurrentItem.Barcode
+                    ExistingBarcode = CurrentItem.Barcode,
+                    SubGroupId = CurrentItem.SubGroupId,
+                    DesignId = CurrentItem.DesignId
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
@@ -2337,8 +2346,55 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new List<string>();
             NewFeatureInput = string.Empty;
-
+            DisableItemFields = false;
+            IsEditItemMode = false;
+            IsProcessing = false;
             StateHasChanged();
+        }
+        private bool HasUnsavedData()
+        {
+            return Purchase.SupplierId.HasValue
+                || !string.IsNullOrWhiteSpace(Purchase.BillInvoiceNumber)
+                || Purchase.StoreId.HasValue
+                || Purchase.IsVatIncluded
+                || CurrentItem.IsSaleable
+                || CurrentItem.IsConsume
+                || CurrentItem.IsRawMaterial
+                || CurrentItem.GroupId.HasValue
+                || CurrentItem.SubGroupId.HasValue
+                || CurrentItem.DesignId.HasValue
+                || CurrentItem.MesurementUnitId.HasValue
+                || !string.IsNullOrWhiteSpace(CurrentItem.ShadeNo)
+                || !string.IsNullOrWhiteSpace(BrandSearchText)
+                || SelectedBrandId.HasValue
+                || !string.IsNullOrWhiteSpace(CatalogueSearchText)
+                || SelectedCatalogueId.HasValue
+                || !string.IsNullOrWhiteSpace(OriginSearchText)
+                || SelectedOriginId.HasValue
+                || SelectedFeatureIds.Any()
+                || NewFeatureNames.Any()
+                || !string.IsNullOrWhiteSpace(NewFeatureInput);
+        }
+        protected async Task TryResetLeftPanel()
+        {
+            if (!HasUnsavedData())
+            {
+                ResetLeftPanel();
+                return;
+            }
+
+            var confirmed = await dialogService.Confirm(
+                "All unsaved data will be lost. Are you sure you want to reset the form?",
+                "Reset Form?",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Yes, Reset",
+                    CancelButtonText = "No, Keep Data",
+                    CloseDialogOnOverlayClick = true
+                }) ?? false;
+
+            if (confirmed)
+                ResetLeftPanel();
         }
         protected void OnBrandLoadData(LoadDataArgs args)
         {
@@ -2360,6 +2416,10 @@ namespace JM.UI.Client.Pages.Purchases
         protected void OnDiscountChanged() => CalculateTotals();
         protected void OnVatChanged() => CalculateTotals();
         protected void OnPaidAmountChanged() => CalculateTotals();
-        public void Dispose() => ItemsGrid?.Dispose();
+        public void Dispose() 
+        {
+            ItemsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        } 
     }
 }

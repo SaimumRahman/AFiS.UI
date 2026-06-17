@@ -1,7 +1,10 @@
 ﻿// CompanyListComponent.razor.cs
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.Routes;
+using JM.UI.Service.Routes;
 using JM.UI.Service.UnitOfWork;
+using JM.UI.Service.Users;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
@@ -12,6 +15,7 @@ namespace JM.UI.Client.Pages.Employees
     public partial class EmployeeListComponent : PosComponentBase, IDisposable
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public IUserAuthService _userAuthService { get; set; } = default!;
 
         protected RadzenDataGrid<EmployeeModelDTO> EmployeesGrid = default!;
         protected IEnumerable<EmployeeModelDTO> Employees = new List<EmployeeModelDTO>();
@@ -82,7 +86,21 @@ namespace JM.UI.Client.Pages.Employees
                     await LoadEmployees();
             }
         }
+        protected async Task ToggleStatus(EmployeeModelDTO employee, bool value)
+        {
+            var result = await _userAuthService.UpdateActiveInactiveUser(employee.Surname, value);
 
+            if (result)
+            {
+                notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = $"Status updated successfully.",
+                    Duration = 3000
+                });
+            }
+        }
         protected string GetStatusText(int status) =>
             _serviceUnitOfWork.EmployeeService.GetStatusText(status);
 

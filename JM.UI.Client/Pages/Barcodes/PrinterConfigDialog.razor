@@ -1,0 +1,463 @@
+@* PrinterConfigDialog.razor — Printer settings & print execution dialog *@
+@using JM.UI.Entities.Model.Barcodes
+@namespace JM.UI.Client.Pages.Barcode
+
+<style>
+    .pc-dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.65);
+        z-index: 9500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pc-dialog {
+        background: #fff;
+        border-radius: 10px;
+        width: min(680px, 96vw);
+        max-height: 88vh;
+        overflow-y: auto;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pc-dialog-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #1a2744 100%);
+        color: #fff;
+        padding: 1.1rem 1.4rem;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .pc-dialog-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .pc-dialog-title {
+        font-family: sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .pc-dialog-body {
+        padding: 1.4rem;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .pc-section-title {
+        font-family: sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin: 0 0 0.6rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .pc-form-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .pc-form-group {
+        flex: 1;
+        min-width: 140px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+        .pc-form-group label {
+            font-family: sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .pc-form-group select,
+        .pc-form-group input[type=text],
+        .pc-form-group input[type=number] {
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            padding: 6px 9px;
+            background: #f9fafb;
+            outline: none;
+            transition: border-color 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+            .pc-form-group select:focus,
+            .pc-form-group input:focus {
+                border-color: #3b82f6;
+                background: #fff;
+            }
+
+    .pc-preview-box {
+        background: #0d1117;
+        border-radius: 6px;
+        padding: 0.85rem 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.72rem;
+        color: #4ade80;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 210px;
+        overflow-y: auto;
+        margin-top: 0.5rem;
+        border: 1px solid #1f2937;
+        line-height: 1.6;
+    }
+
+    .pc-protocol-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .pc-tab {
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-family: sans-serif;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid #d1d5db;
+        background: #f3f4f6;
+        color: #374151;
+        transition: all 0.15s;
+    }
+
+        .pc-tab.active {
+            background: #1e3a5f;
+            border-color: #1e3a5f;
+            color: #fff;
+        }
+
+    .pc-dialog-footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 1rem 1.4rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.6rem;
+        flex-shrink: 0;
+        background: #f9fafb;
+        border-radius: 0 0 10px 10px;
+    }
+
+    .pc-btn {
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-family: sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: opacity 0.15s;
+    }
+
+        .pc-btn:hover {
+            opacity: 0.86;
+        }
+
+        .pc-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+    .pc-btn-primary {
+        background: #22c55e;
+        color: #fff;
+    }
+
+    .pc-btn-secondary {
+        background: #6366f1;
+        color: #fff;
+    }
+
+    .pc-btn-outline {
+        background: #fff;
+        color: #374151;
+        border: 1.5px solid #d1d5db;
+    }
+
+    .pc-btn-danger {
+        background: #dc2626;
+        color: #fff;
+    }
+
+    .pc-alert-info {
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        border-radius: 6px;
+        padding: 0.6rem 0.9rem;
+        font-family: sans-serif;
+        font-size: 0.76rem;
+        color: #1e40af;
+        margin-bottom: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .pc-alert-warning {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 6px;
+        padding: 0.6rem 0.9rem;
+        font-family: sans-serif;
+        font-size: 0.76rem;
+        color: #92400e;
+        margin-bottom: 0.85rem;
+    }
+</style>
+
+@if (IsVisible)
+{
+    <div class="pc-dialog-overlay">
+        <div class="pc-dialog">
+
+            @* ── Header ──────────────────────────────────────────── *@
+            <div class="pc-dialog-header">
+                <div class="pc-dialog-header-left">
+                    <span style="font-size:1.3rem;">🖨️</span>
+                    <span class="pc-dialog-title">Barcode Printer Configuration</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-family:sans-serif; font-size:0.77rem; color:#94a3b8;">
+                        @TotalLabels labels queued
+                    </span>
+                    <button style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;line-height:1;"
+                            @onclick="Close">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            @* ── Body ─────────────────────────────────────────────── *@
+            <div class="pc-dialog-body">
+
+                @* Protocol selector *@
+                <p class="pc-section-title">🔌 Printer Protocol / Language</p>
+
+                <div class="pc-protocol-tabs">
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.ZPL ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.ZPL)'>
+                        ZPL (Zebra)
+                    </button>
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.TSPL ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.TSPL)'>
+                        TSPL (TSC)
+                    </button>
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.EPL ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.EPL)'>
+                        EPL2 (Zebra Legacy)
+                    </button>
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.CPCL ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.CPCL)'>
+                        CPCL (Honeywell)
+                    </button>
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.Browser ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.Browser)'>
+                        Browser Print
+                    </button>
+                    <button class="pc-tab @(Config.Protocol == PrintProtocol.RawText ? "active" : "")"
+                            @onclick='() => SetProtocol(PrintProtocol.RawText)'>
+                        Raw Text
+                    </button>
+                </div>
+
+                <div class="pc-alert-info">
+                    @ProtocolHelpText
+                </div>
+
+                @* Connection settings *@
+                <p class="pc-section-title">🔧 Connection Settings</p>
+                <div class="pc-form-row">
+                    @if (Config.Protocol != PrintProtocol.Browser)
+                    {
+                        <div class="pc-form-group">
+                            <label>Send Method</label>
+                            <select @bind="Config.SendMethod">
+                                <option value="TCP">TCP/IP (Network)</option>
+                                <option value="USB">USB / Serial Port</option>
+                                <option value="File">Write to File</option>
+                                <option value="API">REST API Endpoint</option>
+                            </select>
+                        </div>
+
+                        @if (Config.SendMethod == "TCP")
+                        {
+                            <div class="pc-form-group">
+                                <label>Printer IP Address</label>
+                                <input type="text" @bind="Config.PrinterIp" placeholder="192.168.1.100" />
+                            </div>
+                            <div class="pc-form-group" style="max-width:100px;">
+                                <label>Port</label>
+                                <input type="number" @bind="Config.PrinterPort" min="1" max="65535" />
+                            </div>
+                        }
+                        else if (Config.SendMethod == "USB")
+                        {
+                            <div class="pc-form-group">
+                                <label>COM / USB Port</label>
+                                <input type="text" @bind="Config.PortName" placeholder="COM3 or /dev/usb/lp0" />
+                            </div>
+                            <div class="pc-form-group" style="max-width:130px;">
+                                <label>Baud Rate</label>
+                                <select @bind="Config.BaudRate">
+                                    <option>9600</option>
+                                    <option>19200</option>
+                                    <option>38400</option>
+                                    <option>57600</option>
+                                    <option>115200</option>
+                                </select>
+                            </div>
+                        }
+                        else if (Config.SendMethod == "File")
+                        {
+                            <div class="pc-form-group">
+                                <label>Output File Path</label>
+                                <input type="text" @bind="Config.FilePath" placeholder="C:\print\output.zpl" />
+                            </div>
+                        }
+                        else if (Config.SendMethod == "API")
+                        {
+                            <div class="pc-form-group">
+                                <label>API Endpoint URL</label>
+                                <input type="text" @bind="Config.ApiEndpoint" placeholder="http://localhost:9100/print" />
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="pc-alert-info" style="margin:0; flex:1;">
+                            ℹ️ <strong>Browser Print</strong> uses your OS print dialog and sends labels via CSS @@media print.
+                            No special printer driver needed — works with any AirPrint / network printer.
+                        </div>
+                    }
+                </div>
+
+                @* Label settings *@
+                <p class="pc-section-title">📐 Label & Print Settings</p>
+                <div class="pc-form-row">
+                    <div class="pc-form-group">
+                        <label>Label Width (mm)</label>
+                        <input type="number" @bind="Config.LabelWidthMm" min="10" max="300" />
+                    </div>
+                    <div class="pc-form-group">
+                        <label>Label Height (mm)</label>
+                        <input type="number" @bind="Config.LabelHeightMm" min="10" max="300" />
+                    </div>
+                    <div class="pc-form-group">
+                        <label>DPI</label>
+                        <select @bind="Config.Dpi">
+                            <option value="152">152 dpi (6 dpmm)</option>
+                            <option value="203">203 dpi (8 dpmm)</option>
+                            <option value="300">300 dpi (12 dpmm)</option>
+                            <option value="600">600 dpi (24 dpmm)</option>
+                        </select>
+                    </div>
+                    <div class="pc-form-group">
+                        <label>Print Speed</label>
+                        <select @bind="Config.PrintSpeed">
+                            <option value="2">2 ips — Slow</option>
+                            <option value="4">4 ips — Normal</option>
+                            <option value="6">6 ips — Fast</option>
+                            <option value="8">8 ips — Fastest</option>
+                        </select>
+                    </div>
+                    <div class="pc-form-group">
+                        <label>Darkness / Density</label>
+                        <input type="number" @bind="Config.Darkness" min="0" max="30" />
+                    </div>
+                </div>
+
+                @* Barcode encoding *@
+                <p class="pc-section-title">📊 Barcode Encoding</p>
+                <div class="pc-form-row">
+                    <div class="pc-form-group">
+                        <label>Barcode Symbology</label>
+                        <select @bind="Config.BarcodeSymbology">
+                            <option value="QR">QR Code</option>
+                            <option value="CODE128">Code 128</option>
+                            <option value="CODE39">Code 39</option>
+                            <option value="EAN13">EAN-13</option>
+                            <option value="EAN8">EAN-8</option>
+                            <option value="UPCA">UPC-A</option>
+                            <option value="DATAMATRIX">Data Matrix</option>
+                            <option value="PDF417">PDF417</option>
+                        </select>
+                    </div>
+                    <div class="pc-form-group">
+                        <label>QR Error Correction</label>
+                        <select @bind="Config.QrErrorCorrection">
+                            <option value="M">M (15%)</option>
+                            <option value="L">L (7%)</option>
+                            <option value="Q">Q (25%)</option>
+                            <option value="H">H (30%)</option>
+                        </select>
+                    </div>
+                    <div class="pc-form-group">
+                        <label>Encoding Charset</label>
+                        <select @bind="Config.Encoding">
+                            <option value="UTF-8">UTF-8</option>
+                            <option value="ASCII">ASCII</option>
+                            <option value="ISO-8859-1">ISO-8859-1</option>
+                        </select>
+                    </div>
+                </div>
+
+                @* Generated code preview *@
+                <p class="pc-section-title">👁 Generated Command Preview (first label)</p>
+                @if (Items.Any())
+                {
+                    <div class="pc-preview-box">@GeneratedCommandPreview</div>
+                }
+                else
+                {
+                    <div class="pc-alert-warning">⚠ No items in print queue — add items first to see command preview.</div>
+                }
+
+            </div>
+
+            @* ── Footer ───────────────────────────────────────────── *@
+            <div class="pc-dialog-footer">
+                <button class="pc-btn pc-btn-outline" @onclick="Close">Cancel</button>
+                <button class="pc-btn pc-btn-secondary" @onclick="CopyCommandToClipboard" disabled="@(!Items.Any())">
+                    📋 Copy Commands
+                </button>
+                <button class="pc-btn pc-btn-primary" @onclick="ExecutePrint"
+                        disabled="@(!Items.Any() || IsSending)">
+                    @if (IsSending)
+                    {
+                        <span>⏳ Sending...</span>
+                    }
+                    else
+                    {
+                        <span>🖨️ Send to Printer</span>
+                    }
+                </button>
+            </div>
+
+        </div>
+    </div>
+}

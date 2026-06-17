@@ -1,5 +1,5 @@
-@page "/ItemTransfer"
-@page "/ItemTransfer/Edit/{Id:int}"
+@page "/ItemTransferEntry"
+@page "/ItemTransferEntry/Edit/{Id:int}"
 
 @using JM.UI.Entities.Model.Transfer
 @inherits ItemTransferEntryComponent
@@ -176,12 +176,12 @@ else
         <RadzenRow>
             <RadzenColumn Size="12" Style="text-align:right; padding-top:4px;">
                 <RadzenButton Icon="restart_alt"
-                              ButtonStyle="ButtonStyle.Secondary"
-                              Size="ButtonSize.Small"
-                              Click="@ResetLeftPanel"
-                              Disabled="@IsProcessing"
-                              Text="Reset"
-                              Style="height:26px; font-size:0.72rem;" />
+              ButtonStyle="ButtonStyle.Secondary"
+              Size="ButtonSize.Small"
+              Click="@(async () => await TryResetLeftPanel())"
+              Disabled="@IsProcessing"
+              Text="Reset"
+              Style="height:26px; font-size:0.72rem;" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -231,13 +231,27 @@ else
                                 <RadzenLabel Text="From Store" Style="font-weight:600; font-size:0.75rem;" />
                             </RadzenColumn>
                             <RadzenColumn Size="8">
-                                <RadzenDropDown @bind-Value="Transfer.StoreId"
-                                                Data="@Stores"
-                                                TextProperty="Name" ValueProperty="Id"
-                                                Placeholder="Select store..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Change="@(args => OnFromStoreChanged((int?)args))"
-                                                Disabled="@IsProcessing" />
+                                @if (IsFromStoreReadOnly)
+                                {
+                                    <!-- ✅ Branch user — show as plain text, not editable -->
+                                    <div style="font-size:0.75rem; font-weight:600; color:#1565c0;
+                                        padding: 4px 8px; background:#f5f5f5;
+                                        border:1px solid #dee2e6; border-radius:4px;
+                                        height:32px; display:flex; align-items:center;">
+                                        🏪 @(Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name ?? "—")
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- ✅ Head Office user — editable dropdown -->
+                                    <RadzenDropDown @bind-Value="Transfer.StoreId"
+                                                    Data="@Stores"
+                                                    TextProperty="Name" ValueProperty="Id"
+                                                    Placeholder="Select store..."
+                                                    Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
+                                                    Change="@(args => OnFromStoreChanged((int?)args))"
+                                                    Disabled="@IsProcessing" />
+                                }
                             </RadzenColumn>
                         </RadzenRow>
 
@@ -252,6 +266,7 @@ else
                                                 TextProperty="Name" ValueProperty="Id"
                                                 Placeholder="Select store..."
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                 Disabled="@IsProcessing" />
                             </RadzenColumn>
                         </RadzenRow>
@@ -331,6 +346,7 @@ else
                                         <RadzenDropDownDataGridColumn Property="Barcode" Title="Barcode" Width="140px" />
                                         <RadzenDropDownDataGridColumn Property="Name" Title="Item Name" Width="200px" />
                                         <RadzenDropDownDataGridColumn Property="CurrentStock" Title="Stock" Width="80px" />
+                                        <RadzenDropDownDataGridColumn Property="StoreName" Title="Store" Width="80px" />
                                         <RadzenDropDownDataGridColumn Property="SalePrice" Title="Sale Price" Width="90px" />
                                     </Columns>
                                 </RadzenDropDownDataGrid>

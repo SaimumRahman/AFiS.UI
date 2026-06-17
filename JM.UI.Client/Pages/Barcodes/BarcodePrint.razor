@@ -1,5 +1,6 @@
 @page "/BarcodePrint"
 @using JM.UI.Client.Pages.Barcode
+@using JM.UI.Entities.Model.Barcodes
 @attribute [Authorize]
 @inherits BarcodePrintComponent
 
@@ -35,7 +36,7 @@
                     <RadzenButton Text="Print Barcodes"
                                   Icon="print"
                                   ButtonStyle="ButtonStyle.Primary"
-                                  Click="@PrintBarcodes"
+                                  Click="@OpenPrinterConfig"
                                   IsBusy="@IsPrinting"
                                   BusyText="Sending to Printer..."
                                   Disabled="@(!PrintItems.Any() || IsPrinting)" />
@@ -44,26 +45,85 @@
         </RadzenRow>
     </RadzenCard>
 
-    @* ── Config Info Banner ───────────────────────────────────── *@
-    @if (!IsLoadingConfig)
-    {
-        <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false" class="mb-4">
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" AlignItems="AlignItems.Center">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
-                    <RadzenIcon Icon="straighten" />
-                    <RadzenText TextStyle="TextStyle.Caption">
-                        Label Size: <strong>@(PrintConfig.LabelWidthMm)mm × @(PrintConfig.LabelHeightMm)mm</strong>
-                    </RadzenText>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
-                    <RadzenIcon Icon="repeat" />
-                    <RadzenText TextStyle="TextStyle.Caption">
-                        Fabric Repeat: <strong>@PrintConfig.FabricRepeatCount× per barcode</strong>
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenStack>
-        </RadzenAlert>
-    }
+    @* ── Template + Config Info Banner ───────────────────────────────────── *@
+    <RadzenCard class="mb-4">
+        <RadzenFieldset Text="Barcode Template" Icon="style">
+            <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+
+                <RadzenColumn Size="12" SizeMD="5">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Select Template *" Component="BarcodeTemplate" />
+                        <RadzenDropDown @bind-Value="SelectedTemplateId"
+                                        Data="@BarcodeTemplates"
+                                        TextProperty="TemplateName"
+                                        ValueProperty="Id"
+                                        Name="BarcodeTemplate"
+                                        Placeholder="-- Select Barcode Template --"
+                                        Style="width:100%;"
+                                        AllowFiltering="true"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        IsLoading="@IsLoadingTemplates"
+                                        Change="@OnTemplateSelected">
+                            <HeaderTemplate>
+                                <RadzenRow Style="width:100%; padding: 4px 8px; border-bottom: 1px solid var(--rz-border-color);">
+                                    <RadzenColumn Size="4">
+                                        <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                            Template Name
+                                        </RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="8">
+                                        <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                            Fields
+                                        </RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </HeaderTemplate>
+                            <Template Context="tmpl">
+                                <RadzenRow Style="width:100%;">
+                                    <RadzenColumn Size="4">
+                                        <RadzenText TextStyle="TextStyle.Body2"><strong>@tmpl.TemplateName</strong></RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="8">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">@tmpl.Descriptions</RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </Template>
+                        </RadzenDropDown>
+                    </RadzenStack>
+                </RadzenColumn>
+
+                @* Template Info Badge *@
+                @if (SelectedTemplate != null)
+                {
+                    <RadzenColumn Size="12" SizeMD="7">
+                        <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false" Style="padding: 0.5rem 0.75rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="straighten" />
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        Size: <strong>@(PrintConfig.LabelWidthMm)mm × @(PrintConfig.LabelHeightMm)mm</strong>
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="list_alt" />
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        Fields: <strong>@SelectedTemplate.Descriptions</strong>
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="repeat" />
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        Fabric Repeat: <strong>@PrintConfig.FabricRepeatCount×</strong>
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    </RadzenColumn>
+                }
+
+            </RadzenRow>
+        </RadzenFieldset>
+    </RadzenCard>
 
     @* ── Selection Fieldset ───────────────────────────────────── *@
     <RadzenCard class="mb-4">
@@ -121,7 +181,30 @@
                                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                             IsLoading="@IsLoadingPurchases"
                                             Change="@OnPurchaseSelected">
-                                @* TODO: Customize item template if needed *@
+                                <HeaderTemplate>
+                                    <RadzenRow Style="width:100%; padding: 4px 8px; border-bottom: 1px solid var(--rz-border-color);">
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                                Purchase No
+                                            </RadzenText>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Overline" Style="font-weight:600; color: var(--rz-text-secondary-color);">
+                                                Purchase Date
+                                            </RadzenText>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </HeaderTemplate>
+                                <Template Context="purchase">
+                                    <RadzenRow Style="width:100%;">
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseNo</RadzenText>
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="6">
+                                            <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseDate.ToString("dd MMM yyyy")</RadzenText>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+                                </Template>
                             </RadzenDropDown>
                             <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
                                 Showing purchases from @FromDate.ToString("dd MMM yyyy") to @ToDate.ToString("dd MMM yyyy")
@@ -129,10 +212,6 @@
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4" class="d-flex align-items-end">
-                        @*
-                            TODO: Optionally show selected purchase summary:
-                            purchase date, supplier name, total items 
-                        *@
                         @if (SelectedPurchaseId.HasValue)
                         {
                             var selected = PurchaseList.FirstOrDefault(p => p.Id == SelectedPurchaseId);
@@ -159,16 +238,25 @@
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Gap="0.25rem">
                         <RadzenLabel Text="Select Barcode" Component="SingleBarcode" />
-                        <RadzenDropDown @bind-Value="SelectedBarcodeId"
-                                        Data="@AllBarcodes"
-                                        TextProperty="Name"
-                                        ValueProperty="Id"
-                                        Name="SingleBarcode"
-                                        Placeholder="-- Search and select barcode --"
-                                        Style="width:100%;"
-                                        AllowFiltering="true"
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                        IsLoading="@IsLoadingBarcodes" />
+                        <RadzenDropDownDataGrid @bind-Value="SelectedBarcodeId"
+                                                Data="@AllBarcodes"
+                                                TextProperty="Name"
+                                                ValueProperty="Id"
+                                                Name="SingleBarcode"
+                                                Placeholder="-- Search and select barcode --"
+                                                Style="width:100%;"
+                                                AllowFiltering="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                IsLoading="@IsLoadingBarcodes">
+                            <Columns>
+                                <RadzenDropDownDataGridColumn Property="Name"
+                                                              Title="Name"
+                                                              Width="150px" />
+                                <RadzenDropDownDataGridColumn Property="Barcode"
+                                                              Title="Barcode"
+                                                              Width="120px" />
+                            </Columns>
+                        </RadzenDropDownDataGrid>
                     </RadzenStack>
                 </RadzenColumn>
 
@@ -189,7 +277,8 @@
                                   Icon="add"
                                   ButtonStyle="ButtonStyle.Secondary"
                                   Click="@AddSingleBarcode"
-                                  Style="width:100%;" />
+                                  Style="width:100%;"
+                                  Disabled="@(SelectedTemplateId == null)" />
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="2">
@@ -210,376 +299,460 @@
 
     </RadzenCard>
 
-    @* ── Print Queue Preview (Label Sheet) ──────────────────── *@
-    <RadzenCard class="mt-0">
-        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-3">
-            <RadzenColumn>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="preview" Style="color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Label Sheet Preview</RadzenText>
-                    @if (PrintItems.Any())
-                    {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
-                                     Text="@($"{PrintItems.Count} unique · {PrintItems.Sum(x => x.PrintQty)} labels")" />
-                    }
-                </RadzenStack>
-            </RadzenColumn>
-            @if (PrintItems.Any())
-            {
-                <RadzenColumn>
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">
-                        Each card = one physical label at @(PrintConfig.LabelWidthMm)×@(PrintConfig.LabelHeightMm)mm
-                    </RadzenText>
-                </RadzenColumn>
-            }
-        </RadzenRow>
-
-        @if (!PrintItems.Any())
-        {
-            @* ── Empty State ─────────────────────────────────────────── *@
-            <div style="background:var(--rz-base-100); border:2px dashed var(--rz-base-400); border-radius:8px; padding:3rem; text-align:center;">
-                <RadzenIcon Icon="qr_code_scanner" Style="font-size:3.5rem; color:var(--rz-base-400);" />
-                <RadzenText TextStyle="TextStyle.H6" Style="color:var(--rz-base-500); margin-top:0.75rem;">No labels in queue</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Style="color:var(--rz-base-400); max-width:320px; margin:0.25rem auto 0;">
-                    Select a purchase order above or add individual barcodes to see a live label preview.
+    @* ── Guard: No template selected ─────────────────────────── *@
+    @if (SelectedTemplate == null)
+    {
+        <RadzenCard class="mt-0">
+            <div style="background:var(--rz-base-100); border:2px dashed var(--rz-warning); border-radius:8px; padding:3rem; text-align:center;">
+                <RadzenIcon Icon="style" Style="font-size:3.5rem; color:var(--rz-warning);" />
+                <RadzenText TextStyle="TextStyle.H6" Style="color:var(--rz-base-500); margin-top:0.75rem;">No template selected</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color:var(--rz-base-400); max-width:340px; margin:0.25rem auto 0;">
+                    Please select a <strong>Barcode Template</strong> above before adding items to the print queue.
                 </RadzenText>
             </div>
-        }
-        else
-        {
-            @* ── Paper Sheet Simulation ───────────────────────────────── *@
-            <div style="background:#e8e8e8; border-radius:8px; padding:1.5rem; box-shadow:inset 0 2px 8px rgba(0,0,0,0.10);">
+        </RadzenCard>
+    }
+    else
+    {
+        @* ── Print Queue Preview (Label Sheet) ──────────────────── *@
+        <RadzenCard class="mt-0">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-3">
+                <RadzenColumn>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="preview" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" class="mb-0">Label Sheet Preview</RadzenText>
+                        @if (PrintItems.Any())
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
+                                         Text="@($"{PrintItems.Count} unique · {PrintItems.Sum(x => x.PrintQty)} labels")" />
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Preview"
+                                      Icon="open_in_full"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      Variant="Variant.Outlined"
+                                      Size="ButtonSize.Small"
+                                      Click="@OpenPreview"
+                                      Disabled="@(!PrintItems.Any())" />
+                    </RadzenStack>
+                </RadzenColumn>
+                @if (PrintItems.Any())
+                {
+                    <RadzenColumn>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">
+                            Each card = one physical label at @(PrintConfig.LabelWidthMm)×@(PrintConfig.LabelHeightMm)mm
+                        </RadzenText>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
 
-                @* Sheet header ruler hint *@
-                <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem; padding:0 0.25rem;">
-                    <RadzenText TextStyle="TextStyle.Overline" Style="color:#999; font-size:0.65rem; letter-spacing:0.08em;">
-                        ▼ LABEL SHEET — @(PrintConfig.LabelWidthMm)mm × @(PrintConfig.LabelHeightMm)mm each
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Overline" Style="color:#999; font-size:0.65rem;">
-                        @PrintItems.Sum(x => x.PrintQty) LABELS TOTAL
+            @if (!PrintItems.Any())
+            {
+                <div style="background:var(--rz-base-100); border:2px dashed var(--rz-base-400); border-radius:8px; padding:3rem; text-align:center;">
+                    <RadzenIcon Icon="qr_code_scanner" Style="font-size:3.5rem; color:var(--rz-base-400);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="color:var(--rz-base-500); margin-top:0.75rem;">No labels in queue</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color:var(--rz-base-400); max-width:320px; margin:0.25rem auto 0;">
+                        Select a purchase order above or add individual barcodes to see a live label preview.
                     </RadzenText>
                 </div>
+            }
+            else
+            {
+                @* ── Paper Sheet Simulation ───────────────────────────────── *@
+                <div style="background:#e8e8e8; border-radius:8px; padding:1.5rem; box-shadow:inset 0 2px 8px rgba(0,0,0,0.10);">
 
-                @* Label grid — each item repeated PrintQty times *@
-                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem; padding:0 0.25rem;">
+                        <RadzenText TextStyle="TextStyle.Overline" Style="color:#999; font-size:0.65rem; letter-spacing:0.08em;">
+                            ▼ LABEL SHEET — @(PrintConfig.LabelWidthMm)mm × @(PrintConfig.LabelHeightMm)mm each · Template: @SelectedTemplate.TemplateName
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" Style="color:#999; font-size:0.65rem;">
+                            @PrintItems.Sum(x => x.PrintQty) LABELS TOTAL
+                        </RadzenText>
+                    </div>
 
-                    @foreach (var item in PrintItems)
-                    {
-                        @for (int copy = 1; copy <= item.PrintQty; copy++)
+                    @* Label grid *@
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start;">
+
+                        @foreach (var item in PrintItems)
                         {
-                            var copyIndex = copy; // capture for lambda
-                            var isLastCopy = copyIndex == item.PrintQty;
-                            var isFabric = item.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true;
+                            @for (int copy = 1; copy <= item.PrintQty; copy++)
+                            {
+                                var copyIndex = copy;
+                                var isLastCopy = copyIndex == item.PrintQty;
+                                var isFabric = item.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true;
+                                var fields = TemplateFields; // parsed field list from selected template
 
-                            @* Physical label card *@
-                            <div style="
-                                background:#fff;
-                                border:1px solid #ccc;
-                                border-radius:4px;
-                                width:@(LabelWidthPx)px;
-                                height:@(LabelHeightPx)px;
-                                box-shadow:1px 2px 6px rgba(0,0,0,0.13);
-                                display:flex;
-                                flex-direction:column;
-                                overflow:hidden;
-                                position:relative;
-                                font-family:'Courier New', monospace;
-                                ">
-                                @* Top colour stripe by group *@
+                                @* Physical label card — layout matches barcode_template.jpeg *@
                                 <div style="
-                                height:5px;
-                                background:@(isFabric ? "#f59e0b" : "#3b82f6");
-                                flex-shrink:0;
-                                "></div>
+                                    background:#fff;
+                                    border:1px solid #bbb;
+                                    border-radius:4px;
+                                    width:@(LabelWidthPx)px;
+                                    height:@(LabelHeightPx)px;
+                                    box-shadow:1px 2px 6px rgba(0,0,0,0.13);
+                                    display:flex;
+                                    flex-direction:column;
+                                    overflow:hidden;
+                                    position:relative;
+                                    font-family:'Courier New', monospace;
+                                    ">
 
-                                @* Label body *@
-                                <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; padding:5px 7px 4px;">
+                                    @* Top colour stripe *@
+                                    <div style="height:4px; background:@(isFabric ? "#f59e0b" : "#3b82f6"); flex-shrink:0;"></div>
 
-                                    @* Product name *@
-                                    <div style="font-size:@(NameFontSizePx)px; font-weight:700; color:#111; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
-                                        @item.ProductName
-                                    </div>
+                                    @* Label body: top text rows + bottom QR/barcode row *@
+                                    <div style="flex:1; display:flex; flex-direction:column; padding:4px 6px 3px; overflow:hidden;">
 
-                                    @* Simulated barcode stripes *@
-                                    <div style="display:flex; align-items:flex-end; gap:1px; height:@(BarHeightPx)px; margin:3px 0;">
-                                        @foreach (var w in GetBarcodeStripeWidths(item.BarcodeValue))
+                                        @* ── Top section: ProductName + Brand (always shown if in fields) *@
+                                        @if (fields.Contains("ProductName", StringComparer.OrdinalIgnoreCase))
                                         {
-                                            <div style="background:#111; width:@(w)px; height:100%;"></div>
-                                            <div style="background:#fff; width:@(w == 1 ? 1 : 2)px; height:100%;"></div>
+                                            <div style="font-size:@(NameFontSizePx)px; font-weight:700; color:#c0392b; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; margin-bottom:1px;">
+                                                @item.ProductName
+                                            </div>
                                         }
+                                        @if (fields.Contains("Brand", StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            <div style="font-size:@(SmallFontPx + 1)px; font-weight:600; color:#111; line-height:1.2; margin-bottom:2px;">
+                                                @(string.IsNullOrWhiteSpace(item.Brand) ? "—" : item.Brand)
+                                            </div>
+                                        }
+
+                                        @* ── Bottom section: QR code left, details right *@
+                                        <div style="flex:1; display:flex; gap:5px; align-items:stretch; min-height:0;">
+
+                                            @* QR code placeholder (left) *@
+                                            @* QR code placeholder + Serial No (left column) *@
+                                            <div style="
+                                                display:flex;
+                                                flex-direction:column;
+                                                align-items:center;
+                                                gap:2px;
+                                                flex-shrink:0;
+                                                ">
+                                                <div style="
+                                                    width:@(QrSizePx)px;
+                                                    height:@(QrSizePx)px;
+                                                    border:1.5px solid #e74c3c;
+                                                    border-radius:3px;
+                                                    display:flex;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    background:#fff8f8;
+                                                    ">
+                                                    @* QR grid simulation *@
+                                                    <svg width="@(QrSizePx - 6)" height="@(QrSizePx - 6)" viewBox="0 0 21 21">
+                                                        @foreach (var cell in GetQrCells(item.BarcodeValue))
+                                                        {
+                                                            <rect x="@cell.X" y="@cell.Y" width="1" height="1" fill="#c0392b" />
+                                                        }
+                                                    </svg>
+                                                </div>
+                                                @* Serial No below QR *@
+                                                @if (!string.IsNullOrWhiteSpace(item.ReturnRefNo))
+                                                {
+                                                    <div style="
+                                                        font-size:@(SmallFontPx)px;
+                                                        color:#555;
+                                                        font-family:sans-serif;
+                                                        text-align:center;
+                                                        letter-spacing:0.04em;
+                                                        white-space:nowrap;
+                                                        overflow:hidden;
+                                                        text-overflow:ellipsis;
+                                                        max-width:@(QrSizePx)px;
+                                                        ">
+                                                        S/N: @item.ReturnRefNo
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            @* Right side details *@
+                                            <div style="flex:1; display:flex; flex-direction:column; justify-content:space-around; min-width:0;">
+
+                                                @* Barcode text *@
+                                                <div style="font-size:@(BarcodeFontSizePx)px; color:#222; letter-spacing:0.10em; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                    @item.BarcodeValue
+                                                </div>
+
+                                                @* Price *@
+                                                @if (fields.Contains("Price", StringComparer.OrdinalIgnoreCase))
+                                                {
+                                                    <div style="font-size:@(SmallFontPx + 1)px; font-weight:700; color:#111;">
+                                                        @(item.Price.HasValue ? $"৳ {item.Price:N2}" : "৳ —")
+                                                    </div>
+                                                }
+
+                                                @* UOM *@
+                                                @if (fields.Contains("UOM", StringComparer.OrdinalIgnoreCase) || fields.Contains("UoM", StringComparer.OrdinalIgnoreCase))
+                                                {
+                                                    <div style="font-size:@(SmallFontPx)px; color:#555; font-family:sans-serif;">
+                                                        @(string.IsNullOrWhiteSpace(item.UoM) ? "—" : item.UoM)
+                                                    </div>
+                                                }
+
+                                            </div>
+                                        </div>
+
                                     </div>
 
-                                    @* Barcode value text *@
-                                    <div style="font-size:@(BarcodeFontSizePx)px; color:#222; letter-spacing:0.12em; text-align:center;">
-                                        @item.BarcodeValue
-                                    </div>
-
-                                    @* Footer row: group + size + copy indicator *@
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                                    @* Bottom: group badge + copy indicator *@
+                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:1px 6px 2px; border-top:1px solid #f0f0f0;">
                                         <span style="
-                                        font-size:@(SmallFontPx)px;
-                                        background:@(isFabric ? "#fef3c7" : "#dbeafe");
-                                        color:@(isFabric ? "#92400e" : "#1e40af");
-                                        border-radius:3px;
-                                        padding:1px 4px;
-                                        font-family:sans-serif;
-                                        font-weight:600;
-                                        ">@item.GroupName</span>
-                                        <span style="font-size:@(SmallFontPx)px; color:#888; font-family:sans-serif;">
-                                            @(item.LabelWidthMm)×@(item.LabelHeightMm)mm
+                                            font-size:@(SmallFontPx)px;
+                                            background:@(isFabric ? "#fef3c7" : "#dbeafe");
+                                            color:@(isFabric ? "#92400e" : "#1e40af");
+                                            border-radius:3px; padding:0px 3px;
+                                            font-family:sans-serif; font-weight:600;">
+                                            @item.GroupName
                                         </span>
                                         <span style="font-size:@(SmallFontPx)px; color:#aaa; font-family:sans-serif;">
                                             @copyIndex/@item.PrintQty
                                         </span>
                                     </div>
+
+                                    @* Edit overlay on last copy *@
+                                    @if (isLastCopy)
+                                    {
+                                        <div style="position:absolute; top:2px; right:2px; display:flex; gap:2px; align-items:center;">
+                                            <button onclick="@(() => UpdateQty(item, item.PrintQty - 1))"
+                                                    style="width:16px;height:16px;border:1px solid #ddd;border-radius:3px;background:#f5f5f5;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
+                                                    title="Decrease qty">
+                                                −
+                                            </button>
+                                            <button onclick="@(() => UpdateQty(item, item.PrintQty + 1))"
+                                                    style="width:16px;height:16px;border:1px solid #ddd;border-radius:3px;background:#f5f5f5;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
+                                                    title="Increase qty">
+                                                +
+                                            </button>
+                                            <button onclick="@(() => RemovePrintItem(item))"
+                                                    style="width:16px;height:16px;border:1px solid #fca5a5;border-radius:3px;background:#fee2e2;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center; color:#dc2626;"
+                                                    title="Remove">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    }
                                 </div>
-
-                                @* Edit overlay on last copy (quantity controls) — avoids cluttering every repeated label *@
-                                @if (isLastCopy)
-                                {
-                                    <div style="
-                                        position:absolute; top:2px; right:2px;
-                                        display:flex; gap:2px; align-items:center;
-                                        ">
-                                        <button onclick="@(() => UpdateQty(item, item.PrintQty - 1))"
-                                                style="width:16px;height:16px;border:1px solid #ddd;border-radius:3px;background:#f5f5f5;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
-                                                title="Decrease qty">
-                                            −
-                                        </button>
-                                        <button onclick="@(() => UpdateQty(item, item.PrintQty + 1))"
-                                                style="width:16px;height:16px;border:1px solid #ddd;border-radius:3px;background:#f5f5f5;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;"
-                                                title="Increase qty">
-                                            +
-                                        </button>
-                                        <button onclick="@(() => RemovePrintItem(item))"
-                                                style="width:16px;height:16px;border:1px solid #fca5a5;border-radius:3px;background:#fee2e2;font-size:10px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center; color:#dc2626;"
-                                                title="Remove">
-                                            ✕
-                                        </button>
-                                    </div>
-                                }
-                            </div>
+                            }
                         }
-                    }
+                    </div>
                 </div>
-            </div>
 
-            @* ── Footer Summary ─────────────────────────────────────── *@
-            <RadzenCard class="mt-3" Style="background:var(--rz-base-100);">
-                <RadzenRow>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem">
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Unique Barcodes</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">@PrintItems.Count</RadzenText>
+                @* ── Footer Summary ─────────────────────────────────────── *@
+                <RadzenCard class="mt-3" Style="background:var(--rz-base-100);">
+                    <RadzenRow>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem">
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Unique Barcodes</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Count</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Total Labels</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Sum(x => x.PrintQty)</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Fabric Labels</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)</RadzenText>
+                                </RadzenStack>
                             </RadzenStack>
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Total Labels</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">@PrintItems.Sum(x => x.PrintQty)</RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
+                                <RadzenButton Text="Print Barcodes"
+                                              Icon="print"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@OpenPrinterConfig"
+                                              IsBusy="@IsPrinting"
+                                              BusyText="Sending to Printer..."
+                                              Disabled="@(!PrintItems.Any() || IsPrinting)" />
                             </RadzenStack>
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Fabric Labels</RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)</RadzenText>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
+            }
+        </RadzenCard>
+
+        @* ── Print Queue Data Grid ──────────────────────────────── *@
+        <RadzenCard class="mt-4">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-3">
+                <RadzenColumn>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="table_rows" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" class="mb-0">Print Queue</RadzenText>
+                        @if (PrintItems.Any())
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
+                                         Text="@($"{PrintItems.Count} unique barcode(s)")" />
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @if (!PrintItems.Any())
+            {
+                <RadzenCard Style="background: var(--rz-base-100); border: 2px dashed var(--rz-base-400);">
+                    <RadzenStack AlignItems="AlignItems.Center" Gap="0.75rem" class="py-5">
+                        <RadzenIcon Icon="qr_code_scanner" Style="font-size: 3.5rem; color: var(--rz-base-400);" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-base-500);">No barcodes in queue</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-base-400); text-align:center; max-width:320px;">
+                            Select a purchase order above to bulk-load barcodes, or add individual barcodes using the single barcode panel.
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+            else
+            {
+                <RadzenDataGrid Data="@PrintItems"
+                                TItem="BarcodePrintItemDTO"
+                                AllowPaging="true"
+                                PageSize="15"
+                                AllowSorting="true"
+                                GridLines="DataGridGridLines.Horizontal"
+                                Density="Density.Compact"
+                                Style="width:100%;">
+                    <Columns>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Title="#" Width="50px" Frozen="true">
+                            <Template Context="item">
+                                <RadzenText TextStyle="TextStyle.Caption">@(PrintItems.IndexOf(item) + 1)</RadzenText>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="BarcodeValue" Title="Barcode" Width="160px">
+                            <Template Context="item">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
+                                    <RadzenIcon Icon="qr_code" Style="font-size:1rem; color: var(--rz-text-secondary-color);" />
+                                    <strong>@item.BarcodeValue</strong>
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="ProductName" Title="Product Name" />
+
+                        @* Conditionally show Brand column *@
+                        @if (TemplateFields.Contains("Brand", StringComparer.OrdinalIgnoreCase))
+                        {
+                            <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="Brand" Title="Brand" Width="120px">
+                                <Template Context="item">
+                                    <RadzenText TextStyle="TextStyle.Caption">@(item.Brand ?? "—")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+
+                        @* Conditionally show Price column *@
+                        @if (TemplateFields.Contains("Price", StringComparer.OrdinalIgnoreCase))
+                        {
+                            <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="Price" Title="Price" Width="100px">
+                                <Template Context="item">
+                                    <RadzenText TextStyle="TextStyle.Caption">@(item.Price.HasValue ? $"৳ {item.Price:N2}" : "—")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+
+                        @* Conditionally show UoM column *@
+                        @if (TemplateFields.Contains("UOM", StringComparer.OrdinalIgnoreCase) || TemplateFields.Contains("UoM", StringComparer.OrdinalIgnoreCase))
+                        {
+                            <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="UoM" Title="UoM" Width="80px">
+                                <Template Context="item">
+                                    <RadzenText TextStyle="TextStyle.Caption">@(item.UoM ?? "—")</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="GroupName" Title="Group" Width="120px">
+                            <Template Context="item">
+                                <RadzenBadge BadgeStyle="@(item.GroupId == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
+                                             Text="@item.GroupName" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Title="Label Size" Width="130px">
+                            <Template Context="item">
+                                <RadzenText TextStyle="TextStyle.Caption">@(item.LabelWidthMm)mm × @(item.LabelHeightMm)mm</RadzenText>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Title="Print Qty" Width="160px" TextAlign="TextAlign.Center">
+                            <Template Context="item">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem" JustifyContent="JustifyContent.Center">
+                                    <RadzenButton Icon="remove" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text"
+                                                  Size="ButtonSize.ExtraSmall" Click="@(() => UpdateQty(item, item.PrintQty - 1))" />
+                                    <RadzenNumeric Value="@item.PrintQty"
+                                                   ValueChanged="@((int v) => UpdateQty(item, v))"
+                                                   Min="1" Max="999" ShowUpDown="false"
+                                                   Style="width:60px; text-align:center;" />
+                                    <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text"
+                                                  Size="ButtonSize.ExtraSmall" Click="@(() => UpdateQty(item, item.PrintQty + 1))" />
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Title="Action" Width="80px" TextAlign="TextAlign.Center"
+                                              Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                            <Template Context="item">
+                                <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text"
+                                              Size="ButtonSize.Small" Click="@(() => RemovePrintItem(item))"
+                                              Disabled="@IsPrinting" />
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                    </Columns>
+                </RadzenDataGrid>
+
+                <RadzenCard class="mt-3" Style="background: var(--rz-base-100);">
+                    <RadzenRow>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem">
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Unique Barcodes</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Count</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Total Labels</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Sum(x => x.PrintQty)</RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Fabric Labels</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)</RadzenText>
+                                </RadzenStack>
                             </RadzenStack>
-                        </RadzenStack>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
-                                          Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
-                            <RadzenButton Text="Print Barcodes" Icon="print" ButtonStyle="ButtonStyle.Primary"
-                                          Click="@PrintBarcodes" IsBusy="@IsPrinting"
-                                          BusyText="Sending to Printer..."
-                                          Disabled="@(!PrintItems.Any() || IsPrinting)" />
-                        </RadzenStack>
-                    </RadzenColumn>
-                </RadzenRow>
-            </RadzenCard>
-        }
-    </RadzenCard>
-    <RadzenCard>
-        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-3">
-            <RadzenColumn>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="preview" Style="color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Print Queue Preview</RadzenText>
-                    @if (PrintItems.Any())
-                    {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary"
-                                     Text="@($"{PrintItems.Count} unique barcode(s)")" />
-                    }
-                </RadzenStack>
-            </RadzenColumn>
-        </RadzenRow>
-
-        @if (!PrintItems.Any())
-        {
-            @* ── Empty State ─────────────────────────────────────── *@
-            <RadzenCard Style="background: var(--rz-base-100); border: 2px dashed var(--rz-base-400);">
-                <RadzenStack AlignItems="AlignItems.Center" Gap="0.75rem" class="py-5">
-                    <RadzenIcon Icon="qr_code_scanner"
-                                Style="font-size: 3.5rem; color: var(--rz-base-400);" />
-                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-base-500);">No barcodes in queue</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-base-400); text-align:center; max-width:320px;">
-                        Select a purchase order above to bulk-load barcodes, or add individual barcodes using the single barcode panel.
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenCard>
-        }
-        else
-        {
-            @* ── Data Grid ────────────────────────────────────────── *@
-            <RadzenDataGrid Data="@PrintItems"
-                            TItem="BarcodePrintItemDTO"
-                            AllowPaging="true"
-                            PageSize="15"
-                            AllowSorting="true"
-                            GridLines="DataGridGridLines.Horizontal"
-                            Density="Density.Compact"
-                            Style="width:100%;">
-                <Columns>
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Title="#" Width="50px" Frozen="true">
-                        <Template Context="item">
-                            <RadzenText TextStyle="TextStyle.Caption">
-                                @(PrintItems.IndexOf(item) + 1)
-                            </RadzenText>
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Property="BarcodeValue"
-                                          Title="Barcode"
-                                          Width="160px">
-                        <Template Context="item">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
-                                <RadzenIcon Icon="qr_code" Style="font-size:1rem; color: var(--rz-text-secondary-color);" />
-                                <strong>@item.BarcodeValue</strong>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
+                                <RadzenButton Text="Print Barcodes"
+                                              Icon="print"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@OpenPrinterConfig"
+                                              IsBusy="@IsPrinting"
+                                              BusyText="Sending to Printer..."
+                                              Disabled="@(!PrintItems.Any() || IsPrinting)" />
                             </RadzenStack>
-                        </Template>
-                    </RadzenDataGridColumn>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
+            }
+        </RadzenCard>
+    }
+    @* ── Print Preview Overlay ──────────────────────────────────── *@
+    <BarcodePrintPreview IsVisible="@ShowPreview"
+                         Items="@PrintItems"
+                         TemplateFields="@TemplateFields"
+                         TemplateName="@SelectedTemplate?.TemplateName"
+                         LabelWidthMm="@PrintConfig.LabelWidthMm"
+                         LabelHeightMm="@PrintConfig.LabelHeightMm"
+                         OnClose="@(() => { ShowPreview = false; StateHasChanged(); })" />
 
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Property="ProductName"
-                                          Title="Product Name" />
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Property="GroupName"
-                                          Title="Group"
-                                          Width="120px">
-                        <Template Context="item">
-                            <RadzenBadge BadgeStyle="@(item.GroupId == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
-                                         Text="@item.GroupName" />
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Title="Label Size"
-                                          Width="130px">
-                        <Template Context="item">
-                            <RadzenText TextStyle="TextStyle.Caption">
-                                @(item.LabelWidthMm)mm × @(item.LabelHeightMm)mm
-                            </RadzenText>
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Title="Print Qty"
-                                          Width="160px"
-                                          TextAlign="TextAlign.Center">
-                        <Template Context="item">
-                            <RadzenStack Orientation="Orientation.Horizontal"
-                                         AlignItems="AlignItems.Center"
-                                         Gap="0.3rem"
-                                         JustifyContent="JustifyContent.Center">
-                                <RadzenButton Icon="remove"
-                                              ButtonStyle="ButtonStyle.Light"
-                                              Variant="Variant.Text"
-                                              Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => UpdateQty(item, item.PrintQty - 1))" />
-                                <RadzenNumeric Value="@item.PrintQty"
-                                               ValueChanged="@((int v) => UpdateQty(item, v))"
-                                               Min="1"
-                                               Max="999"
-                                               ShowUpDown="false"
-                                               Style="width:60px; text-align:center;" />
-                                <RadzenButton Icon="add"
-                                              ButtonStyle="ButtonStyle.Light"
-                                              Variant="Variant.Text"
-                                              Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => UpdateQty(item, item.PrintQty + 1))" />
-                            </RadzenStack>
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="BarcodePrintItemDTO"
-                                          Title="Action"
-                                          Width="80px"
-                                          TextAlign="TextAlign.Center"
-                                          Frozen="true"
-                                          FrozenPosition="FrozenColumnPosition.Right">
-                        <Template Context="item">
-                            <RadzenButton Icon="delete_outline"
-                                          ButtonStyle="ButtonStyle.Danger"
-                                          Variant="Variant.Text"
-                                          Size="ButtonSize.Small"
-                                          Click="@(() => RemovePrintItem(item))"
-                                          Disabled="@IsPrinting" />
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                </Columns>
-            </RadzenDataGrid>
-
-            @* ── Footer Summary ───────────────────────────────────── *@
-            <RadzenCard class="mt-3" Style="background: var(--rz-base-100);">
-                <RadzenRow>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem">
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                    Unique Barcodes
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">@PrintItems.Count</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                    Total Labels
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">@PrintItems.Sum(x => x.PrintQty)</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Gap="0.1rem">
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                    Fabric Labels
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.H6">
-                                    @PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)
-                                </RadzenText>
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Orientation="Orientation.Horizontal"
-                                     JustifyContent="JustifyContent.End"
-                                     Gap="0.5rem">
-                            <RadzenButton Text="Cancel"
-                                          Icon="cancel"
-                                          ButtonStyle="ButtonStyle.Light"
-                                          Variant="Variant.Flat"
-                                          Click="@ClearAll"
-                                          Disabled="@IsPrinting" />
-                            <RadzenButton Text="Print Barcodes"
-                                          Icon="print"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          Click="@PrintBarcodes"
-                                          IsBusy="@IsPrinting"
-                                          BusyText="Sending to Printer..."
-                                          Disabled="@(!PrintItems.Any() || IsPrinting)" />
-                        </RadzenStack>
-                    </RadzenColumn>
-                </RadzenRow>
-            </RadzenCard>
-        }
-    </RadzenCard>
-
+    @* ── Printer Config Dialog ──────────────────────────────────── *@
+    <PrinterConfigDialog IsVisible="@ShowPrinterConfig"
+                         Items="@PrintItems"
+                         TemplateFields="@TemplateFields"
+                         OnClose="@OnPrinterConfigClose"
+                         OnNotify="@OnPrinterNotify" />
 </RadzenContent>

@@ -21,5 +21,8 @@ namespace JM.UI.DataService.DAL.Transfer
         Task<IEnumerable<TransferMasterDTO>> GetDispatchedTransfers(int storeId);
         Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy);
         Task UpdateReceivedStatus(List<int> receivedDetailIds, List<int> fullyReceivedMasterIds, DateTime now, int userId);
+        Task<IEnumerable<TransferMasterDTO>> GetAllByStoreIdAsync(int storeId);
+        Task<IEnumerable<TransferSummaryDTO>> GetTransferSummaryByNo(string transferNo);
+
     }
 }

@@ -112,6 +112,16 @@
                         </div>
                     </Template>
                 </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Title="Challan" Width="100px" Sortable="false" Filterable="false">
+                    <Template Context="transfer">
+                        <RadzenButton Icon="print"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small"
+                                      Variant="Variant.Flat"
+                                      Click="@(() => DownloadChallan(transfer.TransferNo))"
+                                      Disabled="@(loadingTransferNo != null)" />
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
 
             <!-- Expandable Detail Grid -->
@@ -193,3 +203,13 @@
         </RadzenDataGrid>
     </RadzenCard>
 </RadzenContent>
+<script>
+    window.downloadFileFromBase64 = (fileName, contentType, base64) => {
+        const link = document.createElement('a');
+        link.href  = `data:${contentType};base64,${base64}`;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>

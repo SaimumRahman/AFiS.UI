@@ -25,12 +25,15 @@ using JM.UI.DataService.DAL.GroupRoutePermissions;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
+using JM.UI.DataService.DAL.CustomerDetails;
+using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
 using JM.UI.DataService.DAL.ItemOrigin;
 using JM.UI.DataService.DAL.Items;
 using JM.UI.DataService.DAL.Items;
+using JM.UI.DataService.DAL.MembershipType;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.MesurementUnits;
 using JM.UI.DataService.DAL.PurchaseOrders;
@@ -61,6 +64,7 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.VoucherDetails;
 using JM.UI.DataService.DAL.VoucherDetails;
@@ -119,5 +123,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ITransferRepository TransferRepository { get; }
         IStockRepository StockRepository { get; }
         IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
+        IMembershipTypeRepository MembershipTypeRepository { get; }
+        ICustomerDetailsRepository CustomerDetailsRepository { get; }
+        IDiscountManagerRepository DiscountManagerRepository { get; }
+        IInvRequisitionRepository InvRequisitionRepository { get; }
     }
 }

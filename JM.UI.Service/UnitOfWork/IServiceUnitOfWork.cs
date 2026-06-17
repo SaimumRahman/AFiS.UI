@@ -26,11 +26,14 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.CustomerDetails;
+using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
 using JM.UI.Service.ItemOrigin;
 using JM.UI.Service.Items;
+using JM.UI.Service.MembershipType;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.MesurementUnits;
 using JM.UI.Service.PurchaseOrders;
@@ -60,6 +63,7 @@ using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
 using JM.UI.Service.VoucherDetails;
@@ -121,5 +125,9 @@ namespace JM.UI.Service.UnitOfWork
         ITransferService TransferService { get; }
         IStockService StockService { get; }
         IBarcodePrintConfigService BarcodePrintConfigService { get; }
+        IMembershipTypeService MembershipTypeService { get; }
+        ICustomerDetailsService CustomerDetailsService { get; }
+        IDiscountManagerService DiscountManagerService { get; }
+        IInvRequisitionService InvRequisitionService { get; }
     }
 }

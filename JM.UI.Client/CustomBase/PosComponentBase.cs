@@ -10,6 +10,7 @@ namespace JM.UIWeb.CustomBase
 {
     public class PosComponentBase : ComponentBase
     {
+        [Inject] public INavigationGuardService NavigationGuard { get; set; }
         [Inject] public ITokenProvider TokenProvider { get; set; }
         [Inject] public ITokenService TokenService { get; set; } = default!; // ✅ Add this
         [Inject]
@@ -18,6 +19,8 @@ namespace JM.UIWeb.CustomBase
         [Inject] public NavigationManager NavigationManager { get; set; } = default!;
         [Inject]
         protected ProtectedSessionStorage sessionStorage { get; set; }
+        [Inject]
+        protected ProtectedLocalStorage _localStorage { get; set; }
 
         [Inject]
         protected NotificationService notificationService { get; set; }

@@ -1,6 +1,7 @@
 using JM.Infrastructure.Models;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.PurchaseItems;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,15 +21,54 @@ public class ItemService : IItemService
     {
         return await _unitOfWork.ItemRepository.GetItems();
     }
+    public async Task<IEnumerable<ItemDTO>> GetItemByPurchaseId(int purchaseId)
+    {
+        return await _unitOfWork.ItemRepository.GetItemByPurchaseId(purchaseId);
+    }
+    public async Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId)
+    {
+        return await _unitOfWork.ItemRepository.GetItemsByStoreId(storeId);
+    }
 
     public async Task<ItemDTO?> GetItemById(int id)
     {
         return await _unitOfWork.ItemRepository.GetItemById(id);
     }
-
-    public async Task<ResponseResult> SaveUpdateItem(ItemDTO item)
+   
+    public async Task<int> CreateItem(PreviewItemRow createItemRequest)
     {
-        return await _unitOfWork.ItemRepository.SaveUpdateItem(item);
+        CreateItemRequestDTO createItemRequestDTO = new()
+        {
+            Name = createItemRequest.ItemName,
+            GroupId = createItemRequest.GroupId ?? 0,
+            SubGroupId = createItemRequest.SubGroupId ?? 0,
+            ShadeNo = createItemRequest.ShadeNo,
+            ColorId = createItemRequest.ColorId,
+            SizeId = createItemRequest.SizeId,
+            MaterialType = createItemRequest.MaterialType,
+            Origin = createItemRequest.OriginName,
+            ProductPricePercentage = null, // Set this value as needed
+            MesurementUnitId = createItemRequest.MesurementUnitId ?? 0,
+            CountStockByColor = createItemRequest.CountStockByColor,
+            CountStockBySize = createItemRequest.CountStockBySize,
+            SalePrice = createItemRequest.SalePrice,
+            WholeSalePrice = 0, // Set this value as needed
+            PurchasePrice = createItemRequest.PurchasePrice,
+            ProductType = createItemRequest.ProductType,
+            Catalogue = createItemRequest.CatalogueName,
+            BrandId = createItemRequest.BrandId ?? 0,
+            OriginId = createItemRequest.OriginId ?? 0,
+            DesignId = createItemRequest.DesignId ?? 0,
+            RawMaterial = false, // Set this value as needed
+            IsSaleable = createItemRequest.IsSaleable,
+            IsConsume = createItemRequest.IsConsume,
+            CatalogueId = createItemRequest.CatalogueId,
+            Features = createItemRequest.FeatureIds != null && createItemRequest.FeatureIds.Any()
+    ? string.Join(",", createItemRequest.FeatureIds)
+    : string.Empty
+        };
+        var res = await _unitOfWork.ItemRepository.CreateItem(createItemRequestDTO);
+        return Convert.ToInt32(res.Id);
     }
 
     public async Task<ResponseResult> DeleteItem(int id)
@@ -55,4 +95,5 @@ public class ItemService : IItemService
             throw;
         }
     }
+
 }

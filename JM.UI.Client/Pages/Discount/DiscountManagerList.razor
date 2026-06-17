@@ -1,0 +1,182 @@
+@page "/DiscountManagerList"
+@using JM.UI.Entities.Model.Discount
+@inherits DiscountManagerListComponent
+@attribute [Authorize]
+<PageTitle>Discount Campaigns</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="discount" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Discount Campaign Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="New Campaign"
+                                  Click="@AddCampaign"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="CampaignsGrid"
+                        Data="@Campaigns"
+                        TItem="DiscountManagerDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        AllowRowExpand="true"
+                        RowExpand="@OnRowExpand"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{item.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Campaign Name -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="DiscountName" Title="Campaign Name" Width="220px">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="speakerphone" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @item.DiscountName
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Start Date -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="StartDate" Title="Start Date" Width="140px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @item.StartDate.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- End Date -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="EndDate" Title="End Date" Width="140px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @item.EndDate.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Products Count -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Title="Products" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                     Text="@(item.DiscountDetails?.Count.ToString() ?? "0")"
+                                     Icon="package" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="IsActive" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@(item.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
+                                     Text="@(item.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Created Date -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="CreatedDate" Title="Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            @item.CreatedDate.ToString("dd MMM yyyy")
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditCampaign(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Campaign"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteCampaign(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Campaign"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+            <Template Context="item">
+                @if (LoadingDetails.Contains(item.Id))
+                {
+                    <div style="padding:16px;text-align:center;">
+                        <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="height:24px;width:24px;" />
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin-left:8px;color:var(--rz-text-secondary);">Loading details...</RadzenText>
+                    </div>
+                }
+                else if (item.DiscountDetails?.Count > 0)
+                {
+                    <RadzenCard Style="margin:8px 0;padding:12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom:8px;">
+                            <RadzenIcon Icon="package" Style="margin-right:4px;" /> Products (@item.DiscountDetails.Count)
+                        </RadzenText>
+                        <RadzenDataGrid Data="@item.DiscountDetails"
+                                        TItem="DiscountManagerDetailsDTO"
+                                        AllowPaging="false"
+                                        AllowSorting="false"
+                                        AllowFiltering="false"
+                                        GridLines="DataGridGridLines.Horizontal"
+                                        Density="Density.Compact">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="Barcode" Title="Store" Width="120px" />
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="ItemName" Title="Product" Width="180px" />
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="CurrentSalePrice" Title="Sale Price" Width="100px" TextAlign="TextAlign.Center">
+                                    <Template Context="d">
+                                        <text>@($"৳{d.CurrentSalePrice:N0}")</text>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="DiscountValue" Title="Discount" Width="100px" TextAlign="TextAlign.Center">
+                                    <Template Context="d">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@($"{d.DiscountValue}{(d.DiscountTypeId == 2 ? "৳" : "%")}")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="DiscountTypeName" Title="Type" Width="100px" TextAlign="TextAlign.Center" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="padding:12px;color:var(--rz-text-secondary);">No product details found.</RadzenText>
+                }
+            </Template>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

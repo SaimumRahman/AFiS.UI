@@ -1,7 +1,6 @@
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MesurementUnits;
-using JM.UI.Entities.Model.Purchases;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Transfer;
@@ -9,6 +8,7 @@ using JM.UI.Service.Transfer;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Radzen;
 using Radzen.Blazor;
 
@@ -16,11 +16,17 @@ namespace JM.UI.Client.Pages.Transfers
 {
     public partial class ItemTransferEntryComponent : PosComponentBase
     {
-        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
-        [Inject] public ITransferService TransferService { get; set; } = default!;
-        [Inject] public DialogService dialogService { get; set; } = default!;
-        [Parameter] public int? Id { get; set; }
-
+        [Inject]
+        public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] 
+        public ITransferService TransferService { get; set; } = default!;
+        [Inject] 
+        public DialogService dialogService { get; set; } = default!;
+        [Inject] ProtectedLocalStorage _localStorage { get; set; }
+        [Parameter] 
+        public int? Id { get; set; }
+        protected bool IsFromStoreReadOnly { get; set; } = false;
+        protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
         protected TransferDetailDTO CurrentDetail { get; set; } = new();
@@ -64,7 +70,7 @@ namespace JM.UI.Client.Pages.Transfers
 
         // ── Scan textbox (direct-to-grid, qty = 1) ────────────────────
         protected string ScanBarcodeText { get; set; } = string.Empty;
-
+        private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Item Transfer" : "New Item Transfer";
 
@@ -75,8 +81,9 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
-            await LoadLookupData();
+            //await LoadLookupData();
 
             if (IsEditMode)
                 await LoadTransfer();
@@ -84,7 +91,15 @@ namespace JM.UI.Client.Pages.Transfers
                 await InitializeTransfer();
         }
 
-
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && _isFirstRender)
+            {
+                _isFirstRender = false;
+                await LoadLookupData();
+                StateHasChanged(); // Refresh UI after loading data
+            }
+        }
         // ── Initialization ────────────────────────────────────────────
 
         private async Task InitializeTransfer()
@@ -104,39 +119,84 @@ namespace JM.UI.Client.Pages.Transfers
 
 
         // ── Data Loading ──────────────────────────────────────────────
-
         private async Task LoadLookupData()
         {
             try
             {
+                // ── Read from localStorage safely ─────────────────────────────
+                int storeId = await GetLocalStorageInt("StoreId");
+                CurrentUserId = await GetLocalStorageInt("UserId");
+
+                Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
+
+                // ── Load Stores ───────────────────────────────────────────────
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
 
+                // ── Assign From Store based on User ───────────────────────────
+                if (CurrentUserId == 1)
+                {
+                    var headOfficeStore = stores.FirstOrDefault(s =>
+                        s.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase));
+
+                    Transfer.StoreId = headOfficeStore?.Id
+                                          ?? stores.FirstOrDefault(s => s.Id == storeId)?.Id
+                                          ?? 0;
+                    IsFromStoreReadOnly = false;
+                }
+                else
+                {
+                    var matchedStore = stores.FirstOrDefault(s => s.Id == storeId);
+
+                    if (matchedStore == null)
+                    {
+                        notificationService.Notify(
+                            NotificationSeverity.Warning,
+                            "Store Not Found",
+                            $"Your assigned store (Id = {storeId}) was not found. Please contact admin.",
+                            duration: 7000);
+                        Transfer.StoreId = 0;
+                    }
+                    else
+                    {
+                        Transfer.StoreId = matchedStore.Id; // ✅ e.g. 1004
+                    }
+
+                    IsFromStoreReadOnly = true;
+                }
+
+                // ── Exclude From Store from To Store list ─────────────────────
+                ToStores = stores.Where(s => s.Id != Transfer.StoreId).ToList();
+
+                // ── Load Lookup Lists ─────────────────────────────────────────
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
                           ?? new List<SizesDTO>();
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
                           ?? new List<MesurementUnitModelDTO>();
-                AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
-                                 ?? new List<ItemDTO>();
 
+                // ── Load Items based on store type ────────────────────────────
+                await LoadItemsForStore(Transfer.StoreId);
+
+                // ── Transfer Types ────────────────────────────────────────────
                 TransferTypes = new List<LookupItemDTO>
-                {
-                    new() { Id = 1, Name = "Internal Transfer" },
-                    new() { Id = 2, Name = "Requisition" },
-                    new() { Id = 3, Name = "Return" }
-                };
+        {
+            new() { Id = 1, Name = "Internal Transfer" },
+            new() { Id = 2, Name = "Requisition" },
+            new() { Id = 3, Name = "Return" }
+        };
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error",
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
                     $"Failed to load lookup data: {ex.Message}");
             }
         }
-
         protected async Task LoadTransfer()
         {
             try
@@ -182,11 +242,16 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected void OnFromStoreChanged(int? storeId)
         {
+            // Branch users cannot change From Store
+            if (IsFromStoreReadOnly) return;
+
             Transfer.StoreId = storeId;
             ToStores = Stores.Where(s => s.Id != storeId).ToList();
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
+
+            _ = LoadItemsForStore(storeId);
 
             StateHasChanged();
         }
@@ -946,14 +1011,117 @@ namespace JM.UI.Client.Pages.Transfers
 
 
         // ── Helpers ───────────────────────────────────────────────────
+        private bool HasUnsavedData()
+        {
+            return PreviewItems.Any()
+                || TransferDetails.Any()
+                || Transfer.ToStoreId.HasValue
+                || Transfer.TransTypeID != 0
+                || Transfer.DeliveryTypeId != 0
+                || !string.IsNullOrWhiteSpace(Transfer.DeliveryAddress)
+                || !string.IsNullOrWhiteSpace(Transfer.Comments)
+                || Transfer.RequisitionID.HasValue
+                || !string.IsNullOrWhiteSpace(SharedSerialNo)
+                || !string.IsNullOrWhiteSpace(SharedCreatedRemarks)
+                || SharedIssueQty.HasValue
+                || !string.IsNullOrWhiteSpace(BarcodeSearchText)
+                || !string.IsNullOrWhiteSpace(ScanBarcodeText);
+        }
+        protected async Task TryResetLeftPanel()
+        {
+            if (!HasUnsavedData())
+            {
+                ResetLeftPanel();
+                return;
+            }
 
+            var confirmed = await dialogService.Confirm(
+                "All unsaved data will be lost. Are you sure you want to reset the form?",
+                "Reset Form?",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Yes, Reset",
+                    CancelButtonText = "No, Keep Data",
+                    CloseDialogOnOverlayClick = true
+                }) ?? false;
+
+            if (confirmed)
+                ResetLeftPanel();
+        }
         private void ResetSharedFields()
         {
             SharedIssueQty = null;
             SharedSerialNo = string.Empty;
             SharedCreatedRemarks = string.Empty;
         }
+        // ── Helper: check if a store is Head Office ───────────────────────────────
+        // ── Helper: check if a store is Head Office ───────────────────────────────
+        private bool IsHeadOfficeStore(int? storeId)
+        {
+            if (!storeId.HasValue) return false;
+            var store = Stores.FirstOrDefault(s => s.Id == storeId.Value);
+            return store != null &&
+                   store.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase);
+        }
 
-        public void Dispose() => ItemsGrid?.Dispose();
+        // ── Load items — all for Head Office, filtered for branch ────────────────
+        private async Task LoadItemsForStore(int? storeId)
+        {
+            if (!storeId.HasValue || storeId.Value == 0)
+            {
+                AvailableItems = new List<ItemDTO>();
+                StateHasChanged();
+                return;
+            }
+
+            try
+            {
+                if (IsHeadOfficeStore(storeId))
+                {
+                    // Head Office → load ALL items
+                    AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
+                                     ?? new List<ItemDTO>();
+                }
+                else
+                {
+                    // Branch store → load only their stock
+                    AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId.Value)
+                                     ?? new List<ItemDTO>();
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Error",
+                    $"Failed to load items: {ex.Message}");
+                AvailableItems = new List<ItemDTO>();
+            }
+
+            StateHasChanged();
+        }
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && !string.IsNullOrEmpty(result.Value))
+                {
+                    if (int.TryParse(result.Value, out int parsed) && parsed > 0)
+                        return parsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
+        }
+        public void Dispose()
+        {
+            ItemsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 }

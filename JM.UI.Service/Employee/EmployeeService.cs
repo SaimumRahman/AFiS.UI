@@ -30,6 +30,7 @@ namespace JM.UI.Service.Employee
             {
                 Id = e.Id,
                 Name = e.Name,
+                Surname = e.Surname,
                 EmployeeCode = e.EmployeeCode,
                 DateOfBirth = e.DateOfBirth,
                 Gender = e.Gender,
@@ -151,6 +152,8 @@ namespace JM.UI.Service.Employee
 
             if (employee.EmployeeCode.Length > 50)
                 return Task.FromResult((false, "Employee code cannot exceed 50 characters."));
+            //if (employee.StoreId > 0)
+            //    return Task.FromResult((false, "Store ID cannot exceed 50 characters."));
 
             //if (!string.IsNullOrWhiteSpace(employee.Contact) &&
             //    employee.Contact.Length > 50)

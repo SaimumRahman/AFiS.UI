@@ -27,5 +27,8 @@ namespace JM.UI.Service.Transfer
         Task<IEnumerable<TransferMasterDTO>> GetDispatchedTransfers(int storeId);
         Task<ResponseResult> UpdateDispatchStatus(List<int> transferIds, int updatedBy);
         Task UpdateReceivedStatus(List<int> receivedDetailIds, List<int> fullyReceivedMasterIds, DateTime now, int userId);
+        Task<IEnumerable<TransferMasterDTO>> GetTransfersByStoreId(int storeId);
+        Task<IEnumerable<TransferSummaryDTO>> GetTransferSummaryByNo(string transferNo);
+
     }
 }

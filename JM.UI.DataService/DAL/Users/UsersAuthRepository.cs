@@ -177,6 +177,61 @@ namespace JM.UI.DataService.DAL.Users
                 throw;
             }
         }
+        public async Task<bool> UpdateActiveInactiveUser(string userName, bool isActive)
+        {
+            try
+            {
+                _logger.LogInformation(
+                    "Updating active status for UserName: {UserName}, IsActive: {IsActive}",
+                    userName, isActive);
 
+                var token = _token.GetToken();
+
+                _httpClient.DefaultRequestHeaders.Remove("Authorization");
+
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.GetAsync(
+                    $"api/auth/Active-Inactive-User?userName={Uri.EscapeDataString(userName)}&isActive={isActive}");
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "Failed to update status for UserName: {UserName}. Status: {StatusCode}, Response: {Response}",
+                        userName,
+                        response.StatusCode,
+                        responseContent);
+
+                    return false;
+                }
+
+                _logger.LogInformation(
+                    "Successfully updated status for UserName: {UserName}",
+                    userName);
+
+                return true;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "HTTP request exception while updating status for UserName: {UserName}",
+                    userName);
+
+                throw new Exception($"Failed to update user status: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unexpected error while updating status for UserName: {UserName}",
+                    userName);
+
+                throw;
+            }
+        }
     }
 }
