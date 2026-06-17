@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Accounts;
+﻿using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.AccountsGroups;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Accounts
 {
-    public partial class AccountsAddComponent : PosComponentBase
+    public partial class AccountsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

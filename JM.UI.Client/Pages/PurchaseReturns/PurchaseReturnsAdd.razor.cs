@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.PurchaseReturns;
+﻿using JM.UI.Entities.Model.PurchaseReturns;
 using JM.UI.Entities.Model.PurchaseReturnItems;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Suppliers;
@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace JM.UI.Client.Pages.PurchaseReturns
 {
-    public partial class PurchaseReturnsAddComponent : PosComponentBase
+    public partial class PurchaseReturnsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

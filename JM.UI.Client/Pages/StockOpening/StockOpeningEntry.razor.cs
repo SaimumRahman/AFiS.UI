@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Colors;
+﻿using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.ItemBrand;
@@ -23,39 +23,39 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.StockOpening
 {
-    public partial class StockOpeningEntryComponent : PosComponentBase
+    public partial class StockOpeningEntryComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
         protected bool IsProductNameFieldChange { get; set; } = false;
 
-        // ─── Image Upload ────────────────────────────────────────────
+        // â”€â”€â”€ Image Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
-        // ─── Catalogue ───────────────────────────────────────────────
+        // â”€â”€â”€ Catalogue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
         protected string CatalogueSearchText { get; set; } = string.Empty;
         protected List<ItemCatalogueDTO> CatalogueSuggestions { get; set; } = new();
         protected int? SelectedCatalogueId { get; set; }
         protected bool IsNewCatalogue { get; set; } = false;
 
-        // ─── Stock Opening Data ──────────────────────────────────────
+        // â”€â”€â”€ Stock Opening Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected StockOpeningEntryDTO StockOpening { get; set; } = new();
         protected List<StockOpeningItemDTO> StockOpeningItems { get; set; } = new();
         protected StockOpeningItemDTO CurrentItem { get; set; } = new();
         protected StockOpeningItemDTO? _editingItem = null;
 
-        // ─── Preview Grid ────────────────────────────────────────────
+        // â”€â”€â”€ Preview Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected List<StockOpeningPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<StockOpeningPreviewRow> PreviewGrid = new();
 
-        // ─── Shared price fields (P.Rate + S.Rate + QTY for Stock Opening) ───
+        // â”€â”€â”€ Shared price fields (P.Rate + S.Rate + QTY for Stock Opening) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
         protected decimal SharedSalePrice { get; set; } = 0;
         protected int? SharedQuantity { get; set; }
 
-        // ─── Lookup Data ─────────────────────────────────────────────
+        // â”€â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
         protected IEnumerable<SubGroupModelDTO> SubGroups { get; set; } = new List<SubGroupModelDTO>();
@@ -66,7 +66,7 @@ namespace JM.UI.Client.Pages.StockOpening
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
-        // ─── Brand / Origin / Features ───────────────────────────────
+        // â”€â”€â”€ Brand / Origin / Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemBrandDTO> Brands { get; set; } = new List<ItemBrandDTO>();
         protected IEnumerable<ItemFeatureDTO> Features { get; set; } = new List<ItemFeatureDTO>();
         protected IEnumerable<ItemOriginDTO> Origins { get; set; } = new List<ItemOriginDTO>();
@@ -85,7 +85,7 @@ namespace JM.UI.Client.Pages.StockOpening
         protected List<string> NewFeatureNames { get; set; } = new();
         protected string NewFeatureInput { get; set; } = string.Empty;
 
-        // ─── UI State ────────────────────────────────────────────────
+        // â”€â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsNewItemMode { get; set; } = false;
@@ -97,9 +97,9 @@ namespace JM.UI.Client.Pages.StockOpening
 
         protected RadzenDataGrid<StockOpeningItemDTO> ItemsGrid = default!;
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Lifecycle
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
@@ -107,9 +107,9 @@ namespace JM.UI.Client.Pages.StockOpening
             await InitializeStockOpening();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Initialization
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task InitializeStockOpening()
         {
             StockOpening = new StockOpeningEntryDTO
@@ -137,9 +137,9 @@ namespace JM.UI.Client.Pages.StockOpening
             CountStockBySize = false
         };
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Catalogue Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnCatalogueTextChanged(object value)
         {
             var text = value?.ToString();
@@ -213,9 +213,9 @@ namespace JM.UI.Client.Pages.StockOpening
             IsNewCatalogue = false;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Data Loading
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task LoadLookupData()
         {
             try
@@ -237,9 +237,9 @@ namespace JM.UI.Client.Pages.StockOpening
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Image Upload
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task OnItemImageSelected(InputFileChangeEventArgs e)
         {
             var file = e.File;
@@ -296,9 +296,9 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Brand Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnBrandLoadData(LoadDataArgs args)
         {
             var text = args.Filter;
@@ -355,9 +355,9 @@ namespace JM.UI.Client.Pages.StockOpening
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Origin Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnOriginLoadData(LoadDataArgs args)
         {
             var text = args.Filter;
@@ -415,9 +415,9 @@ namespace JM.UI.Client.Pages.StockOpening
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Features Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void AddNewFeature()
         {
             var trimmed = NewFeatureInput?.Trim();
@@ -449,9 +449,9 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Pre-save Lookup Resolution
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task<bool> ResolveNewLookupEntriesAsync(StockOpeningItemDTO item)
         {
             try
@@ -541,9 +541,9 @@ namespace JM.UI.Client.Pages.StockOpening
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Preview Grid: Shared Price Change
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnSharedPriceChanged()
         {
             foreach (var row in PreviewItems)
@@ -577,9 +577,9 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Build Preview Rows from Barcode Search Response
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private List<StockOpeningPreviewRow> BuildPreviewRowsFromResponse(
             BarcodeSearchResponseDTO response, string barcode)
         {
@@ -672,9 +672,9 @@ namespace JM.UI.Client.Pages.StockOpening
             return rows;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Add Items to Confirmed Grid
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task AddItemToGrid()
         {
             if (IsEditItemMode)
@@ -852,7 +852,7 @@ namespace JM.UI.Client.Pages.StockOpening
             await ItemsGrid.Reload();
             ResetItemFormSelections();
             CurrentItem = CreateNewItem();
-            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added – ready for next entry");
+            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added â€“ ready for next entry");
         }
 
         private void ResetSharedPricing()
@@ -862,9 +862,9 @@ namespace JM.UI.Client.Pages.StockOpening
             SharedQuantity = null;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Edit Item
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task EditItem(StockOpeningItemDTO item)
         {
             _editingItem = item;
@@ -980,7 +980,7 @@ namespace JM.UI.Client.Pages.StockOpening
             }
 
             notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
-                $"Editing '{item.ItemName}' — make changes then click Update.");
+                $"Editing '{item.ItemName}' â€” make changes then click Update.");
 
             StateHasChanged();
         }
@@ -1183,9 +1183,9 @@ namespace JM.UI.Client.Pages.StockOpening
             return (true, string.Empty);
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Save
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task SaveStockOpening()
         {
             if (!ValidateStockOpening()) return;
@@ -1236,9 +1236,9 @@ namespace JM.UI.Client.Pages.StockOpening
             return true;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Cascade / Product Name / Barcode Events
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
@@ -1659,9 +1659,9 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Reset Left Panel
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void ResetLeftPanel()
         {
             StockOpening.StoreId = 1;
@@ -1707,9 +1707,9 @@ namespace JM.UI.Client.Pages.StockOpening
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Helpers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId) =>
             await _serviceUnitOfWork.SubGroupService.LoadSubGroupsByGroup(groupId) ?? new List<SubGroupModelDTO>();
         private async Task<IEnumerable<DesignModelDTO>> LoadDesignsBySubGroup(int subGroupId) =>
@@ -1717,6 +1717,10 @@ namespace JM.UI.Client.Pages.StockOpening
         private async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId) =>
             await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId) ?? new List<ItemDTO>();
 
-        public void Dispose() => ItemsGrid?.Dispose();
+        public void Dispose()
+        {
+            ItemsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 }

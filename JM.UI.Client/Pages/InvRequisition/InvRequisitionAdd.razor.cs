@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.InvRequisition;
+﻿using JM.UI.Entities.Model.InvRequisition;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
@@ -11,7 +11,7 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.InvRequisition
 {
-    public partial class InvRequisitionAddComponent : PosComponentBase
+    public partial class InvRequisitionAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Inject] public ProtectedLocalStorage _localStorage { get; set; } = default!;

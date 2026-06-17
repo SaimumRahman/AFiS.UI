@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Discount;
+﻿using JM.UI.Entities.Model.Discount;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -7,7 +7,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Discount;
 
-public partial class DiscountManagerAddComponent : PosComponentBase
+public partial class DiscountManagerAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
@@ -17,7 +17,7 @@ public partial class DiscountManagerAddComponent : PosComponentBase
     protected List<ItemDTO> AllItems { get; set; } = new();
     protected List<DiscountTypeDTO> DiscountTypes { get; set; } = new();
 
-    // Grid display items — built from AllItems + Campaign.DiscountDetails
+    // Grid display items â€” built from AllItems + Campaign.DiscountDetails
     protected List<DiscountGridItem> GridItems { get; set; } = new();
 
     protected bool IsProcessing { get; set; } = false;
@@ -211,7 +211,7 @@ public partial class DiscountManagerAddComponent : PosComponentBase
             StateHasChanged();
         });
         SearchText = target.Item.Barcode ?? target.Item.Name;
-        notificationService.Notify(NotificationSeverity.Success, "Scanned", $"✓ {target.Item.Name}");
+        notificationService.Notify(NotificationSeverity.Success, "Scanned", $"âœ“ {target.Item.Name}");
         UpdateCampaignDetails();
     }
 
@@ -241,13 +241,13 @@ public partial class DiscountManagerAddComponent : PosComponentBase
                 Scanning = false;
                 StateHasChanged();
             });
-            notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {match.Item.Name}");
+            notificationService.Notify(NotificationSeverity.Success, "Found", $"âœ“ {match.Item.Name}");
             SearchText = "";
             UpdateCampaignDetails();
         }
         else
         {
-            notificationService.Notify(NotificationSeverity.Warning, "Not found", "⚠ No product matched");
+            notificationService.Notify(NotificationSeverity.Warning, "Not found", "âš  No product matched");
         }
     }
 

@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.GroupRole;
 
-public partial class GroupRoleAddComponent : PosComponentBase
+public partial class GroupRoleAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

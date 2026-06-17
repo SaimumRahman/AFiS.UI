@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Accounts;
+﻿using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Service.UnitOfWork;
@@ -8,7 +8,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.CustomerDetails;
 
-public partial class CustomerDetailsAddComponent : PosComponentBase
+public partial class CustomerDetailsAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

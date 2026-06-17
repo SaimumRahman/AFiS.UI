@@ -8,7 +8,7 @@ using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
-public partial class UserGroupAddComponent : PosComponentBase
+public partial class UserGroupAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Inject] public IUserAuthService userAuthService { get; set; } = default!;

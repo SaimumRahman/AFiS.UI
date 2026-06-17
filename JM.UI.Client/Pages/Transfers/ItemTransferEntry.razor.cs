@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Colors;
+﻿using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.Sizes;
@@ -14,7 +14,7 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.Transfers
 {
-    public partial class ItemTransferEntryComponent : PosComponentBase
+    public partial class ItemTransferEntryComponent : AddEditPageBase
     {
         [Inject]
         public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
@@ -34,20 +34,20 @@ namespace JM.UI.Client.Pages.Transfers
         protected TransferDetailDTO? _editingItem = null;
 
 
-        // ── Preview Grid ──────────────────────────────────────────────
+        // â”€â”€ Preview Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected List<TransferPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<TransferPreviewRow> PreviewGrid = new();
 
 
-        // ── Shared fields (propagated to all preview rows) ────────────
+        // â”€â”€ Shared fields (propagated to all preview rows) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
 
 
-        // ── Lookup Data ───────────────────────────────────────────────
+        // â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
@@ -58,7 +58,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
 
-        // ── UI State ──────────────────────────────────────────────────
+        // â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected bool IsLoading { get; set; } = false;
         protected bool IsProcessing { get; set; } = false;
@@ -68,7 +68,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected bool IsEditItemMode { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
-        // ── Scan textbox (direct-to-grid, qty = 1) ────────────────────
+        // â”€â”€ Scan textbox (direct-to-grid, qty = 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected string ScanBarcodeText { get; set; } = string.Empty;
         private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -77,7 +77,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected RadzenDataGrid<TransferDetailDTO> ItemsGrid = default!;
 
 
-        // ── Lifecycle ─────────────────────────────────────────────────
+        // â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected override async Task OnInitializedAsync()
         {
@@ -100,7 +100,7 @@ namespace JM.UI.Client.Pages.Transfers
                 StateHasChanged(); // Refresh UI after loading data
             }
         }
-        // ── Initialization ────────────────────────────────────────────
+        // â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private async Task InitializeTransfer()
         {
@@ -118,24 +118,24 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Data Loading ──────────────────────────────────────────────
+        // â”€â”€ Data Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private async Task LoadLookupData()
         {
             try
             {
-                // ── Read from localStorage safely ─────────────────────────────
+                // â”€â”€ Read from localStorage safely â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 int storeId = await GetLocalStorageInt("StoreId");
                 CurrentUserId = await GetLocalStorageInt("UserId");
 
                 Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
-                // ── Load Stores ───────────────────────────────────────────────
+                // â”€â”€ Load Stores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
 
-                // ── Assign From Store based on User ───────────────────────────
+                // â”€â”€ Assign From Store based on User â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (CurrentUserId == 1)
                 {
                     var headOfficeStore = stores.FirstOrDefault(s =>
@@ -161,16 +161,16 @@ namespace JM.UI.Client.Pages.Transfers
                     }
                     else
                     {
-                        Transfer.StoreId = matchedStore.Id; // ✅ e.g. 1004
+                        Transfer.StoreId = matchedStore.Id; // âœ… e.g. 1004
                     }
 
                     IsFromStoreReadOnly = true;
                 }
 
-                // ── Exclude From Store from To Store list ─────────────────────
+                // â”€â”€ Exclude From Store from To Store list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 ToStores = stores.Where(s => s.Id != Transfer.StoreId).ToList();
 
-                // ── Load Lookup Lists ─────────────────────────────────────────
+                // â”€â”€ Load Lookup Lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
                           ?? new List<ColorsDTO>();
                 Sizes = await _serviceUnitOfWork.SizesService.GetSizess()
@@ -178,10 +178,10 @@ namespace JM.UI.Client.Pages.Transfers
                 Units = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits()
                           ?? new List<MesurementUnitModelDTO>();
 
-                // ── Load Items based on store type ────────────────────────────
+                // â”€â”€ Load Items based on store type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 await LoadItemsForStore(Transfer.StoreId);
 
-                // ── Transfer Types ────────────────────────────────────────────
+                // â”€â”€ Transfer Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 TransferTypes = new List<LookupItemDTO>
         {
             new() { Id = 1, Name = "Internal Transfer" },
@@ -238,7 +238,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Store Changed ─────────────────────────────────────────────
+        // â”€â”€ Store Changed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected void OnFromStoreChanged(int? storeId)
         {
@@ -257,7 +257,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Shared Fields Changed → Propagate to all preview rows ─────
+        // â”€â”€ Shared Fields Changed â†’ Propagate to all preview rows â”€â”€â”€â”€â”€
 
         protected void OnSharedFieldChanged()
         {
@@ -286,7 +286,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Barcode Dropdown Search → loads preview grid ──────────────
+        // â”€â”€ Barcode Dropdown Search â†’ loads preview grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected async Task OnBarcodeDropdownChanged(object value)
         {
@@ -413,7 +413,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Scan Barcode Textbox → direct add to final list (qty = 1) ─
+        // â”€â”€ Scan Barcode Textbox â†’ direct add to final list (qty = 1) â”€
 
         protected async Task OnScanBarcodeKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
         {
@@ -591,7 +591,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Add Items to Confirmed Grid (from preview) ────────────────
+        // â”€â”€ Add Items to Confirmed Grid (from preview) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected async Task AddItemToGrid()
         {
@@ -614,7 +614,7 @@ namespace JM.UI.Client.Pages.Transfers
 
             foreach (var row in validRows)
             {
-                // ── Stock check (preview qty vs available stock) ──────────
+                // â”€â”€ Stock check (preview qty vs available stock) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (row.StockQuantity > 0 && row.IssueQty > row.StockQuantity)
                 {
                     notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
@@ -623,7 +623,7 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                // ── Duplicate check — already in confirmed list ───────────
+                // â”€â”€ Duplicate check â€” already in confirmed list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var existingLine = TransferDetails.FirstOrDefault(i => i.Barcode == row.Barcode);
 
                 if (existingLine != null)
@@ -640,7 +640,7 @@ namespace JM.UI.Client.Pages.Transfers
                             CancelButtonText = "No"
                         }) ?? false;
 
-                    if (!confirmed) continue;   // user said No — skip silently
+                    if (!confirmed) continue;   // user said No â€” skip silently
 
                     var totalQty = existingLine.IssueQty + row.IssueQty;
 
@@ -660,7 +660,7 @@ namespace JM.UI.Client.Pages.Transfers
                     continue;
                 }
 
-                // ── Fresh add ─────────────────────────────────────────────
+                // â”€â”€ Fresh add â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var newLine = TransferService.CreateNewDetailLine();
 
                 newLine.TransferID = Transfer.TransferId;
@@ -689,10 +689,10 @@ namespace JM.UI.Client.Pages.Transfers
                 addedCount++;
             }
 
-            // ── Reload confirmed grid ─────────────────────────────────────
+            // â”€â”€ Reload confirmed grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             await ItemsGrid.Reload();
 
-            // ── Clear preview ─────────────────────────────────────────────
+            // â”€â”€ Clear preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             PreviewItems.Clear();
             await PreviewGrid.Reload();
             ResetSharedFields();
@@ -702,7 +702,7 @@ namespace JM.UI.Client.Pages.Transfers
             CurrentDetail.SizeId = null;
             CurrentDetail.Barcode = null;
 
-            // ── Notification ──────────────────────────────────────────────
+            // â”€â”€ Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (addedCount == 0 && updatedCount == 0)
             {
                 notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
@@ -718,7 +718,7 @@ namespace JM.UI.Client.Pages.Transfers
                 string.Join(", ", parts) + ".");
         }
 
-        // ── Edit Item in Confirmed Grid ───────────────────────────────
+        // â”€â”€ Edit Item in Confirmed Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected async Task EditItem(TransferDetailDTO item)
         {
@@ -781,7 +781,7 @@ namespace JM.UI.Client.Pages.Transfers
             DisableItemFields = true;
 
             notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
-                $"Editing '{item.ItemName}' — make changes then click Update.");
+                $"Editing '{item.ItemName}' â€” make changes then click Update.");
 
             StateHasChanged();
         }
@@ -878,7 +878,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Save Transfer ─────────────────────────────────────────────
+        // â”€â”€ Save Transfer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected async Task SaveTransfer()
         {
@@ -958,7 +958,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Cancel / Navigation ───────────────────────────────────────
+        // â”€â”€ Cancel / Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected void Cancel()
         {
@@ -975,7 +975,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Clear / Reset ─────────────────────────────────────────────
+        // â”€â”€ Clear / Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected void ClearBarcodeSearch()
         {
@@ -1010,7 +1010,7 @@ namespace JM.UI.Client.Pages.Transfers
         }
 
 
-        // ── Helpers ───────────────────────────────────────────────────
+        // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private bool HasUnsavedData()
         {
             return PreviewItems.Any()
@@ -1054,8 +1054,8 @@ namespace JM.UI.Client.Pages.Transfers
             SharedSerialNo = string.Empty;
             SharedCreatedRemarks = string.Empty;
         }
-        // ── Helper: check if a store is Head Office ───────────────────────────────
-        // ── Helper: check if a store is Head Office ───────────────────────────────
+        // â”€â”€ Helper: check if a store is Head Office â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // â”€â”€ Helper: check if a store is Head Office â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private bool IsHeadOfficeStore(int? storeId)
         {
             if (!storeId.HasValue) return false;
@@ -1064,7 +1064,7 @@ namespace JM.UI.Client.Pages.Transfers
                    store.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase);
         }
 
-        // ── Load items — all for Head Office, filtered for branch ────────────────
+        // â”€â”€ Load items â€” all for Head Office, filtered for branch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private async Task LoadItemsForStore(int? storeId)
         {
             if (!storeId.HasValue || storeId.Value == 0)
@@ -1078,13 +1078,13 @@ namespace JM.UI.Client.Pages.Transfers
             {
                 if (IsHeadOfficeStore(storeId))
                 {
-                    // Head Office → load ALL items
+                    // Head Office â†’ load ALL items
                     AvailableItems = await _serviceUnitOfWork.ItemService.GetItems()
                                      ?? new List<ItemDTO>();
                 }
                 else
                 {
-                    // Branch store → load only their stock
+                    // Branch store â†’ load only their stock
                     AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId.Value)
                                      ?? new List<ItemDTO>();
                 }

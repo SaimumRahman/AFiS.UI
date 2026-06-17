@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Sizes;
 
-public partial class SizesAddComponent : PosComponentBase
+public partial class SizesAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? SizesID { get; set; }

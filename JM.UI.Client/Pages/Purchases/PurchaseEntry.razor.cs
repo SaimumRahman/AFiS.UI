@@ -1,4 +1,4 @@
-using JM.UI.Client.Pages.Dialog;
+﻿using JM.UI.Client.Pages.Dialog;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Groups;
@@ -24,7 +24,7 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.Purchases
 {
-    public partial class PurchaseEntryComponent : PosComponentBase
+    public partial class PurchaseEntryComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
@@ -33,11 +33,11 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsDraftMode => DraftId.HasValue && DraftId.Value > 0;
         protected bool IsProductNameFieldChange { get; set; } = false;
 
-        // ─── Image Upload ──
+        // â”€â”€â”€ Image Upload â”€â”€
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
-        // ── Add to lookup fields (alongside Brand/Origin) ─────────────────────
+        // â”€â”€ Add to lookup fields (alongside Brand/Origin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
 
         // Catalogue auto-complete state
@@ -46,17 +46,17 @@ namespace JM.UI.Client.Pages.Purchases
         protected int? SelectedCatalogueId { get; set; }
         protected bool IsNewCatalogue { get; set; } = false;
 
-        // ─── Purchase Data ────
+        // â”€â”€â”€ Purchase Data â”€â”€â”€â”€
         protected PurchaseDTO Purchase { get; set; } = new();
         protected List<PurchaseItemDTO> PurchaseItems { get; set; } = new();
         protected PurchaseItemDTO CurrentItem { get; set; } = new();
         protected PurchaseItemDTO? _editingItem = null;
 
-        // ─── Preview Grid Items (editable, loaded from barcode/color/size search) ───
+        // â”€â”€â”€ Preview Grid Items (editable, loaded from barcode/color/size search) â”€â”€â”€
         protected List<PreviewItemRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<PreviewItemRow> PreviewGrid = new();
 
-        // ─── Shared price fields for preview grid (applied to all rows) ───
+        // â”€â”€â”€ Shared price fields for preview grid (applied to all rows) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
         protected decimal SharedSalePrice { get; set; } = 0;
         protected decimal? SharedOtherCost { get; set; }
@@ -66,7 +66,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected decimal? SharedOperationalCost { get; set; }
         protected int? SharedQuantity { get; set; }
 
-        // ─── Lookup Data ──────
+        // â”€â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
@@ -78,7 +78,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
 
-        // ─── Brand / Origin / Features Lookups ─────────────────────────
+        // â”€â”€â”€ Brand / Origin / Features Lookups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemBrandDTO> Brands { get; set; } = new List<ItemBrandDTO>();
         protected IEnumerable<ItemFeatureDTO> Features { get; set; } = new List<ItemFeatureDTO>();
         protected IEnumerable<ItemOriginDTO> Origins { get; set; } = new List<ItemOriginDTO>();
@@ -100,7 +100,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected List<string> NewFeatureNames { get; set; } = new();
         protected string NewFeatureInput { get; set; } = string.Empty;
 
-        // ─── UI State ─────────
+        // â”€â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -110,7 +110,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
-        // ─── Edit-item mode: true while an item from the confirmed grid is being edited ───
+        // â”€â”€â”€ Edit-item mode: true while an item from the confirmed grid is being edited â”€â”€â”€
         protected bool IsEditItemMode { get; set; } = false;
 
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
@@ -120,9 +120,9 @@ namespace JM.UI.Client.Pages.Purchases
             "Sell Product", "Raw Material", "Both", "Consume", "Combo Package"
         };
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Lifecycle
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
@@ -137,9 +137,9 @@ namespace JM.UI.Client.Pages.Purchases
                 await InitializePurchase();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Initialization
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task InitializePurchase()
         {
             Purchase = await _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
@@ -238,9 +238,9 @@ namespace JM.UI.Client.Pages.Purchases
             IsNewCatalogue = false;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Data Loading
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task LoadLookupData()
         {
             try
@@ -483,9 +483,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Brand Auto-Complete Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnBrandTextChanged(object value)
         {
             var text = value?.ToString();
@@ -549,9 +549,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Origin Auto-Complete Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnOriginTextChanged(object value)
         {
             var text = value?.ToString();
@@ -600,9 +600,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Features Multi-Select Handlers
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void AddNewFeature()
         {
             var trimmed = NewFeatureInput?.Trim();
@@ -635,9 +635,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // Save – Brand / Origin / Features pre-save resolution
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // Save â€“ Brand / Origin / Features pre-save resolution
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task<bool> ResolveNewLookupEntriesAsync(PurchaseItemDTO item)
         {
             try
@@ -727,9 +727,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // Preview Grid: Shared Price Change → Recalculate All Rows
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        // Preview Grid: Shared Price Change â†’ Recalculate All Rows
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnSharedPriceChanged()
         {
             foreach (var row in PreviewItems)
@@ -784,9 +784,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Build PreviewItemRow from BarcodeSearchResponseDTO
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private List<PreviewItemRow> BuildPreviewRowsFromResponse(BarcodeSearchResponseDTO response, string barcode)
         {
             var rows = new List<PreviewItemRow>();
@@ -872,7 +872,7 @@ namespace JM.UI.Client.Pages.Purchases
                         MesurementUnitId = CurrentItem.MesurementUnitId,
                         CatalogueId = CurrentItem.CatalogueId,
                         CatalogueName = CatalogueSearchText,
-                        DesignId = CurrentItem.DesignId,          // ← ADD THIS
+                        DesignId = CurrentItem.DesignId,          // â† ADD THIS
                         IsNewItem = true,
                         IsSaleable = CurrentItem.IsSaleable,
                         ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -897,9 +897,9 @@ namespace JM.UI.Client.Pages.Purchases
             return rows;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Item Management
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task AddItemToGrid()
         {
             // If we're in edit-item mode, delegate to the update path
@@ -923,7 +923,7 @@ namespace JM.UI.Client.Pages.Purchases
 
                 foreach (var row in validRows)
                 {
-                    // ── P.Rate validation (calculated value) ──
+                    // â”€â”€ P.Rate validation (calculated value) â”€â”€
                     if (row.PurchasePrice <= 0)
                     {
                         notificationService.Notify(NotificationSeverity.Warning, "Validation",
@@ -932,7 +932,7 @@ namespace JM.UI.Client.Pages.Purchases
                         continue;
                     }
 
-                    // ── Duplicate barcode check ──
+                    // â”€â”€ Duplicate barcode check â”€â”€
                     if (PurchaseItems.Any(i => i.Barcode == row.Barcode))
                     {
                         notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
@@ -940,7 +940,7 @@ namespace JM.UI.Client.Pages.Purchases
                         continue;
                     }
 
-                    // ── S.Rate validation (only if Saleable) ──
+                    // â”€â”€ S.Rate validation (only if Saleable) â”€â”€
                     if (row.IsSaleable)
                     {
                         var t = CurrentItem.IsSaleable;
@@ -1010,7 +1010,7 @@ namespace JM.UI.Client.Pages.Purchases
                     addedCount++;
                 }
 
-                // ── Nothing passed validation — keep preview grid intact ──
+                // â”€â”€ Nothing passed validation â€” keep preview grid intact â”€â”€
                 if (addedCount == 0)
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
@@ -1018,7 +1018,7 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
 
-                // ── Partial success — notify how many were skipped ──
+                // â”€â”€ Partial success â€” notify how many were skipped â”€â”€
                 if (addedCount < validRows.Count)
                 {
                     notificationService.Notify(NotificationSeverity.Info, "Partial Add",
@@ -1035,7 +1035,7 @@ namespace JM.UI.Client.Pages.Purchases
                 DisableItemFields = false;
                 IsNewItemMode = false;
 
-                // Clear only Color, Size, ShadeNo — leave rest of left panel intact
+                // Clear only Color, Size, ShadeNo â€” leave rest of left panel intact
                 CurrentItem.ColorId = null;
                 CurrentItem.SizeId = null;
                 CurrentItem.ShadeNo = null;
@@ -1053,7 +1053,7 @@ namespace JM.UI.Client.Pages.Purchases
                 return;
             }
 
-            // ── Fallback: original single-item add logic ──
+            // â”€â”€ Fallback: original single-item add logic â”€â”€
             var validation = ValidateCurrentItem();
             if (!validation.IsValid)
             {
@@ -1130,7 +1130,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.TotalAmount = 0;
             ResetItemFormSelections();
 
-            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added – ready for next entry");
+            notificationService.Notify(NotificationSeverity.Success, "Success", "Item added â€“ ready for next entry");
         }
         private void ResetSharedPricing()
         {
@@ -1143,9 +1143,9 @@ namespace JM.UI.Client.Pages.Purchases
             SharedOperationalCost = null;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Edit Item
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
         /// <summary>
         /// Enters edit mode for an existing confirmed item.
@@ -1158,14 +1158,14 @@ namespace JM.UI.Client.Pages.Purchases
             // If we were already editing something, restore it first
             if (IsEditItemMode && _editingItem != null && _editingItem != item)
             {
-                // Discard unsaved changes to the previous item — nothing to do
+                // Discard unsaved changes to the previous item â€” nothing to do
                 // because the item was never removed from the list
             }
 
             _editingItem = item;
             IsEditItemMode = true;
 
-            // Clear the preview grid — irrelevant while editing a confirmed item
+            // Clear the preview grid â€” irrelevant while editing a confirmed item
             // Load the item being edited into the preview grid so the user can edit it there
             PreviewItems.Clear();
             ResetSharedPricing();
@@ -1199,7 +1199,7 @@ namespace JM.UI.Client.Pages.Purchases
                 MaterialType = item.MaterialType,
                 CountStockByColor = item.CountStockByColor,
                 CountStockBySize = item.CountStockBySize,
-                // Keep quantity from the saved item — the user is editing it
+                // Keep quantity from the saved item â€” the user is editing it
                 Quantity = item.Quantity,
                 StockQuantity = 0,   // not available from PurchaseItemDTO
                 PurchasePrice = item.PurchasePrice,
@@ -1308,7 +1308,7 @@ namespace JM.UI.Client.Pages.Purchases
 
             // Scroll / notify
             notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
-                $"Editing '{item.ItemName}' — make changes then click Update.");
+                $"Editing '{item.ItemName}' â€” make changes then click Update.");
 
             StateHasChanged();
         }
@@ -1432,7 +1432,7 @@ namespace JM.UI.Client.Pages.Purchases
         };
 
         /// <summary>
-        /// Validates CurrentItem in edit mode — identical to ValidateCurrentItem
+        /// Validates CurrentItem in edit mode â€” identical to ValidateCurrentItem
         /// except barcode-duplicate check is scoped to other items only.
         /// </summary>
         private (bool IsValid, string Message) ValidateEditedItem()
@@ -1467,7 +1467,7 @@ namespace JM.UI.Client.Pages.Purchases
                     return (false, "Sale price must be greater than purchase price");
             }
 
-            // Duplicate barcode check — exclude the item being edited
+            // Duplicate barcode check â€” exclude the item being edited
             if (PurchaseItems.Any(i => i != _editingItem && i.Barcode == CurrentItem.Barcode))
                 return (false, "Another item with this barcode already exists");
 
@@ -1494,7 +1494,7 @@ namespace JM.UI.Client.Pages.Purchases
         }
 
         /// <summary>
-        /// Main Cancel button — exits edit mode if editing, otherwise navigates to list.
+        /// Main Cancel button â€” exits edit mode if editing, otherwise navigates to list.
         /// </summary>
         protected void Cancel()
         {
@@ -1556,9 +1556,9 @@ namespace JM.UI.Client.Pages.Purchases
             return (true, string.Empty);
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Save Purchase
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task SavePurchase()
         {
             Purchase.StoreId = (await _serviceUnitOfWork.StoreService.GetStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Id;
@@ -1616,9 +1616,9 @@ namespace JM.UI.Client.Pages.Purchases
             return true;
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Save As Draft
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task SaveAsDraft()
         {
             try
@@ -1678,7 +1678,7 @@ namespace JM.UI.Client.Pages.Purchases
                     FeaturesDisplay = pi.FeaturesDisplay ?? string.Empty,
                     Barcode = pi.Barcode,
                     MesurementUnitId = pi.MesurementUnitId,
-                    MesurementUnitName = pi.MesurementUnitName,  // ← ADD THIS
+                    MesurementUnitName = pi.MesurementUnitName,  // â† ADD THIS
                     Quantity = pi.Quantity,
                     PurchasePrice = pi.PurchasePrice,
                     ProductPricePercentage = pi.ProductPricePercentage,
@@ -1718,9 +1718,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Cascade / Product name / Barcode Events
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
@@ -1736,7 +1736,7 @@ namespace JM.UI.Client.Pages.Purchases
            // await GenerateBarcode();
         }
 
-        // ─── Color Change: clear image, then load barcode preview ────────────
+        // â”€â”€â”€ Color Change: clear image, then load barcode preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected async Task OnColorChanged(int? colorId)
         {
             if (!colorId.HasValue) return;
@@ -1759,7 +1759,7 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // ─── Size Change: call same barcode search API ─────────────────────
+        // â”€â”€â”€ Size Change: call same barcode search API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected async Task OnSizeChanged(int? sizeId)
         {
             if (!sizeId.HasValue) return;
@@ -1807,7 +1807,7 @@ namespace JM.UI.Client.Pages.Purchases
                             MesurementUnitId = CurrentItem.MesurementUnitId,
                             CatalogueId = CurrentItem.CatalogueId,
                             CatalogueName = CatalogueSearchText,
-                            DesignId = CurrentItem.DesignId,   // ← ADD THIS LINE to each block
+                            DesignId = CurrentItem.DesignId,   // â† ADD THIS LINE to each block
                             IsNewItem = true,
                             IsSaleable = CurrentItem.IsSaleable,
                             ProductType = CurrentItem.ProductType ?? "Sell Product",
@@ -1824,7 +1824,7 @@ namespace JM.UI.Client.Pages.Purchases
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
                            
-                            // Image is null — user must upload for this new color
+                            // Image is null â€” user must upload for this new color
                             ImageBase64 = null
                         };
                     }
@@ -1874,7 +1874,7 @@ namespace JM.UI.Client.Pages.Purchases
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
-                            // Image is null — user must upload for this new color
+                            // Image is null â€” user must upload for this new color
                             ImageBase64 = null
                         };
                     }
@@ -1915,7 +1915,7 @@ namespace JM.UI.Client.Pages.Purchases
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,  
-                        // Image is null — user must upload for this new color
+                        // Image is null â€” user must upload for this new color
                         ImageBase64 = null,
                         FeatureIds = SelectedFeatureIds.ToList(),
                     };
@@ -2036,9 +2036,9 @@ namespace JM.UI.Client.Pages.Purchases
             await _serviceUnitOfWork.ItemService.LoadItemsBySubGroup(subGroupId) ?? new List<ItemDTO>();
         private Task LoadItemDetails(int itemId) => Task.CompletedTask; // TODO
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Barcode Search / Create New Item
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task OnBarcodeDropdownChanged(object value)
         {
             var barcode = value?.ToString();
@@ -2279,9 +2279,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Calculation
-        // ═══════════════════════════════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void CalculateItemTotal()
         {
             CurrentItem.TotalAmount = _serviceUnitOfWork.PurchaseService.CalculateItemTotal(CurrentItem);
@@ -2296,7 +2296,7 @@ namespace JM.UI.Client.Pages.Purchases
         }
         protected void ResetLeftPanel()
         {
-            // ── Header fields 
+            // â”€â”€ Header fields 
             Purchase.SupplierId = null;
             //Purchase.SystemInvoiceNo = null;
             Purchase.BillInvoiceNumber = null;
@@ -2304,25 +2304,25 @@ namespace JM.UI.Client.Pages.Purchases
             Purchase.StoreId = null;
             Purchase.IsVatIncluded = false;
 
-            // ── Item-type checkboxes 
+            // â”€â”€ Item-type checkboxes 
             CurrentItem.IsSaleable = false;
             CurrentItem.IsConsume = false;
             CurrentItem.IsRawMaterial = false;
 
-            // ── Cascade dropdowns ───
+            // â”€â”€ Cascade dropdowns â”€â”€â”€
             CurrentItem.GroupId = null;
             CurrentItem.SubGroupId = null;
             CurrentItem.DesignId = null;
             SubGroups = new List<SubGroupModelDTO>();
             Designs = new List<DesignModelDTO>();
 
-            // ── UoM ─────────
+            // â”€â”€ UoM â”€â”€â”€â”€â”€â”€â”€â”€â”€
             CurrentItem.MesurementUnitId = null;
 
-            // ── ShadeNo ─────
+            // â”€â”€ ShadeNo â”€â”€â”€â”€â”€
             CurrentItem.ShadeNo = null;
 
-            // ── Brand ───────
+            // â”€â”€ Brand â”€â”€â”€â”€â”€â”€â”€
             BrandSearchText = string.Empty;
             BrandSuggestions = new List<ItemBrandDTO>();
             SelectedBrandId = null;
@@ -2330,7 +2330,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.BrandId = null;
             CurrentItem.BrandName = null;
 
-            // ── Catalogue ───
+            // â”€â”€ Catalogue â”€â”€â”€
             CatalogueSearchText = string.Empty;
             CatalogueSuggestions = new List<ItemCatalogueDTO>();
             SelectedCatalogueId = null;
@@ -2338,7 +2338,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.CatalogueId = null;
             CurrentItem.CatalogueName = null;
 
-            // ── Origin ──────
+            // â”€â”€ Origin â”€â”€â”€â”€â”€â”€
             OriginSearchText = string.Empty;
             OriginSuggestions = new List<ItemOriginDTO>();
             SelectedOriginId = null;
@@ -2346,7 +2346,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.OriginId = null;
             CurrentItem.OriginName = null;
 
-            // ── Features ────
+            // â”€â”€ Features â”€â”€â”€â”€
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new List<string>();
             NewFeatureInput = string.Empty;

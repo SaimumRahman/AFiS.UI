@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Store;
 
-public partial class StoreAddComponent : PosComponentBase
+public partial class StoreAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

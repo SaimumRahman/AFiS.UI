@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.MembershipType;
+﻿using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.MembershipType;
 
-public partial class MembershipTypeAddComponent : PosComponentBase
+public partial class MembershipTypeAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.MesurementUnits;
+﻿using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.MesurementUnits
 {
-    public partial class MesurementUnitsAddComponent : PosComponentBase
+    public partial class MesurementUnitsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

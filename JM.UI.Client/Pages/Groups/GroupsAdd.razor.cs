@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Groups;
+﻿using JM.UI.Entities.Model.Groups;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Groups
 {
-    public partial class GroupsAddComponent : PosComponentBase
+    public partial class GroupsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
