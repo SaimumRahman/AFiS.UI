@@ -141,9 +141,43 @@
                             </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
+                    <RadzenStack Gap="0.5rem">
+                            <RadzenLabel Text="Upload Letterhead File" Component="LetterHeadFile" />
+                        @if (!string.IsNullOrEmpty(Store.LetterHeadFile))
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="attach_file" Style="color: var(--rz-primary);" />
+                                <RadzenText TextStyle="TextStyle.Body2">@LetterHeadFileName</RadzenText>
+                                <RadzenButton Icon="close"
+                                              Variant="Variant.Text"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.ExtraSmall"
+                                              Click="@ClearLetterHeadFile" />
+                            </RadzenStack>
 
+                            <!-- Preview if image -->
+                            @if (IsImageFile)
+                            {
+                                <img src="@Store.LetterHeadFile"
+                                     style="max-height: 120px; max-width: 100%; object-fit: contain; border: 1px solid var(--rz-border-disabled-color); border-radius: 4px; padding: 4px;" />
+                            }
+                        }
+
+                        <InputFile id="letterheadInput"
+                                   OnChange="@OnLetterHeadFileSelected"
+                                   accept=".jpg,.jpeg,.png,.pdf,.bmp,.gif,.webp"
+                                   style="display:none" />
+
+                        <RadzenButton Text="@(string.IsNullOrEmpty(Store.LetterHeadFile) ? "Choose File" : "Replace File")"
+                                      Icon="upload_file"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Outlined"
+                                      Size="ButtonSize.Small"
+                                      Click="@TriggerFileInput"
+                                      Disabled="@IsProcessing" />
+                    </RadzenStack>
                     <!-- Letterhead Settings Section -->
-                    <RadzenFieldset Text="Letterhead Settings" Icon="description">
+                    <RadzenFieldset Text="Letterhead Settings" Icon="description" Visible="false">
                         <RadzenStack Gap="1rem">
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeMD="6">

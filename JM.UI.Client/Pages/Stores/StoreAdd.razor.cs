@@ -2,6 +2,8 @@
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using Radzen;
 
 namespace JM.UI.Client.Pages.Store;
@@ -9,6 +11,7 @@ namespace JM.UI.Client.Pages.Store;
 public partial class StoreAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+    [Inject] public IJSRuntime JS { get; set; } = default!;
 
     [Parameter] public int? Id { get; set; }
 
@@ -18,6 +21,13 @@ public partial class StoreAddComponent : AddEditPageBase
     protected bool IsEditMode => Id.HasValue && Id.Value > 0;
     protected string PageTitle => IsEditMode ? "Edit Store" : "Add New Store";
     protected string PageIcon => IsEditMode ? "edit" : "store";
+
+    protected string LetterHeadFileName { get; set; } = string.Empty;
+    protected bool IsImageFile { get; set; } = false;
+
+    private static readonly long MaxFileSize = 2 * 1024 * 1024; // 2 MB
+    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf", ".bmp", ".gif", ".webp" };
+    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp" };
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,6 +58,12 @@ public partial class StoreAddComponent : AddEditPageBase
             }
 
             Store = store;
+
+            // Restore file state if base64 exists
+            if (!string.IsNullOrEmpty(Store.LetterHeadFile))
+            {
+                DetectFileTypeFromBase64(Store.LetterHeadFile);
+            }
         }
         catch (Exception ex)
         {
@@ -63,26 +79,107 @@ public partial class StoreAddComponent : AddEditPageBase
     private void InitializeStore()
     {
         Store = _serviceUnitOfWork.StoreService.CreateNewStore();
+        LetterHeadFileName = string.Empty;
+        IsImageFile = false;
     }
+
+    protected async Task TriggerFileInput()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('letterheadInput').click()");
+    }
+
+    protected async Task OnLetterHeadFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+
+        if (!AllowedExtensions.Contains(ext))
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Invalid File", "Allowed: jpg, jpeg, png, pdf, bmp, gif, webp.");
+            return;
+        }
+
+        if (file.Size > MaxFileSize)
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "File Too Large", "Maximum file size is 2 MB.");
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(MaxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+
+            var mimeType = GetMimeType(ext);
+            var base64 = Convert.ToBase64String(bytes);
+
+            Store.LetterHeadFile = $"data:{mimeType};base64,{base64}";
+            LetterHeadFileName = file.Name;
+            IsImageFile = ImageExtensions.Contains(ext);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to read file: {ex.Message}");
+        }
+    }
+
+    protected void ClearLetterHeadFile()
+    {
+        Store.LetterHeadFile = null;
+        LetterHeadFileName = string.Empty;
+        IsImageFile = false;
+        StateHasChanged();
+    }
+
+    private void DetectFileTypeFromBase64(string dataUrl)
+    {
+        // e.g. "data:image/png;base64,..."
+        if (dataUrl.StartsWith("data:image/"))
+        {
+            IsImageFile = true;
+            var start = dataUrl.IndexOf('/') + 1;
+            var end = dataUrl.IndexOf(';');
+            var ext = dataUrl.Substring(start, end - start); // "png", "jpeg", etc.
+            LetterHeadFileName = $"letterhead.{ext}";
+        }
+        else if (dataUrl.StartsWith("data:application/pdf"))
+        {
+            IsImageFile = false;
+            LetterHeadFileName = "letterhead.pdf";
+        }
+        else
+        {
+            IsImageFile = false;
+            LetterHeadFileName = "letterhead file";
+        }
+    }
+
+    private static string GetMimeType(string ext) => ext switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".gif" => "image/gif",
+        ".bmp" => "image/bmp",
+        ".webp" => "image/webp",
+        ".pdf" => "application/pdf",
+        _ => "application/octet-stream"
+    };
+
+    // ── Save / SaveAndNew / Cancel / Reset unchanged below ──
 
     protected async Task Save()
     {
         var userObj = await sessionStorage.GetAsync<string>("UserId");
         int userId = 0;
+        if (!string.IsNullOrEmpty(userObj.Value)) int.TryParse(userObj.Value, out userId);
 
-        if (!string.IsNullOrEmpty(userObj.Value))
-        {
-            int.TryParse(userObj.Value, out userId);
-        }
-
-        if (IsEditMode)
-        {
-            Store.ModifiedBy = userId.ToString();
-        }
-        else
-        {
-            Store.CreatedBy = userId.ToString();
-        }
+        if (IsEditMode) Store.ModifiedBy = userId.ToString();
+        else Store.CreatedBy = userId.ToString();
 
         var validation = await _serviceUnitOfWork.StoreService.ValidateStore(Store);
         if (!validation.IsValid)
@@ -119,19 +216,11 @@ public partial class StoreAddComponent : AddEditPageBase
 
     protected async Task SaveAndNew()
     {
-        if (IsEditMode)
-        {
-            await Save();
-            return;
-        }
+        if (IsEditMode) { await Save(); return; }
 
         var userObj = await sessionStorage.GetAsync<string>("UserId");
         int userId = 0;
-
-        if (!string.IsNullOrEmpty(userObj.Value))
-        {
-            int.TryParse(userObj.Value, out userId);
-        }
+        if (!string.IsNullOrEmpty(userObj.Value)) int.TryParse(userObj.Value, out userId);
 
         Store.CreatedBy = userId.ToString();
 
@@ -168,21 +257,12 @@ public partial class StoreAddComponent : AddEditPageBase
         }
     }
 
-    protected void Cancel()
-    {
-        NavigationManager.NavigateTo("/StoreList");
-    }
+    protected void Cancel() => NavigationManager.NavigateTo("/StoreList");
 
     protected async Task Reset()
     {
-        if (IsEditMode)
-        {
-            await LoadStore();
-        }
-        else
-        {
-            InitializeStore();
-        }
+        if (IsEditMode) await LoadStore();
+        else InitializeStore();
         StateHasChanged();
     }
 }

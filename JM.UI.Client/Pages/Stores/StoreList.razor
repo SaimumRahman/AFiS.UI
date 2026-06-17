@@ -155,6 +155,40 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <!-- Letterhead File Preview -->
+                <RadzenDataGridColumn TItem="StoreDTO" Property="LetterHeadFile" Title="Letterhead File" Width="130px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="store">
+                        @if (!string.IsNullOrWhiteSpace(store.LetterHeadFile))
+                        {
+                            @if (store.LetterHeadFile.StartsWith("data:image/"))
+                            {
+                                <RadzenButton Variant="Variant.Text"
+                                              Style="padding:0;"
+                                              Click="@(async () => await PreviewLetterHead(store))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Click to preview"))">
+                                    <ChildContent>
+                                        <img src="@store.LetterHeadFile"
+                                             style="width:60px; height:40px; object-fit:contain; border:1px solid var(--rz-border-disabled-color); border-radius:4px;" />
+                                    </ChildContent>
+                                </RadzenButton>
+                            }
+                            else if (store.LetterHeadFile.StartsWith("data:application/pdf"))
+                            {
+                                <RadzenButton Icon="picture_as_pdf"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Variant="Variant.Text"
+                                              Size="ButtonSize.Small"
+                                              Click="@(async () => await PreviewLetterHead(store))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Click to preview PDF"))" />
+                            }
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <!-- Use Letterhead -->
                 <RadzenDataGridColumn TItem="StoreDTO" Property="UseLetterHead" Title="Letterhead" Width="120px" TextAlign="TextAlign.Center">
                     <Template Context="store">
