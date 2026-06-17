@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Barcodes;
+﻿using JM.UI.Entities.Model.Barcodes;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Barcodes
 {
-    public partial class BarcodeAddComponent : PosComponentBase
+    public partial class BarcodeAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

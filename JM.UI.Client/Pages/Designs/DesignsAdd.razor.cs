@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Designs;
+﻿using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Designs
 {
-    public partial class DesignsAddComponent : PosComponentBase
+    public partial class DesignsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

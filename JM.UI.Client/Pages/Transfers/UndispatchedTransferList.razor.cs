@@ -23,7 +23,6 @@ namespace JM.UI.Client.Pages.Transfer
 
         protected override async Task OnInitializedAsync()
         {
-            NavigationGuard.IsGuardActive = true;
             await TokenService.InitializeTokenAsync();
 
             if(await GetUserInfoAsync() == 1)
@@ -187,7 +186,6 @@ namespace JM.UI.Client.Pages.Transfer
         public void Dispose()
         {
             TransferGrid?.Dispose();
-            NavigationGuard.IsGuardActive = false;
         }
         private async Task<int> GetUserInfoAsync()
         {

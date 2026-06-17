@@ -118,9 +118,6 @@ namespace JM.UI.Service.Stores
             if (!string.IsNullOrWhiteSpace(store.TIN) && store.TIN.Length > 50)
                 return Task.FromResult((false, "TIN cannot exceed 50 characters."));
 
-            if (!string.IsNullOrWhiteSpace(store.LetterHeadFile) && store.LetterHeadFile.Length > 500)
-                return Task.FromResult((false, "LetterHead file path cannot exceed 500 characters."));
-
             return Task.FromResult((true, string.Empty));
         }
 

@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Banks;
 
-public partial class BanksAddComponent : PosComponentBase
+public partial class BanksAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? BanksID { get; set; }

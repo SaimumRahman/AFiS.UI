@@ -1,5 +1,11 @@
+﻿using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Discount;
+using JM.UI.Entities.Model.Designs;
+using JM.UI.Entities.Model.Groups;
+using JM.UI.Entities.Model.ItemCatalogue;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.Sizes;
+using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -7,7 +13,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Discount;
 
-public partial class DiscountManagerAddComponent : PosComponentBase
+public partial class DiscountManagerAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
@@ -17,7 +23,7 @@ public partial class DiscountManagerAddComponent : PosComponentBase
     protected List<ItemDTO> AllItems { get; set; } = new();
     protected List<DiscountTypeDTO> DiscountTypes { get; set; } = new();
 
-    // Grid display items — built from AllItems + Campaign.DiscountDetails
+    // Grid display items
     protected List<DiscountGridItem> GridItems { get; set; } = new();
 
     protected bool IsProcessing { get; set; } = false;
@@ -38,6 +44,30 @@ public partial class DiscountManagerAddComponent : PosComponentBase
     protected int SelectedCount => GridItems.Count(x => x.Selected);
     protected bool ShowGlobalDiscount => AllSelected;
 
+    // Campaign selection dropdown
+    protected IEnumerable<DiscountManagerDTO> Campaigns { get; set; } = new List<DiscountManagerDTO>();
+    protected int? SelectedCampaignId { get; set; }
+
+    // Filter dropdowns - full lists
+    protected IEnumerable<GroupModelDTO> Groups { get; set; } = new List<GroupModelDTO>();
+    protected IEnumerable<SubGroupModelDTO> AllSubGroups { get; set; } = new List<SubGroupModelDTO>();
+    protected IEnumerable<DesignModelDTO> AllDesigns { get; set; } = new List<DesignModelDTO>();
+    protected IEnumerable<ColorsDTO> Colors { get; set; } = new List<ColorsDTO>();
+    protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
+    protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
+
+    // Filter selected values
+    protected int? SelectedGroupId { get; set; }
+    protected int? SelectedSubGroupId { get; set; }
+    protected int? SelectedDesignId { get; set; }
+    protected int? SelectedColorId { get; set; }
+    protected int? SelectedSizeId { get; set; }
+    protected int? SelectedCatalogueId { get; set; }
+
+    // Cascading filtered dropdowns
+    protected IEnumerable<SubGroupModelDTO> FilteredSubGroups { get; set; } = new List<SubGroupModelDTO>();
+    protected IEnumerable<DesignModelDTO> FilteredDesigns { get; set; } = new List<DesignModelDTO>();
+
     protected override async Task OnInitializedAsync()
     {
         NavigationGuard.IsGuardActive = true;
@@ -51,12 +81,19 @@ public partial class DiscountManagerAddComponent : PosComponentBase
         {
             IsLoading = true;
 
-            // Load discount types
             DiscountTypes = (await _serviceUnitOfWork.DiscountManagerService.GetDiscountTypes()).ToList();
 
-            // Load all items
             var items = await _serviceUnitOfWork.ItemService.GetItems();
             AllItems = items.ToList();
+
+            // Load filter lookup data
+            Campaigns = (await _serviceUnitOfWork.DiscountManagerService.GetAll()).ToList();
+            Groups = (await _serviceUnitOfWork.GroupService.GetGroups()).ToList();
+            AllSubGroups = (await _serviceUnitOfWork.SubGroupService.GetSubGroups()).ToList();
+            AllDesigns = (await _serviceUnitOfWork.DesignService.GetDesigns()).ToList();
+            Colors = (await _serviceUnitOfWork.ColorsService.GetColorss()).ToList();
+            Sizes = (await _serviceUnitOfWork.SizesService.GetSizess()).ToList();
+            Catalogues = (await _serviceUnitOfWork.ItemCatalogueService.GetItemCatalogues()).ToList();
 
             if (IsEditMode)
             {
@@ -89,22 +126,138 @@ public partial class DiscountManagerAddComponent : PosComponentBase
 
     private void BuildGridItems()
     {
+        var filtered = FilterItems();
         GridItems = new List<DiscountGridItem>();
 
-        foreach (var item in AllItems)
+        foreach (var item in filtered)
         {
             var detail = Campaign.DiscountDetails.FirstOrDefault(d => d.ItemId == item.Id);
             GridItems.Add(new DiscountGridItem
             {
                 Item = item,
-                Selected = detail != null,
+                Selected = detail != null || !IsEditMode,
                 DiscountValue = detail?.DiscountValue ?? 0,
                 DiscountTypeId = detail?.DiscountTypeId ?? 1,
                 DiscountTypeName = detail?.DiscountTypeName ?? DiscountTypes.FirstOrDefault()?.TypeName ?? "Percentage",
-                Source = detail != null ? "loaded" : "",
+                Source = detail != null ? "loaded" : (!IsEditMode ? "all" : ""),
                 CurrentSalePrice = item.SalePrice ?? 0
             });
         }
+    }
+
+    private List<ItemDTO> FilterItems()
+    {
+        var query = AllItems.AsEnumerable();
+
+        if (SelectedGroupId.HasValue)
+            query = query.Where(i => i.GroupId == SelectedGroupId.Value);
+
+        if (SelectedSubGroupId.HasValue)
+            query = query.Where(i => i.SubGroupId == SelectedSubGroupId.Value);
+
+        if (SelectedDesignId.HasValue)
+            query = query.Where(i => i.DesignId == SelectedDesignId.Value);
+
+        if (SelectedColorId.HasValue)
+            query = query.Where(i => i.ColorId == SelectedColorId.Value);
+
+        if (SelectedSizeId.HasValue)
+            query = query.Where(i => i.SizeId == SelectedSizeId.Value);
+
+        if (SelectedCatalogueId.HasValue)
+            query = query.Where(i => i.CatalogueId == SelectedCatalogueId.Value);
+
+        return query.ToList();
+    }
+
+    protected async Task OnCampaignSelected(int? campaignId)
+    {
+        if (!campaignId.HasValue) return;
+
+        var campaign = await _serviceUnitOfWork.DiscountManagerService.GetById(campaignId.Value);
+        if (campaign == null) return;
+
+        Campaign = campaign;
+        SelectedCampaignId = campaignId;
+        Id = campaign.Id;
+
+        // Reset filters
+        SelectedGroupId = null;
+        SelectedSubGroupId = null;
+        SelectedDesignId = null;
+        SelectedColorId = null;
+        SelectedSizeId = null;
+        SelectedCatalogueId = null;
+        FilteredSubGroups = AllSubGroups;
+        FilteredDesigns = AllDesigns;
+        BulkDiscountValue = 0;
+        SearchText = string.Empty;
+
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnGroupChanged(int? groupId)
+    {
+        SelectedGroupId = groupId;
+        SelectedSubGroupId = null;
+        SelectedDesignId = null;
+
+        if (groupId.HasValue)
+        {
+            FilteredSubGroups = AllSubGroups.Where(sg => sg.GroupId == groupId.Value).ToList();
+            FilteredDesigns = AllDesigns.Where(d => d.SubGroupId == -1).ToList(); // empty
+        }
+        else
+        {
+            FilteredSubGroups = AllSubGroups;
+            FilteredDesigns = AllDesigns;
+        }
+
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnSubGroupChanged(int? subGroupId)
+    {
+        SelectedSubGroupId = subGroupId;
+        SelectedDesignId = null;
+
+        if (subGroupId.HasValue)
+            FilteredDesigns = AllDesigns.Where(d => d.SubGroupId == subGroupId.Value).ToList();
+        else
+            FilteredDesigns = AllDesigns;
+
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnDesignChanged(int? designId)
+    {
+        SelectedDesignId = designId;
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnColorChanged(int? colorId)
+    {
+        SelectedColorId = colorId;
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnSizeChanged(int? sizeId)
+    {
+        SelectedSizeId = sizeId;
+        BuildGridItems();
+        StateHasChanged();
+    }
+
+    protected void OnCatalogueChanged(int? catalogueId)
+    {
+        SelectedCatalogueId = catalogueId;
+        BuildGridItems();
+        StateHasChanged();
     }
 
     protected void ToggleItem(DiscountGridItem gridItem)
@@ -320,6 +473,16 @@ public partial class DiscountManagerAddComponent : PosComponentBase
     {
         BulkDiscountValue = 0;
         SearchText = "";
+        SelectedCampaignId = null;
+        SelectedGroupId = null;
+        SelectedSubGroupId = null;
+        SelectedDesignId = null;
+        SelectedColorId = null;
+        SelectedSizeId = null;
+        SelectedCatalogueId = null;
+        FilteredSubGroups = AllSubGroups;
+        FilteredDesigns = AllDesigns;
+        Campaign = _serviceUnitOfWork.DiscountManagerService.CreateNew();
         await LoadData();
     }
 
@@ -339,10 +502,9 @@ public partial class DiscountManagerAddComponent : PosComponentBase
             return "<span class='badge badge-all'><i class='ti ti-check' style='font-size:11px'></i> All</span>";
         return "";
     }
+
     public void Dispose()
     {
-        // Deactivate when leaving the page
         NavigationGuard.IsGuardActive = false;
     }
-    
 }

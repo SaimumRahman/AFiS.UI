@@ -7,7 +7,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Shift;
 
-public partial class ShiftAddComponent : PosComponentBase
+public partial class ShiftAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

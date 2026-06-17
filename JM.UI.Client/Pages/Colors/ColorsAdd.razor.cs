@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Colors;
 
-public partial class ColorsAddComponent : PosComponentBase
+public partial class ColorsAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? Id { get; set; }

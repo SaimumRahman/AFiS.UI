@@ -10,7 +10,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Action;
 
-public partial class GroupRoutePermissionAddComponent : PosComponentBase
+public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

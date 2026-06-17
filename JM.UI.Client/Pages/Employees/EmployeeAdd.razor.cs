@@ -17,7 +17,7 @@ using RadzenBlazorDemos.Server.Models.Northwind;
 
 namespace JM.UI.Client.Pages.Employees
 {
-    public partial class EmployeeAddComponent : PosComponentBase
+    public partial class EmployeeAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Inject] public IUserAuthService _userAuthService { get; set; } = default!;

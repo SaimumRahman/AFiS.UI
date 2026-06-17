@@ -1,16 +1,18 @@
-﻿using JM.UI.Entities.Model.Routes;
+﻿using JM.UI.Client.Services;
+using JM.UI.Entities.Model.Routes;
 using JM.UI.Service.Routes;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
 namespace JM.UI.Components.Pages.Route
 {
-    public partial class RouteAddComponent : ComponentBase
+    public partial class RouteAddComponent : ComponentBase, IDisposable
     {
         [Inject] private IRouteService RouteService { get; set; } = default!;
         [Inject] private NavigationManager NavigationManager { get; set; } = default!;
         [Inject] private NotificationService NotificationService { get; set; } = default!;
         [Inject] private DialogService DialogService { get; set; } = default!;
+        [Inject] private INavigationGuardService NavigationGuard { get; set; } = default!;
 
         [Parameter] public int? Id { get; set; }
 
@@ -26,6 +28,7 @@ namespace JM.UI.Components.Pages.Route
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
             await LoadRoute();
         }
 
@@ -237,6 +240,11 @@ namespace JM.UI.Components.Pages.Route
         protected void Cancel()
         {
             NavigationManager.NavigateTo("/RouteList");
+        }
+
+        public void Dispose()
+        {
+            NavigationGuard.IsGuardActive = false;
         }
     }
 }

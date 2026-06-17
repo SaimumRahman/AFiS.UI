@@ -8,7 +8,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.AccountsGroups;
 
-public partial class AccountsGroupsAddComponent : PosComponentBase
+public partial class AccountsGroupsAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? Id { get; set; }

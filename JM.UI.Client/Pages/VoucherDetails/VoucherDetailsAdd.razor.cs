@@ -1,4 +1,4 @@
-
+﻿
 using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.VoucherDetails;
 using JM.UI.Entities.Model.Vouchers;
@@ -9,7 +9,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.VoucherDetails
 {
-    public partial class VoucherDetailsAddComponent : PosComponentBase
+    public partial class VoucherDetailsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

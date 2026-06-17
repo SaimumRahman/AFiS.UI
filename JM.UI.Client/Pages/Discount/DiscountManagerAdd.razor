@@ -51,7 +51,19 @@
             <RadzenFieldset Text="Campaign Details" Icon="speakerphone">
                 <RadzenStack Gap="1rem">
                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Load Campaign" Component="CampaignSelector" />
+                                <RadzenDropDown Data="@Campaigns"
+                                                Value="@SelectedCampaignId"
+                                                ValueProperty="Id"
+                                                TextProperty="DiscountName"
+                                                Placeholder="Select campaign..."
+                                                Change="@(args => OnCampaignSelected(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
                             <RadzenStack Gap="0.25rem">
                                 <RadzenLabel Text="Campaign Name *" Component="DiscountName" />
                                 <RadzenTextBox @bind-Value="Campaign.DiscountName"
@@ -89,6 +101,90 @@
                             </RadzenColumn>
                         </RadzenRow>
                     }
+                </RadzenStack>
+            </RadzenFieldset>
+        </RadzenCard>
+
+        <!-- Product Filter -->
+        <RadzenCard class="mb-4">
+            <RadzenFieldset Text="Filter Products" Icon="filter">
+                <RadzenStack Gap="0.75rem">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Group" Component="GroupFilter" />
+                                <RadzenDropDown Data="@Groups"
+                                                Value="@SelectedGroupId"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="All Groups"
+                                                Change="@(args => OnGroupChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Sub Group" Component="SubGroupFilter" />
+                                <RadzenDropDown Data="@FilteredSubGroups"
+                                                Value="@SelectedSubGroupId"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="All Sub Groups"
+                                                Change="@(args => OnSubGroupChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Design" Component="DesignFilter" />
+                                <RadzenDropDown Data="@FilteredDesigns"
+                                                Value="@SelectedDesignId"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="All Designs"
+                                                Change="@(args => OnDesignChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Color" Component="ColorFilter" />
+                                <RadzenDropDown Data="@Colors"
+                                                Value="@SelectedColorId"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="All Colors"
+                                                Change="@(args => OnColorChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Size" Component="SizeFilter" />
+                                <RadzenDropDown Data="@Sizes"
+                                                Value="@SelectedSizeId"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="All Sizes"
+                                                Change="@(args => OnSizeChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Catalog" Component="CatalogueFilter" />
+                                <RadzenDropDown Data="@Catalogues"
+                                                Value="@SelectedCatalogueId"
+                                                ValueProperty="CatalogueId"
+                                                TextProperty="CatalogueName"
+                                                Placeholder="All Catalogs"
+                                                Change="@(args => OnCatalogueChanged(args as int?))"
+                                                Style="width:100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
                 </RadzenStack>
             </RadzenFieldset>
         </RadzenCard>

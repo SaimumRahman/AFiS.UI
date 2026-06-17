@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Designations;
 
-public partial class DesignationAddComponent : PosComponentBase
+public partial class DesignationAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Parameter] public int? DesignationID { get; set; }

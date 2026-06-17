@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Vouchers;
+﻿using JM.UI.Entities.Model.Vouchers;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.Vouchers
 {
-    public partial class VoucherAddComponent : PosComponentBase
+    public partial class VoucherAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

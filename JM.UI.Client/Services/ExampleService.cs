@@ -181,6 +181,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Discount Setup",
+                        Path        = "/DiscountManagerList",
+                        Icon        = "\ue8d2",
+                        Title       = "Sizes",
+                        Description = "Manage product size variants",
+                        Tags        = new[] { "size", "variant", "inventory" }
+                    },
+                    new Example
+                    {
                         Name        = "Barcodes",
                         Path        = "/BarcodeList",
                         Icon        = "\ue6b8",

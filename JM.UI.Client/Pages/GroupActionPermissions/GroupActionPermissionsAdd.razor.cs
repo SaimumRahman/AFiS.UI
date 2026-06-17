@@ -8,7 +8,7 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.Permission
 {
-    public partial class GroupActionPermissionsAddComponent : PosComponentBase
+    public partial class GroupActionPermissionsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Parameter] public int GroupId { get; set; }
@@ -227,6 +227,7 @@ namespace JM.UI.Client.Pages.Permission
         public void Dispose()
         {
             PermissionsGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
         }
     }
 }

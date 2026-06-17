@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Items;
+﻿using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.Suppliers;
@@ -9,7 +9,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Items
 {
-    public partial class ItemsAddComponent : PosComponentBase
+    public partial class ItemsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

@@ -6,7 +6,7 @@ using Radzen;
 
 namespace JM.UI.Client.Pages.Approval;
 
-public partial class ApprovalLevelAddComponent : PosComponentBase
+public partial class ApprovalLevelAddComponent : AddEditPageBase
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 

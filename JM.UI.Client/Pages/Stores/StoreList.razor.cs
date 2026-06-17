@@ -1,8 +1,8 @@
-﻿
-using JM.UI.Entities.Model.Stores;
+﻿using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Radzen;
 using Radzen.Blazor;
 
@@ -71,6 +71,45 @@ namespace JM.UI.Client.Pages.Store
                     notificationService.Notify(NotificationSeverity.Error, "Error", result.Message ?? "Failed to delete store.");
                 }
             }
+        }
+
+        protected async Task PreviewLetterHead(StoreDTO store)
+        {
+            await dialogService.OpenAsync($"Letterhead Preview — {store.Name}",
+                ds =>
+                {
+                    RenderFragment content = builder =>
+                    {
+                        builder.OpenElement(0, "div");
+                        builder.AddAttribute(1, "style", "display:flex; justify-content:center; align-items:center; padding:1rem;");
+
+                        if (store.LetterHeadFile!.StartsWith("data:image/"))
+                        {
+                            builder.OpenElement(2, "img");
+                            builder.AddAttribute(3, "src", store.LetterHeadFile);
+                            builder.AddAttribute(4, "style", "max-width:100%; max-height:480px; object-fit:contain; border-radius:6px;");
+                            builder.CloseElement();
+                        }
+                        else if (store.LetterHeadFile!.StartsWith("data:application/pdf"))
+                        {
+                            builder.OpenElement(2, "iframe");
+                            builder.AddAttribute(3, "src", store.LetterHeadFile);
+                            builder.AddAttribute(4, "style", "width:100%; height:480px; border:none; border-radius:6px;");
+                            builder.CloseElement();
+                        }
+
+                        builder.CloseElement();
+                    };
+                    return content;
+                },
+                new DialogOptions
+                {
+                    Width = "720px",
+                    Height = "580px",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = true
+                });
         }
 
         protected string Truncate(string? value, int maxChars)

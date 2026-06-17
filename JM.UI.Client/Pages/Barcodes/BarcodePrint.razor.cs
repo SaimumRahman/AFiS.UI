@@ -61,7 +61,6 @@ public partial class BarcodePrintComponent : PosComponentBase
     // ────────────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        NavigationGuard.IsGuardActive = true;
         await TokenService.InitializeTokenAsync();
 
         await Task.WhenAll(
@@ -480,10 +479,5 @@ public partial class BarcodePrintComponent : PosComponentBase
             isError ? NotificationSeverity.Error : NotificationSeverity.Success,
             isError ? "Print Error" : "Print",
             message);
-    }
-    public void Dispose()
-    {
-        // Deactivate when leaving the page
-        NavigationGuard.IsGuardActive = false;
     }
 }

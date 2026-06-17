@@ -54,6 +54,7 @@ public class ItemService : IItemService
             SalePrice = createItemRequest.SalePrice,
             WholeSalePrice = 0, // Set this value as needed
             PurchasePrice = createItemRequest.PurchasePrice,
+            Barcode = createItemRequest.Barcode,
             ProductType = createItemRequest.ProductType,
             Catalogue = createItemRequest.CatalogueName,
             BrandId = createItemRequest.BrandId ?? 0,

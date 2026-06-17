@@ -1,4 +1,4 @@
-using JM.UI.Entities.Model.Bank;
+﻿using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.SupplierPayments;
 using JM.UI.Entities.Model.Suppliers;
@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace JM.UI.Client.Pages.SupplierPayments
 {
-    public partial class SupplierPaymentsAddComponent : PosComponentBase
+    public partial class SupplierPaymentsAddComponent : AddEditPageBase
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
         [Inject] public Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
