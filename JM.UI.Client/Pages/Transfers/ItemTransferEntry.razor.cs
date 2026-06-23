@@ -26,6 +26,7 @@ namespace JM.UI.Client.Pages.Transfers
         [Parameter] 
         public int? Id { get; set; }
         protected bool IsFromStoreReadOnly { get; set; } = false;
+        protected bool IsDamagedMode { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
@@ -182,12 +183,13 @@ namespace JM.UI.Client.Pages.Transfers
                 await LoadItemsForStore(Transfer.StoreId);
 
                 // â”€â”€ Transfer Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                TransferTypes = new List<LookupItemDTO>
-        {
-            new() { Id = 1, Name = "Internal Transfer" },
-            new() { Id = 2, Name = "Requisition" },
-            new() { Id = 3, Name = "Return" }
-        };
+                var transactionTypes = await _serviceUnitOfWork.ItemService.GetTransactionTypes();
+                TransferTypes = (transactionTypes ?? new List<TransactionTypeDTO>())
+                    .Select(tt => new LookupItemDTO
+                    {
+                        Id = tt.TransactionTypeID,
+                        Name = tt.TransactionTypeName
+                    }).ToList();
             }
             catch (Exception ex)
             {
@@ -237,9 +239,6 @@ namespace JM.UI.Client.Pages.Transfers
             }
         }
 
-
-        // â”€â”€ Store Changed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
         protected void OnFromStoreChanged(int? storeId)
         {
             // Branch users cannot change From Store
@@ -256,8 +255,38 @@ namespace JM.UI.Client.Pages.Transfers
             StateHasChanged();
         }
 
+        protected void OnTransferTypeChanged(int? transTypeId)
+        {
+            if (transTypeId is null) return;
 
-        // â”€â”€ Shared Fields Changed â†’ Propagate to all preview rows â”€â”€â”€â”€â”€
+            var selectedType = TransferTypes.FirstOrDefault(t => t.Id == transTypeId.Value);
+            if (selectedType is null) return;
+
+            var isDamaged = selectedType.Name.Equals("Damaged", StringComparison.OrdinalIgnoreCase);
+            IsDamagedMode = isDamaged;
+
+            if (isDamaged)
+            {
+                var headOffice = Stores.FirstOrDefault(s =>
+                    s.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase));
+                var damagedStore = Stores.FirstOrDefault(s =>
+                    s.Code?.Equals("dm", StringComparison.OrdinalIgnoreCase) == true);
+
+                if (headOffice != null)
+                    Transfer.StoreId = headOffice.Id;
+
+                if (damagedStore != null)
+                    Transfer.ToStoreId = damagedStore.Id;
+
+                ToStores = Stores.Where(s => s.Id != Transfer.StoreId).ToList();
+                _ = LoadItemsForStore(Transfer.StoreId);
+            }
+
+            StateHasChanged();
+        }
+
+
+        // �"?�"? Shared Fields Changed �+' Propagate to all preview rows �"?�"?�"?�"?�"?
 
         protected void OnSharedFieldChanged()
         {
