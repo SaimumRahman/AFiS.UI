@@ -22,6 +22,7 @@ using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
@@ -118,6 +119,8 @@ namespace JM.UI.Service
             services.AddScoped<ICustomerDetailsService, CustomerDetailsService>();
             services.AddScoped<IDiscountManagerService, DiscountManagerService>();
             services.AddScoped<IInvRequisitionService, InvRequisitionService>();
+            services.AddScoped<ICouponTypeService, CouponTypeService>();
+            services.AddScoped<ICouponService, CouponService>();
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
         }

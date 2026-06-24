@@ -26,6 +26,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
+using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -127,5 +128,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICustomerDetailsRepository CustomerDetailsRepository { get; }
         IDiscountManagerRepository DiscountManagerRepository { get; }
         IInvRequisitionRepository InvRequisitionRepository { get; }
+        ICouponTypeRepository CouponTypeRepository { get; }
+        ICouponRepository CouponRepository { get; }
     }
 }

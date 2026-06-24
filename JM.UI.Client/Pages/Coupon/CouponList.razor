@@ -1,0 +1,132 @@
+@page "/CouponList"
+@using JM.UI.Entities.Model.Coupon
+@inherits CouponListComponent
+@attribute [Authorize]
+<PageTitle>Coupon Discounts</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="confirmation_number" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Coupon Discount Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="New Coupon"
+                                  Click="@AddCoupon"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenDataGrid @ref="CouponsGrid"
+                        Data="@Coupons"
+                        TItem="CouponDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="CouponDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{item.Id}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="CouponCode" Title="Coupon Code" Width="160px">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="confirmation_number" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @item.CouponCode
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="Description" Title="Description" Width="200px">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Body2">@Truncate(item.Description, 50)</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="CouponTypeName" Title="Type" Width="130px" TextAlign="TextAlign.Center" />
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="DiscountValue" Title="Discount" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@($"৳{item.DiscountValue:N0}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="StartDate" Title="Start Date" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Body2">@item.StartDate.ToString("dd MMM yyyy")</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="EndDate" Title="End Date" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Body2">@item.EndDate.ToString("dd MMM yyyy")</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Title="Used" Width="80px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"{item.UsedCount}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="IsActive" Title="Status" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@(item.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
+                                     Text="@(item.IsActive ? "Active" : "Inactive")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Property="CreatedDate" Title="Created" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Caption">@item.CreatedDate.ToString("dd MMM yyyy")</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CouponDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditCoupon(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Coupon"))" />
+
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => DeleteCoupon(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Coupon"))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

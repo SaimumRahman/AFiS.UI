@@ -13,6 +13,7 @@ using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
+using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.GroupActionPermission;
@@ -104,6 +105,8 @@ namespace JM.UI.DataService
             services.AddScoped<IStockRepository, StockRepository>();
             services.AddScoped<IBarcodePrintConfigRepository, BarcodePrintConfigRepository>();
             services.AddScoped<IDiscountManagerRepository, DiscountManagerRepository>();
+            services.AddScoped<ICouponTypeRepository, CouponTypeRepository>();
+            services.AddScoped<ICouponRepository, CouponRepository>();
             #endregion
         }
 

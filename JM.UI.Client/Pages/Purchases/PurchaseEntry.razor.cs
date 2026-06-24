@@ -110,7 +110,6 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
-        // â”€â”€â”€ Edit-item mode: true while an item from the confirmed grid is being edited â”€â”€â”€
         protected bool IsEditItemMode { get; set; } = false;
 
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
@@ -119,10 +118,6 @@ namespace JM.UI.Client.Pages.Purchases
         {
             "Sell Product", "Raw Material", "Both", "Consume", "Combo Package"
         };
-
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Lifecycle
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
@@ -136,10 +131,6 @@ namespace JM.UI.Client.Pages.Purchases
             else
                 await InitializePurchase();
         }
-
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Initialization
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private async Task InitializePurchase()
         {
             Purchase = await _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
@@ -450,10 +441,6 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        /// <summary>
-        /// Applies the given image to every preview row whose ColorId matches
-        /// the currently selected ColorId on CurrentItem.
-        /// </summary>
         private void ApplyImageToMatchingPreviewRows(string imageBase64)
         {
             if (!PreviewItems.Any()) return;
@@ -727,9 +714,6 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Preview Grid: Shared Price Change â†’ Recalculate All Rows
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected void OnSharedPriceChanged()
         {
             foreach (var row in PreviewItems)
@@ -784,9 +768,6 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Build PreviewItemRow from BarcodeSearchResponseDTO
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         private List<PreviewItemRow> BuildPreviewRowsFromResponse(BarcodeSearchResponseDTO response, string barcode)
         {
             var rows = new List<PreviewItemRow>();
@@ -896,10 +877,6 @@ namespace JM.UI.Client.Pages.Purchases
 
             return rows;
         }
-
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Item Management
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task AddItemToGrid()
         {
             // If we're in edit-item mode, delegate to the update path
@@ -1142,17 +1119,6 @@ namespace JM.UI.Client.Pages.Purchases
             SharedTransportCost = null;
             SharedOperationalCost = null;
         }
-
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // Edit Item
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-        /// <summary>
-        /// Enters edit mode for an existing confirmed item.
-        /// The item is kept in PurchaseItems (just visually highlighted as being
-        /// edited) so that Cancel can simply exit edit mode without data loss.
-        /// The item is only replaced when the user clicks Update.
-        /// </summary>
         protected async Task EditItem(PurchaseItemDTO item)
         {
             // If we were already editing something, restore it first
