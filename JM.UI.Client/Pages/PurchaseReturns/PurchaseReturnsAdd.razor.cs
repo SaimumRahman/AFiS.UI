@@ -1,17 +1,12 @@
-﻿using JM.UI.Entities.Model.PurchaseReturns;
-using JM.UI.Entities.Model.PurchaseReturnItems;
+﻿using JM.UI.Entities.Model.PurchaseReturnItems;
+using JM.UI.Entities.Model.PurchaseReturns;
 using JM.UI.Entities.Model.Stores;
-using JM.UI.Entities.Model.Suppliers;
-using JM.UI.Entities.Model.Vouchers;
-using JM.UI.Entities.Model.Items;
-using JM.UI.Entities.Model.Users;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using JM.UI.Entities.Model.Colors;
-using JM.UI.Entities.Model.Sizes;
 using Newtonsoft.Json;
+using JM.UI.Entities.Model.Users;
 
 namespace JM.UI.Client.Pages.PurchaseReturns
 {
@@ -22,21 +17,30 @@ namespace JM.UI.Client.Pages.PurchaseReturns
         [Parameter] public int? Id { get; set; }
 
         protected PurchaseReturnModelDTO PurchaseReturn { get; set; } = new();
-        protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
+        protected List<ReturnRefStockDetailDTO> ReturnItems { get; set; } = new();
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
-        protected IEnumerable<VoucherModelDTO> Vouchers { get; set; } = new List<VoucherModelDTO>();
-        
-        // Line Item Lookups
-        protected IEnumerable<ItemDTO> ItemsList = new List<ItemDTO>();
-        protected IEnumerable<ColorsDTO> ColorsList = new List<ColorsDTO>();
-        protected IEnumerable<SizesDTO> SizesList = new List<SizesDTO>();
 
-        protected PurchaseReturnItemModelDTO NewItem { get; set; } = new();
+        // Barcode scan
+        protected string ScanBarcodeText { get; set; } = "";
+        protected bool IsScanning { get; set; } = false;
+
+        // Supplier lock
+        protected int? LockedSupplierId { get; set; }
+        protected string? LockedSupplierName { get; set; }
+        protected bool IsSupplierLocked { get; set; } = false;
+
+        // WH store
+        protected StoreDTO? WhStore { get; set; }
 
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Purchase Return" : "New Purchase Return";
+
+        // Summary
+        protected int DistinctItemCount => ReturnItems.Select(i => i.Barcode).Distinct().Count();
+        protected decimal TotalQty => ReturnItems.Sum(i => i.Quantity);
+        protected decimal TotalValue => ReturnItems.Sum(i => i.Quantity * i.TradePrice);
 
         protected override async Task OnInitializedAsync()
         {
@@ -45,9 +49,7 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             await SetUserInfo();
 
             if (IsEditMode)
-            {
                 await LoadPurchaseReturn();
-            }
         }
 
         private async Task SetUserInfo()
@@ -59,10 +61,7 @@ namespace JM.UI.Client.Pages.PurchaseReturns
                 {
                     var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
                     if (userInfo != null)
-                    {
                         PurchaseReturn.UserName = userInfo.Username;
-                        StateHasChanged();
-                    }
                 }
             }
             catch (Exception ex)
@@ -76,21 +75,13 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             try
             {
                 IsLoading = true;
-                var suppliersTask = _serviceUnitOfWork.SupplierService.GetSuppliers();
-                var storesTask = _serviceUnitOfWork.StoreService.GetStores();
-                var vouchersTask = _serviceUnitOfWork.VoucherService.GetVouchers();
-                var itemsTask = _serviceUnitOfWork.ItemService.GetItems();
-                var colorsTask = _serviceUnitOfWork.ColorsService.GetColorss();
-                var sizesTask = _serviceUnitOfWork.SizesService.GetSizess();
+                Stores = await _serviceUnitOfWork.StoreService.GetStores();
 
-                await Task.WhenAll(suppliersTask, storesTask, vouchersTask, itemsTask, colorsTask, sizesTask);
-
-                Suppliers = await suppliersTask;
-                Stores = await storesTask;
-                Vouchers = await vouchersTask;
-                ItemsList = await itemsTask;
-                ColorsList = await colorsTask;
-                SizesList = await sizesTask;
+                // Find WH store and lock it
+                WhStore = Stores.FirstOrDefault(s =>
+                    s.Code?.Equals("WH", StringComparison.OrdinalIgnoreCase) == true);
+                if (WhStore != null)
+                    PurchaseReturn.StoreId = WhStore.Id;
             }
             catch (Exception ex)
             {
@@ -117,10 +108,30 @@ namespace JM.UI.Client.Pages.PurchaseReturns
                 }
 
                 PurchaseReturn = result;
-                
-                // Load line items
+
                 var items = await _serviceUnitOfWork.PurchaseReturnItemService.GetItemsByReturnId(Id.Value);
-                PurchaseReturn.Items = items.ToList();
+                ReturnItems = items.Select(i => new ReturnRefStockDetailDTO
+                {
+                    ProductName = i.ItemName ?? "",
+                    Barcode = i.Barcode,
+                    CurrentStock = i.CurrentStock,
+                    PurchasePrice = i.TradePrice,
+                    Quantity = i.Quantity,
+                    TradePrice = i.TradePrice
+                }).ToList();
+
+                // Re-lock supplier from loaded data
+                if (ReturnItems.Any())
+                {
+                    var first = ReturnItems.First();
+                    if (first.SupplierId != null)
+                    {
+                        LockedSupplierId = first.SupplierId;
+                        LockedSupplierName = first.SupplierName;
+                        IsSupplierLocked = true;
+                        PurchaseReturn.SupplierId = first.SupplierId.Value;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -133,42 +144,129 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             }
         }
 
-        protected void AddLineItem()
+        // ── Barcode Scan ────────────────────────────────────────
+        protected void OnScanBarcodeKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
         {
-            if (NewItem.ItemId == 0 || NewItem.Quantity <= 0)
+            if (e.Key == "Enter")
+                ScanBarcode();
+        }
+
+        protected async void ScanBarcode()
+        {
+            var input = ScanBarcodeText?.Trim();
+            if (string.IsNullOrWhiteSpace(input))
             {
-                notificationService.Notify(NotificationSeverity.Warning, "Warning", "Please select an item and enter quantity.");
+                notificationService.Notify(NotificationSeverity.Warning, "Empty", "Please scan or enter a barcode.");
                 return;
             }
 
-            var item = ItemsList.FirstOrDefault(i => i.Id == NewItem.ItemId);
-            if (item != null)
+            if (WhStore == null)
             {
-                NewItem.ItemName = item.Name;
+                notificationService.Notify(NotificationSeverity.Error, "No Store", "WH store not found. Cannot scan.");
+                return;
             }
 
-            if (NewItem.ColorId.HasValue)
+            try
             {
-                NewItem.ColorName = ColorsList.FirstOrDefault(c => c.Id == NewItem.ColorId.Value)?.Name;
-            }
+                IsScanning = true;
+                StateHasChanged();
 
-            if (NewItem.SizeId.HasValue)
+                var results = (await _serviceUnitOfWork.PurchaseReturnService
+                    .GetReturnRefStockDetails(input, WhStore.Id)).ToList();
+
+                if (!results.Any())
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Not Found",
+                        $"No item found with barcode/ref '{input}'.");
+                    return;
+                }
+
+                var scannedItem = results.First();
+                scannedItem.TradePrice = scannedItem.PurchasePrice ?? 0;
+
+                // ── Supplier lock check ──
+                if (!IsSupplierLocked)
+                {
+                    if (scannedItem.SupplierId.HasValue)
+                    {
+                        LockedSupplierId = scannedItem.SupplierId;
+                        LockedSupplierName = scannedItem.SupplierName;
+                        IsSupplierLocked = true;
+                        PurchaseReturn.SupplierId = scannedItem.SupplierId.Value;
+                        notificationService.Notify(NotificationSeverity.Info, "Supplier Locked",
+                            $"Supplier set to '{scannedItem.SupplierName}' for this return.");
+                    }
+                }
+                else
+                {
+                    if (scannedItem.SupplierId != LockedSupplierId)
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Supplier Mismatch",
+                            $"Item '{scannedItem.ProductName}' belongs to '{(scannedItem.SupplierName ?? "another supplier")}', " +
+                            $"but this return is locked to '{LockedSupplierName}'. Cannot add.");
+                        ScanBarcodeText = "";
+                        IsScanning = false;
+                        StateHasChanged();
+                        return;
+                    }
+                }
+
+                // ── Stock availability check ──
+                var existing = ReturnItems.FirstOrDefault(i =>
+                    i.Barcode?.Equals(scannedItem.Barcode, StringComparison.OrdinalIgnoreCase) == true);
+                var newQty = existing != null ? existing.Quantity + 1 : 1;
+
+                if (scannedItem.CurrentStock.HasValue && newQty > scannedItem.CurrentStock.Value)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Insufficient Stock",
+                        $"Return qty ({newQty:N0}) exceeds current stock ({scannedItem.CurrentStock.Value:N0}) for '{scannedItem.ProductName}'.");
+                    ScanBarcodeText = "";
+                    IsScanning = false;
+                    StateHasChanged();
+                    return;
+                }
+
+                // ── Add or increment item ──
+                if (existing != null)
+                {
+                    existing.Quantity += 1;
+                }
+                else
+                {
+                    scannedItem.Quantity = 1;
+                    ReturnItems.Add(scannedItem);
+                }
+
+                ScanBarcodeText = "";
+                notificationService.Notify(NotificationSeverity.Success, "Added", $"✓ {scannedItem.ProductName}");
+            }
+            catch (Exception ex)
             {
-                NewItem.SizeName = SizesList.FirstOrDefault(s => s.Id == NewItem.SizeId.Value)?.Name;
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load item: {ex.Message}");
             }
-
-            PurchaseReturn.Items.Add(NewItem);
-            NewItem = new PurchaseReturnItemModelDTO(); // Reset for next item
+            finally
+            {
+                IsScanning = false;
+                StateHasChanged();
+            }
         }
 
-        protected void RemoveLineItem(PurchaseReturnItemModelDTO item)
+        protected void RemoveLineItem(ReturnRefStockDetailDTO item)
         {
-            PurchaseReturn.Items.Remove(item);
+            ReturnItems.Remove(item);
+
+            if (!ReturnItems.Any())
+            {
+                LockedSupplierId = null;
+                LockedSupplierName = null;
+                IsSupplierLocked = false;
+                PurchaseReturn.SupplierId = 0;
+            }
         }
 
         protected async Task Save()
         {
-            if (!PurchaseReturn.Items.Any())
+            if (!ReturnItems.Any())
             {
                 notificationService.Notify(NotificationSeverity.Warning, "Empty Items", "Please add at least one item to return.");
                 return;
@@ -177,17 +275,23 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             try
             {
                 IsProcessing = true;
-                
-                // Populate UserName from session storage before saving
+
                 var userInfoResult = await sessionStorage.GetAsync<string>("UserInfo");
                 if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
                 {
                     var userInfo = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value);
                     if (userInfo != null)
-                    {
                         PurchaseReturn.UserName = userInfo.Username;
-                    }
                 }
+
+                // Map ReturnItems → PurchaseReturn.Items (for persistence)
+                PurchaseReturn.Items = ReturnItems.Select((r, idx) => new PurchaseReturnItemModelDTO
+                {
+                    ItemName = r.ProductName,
+                    Barcode = r.Barcode,
+                    Quantity = r.Quantity,
+                    TradePrice = r.TradePrice
+                }).ToList();
 
                 var result = await _serviceUnitOfWork.PurchaseReturnService.SaveUpdatePurchaseReturn(PurchaseReturn);
 
@@ -212,9 +316,22 @@ namespace JM.UI.Client.Pages.PurchaseReturns
             }
         }
 
-        protected void Cancel()
+        protected void Reset()
         {
-            NavigationManager.NavigateTo("/PurchaseReturnsList");
+            ScanBarcodeText = "";
+            LockedSupplierId = null;
+            LockedSupplierName = null;
+            IsSupplierLocked = false;
+            ReturnItems.Clear();
+            PurchaseReturn = new PurchaseReturnModelDTO
+            {
+                ReturnDate = DateTime.Now,
+                UserName = PurchaseReturn.UserName,
+                StoreId = WhStore?.Id ?? 0
+            };
+            StateHasChanged();
         }
+
+        protected void Cancel() => NavigationManager.NavigateTo("/PurchaseReturnsList");
     }
 }

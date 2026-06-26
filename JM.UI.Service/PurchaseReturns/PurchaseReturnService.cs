@@ -64,5 +64,17 @@ namespace JM.UI.Service.PurchaseReturns
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
         }
+
+        public async Task<IEnumerable<ReturnRefStockDetailDTO>> GetReturnRefStockDetails(string returnRefNo, int storeId)
+        {
+            try
+            {
+                return await _unitOfWork.PurchaseReturnRepository.GetReturnRefStockDetails(returnRefNo, storeId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

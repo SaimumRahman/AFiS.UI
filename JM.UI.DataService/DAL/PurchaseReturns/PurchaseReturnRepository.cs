@@ -97,5 +97,23 @@ namespace JM.UI.DataService.DAL.PurchaseReturns
                 throw;
             }
         }
+
+        public async Task<IEnumerable<ReturnRefStockDetailDTO>> GetReturnRefStockDetails(string returnRefNo, int storeId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"items/GetReturnRefStockDetails?returnRefNo={System.Uri.EscapeDataString(returnRefNo)}&storeId={storeId}");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<ReturnRefStockDetailDTO>>();
+                return result ?? new List<ReturnRefStockDetailDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching return ref stock details for: {ReturnRefNo}", returnRefNo);
+                throw;
+            }
+        }
     }
 }

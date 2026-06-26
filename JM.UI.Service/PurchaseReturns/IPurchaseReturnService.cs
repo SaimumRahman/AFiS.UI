@@ -11,5 +11,6 @@ namespace JM.UI.Service.PurchaseReturns
         Task<PurchaseReturnModelDTO?> GetPurchaseReturnById(int id);
         Task<ResponseResult> SaveUpdatePurchaseReturn(PurchaseReturnModelDTO purchaseReturn);
         Task<ResponseResult> DeletePurchaseReturn(int id);
+        Task<IEnumerable<ReturnRefStockDetailDTO>> GetReturnRefStockDetails(string returnRefNo, int storeId);
     }
 }

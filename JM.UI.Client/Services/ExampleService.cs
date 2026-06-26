@@ -210,15 +210,7 @@ namespace JM.UI.Client.Services
                 Children = new[]
                 {
                     // ── Orders & Invoices ──
-                    new Example
-                    {
-                        Name        = "Purchase Orders",
-                        Path        = "/PurchaseOrdersList",
-                        Icon        = "\ue8cc",
-                        Title       = "Purchase Orders",
-                        Description = "Create and track purchase orders",
-                        Tags        = new[] { "po", "order", "purchase" }
-                    },
+                    
                     new Example
                     {
                         Name        = "Purchase",
@@ -237,15 +229,7 @@ namespace JM.UI.Client.Services
                         Description = "Manage draft purchase entries before posting",
                         Tags        = new[] { "draft", "purchase" }
                     },
-                    new Example
-                    {
-                        Name        = "Purchase Invoices",
-                        Path        = "/PurchasesList",
-                        Icon        = "\ue873",
-                        Title       = "Purchase Invoices",
-                        Description = "Record and manage received invoices",
-                        Tags        = new[] { "invoice", "bill", "purchase" }
-                    },
+                    
                     new Example
                     {
                         Name        = "Purchase Returns",
@@ -277,15 +261,7 @@ namespace JM.UI.Client.Services
                     },
  
                     // ── Transfers ──
-                    new Example
-                    {
-                        Name        = "Item Transfer",
-                        Path        = "/ItemTransfer",
-                        Icon        = "\ue0d1",
-                        Title       = "Item Transfer",
-                        Description = "Transfer items between stores",
-                        Tags        = new[] { "transfer", "stock", "store", "issue" }
-                    },
+                   
                     new Example
                     {
                         Name        = "Transfer List",
