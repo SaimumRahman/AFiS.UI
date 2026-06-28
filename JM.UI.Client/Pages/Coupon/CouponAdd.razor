@@ -67,6 +67,7 @@
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenLabel Text="Coupon Type *" Component="CouponTypeId" />
                                     <RadzenDropDown @bind-Value="Coupon.CouponTypeId"
+                                                    Name="CouponTypeId"
                                                     Data="@CouponTypes"
                                                     TextProperty="TypeName" ValueProperty="Id"
                                                     Placeholder="Select type..."
@@ -168,64 +169,174 @@
                         </RadzenRow>
                     </RadzenFieldset>
 
-                    <!-- Product Selection -->
+                    <!-- Product Filter -->
                     @if (!Coupon.ApplicableToAll)
                     {
-                        <RadzenFieldset Text="Product Selection" Icon="package">
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Text="Search products" />
-                                        <RadzenTextBox @bind-Value="SearchText"
-                                                       Placeholder="Search by name or barcode..."
-                                                       Style="width:100%;" />
-                                    </RadzenStack>
-                                </RadzenColumn>
-                            </RadzenRow>
+                        <RadzenFieldset Text="Filter Products" Icon="filter">
+                            <RadzenStack Gap="0.75rem">
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Group" Component="GroupFilter" />
+                                            <RadzenDropDown Data="@Groups"
+                                                            Value="@SelectedGroupId"
+                                                            ValueProperty="Id"
+                                                            TextProperty="Name"
+                                                            Placeholder="All Groups"
+                                                            Change="@(args => OnGroupChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Sub Group" Component="SubGroupFilter" />
+                                            <RadzenDropDown Data="@FilteredSubGroups"
+                                                            Value="@SelectedSubGroupId"
+                                                            ValueProperty="Id"
+                                                            TextProperty="Name"
+                                                            Placeholder="All Sub Groups"
+                                                            Change="@(args => OnSubGroupChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Design" Component="DesignFilter" />
+                                            <RadzenDropDown Data="@FilteredDesigns"
+                                                            Value="@SelectedDesignId"
+                                                            ValueProperty="Id"
+                                                            TextProperty="Name"
+                                                            Placeholder="All Designs"
+                                                            Change="@(args => OnDesignChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Color" Component="ColorFilter" />
+                                            <RadzenDropDown Data="@Colors"
+                                                            Value="@SelectedColorId"
+                                                            ValueProperty="Id"
+                                                            TextProperty="Name"
+                                                            Placeholder="All Colors"
+                                                            Change="@(args => OnColorChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Size" Component="SizeFilter" />
+                                            <RadzenDropDown Data="@Sizes"
+                                                            Value="@SelectedSizeId"
+                                                            ValueProperty="Id"
+                                                            TextProperty="Name"
+                                                            Placeholder="All Sizes"
+                                                            Change="@(args => OnSizeChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="3">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Catalog" Component="CatalogueFilter" />
+                                            <RadzenDropDown Data="@Catalogues"
+                                                            Value="@SelectedCatalogueId"
+                                                            ValueProperty="CatalogueId"
+                                                            TextProperty="CatalogueName"
+                                                            Placeholder="All Catalogs"
+                                                            Change="@(args => OnCatalogueChanged(args as int?))"
+                                                            Style="width:100%;" />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenFieldset>
 
-                            <RadzenCard class="mt-2" Style="max-height:400px;overflow-y:auto;">
-                                @if (ProductRows.Any())
-                                {
-                                    <RadzenDataGrid Data="@ProductRows"
-                                                    TItem="CouponProductRow"
-                                                    AllowPaging="true"
-                                                    PageSize="15"
-                                                    AllowSorting="true"
-                                                    AllowFiltering="true"
-                                                    Density="Density.Compact"
-                                                    GridLines="DataGridGridLines.Horizontal">
-                                        <Columns>
-                                            <RadzenDataGridColumn TItem="CouponProductRow" Title="Select" Width="60px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
-                                                <Template Context="row">
-                                        <RadzenCheckBox @bind-Value="row.Selected" />
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                            <RadzenDataGridColumn TItem="CouponProductRow" Property="Item.Barcode" Title="Barcode" Width="120px" />
-                                            <RadzenDataGridColumn TItem="CouponProductRow" Property="Item.Name" Title="Product Name" Width="200px" />
-                                            <RadzenDataGridColumn TItem="CouponProductRow" Property="MinQty" Title="Min Qty" Width="80px" TextAlign="TextAlign.Center">
-                                                <Template Context="row">
-                                                    <RadzenNumeric @bind-Value="row.MinQty"
-                                                                   Style="width:60px;"
-                                                                   Min="0" ShowUpDown="true" Disabled="@(!row.Selected)" />
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                            <RadzenDataGridColumn TItem="CouponProductRow" Property="DiscountOverride" Title="Disc. Override" Width="100px">
-                                                <Template Context="row">
-                                                    <RadzenNumeric @bind-Value="row.DiscountOverride"
-                                                                   Style="width:80px;"
-                                                                   Min="0" Disabled="@(!row.Selected)" />
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                        </Columns>
-                                    </RadzenDataGrid>
-                                }
-                                else
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="color:var(--rz-text-secondary);padding:12px;">
-                                        No products loaded.
-                                    </RadzenText>
-                                }
-                            </RadzenCard>
+                        <!-- Scan / Search -->
+                        <RadzenFieldset Text="Scan or Search Products" Icon="barcode">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <span style="width:8px;height:8px;border-radius:50%;background:@(Scanning ? "#22c55e" : "#ccc");display:inline-block;transition:background 0.3s;" />
+                                <RadzenTextBox @bind-Value="SearchText"
+                                               Placeholder="Scan barcode / QR or type product name..."
+                                               Style="flex:1;"
+                                               @onkeydown="@OnSearchKeyDown" />
+                                <RadzenButton Icon="scan"
+                                              Text="Simulate Scan"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Click="@SimulateScan" />
+                                <RadzenButton Icon="search"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Click="@SearchByBarcode" />
+                            </RadzenStack>
+                        </RadzenFieldset>
+
+                        <!-- Product List -->
+                        <RadzenFieldset Text="Product List" Icon="package">
+                            <!-- Selected count banner -->
+                            @if (AllSelected)
+                            {
+                                <div style="display:flex;align-items:center;gap:8px;background:var(--rz-success-light);border:1px solid var(--rz-success);border-radius:var(--rz-border-radius);padding:8px 12px;margin-bottom:12px;font-size:13px;">
+                                    <i class="ti ti-check" aria-hidden="true"></i>
+                                    <span>All @ProductRows.Count products selected.</span>
+                                </div>
+                            }
+
+                            <!-- Bulk action bar -->
+                            <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:10px 12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);margin-bottom:12px;">
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <label style="font-size:12px;color:var(--rz-text-secondary);font-weight:500;">Selected</label>
+                                    <RadzenNumeric Value="@SelectedCount" Disabled="true" Style="width:72px;" />
+                                </div>
+                                <RadzenButton Text="@(AllSelected ? "Deselect All" : "Select All")"
+                                              Icon="@(AllSelected ? "deselect" : "select_all")"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Size="ButtonSize.Small"
+                                              Click="@ToggleAll" />
+                            </div>
+
+                            <!-- Product table -->
+                            <RadzenDataGrid Data="@ProductRows"
+                                            TItem="CouponProductRow"
+                                            AllowPaging="true" PageSize="15"
+                                            AllowSorting="true"
+                                            AllowFiltering="true"
+                                            Density="Density.Compact"
+                                            GridLines="DataGridGridLines.Horizontal">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="CouponProductRow" Title="Select" Width="60px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                                        <Template Context="row">
+                                            <input type="checkbox" checked="@row.Selected"
+                                                   @onchange="() => ToggleItem(row)"
+                                                   disabled="@(AllSelected && row.Source == "all")" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CouponProductRow" Property="Item.Name" Title="Product Name" Width="200px" />
+                                    <RadzenDataGridColumn TItem="CouponProductRow" Property="Item.Barcode" Title="Barcode" Width="140px" />
+                                    <RadzenDataGridColumn TItem="CouponProductRow" Title="Category" Width="120px">
+                                        <Template Context="row">
+                                            @(row.Item.GroupName ?? row.Item.ProductType ?? "-")
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CouponProductRow" Title="Source" Width="90px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                                        <Template Context="row">
+                                            @if (row.Source == "scan")
+                                            {
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Scanned" />
+                                            }
+                                            else if (row.Source == "all")
+                                            {
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="All" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+
+                            <!-- Footer -->
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--rz-border);">
+                                <span style="font-size:13px;color:var(--rz-text-secondary);">@SelectedCount of @ProductRows.Count products selected</span>
+                            </div>
                         </RadzenFieldset>
                     }
 

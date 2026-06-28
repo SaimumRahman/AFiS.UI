@@ -44,6 +44,35 @@ namespace JM.UI.Client.Services
                     }
                 }
             },
+            // ─────────────────────────────────────────
+            // 2. Discount Setup
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Discount",
+                Icon = "\ue8d2",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "General Discount",
+                        Path        = "/DiscountManagerList",
+                        Icon        = "\ue8d2",
+                        Title       = "General Discount",
+                        Description = "Manage general discount configurations",
+                        Tags        = new[] { "discount", "general", "promotion" }
+                    },
+                    new Example
+                    {
+                        Name        = "Coupon Setup",
+                        Path        = "/CouponList",
+                        Icon        = "\ue8d2",
+                        Title       = "Coupons",
+                        Description = "Manage discount coupons and promotional codes",
+                        Tags        = new[] { "coupon", "promotion", "discount" }
+                    }
+                }
+            },
  
             // ─────────────────────────────────────────
             // 3. Human Resources
@@ -179,15 +208,7 @@ namespace JM.UI.Client.Services
                         Description = "Manage product size variants",
                         Tags        = new[] { "size", "variant", "inventory" }
                     },
-                    new Example
-                    {
-                        Name        = "Discount Setup",
-                        Path        = "/DiscountManagerList",
-                        Icon        = "\ue8d2",
-                        Title       = "Sizes",
-                        Description = "Manage product size variants",
-                        Tags        = new[] { "size", "variant", "inventory" }
-                    },
+                   
                     new Example
                     {
                         Name        = "Barcodes",

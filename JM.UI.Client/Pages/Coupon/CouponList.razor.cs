@@ -16,6 +16,32 @@ namespace JM.UI.Client.Pages.Coupon
         protected bool IsLoading { get; set; } = false;
         protected HashSet<int> LoadingDetails { get; set; } = new();
 
+        protected async Task OnRowExpand(CouponDTO coupon)
+        {
+            if (coupon.CouponItems?.Count > 0) return;
+
+            try
+            {
+                LoadingDetails.Add(coupon.Id);
+                StateHasChanged();
+
+                var full = await _serviceUnitOfWork.CouponService.GetById(coupon.Id);
+                if (full != null)
+                {
+                    coupon.CouponItems = full.CouponItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load details: {ex.Message}");
+            }
+            finally
+            {
+                LoadingDetails.Remove(coupon.Id);
+                StateHasChanged();
+            }
+        }
+
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();

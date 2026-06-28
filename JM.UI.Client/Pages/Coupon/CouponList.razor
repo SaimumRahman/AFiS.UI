@@ -29,11 +29,13 @@
         <RadzenDataGrid @ref="CouponsGrid"
                         Data="@Coupons"
                         TItem="CouponDTO"
-                        AllowFiltering="true"
-                        AllowColumnResize="true"
-                        AllowAlternatingRows="true"
-                        AllowPaging="true"
-                        AllowSorting="true"
+                         AllowFiltering="true"
+                         AllowColumnResize="true"
+                         AllowAlternatingRows="true"
+                         AllowPaging="true"
+                         AllowSorting="true"
+                         AllowRowExpand="true"
+                         RowExpand="@OnRowExpand"
                         PagerHorizontalAlign="HorizontalAlign.Center"
                         PageSize="10"
                         PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
@@ -88,6 +90,14 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <RadzenDataGridColumn TItem="CouponDTO" Title="Products" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                     Text="@(item.CouponItems?.Count.ToString() ?? "0")"
+                                     Icon="package" />
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <RadzenDataGridColumn TItem="CouponDTO" Title="Used" Width="80px" TextAlign="TextAlign.Center">
                     <Template Context="item">
                         <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"{item.UsedCount}")" />
@@ -127,6 +137,39 @@
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
+            <Template Context="item">
+                @if (LoadingDetails.Contains(item.Id))
+                {
+                    <div style="padding:16px;text-align:center;">
+                        <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="height:24px;width:24px;" />
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin-left:8px;color:var(--rz-text-secondary);">Loading details...</RadzenText>
+                    </div>
+                }
+                else if (item.CouponItems?.Count > 0)
+                {
+                    <RadzenCard Style="margin:8px 0;padding:12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom:8px;">
+                            <RadzenIcon Icon="package" Style="margin-right:4px;" /> Products (@item.CouponItems.Count)
+                        </RadzenText>
+                        <RadzenDataGrid Data="@item.CouponItems"
+                                        TItem="CouponItemDTO"
+                                        AllowPaging="false"
+                                        AllowSorting="false"
+                                        AllowFiltering="false"
+                                        GridLines="DataGridGridLines.Horizontal"
+                                        Density="Density.Compact">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="CouponItemDTO" Property="Barcode" Title="Barcode" Width="130px" />
+                                <RadzenDataGridColumn TItem="CouponItemDTO" Property="ItemName" Title="Product" Width="200px" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="padding:12px;color:var(--rz-text-secondary);">No product details found.</RadzenText>
+                }
+            </Template>
         </RadzenDataGrid>
     </RadzenCard>
 </RadzenContent>

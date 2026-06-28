@@ -72,7 +72,11 @@ namespace JM.UI.DataService.DAL.Coupon
             {
                 _logger.LogInformation("Saving coupon");
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.PostAsJsonAsync("api/Coupon/insert-update", coupon);
+                var command = new
+                {
+                    Coupon = coupon
+                };
+                var response = await httpClient.PostAsJsonAsync("api/Coupon/insert-update", command);
                 response.EnsureSuccessStatusCode();
                 var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
                 return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
