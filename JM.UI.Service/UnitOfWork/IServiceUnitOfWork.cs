@@ -132,5 +132,6 @@ namespace JM.UI.Service.UnitOfWork
         IInvRequisitionService InvRequisitionService { get; }
         ICouponTypeService CouponTypeService { get; }
         ICouponService CouponService { get; }
+        ITransferTypeService TransferTypeService { get; }
     }
 }

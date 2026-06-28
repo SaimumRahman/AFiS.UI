@@ -117,6 +117,7 @@ namespace JM.UI.Service.UnitOfWork
         public IInvRequisitionService InvRequisitionService { get; private set; }
         public ICouponTypeService CouponTypeService { get; private set; }
         public ICouponService CouponService { get; private set; }
+        public ITransferTypeService TransferTypeService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -172,6 +173,7 @@ namespace JM.UI.Service.UnitOfWork
             InvRequisitionService = new InvRequisitionService(_repoUow);
             CouponTypeService = new CouponTypeService(_repoUow);
             CouponService = new CouponService(_repoUow);
+            TransferTypeService = new TransferTypeService(_repoUow);
         }
         public void Dispose()
         {

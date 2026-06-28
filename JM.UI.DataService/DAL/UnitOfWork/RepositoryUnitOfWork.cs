@@ -138,6 +138,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IInvRequisitionRepository InvRequisitionRepository { get; }
         public ICouponTypeRepository CouponTypeRepository { get; }
         public ICouponRepository CouponRepository { get; }
+        public ITransferTypeRepository TransferTypeRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -198,6 +199,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             InvRequisitionRepository = new InvRequisitionRepository(factory, tokenProvider, loggerFactory.CreateLogger<InvRequisitionRepository>());
             CouponTypeRepository = new CouponTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponTypeRepository>());
             CouponRepository = new CouponRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponRepository>());
+            TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
         }
 
         public void Dispose()

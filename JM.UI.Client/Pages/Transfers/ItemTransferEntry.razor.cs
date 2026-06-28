@@ -183,12 +183,12 @@ namespace JM.UI.Client.Pages.Transfers
                 await LoadItemsForStore(Transfer.StoreId);
 
                 // â”€â”€ Transfer Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                var transactionTypes = await _serviceUnitOfWork.ItemService.GetTransactionTypes();
-                TransferTypes = (transactionTypes ?? new List<TransactionTypeDTO>())
+                var transactionTypes = (await _serviceUnitOfWork.TransferTypeService.GetTransferTypes()).ToList();
+                TransferTypes = (transactionTypes ?? new List<TransferTypeDTO>())
                     .Select(tt => new LookupItemDTO
                     {
-                        Id = tt.TransactionTypeID,
-                        Name = tt.TransactionTypeName
+                        Id = tt.TransferTypeId,
+                        Name = tt.TransferTypeName
                     }).ToList();
             }
             catch (Exception ex)
@@ -262,7 +262,7 @@ namespace JM.UI.Client.Pages.Transfers
             var selectedType = TransferTypes.FirstOrDefault(t => t.Id == transTypeId.Value);
             if (selectedType is null) return;
 
-            var isDamaged = selectedType.Name.Equals("Damaged", StringComparison.OrdinalIgnoreCase);
+            var isDamaged = selectedType.Name.Equals("Damage", StringComparison.OrdinalIgnoreCase);
             IsDamagedMode = isDamaged;
 
             if (isDamaged)

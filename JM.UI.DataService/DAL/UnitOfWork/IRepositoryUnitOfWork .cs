@@ -130,5 +130,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IInvRequisitionRepository InvRequisitionRepository { get; }
         ICouponTypeRepository CouponTypeRepository { get; }
         ICouponRepository CouponRepository { get; }
+        ITransferTypeRepository TransferTypeRepository { get; }
     }
 }
