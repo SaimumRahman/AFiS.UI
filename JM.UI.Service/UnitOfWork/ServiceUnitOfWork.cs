@@ -26,6 +26,7 @@ using JM.UI.Service.GroupRoutePermission;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
+using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
@@ -114,6 +115,9 @@ namespace JM.UI.Service.UnitOfWork
         public ICustomerDetailsService CustomerDetailsService { get; private set; }
         public IDiscountManagerService DiscountManagerService { get; private set; }
         public IInvRequisitionService InvRequisitionService { get; private set; }
+        public ICouponTypeService CouponTypeService { get; private set; }
+        public ICouponService CouponService { get; private set; }
+        public ITransferTypeService TransferTypeService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -167,6 +171,9 @@ namespace JM.UI.Service.UnitOfWork
             CustomerDetailsService = new CustomerDetailsService(_repoUow);
             DiscountManagerService = new DiscountManagerService(_repoUow);
             InvRequisitionService = new InvRequisitionService(_repoUow);
+            CouponTypeService = new CouponTypeService(_repoUow);
+            CouponService = new CouponService(_repoUow);
+            TransferTypeService = new TransferTypeService(_repoUow);
         }
         public void Dispose()
         {

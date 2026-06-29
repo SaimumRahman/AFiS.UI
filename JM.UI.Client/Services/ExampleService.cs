@@ -44,6 +44,35 @@ namespace JM.UI.Client.Services
                     }
                 }
             },
+            // ─────────────────────────────────────────
+            // 2. Discount Setup
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Discount",
+                Icon = "\ue8d2",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "General Discount",
+                        Path        = "/DiscountManagerList",
+                        Icon        = "\ue8d2",
+                        Title       = "General Discount",
+                        Description = "Manage general discount configurations",
+                        Tags        = new[] { "discount", "general", "promotion" }
+                    },
+                    new Example
+                    {
+                        Name        = "Coupon Setup",
+                        Path        = "/CouponList",
+                        Icon        = "\ue8d2",
+                        Title       = "Coupons",
+                        Description = "Manage discount coupons and promotional codes",
+                        Tags        = new[] { "coupon", "promotion", "discount" }
+                    }
+                }
+            },
  
             // ─────────────────────────────────────────
             // 3. Human Resources
@@ -179,15 +208,7 @@ namespace JM.UI.Client.Services
                         Description = "Manage product size variants",
                         Tags        = new[] { "size", "variant", "inventory" }
                     },
-                    new Example
-                    {
-                        Name        = "Discount Setup",
-                        Path        = "/DiscountManagerList",
-                        Icon        = "\ue8d2",
-                        Title       = "Sizes",
-                        Description = "Manage product size variants",
-                        Tags        = new[] { "size", "variant", "inventory" }
-                    },
+                   
                     new Example
                     {
                         Name        = "Barcodes",
@@ -210,15 +231,7 @@ namespace JM.UI.Client.Services
                 Children = new[]
                 {
                     // ── Orders & Invoices ──
-                    new Example
-                    {
-                        Name        = "Purchase Orders",
-                        Path        = "/PurchaseOrdersList",
-                        Icon        = "\ue8cc",
-                        Title       = "Purchase Orders",
-                        Description = "Create and track purchase orders",
-                        Tags        = new[] { "po", "order", "purchase" }
-                    },
+                    
                     new Example
                     {
                         Name        = "Purchase",
@@ -237,15 +250,7 @@ namespace JM.UI.Client.Services
                         Description = "Manage draft purchase entries before posting",
                         Tags        = new[] { "draft", "purchase" }
                     },
-                    new Example
-                    {
-                        Name        = "Purchase Invoices",
-                        Path        = "/PurchasesList",
-                        Icon        = "\ue873",
-                        Title       = "Purchase Invoices",
-                        Description = "Record and manage received invoices",
-                        Tags        = new[] { "invoice", "bill", "purchase" }
-                    },
+                    
                     new Example
                     {
                         Name        = "Purchase Returns",
@@ -277,15 +282,7 @@ namespace JM.UI.Client.Services
                     },
  
                     // ── Transfers ──
-                    new Example
-                    {
-                        Name        = "Item Transfer",
-                        Path        = "/ItemTransfer",
-                        Icon        = "\ue0d1",
-                        Title       = "Item Transfer",
-                        Description = "Transfer items between stores",
-                        Tags        = new[] { "transfer", "stock", "store", "issue" }
-                    },
+                   
                     new Example
                     {
                         Name        = "Transfer List",

@@ -444,7 +444,7 @@
                                                     ">
                                                     @* QR grid simulation *@
                                                     <svg width="@(QrSizePx - 6)" height="@(QrSizePx - 6)" viewBox="0 0 21 21">
-                                                        @foreach (var cell in GetQrCells(item.BarcodeValue))
+                                                        @foreach (var cell in GetQrCells(item.ReturnRefNo ?? item.BarcodeValue))
                                                         {
                                                             <rect x="@cell.X" y="@cell.Y" width="1" height="1" fill="#c0392b" />
                                                         }

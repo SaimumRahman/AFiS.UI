@@ -86,15 +86,19 @@ public class ItemService : IItemService
     }
 
     public async Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId)
-    {
-        try
         {
-            return await _unitOfWork.ItemRepository.LoadItemsBySubGroup(subGroupId);
+            try
+            {
+                return await _unitOfWork.ItemRepository.LoadItemsBySubGroup(subGroupId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
-        catch (Exception)
+
+        public async Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes()
         {
-            throw;
+            return await _unitOfWork.ItemRepository.GetTransactionTypes();
         }
     }
-
-}

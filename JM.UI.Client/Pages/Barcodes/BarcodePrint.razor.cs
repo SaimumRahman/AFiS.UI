@@ -77,8 +77,6 @@ public partial class BarcodePrintComponent : PosComponentBase
         try
         {
             IsLoadingConfig = true;
-            // TODO: wire to real service
-            // PrintConfig = (await _serviceUnitOfWork.BarcodePrintConfigService.GetAllBarcodePrintConfigs()).FirstOrDefault() ?? new();
             PrintConfig = new BarcodePrintConfigDTO
             {
                 LabelWidthMm = 50,

@@ -376,7 +376,7 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         }
     }
 
-    protected void SearchByBarcode()
+    protected async Task SearchByBarcode()
     {
         if (string.IsNullOrWhiteSpace(SearchText)) return;
         var text = SearchText.Trim().ToLower();
@@ -400,7 +400,32 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         }
         else
         {
-            notificationService.Notify(NotificationSeverity.Warning, "Not found", "⚠ No product matched");
+            var apiItem = await _serviceUnitOfWork.TransferService.SearchByBarcodeExact(SearchText.Trim(), 4);
+            if (apiItem != null)
+            {
+                var gridItem = new DiscountGridItem
+                {
+                    Item = apiItem,
+                    Selected = true,
+                    Source = "scan",
+                    CurrentSalePrice = apiItem.SalePrice ?? 0
+                };
+                GridItems.Add(gridItem);
+                Scanning = true;
+                InvokeAsync(async () =>
+                {
+                    await Task.Delay(800);
+                    Scanning = false;
+                    StateHasChanged();
+                });
+                notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {apiItem.Name} (from server)");
+                SearchText = "";
+                UpdateCampaignDetails();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Not found", "⚠ No product matched");
+            }
         }
     }
 

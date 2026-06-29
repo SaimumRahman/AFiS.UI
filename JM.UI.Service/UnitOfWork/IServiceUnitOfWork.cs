@@ -27,6 +27,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
+using JM.UI.Service.Coupon;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -129,5 +130,8 @@ namespace JM.UI.Service.UnitOfWork
         ICustomerDetailsService CustomerDetailsService { get; }
         IDiscountManagerService DiscountManagerService { get; }
         IInvRequisitionService InvRequisitionService { get; }
+        ICouponTypeService CouponTypeService { get; }
+        ICouponService CouponService { get; }
+        ITransferTypeService TransferTypeService { get; }
     }
 }

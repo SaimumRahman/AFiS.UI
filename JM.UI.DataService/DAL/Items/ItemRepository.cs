@@ -153,5 +153,24 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
+        public async Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching transaction types");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("Items/GetTransactionTypes");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<TransactionTypeDTO>>();
+                return result ?? new List<TransactionTypeDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching transaction types");
+                throw;
+            }
+        }
     }
 }

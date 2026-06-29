@@ -221,7 +221,8 @@ else
                                                 TextProperty="Name" ValueProperty="Id"
                                                 Placeholder="Select type..."
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Disabled="@IsProcessing" />
+                                                Disabled="@IsProcessing"
+                                                Change="@(args => OnTransferTypeChanged((int?)args))" />
                             </RadzenColumn>
                         </RadzenRow>
 
@@ -250,7 +251,7 @@ else
                                                     Placeholder="Select store..."
                                                     Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                     Change="@(args => OnFromStoreChanged((int?)args))"
-                                                    Disabled="@IsProcessing" />
+                                                    Disabled="@(IsProcessing || IsDamagedMode)" />
                                 }
                             </RadzenColumn>
                         </RadzenRow>
@@ -267,7 +268,7 @@ else
                                                 Placeholder="Select store..."
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                Disabled="@IsProcessing" />
+                                                Disabled="@(IsProcessing || IsDamagedMode)" />
                             </RadzenColumn>
                         </RadzenRow>
 

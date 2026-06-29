@@ -249,8 +249,20 @@ namespace JM.UI.Client.Pages.InvRequisition
 
                 if (item == null)
                 {
-                    notificationService.Notify(NotificationSeverity.Warning, "Not Found", $"No item found with barcode '{barcode}'.");
-                    return;
+                    try
+                    {
+                        item = await _serviceUnitOfWork.TransferService
+                                   .SearchByBarcodeExact(barcode, Requisition.FromStore.Value);
+                    }
+                    catch (Exception innerEx) when (
+                        innerEx.Message.Contains("does not contain any JSON") ||
+                        innerEx.Message.Contains("isFinalBlock") ||
+                        innerEx.Message.Contains("Unexpected error") ||
+                        innerEx.Message.Contains("JSON"))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Not Found", $"No item found with barcode '{barcode}'.");
+                        return;
+                    }
                 }
 
                 var existing = RequisitionDetails.FirstOrDefault(d =>
@@ -259,7 +271,7 @@ namespace JM.UI.Client.Pages.InvRequisition
                 {
                     existing.Qty += 1;
                     existing.Amount = existing.Qty * existing.UnitPrice;
-                    ItemsGrid.Reload();
+                    await ItemsGrid.Reload();
                     notificationService.Notify(NotificationSeverity.Info, "Qty Updated", $"Increased qty for '{item.Name}'.");
                     ScanBarcodeText = string.Empty;
                     return;
@@ -276,7 +288,7 @@ namespace JM.UI.Client.Pages.InvRequisition
                     CreateOn = DateTime.Now
                 });
 
-                ItemsGrid.Reload();
+                await ItemsGrid.Reload();
                 ScanBarcodeText = string.Empty;
                 notificationService.Notify(NotificationSeverity.Success, "Added", $"'{item.Name}' added with qty 1.");
             }

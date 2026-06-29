@@ -26,6 +26,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
+using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -135,6 +136,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICustomerDetailsRepository CustomerDetailsRepository { get; }
         public IDiscountManagerRepository DiscountManagerRepository { get; }
         public IInvRequisitionRepository InvRequisitionRepository { get; }
+        public ICouponTypeRepository CouponTypeRepository { get; }
+        public ICouponRepository CouponRepository { get; }
+        public ITransferTypeRepository TransferTypeRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -193,6 +197,9 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CustomerDetailsRepository = new CustomerDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<CustomerDetailsRepository>());
             DiscountManagerRepository = new DiscountManagerRepository(factory, tokenProvider, loggerFactory.CreateLogger<DiscountManagerRepository>());
             InvRequisitionRepository = new InvRequisitionRepository(factory, tokenProvider, loggerFactory.CreateLogger<InvRequisitionRepository>());
+            CouponTypeRepository = new CouponTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponTypeRepository>());
+            CouponRepository = new CouponRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponRepository>());
+            TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
         }
 
         public void Dispose()
