@@ -349,7 +349,7 @@
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Component="StoreId">
-                                            Store <span style="color:red"></span>
+                                            Store <span style="color:red">*</span>
                                         </RadzenLabel>
                                         <RadzenDropDown @bind-Value="Employee.StoreId"
                                                         Data="@Stores"
@@ -540,7 +540,7 @@
                                 <RadzenRow Gap="1rem">
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenStack Gap="0.25rem">
-                                            <RadzenLabel Text="Password" Component="Password" /><span style="color:red">*</span>
+                                            <RadzenLabel Text="Password *" Component="Password" />
                                             <RadzenTextBox @bind-Value="Employee.Password"
                                                            Name="Password"
                                                            Type="password"
@@ -552,7 +552,7 @@
 
                                     <RadzenColumn Size="12" SizeMD="6">
                                         <RadzenStack Gap="0.25rem">
-                                            <RadzenLabel Text="Confirm Password" Component="ConfirmPassword" /><span style="color:red">*</span>
+                                            <RadzenLabel Text="Confirm Password *" Component="ConfirmPassword" />
                                             <RadzenTextBox @bind-Value="Employee.ConfirmPassword"
                                                            Name="ConfirmPassword"
                                                            Type="password"
@@ -561,7 +561,6 @@
                                                            MaxLength="50" />
                                         </RadzenStack>
                                     </RadzenColumn>
-
                                 </RadzenRow>
                             </RadzenStack>
                         </RadzenFieldset>

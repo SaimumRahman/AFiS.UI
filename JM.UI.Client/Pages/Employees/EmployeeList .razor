@@ -74,13 +74,6 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <!-- Designation -->
-                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="DesignationName" Title="Designation" Width="180px">
-                    <Template Context="employee">
-                        @(employee.DesignationName ?? "N/A")
-                    </Template>
-                </RadzenDataGridColumn>
-
                 <!-- Contact -->
                 <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Contact" Title="Contact" Width="140px">
                     <Template Context="employee">
@@ -99,35 +92,18 @@
                 </RadzenDataGridColumn>
 
                 <!-- Email -->
-                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Email" Title="Email" Width="220px">
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="StoreName" Title="StoreName" Width="220px">
                     <Template Context="employee">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
-                            @if (!string.IsNullOrWhiteSpace(employee.Email))
+                            @if (!string.IsNullOrWhiteSpace(employee.StoreName))
                             {
-                                <RadzenIcon Icon="email" Style="font-size: 16px; color: var(--rz-text-secondary-color);" />
-                                <a href="mailto:@employee.Email" style="text-decoration: none; color: var(--rz-primary);">
-                                    @_serviceUnitOfWork.EmployeeService.Truncate(employee.Email, 25)
-                                </a>
+                                <span>@employee.StoreName</span>
                             }
                             else
                             {
                                 <span style="color: var(--rz-text-secondary-color);">N/A</span>
                             }
                         </RadzenStack>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <!-- Gender -->
-                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="Gender" Title="Gender" Width="100px" TextAlign="TextAlign.Center">
-                    <Template Context="employee">
-                        @if (!string.IsNullOrWhiteSpace(employee.Gender))
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@employee.Gender" />
-                        }
-                        else
-                        {
-                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
-                        }
                     </Template>
                 </RadzenDataGridColumn>
 
