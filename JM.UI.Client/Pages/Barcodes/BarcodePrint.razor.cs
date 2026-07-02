@@ -37,7 +37,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsLoadingTemplates { get; set; } = false;
 
     // ── Filter State ─────────────────────────────────────────────
-    protected DateTime FromDate { get; set; } = DateTime.Today;
+    protected DateTime FromDate { get; set; } = DateTime.Today.AddDays(-30);
     protected DateTime ToDate { get; set; } = DateTime.Today;
 
     // ── Purchase Dropdown ────────────────────────────────────────
@@ -371,7 +371,9 @@ public partial class BarcodePrintComponent : PosComponentBase
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
-                TemplateId = SelectedTemplateId ?? 0
+                TemplateId = SelectedTemplateId ?? 0,
+                SalesPrice = barcode.SalePrice.ToString() ?? "0",
+                ReturnRefNo = barcode.ReturnRefNo ?? "N/A"
             }
         };
         }

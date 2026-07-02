@@ -41,13 +41,13 @@
                                   IsBusy="@IsDownloadingPdf"
                                   BusyText="Generating PDF..."
                                   Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
-                    <RadzenButton Text="Print Barcodes"
+                    @* <RadzenButton Text="Print Barcodes"
                                   Icon="print"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Click="@OpenPrinterConfig"
                                   IsBusy="@IsPrinting"
                                   BusyText="Sending to Printer..."
-                                  Disabled="@(!PrintItems.Any() || IsPrinting)" />
+                                  Disabled="@(!PrintItems.Any() || IsPrinting)" /> *@
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -240,7 +240,7 @@
         </RadzenFieldset>
 
         @* ── Single Barcode Add ───────────────────────────────── *@
-        <RadzenFieldset Text="Add Single Barcode" Icon="add_circle_outline">
+@*         <RadzenFieldset Text="Add Single Barcode" Icon="add_circle_outline">
             <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
 
                 <RadzenColumn Size="12" SizeMD="6">
@@ -303,7 +303,7 @@
                 </RadzenColumn>
 
             </RadzenRow>
-        </RadzenFieldset>
+        </RadzenFieldset> *@
 
     </RadzenCard>
 
@@ -579,13 +579,13 @@
                                               IsBusy="@IsDownloadingPdf"
                                               BusyText="Generating PDF..."
                                               Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
-                                <RadzenButton Text="Print Barcodes"
+                                @* <RadzenButton Text="Print Barcodes"
                                               Icon="print"
                                               ButtonStyle="ButtonStyle.Primary"
                                               Click="@OpenPrinterConfig"
                                               IsBusy="@IsPrinting"
                                               BusyText="Sending to Printer..."
-                                              Disabled="@(!PrintItems.Any() || IsPrinting)" />
+                                              Disabled="@(!PrintItems.Any() || IsPrinting)" /> *@
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
@@ -750,13 +750,13 @@
                                               IsBusy="@IsDownloadingPdf"
                                               BusyText="Generating PDF..."
                                               Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
-                                <RadzenButton Text="Print Barcodes"
+                                @* <RadzenButton Text="Print Barcodes"
                                               Icon="print"
                                               ButtonStyle="ButtonStyle.Primary"
                                               Click="@OpenPrinterConfig"
                                               IsBusy="@IsPrinting"
                                               BusyText="Sending to Printer..."
-                                              Disabled="@(!PrintItems.Any() || IsPrinting)" />
+                                              Disabled="@(!PrintItems.Any() || IsPrinting)" /> *@
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
