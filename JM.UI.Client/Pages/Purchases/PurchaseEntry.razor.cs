@@ -731,8 +731,11 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
+        private bool _userEditedPurchasePrice = false;
+
         protected void OnPreviewRowPriceChanged(PreviewItemRow row)
         {
+            _userEditedPurchasePrice = true;
             RecalculatePreviewRow(row);
             PreviewGrid?.Reload();
             StateHasChanged();
@@ -740,6 +743,21 @@ namespace JM.UI.Client.Pages.Purchases
 
         private void RecalculatePreviewRow(PreviewItemRow row)
         {
+            if (_userEditedPurchasePrice)
+            {
+                var baseComponents = row.BasePurchasePrice
+                                    + (row.OtherCost ?? 0)
+                                    + (row.CarryingCost ?? 0)
+                                    + (row.TransportCost ?? 0)
+                                    + (row.OperationalCost ?? 0);
+
+                var calculated = Math.Max(0, baseComponents * row.Quantity);
+                row.TotalAmount = calculated;
+
+                _userEditedPurchasePrice = false;
+                return;
+            }
+
             // Recalculate P.Rate from components
             row.PurchasePrice = row.BasePurchasePrice
                               + (row.OtherCost ?? 0)
@@ -757,6 +775,12 @@ namespace JM.UI.Client.Pages.Purchases
             }
 
             row.TotalAmount = baseAmount + vatAmt;
+        }
+
+        protected async Task OnSharedPriceChanged(EditContext context)
+        {
+            _userEditedPurchasePrice = false;
+            await InvokeAsync(StateHasChanged);
         }
 
         protected async Task RemovePreviewRow(PreviewItemRow row)
