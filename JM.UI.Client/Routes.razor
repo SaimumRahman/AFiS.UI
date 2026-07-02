@@ -11,61 +11,78 @@
 @inject DialogService DialogService
 @implements IDisposable
 
-<CascadingAuthenticationState>
-    <Router AppAssembly="typeof(Routes).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
-                    {
-                        <RedirectToLogin />
-                    }
-                    else
-                    {
+@if (!_permissionChecked)
+{
+    <div class="rz-text-align-center rz-p-12">
+        <div class="rz-mt-12">
+            <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+            <div class="rz-mt-4">Checking authorization...</div>
+        </div>
+    </div>
+}
+else if (_isAuthenticated && !_hasRouteAccess)
+{
+    <div></div>
+}
+else
+{
+    <CascadingAuthenticationState>
+        <Router AppAssembly="typeof(Routes).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                    <NotAuthorized>
+                        @if (context.User.Identity?.IsAuthenticated != true)
+                        {
+                            <RedirectToLogin />
+                        }
+                        else
+                        {
+                            <div class="rz-text-align-center rz-p-12">
+                                <h3>Access Denied</h3>
+                                <p>You are not authorized to access this page.</p>
+                            </div>
+                        }
+                    </NotAuthorized>
+                    <Authorizing>
                         <div class="rz-text-align-center rz-p-12">
-                            <h3>Access Denied</h3>
-                            <p>You are not authorized to access this page.</p>
+                            <div class="rz-mt-12">
+                                <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
+                                <div class="rz-mt-4">Checking authorization...</div>
+                            </div>
                         </div>
-                    }
-                </NotAuthorized>
-                <Authorizing>
-                    <div class="rz-text-align-center rz-p-12">
-                        <div class="rz-mt-12">
-                            <i class="rzi rzi-refresh rzi-spin" style="font-size: 48px;"></i>
-                            <div class="rz-mt-4">Checking authorization...</div>
-                        </div>
-                    </div>
-                </Authorizing>
-            </AuthorizeRouteView>
-        </Found>
-        <NotFound>
-            <LayoutView Layout="typeof(MainLayout)">
-                <NotFound />
-            </LayoutView>
-        </NotFound>
-    </Router>
-</CascadingAuthenticationState>
+                    </Authorizing>
+                </AuthorizeRouteView>
+            </Found>
+            <NotFound>
+                <LayoutView Layout="typeof(MainLayout)">
+                    <NotFound />
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </CascadingAuthenticationState>
+}
 
 @code {
-    // Track an ongoing check so we can cancel stale ones
+    private bool _permissionChecked;
+    private bool _hasRouteAccess;
+    private bool _isAuthenticated;
     private CancellationTokenSource _cts = new();
     private IDisposable? _locationChangingHandler;
 
     protected override void OnInitialized()
     {
         navigationManager.LocationChanged += OnLocationChanged;
-        // This fires BEFORE navigation, allowing cancellation
         _locationChangingHandler = navigationManager.RegisterLocationChangingHandler(OnLocationChanging);
     }
 
     protected override async Task OnInitializedAsync()
     {
         await CheckRoutePermissionAsync(_cts.Token);
+        StateHasChanged();
     }
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // Cancel any previous in-flight check
         await _cts.CancelAsync();
         _cts = new CancellationTokenSource();
 
@@ -74,23 +91,16 @@
             await CheckRoutePermissionAsync(_cts.Token);
             await InvokeAsync(StateHasChanged);
         }
-        catch (OperationCanceledException)
-        {
-            // Navigation changed again before this check finished — safe to ignore
-        }
-        catch
-        {
-            // log if needed
-        }
+        catch (OperationCanceledException) { }
+        catch { }
     }
+
     private async ValueTask OnLocationChanging(LocationChangingContext context)
     {
         if (!NavigationGuard.IsGuardActive)
             return;
 
-        // Show Radzen confirmation dialog
         bool confirmed = false;
-
         await InvokeAsync(async () =>
         {
             var result = await DialogService.Confirm(
@@ -101,53 +111,69 @@
                     OkButtonText = "Leave",
                     CancelButtonText = "Stay",
                 });
-
             confirmed = result == true;
         });
 
         if (!confirmed)
             context.PreventNavigation();
     }
+
     private async Task CheckRoutePermissionAsync(CancellationToken ct)
     {
         try
         {
+            _permissionChecked = false;
+            _hasRouteAccess = false;
+            _isAuthenticated = false;
+
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             ct.ThrowIfCancellationRequested();
 
             var user = authState.User;
             if (user.Identity?.IsAuthenticated != true)
+            {
+                _permissionChecked = true;
                 return;
+            }
+
+            _isAuthenticated = true;
 
             var userId = await GetUserInfoAsync();
             ct.ThrowIfCancellationRequested();
 
-            // Admins always have access
             if (userId == 1)
+            {
+                _hasRouteAccess = true;
+                _permissionChecked = true;
                 return;
+            }
 
             var relativePath = navigationManager.ToBaseRelativePath(navigationManager.Uri);
             var routePath = "/" + relativePath.Split('?')[0];
+            routePath = NormalizeRoutePath(routePath);
 
-            // Normalize dynamic segments before checking permission
-                routePath = NormalizeRoutePath(routePath);
-
-            if (routePath == "/" || routePath == "/dashboard")
+            if (routePath == "/" || routePath == "/dashboard" || routePath == "/UnAuthorized")
+            {
+                _hasRouteAccess = true;
+                _permissionChecked = true;
                 return;
+            }
 
             var hasAccess = await permissionService.CanAccessRoute(routePath);
             ct.ThrowIfCancellationRequested();
 
+            _hasRouteAccess = hasAccess;
+            _permissionChecked = true;
+
             if (!hasAccess)
-            {
                 await InvokeAsync(() => navigationManager.NavigateTo("/UnAuthorized"));
-            }
         }
         catch (OperationCanceledException)
         {
-            throw; // let caller handle
+            throw;
         }
     }
+
     public void Dispose()
     {
         navigationManager.LocationChanged -= OnLocationChanged;
@@ -155,49 +181,40 @@
         _cts.Cancel();
         _cts.Dispose();
     }
+
     private async Task<int> GetUserInfoAsync()
     {
         var userInfoResult = await sessionStorage.GetAsync<string>("UserId");
-
         if (!string.IsNullOrEmpty(userInfoResult.Value))
         {
             var userInfo = JsonConvert.DeserializeObject<string>(userInfoResult.Value);
             return Convert.ToInt32(userInfo);
         }
-
         return 0;
     }
+
     private string NormalizeRoutePath(string path)
     {
-        // Handle /PurchaseEntry/Edit/5  --> /PurchaseEntry/Edit/{Id:int}
-        // Handle /PurchaseEntry/Draft/5 --> /PurchaseEntry/Draft/{DraftId:int}
-        // Handle /ItemTransfer/Edit/5   --> /ItemTransfer/Edit/{Id:int}
-        // Handle all other /SomePage/5  --> /SomePage/{Id:int}
-
         return System.Text.RegularExpressions.Regex.Replace(
-                path,
-                @"/\d+$",
-                match =>
-                {
-                    // Check which parameter name to use based on path
-                    if (path.Contains("/GroupRoutePermissionAdd") || path.Contains("/GroupActionPermissionsAdd"))
-                        return "/{GroupId:int}";
-                    if (path.Contains("/PurchaseEntry/Draft"))
-                        return "/{DraftId:int}";
-                    if (path.Contains("/AccountsGroupsAdd"))
-                        return "/{AccountsGroupsID:int}";
-                    if (path.Contains("/BanksAdd"))
-                        return "/{BanksID:int}";
-                    if (path.Contains("/DesignationAdd"))
-                        return "/{DesignationID:int}";
-                    if (path.Contains("/SizesAdd"))
-                        return "/{SizesID:int}";
-                    if (path.Contains("/ActionAdd"))
-                        return "/{ActionId:int}";
-
-                    // Default for all others
-                    return "/{Id:int}";
-                }
-            );
+            path,
+            @"/\d+$",
+            match =>
+            {
+                if (path.Contains("/GroupRoutePermissionAdd") || path.Contains("/GroupActionPermissionsAdd"))
+                    return "/{GroupId:int}";
+                if (path.Contains("/PurchaseEntry/Draft"))
+                    return "/{DraftId:int}";
+                if (path.Contains("/AccountsGroupsAdd"))
+                    return "/{AccountsGroupsID:int}";
+                if (path.Contains("/BanksAdd"))
+                    return "/{BanksID:int}";
+                if (path.Contains("/DesignationAdd"))
+                    return "/{DesignationID:int}";
+                if (path.Contains("/SizesAdd"))
+                    return "/{SizesID:int}";
+                if (path.Contains("/ActionAdd"))
+                    return "/{ActionId:int}";
+                return "/{Id:int}";
+            });
     }
 }
