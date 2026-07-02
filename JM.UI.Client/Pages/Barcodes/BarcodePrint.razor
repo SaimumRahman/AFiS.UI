@@ -33,6 +33,14 @@
                                       Click="@ClearAll"
                                       Disabled="@IsPrinting" />
                     }
+                    <RadzenButton Text="Download PDF"
+                                  Icon="download"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Variant="Variant.Outlined"
+                                  Click="@DownloadPdfAsync"
+                                  IsBusy="@IsDownloadingPdf"
+                                  BusyText="Generating PDF..."
+                                  Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
                     <RadzenButton Text="Print Barcodes"
                                   Icon="print"
                                   ButtonStyle="ButtonStyle.Primary"
@@ -563,6 +571,14 @@
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                 <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
+                                <RadzenButton Text="Download PDF"
+                                              Icon="download"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Variant="Variant.Outlined"
+                                              Click="@DownloadPdfAsync"
+                                              IsBusy="@IsDownloadingPdf"
+                                              BusyText="Generating PDF..."
+                                              Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
                                 <RadzenButton Text="Print Barcodes"
                                               Icon="print"
                                               ButtonStyle="ButtonStyle.Primary"
@@ -726,6 +742,14 @@
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                                 <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Flat" Click="@ClearAll" Disabled="@IsPrinting" />
+                                <RadzenButton Text="Download PDF"
+                                              Icon="download"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Variant="Variant.Outlined"
+                                              Click="@DownloadPdfAsync"
+                                              IsBusy="@IsDownloadingPdf"
+                                              BusyText="Generating PDF..."
+                                              Disabled="@(!PrintItems.Any() || IsDownloadingPdf)" />
                                 <RadzenButton Text="Print Barcodes"
                                               Icon="print"
                                               ButtonStyle="ButtonStyle.Primary"

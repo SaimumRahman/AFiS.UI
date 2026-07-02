@@ -1,0 +1,154 @@
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using JM.UI.Entities.Model.Barcodes;
+
+namespace JM.UI.Service.Reports;
+
+public class BarcodePrintPdfService
+{
+    private const string Black = "#000000";
+
+    public byte[] GeneratePdf(
+        List<BarcodePrintItemDTO> items,
+        List<string> fields,
+        decimal labelWidthMm,
+        decimal labelHeightMm)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        if (items.Count == 0)
+            return Array.Empty<byte>();
+
+        float lw = (float)labelWidthMm;
+        float lh = (float)labelHeightMm;
+
+        var allLabels = new List<(BarcodePrintItemDTO Item, int Copy, int Of)>();
+        foreach (var item in items)
+            for (int c = 1; c <= item.PrintQty; c++)
+                allLabels.Add((item, c, item.PrintQty));
+
+        var document = Document.Create(d =>
+        {
+            foreach (var (item, copy, of) in allLabels)
+            {
+                d.Page(page =>
+                {
+                    page.Size(lw, lh, Unit.Millimetre);
+                    page.MarginLeft(3, Unit.Millimetre);
+                    page.MarginRight(3, Unit.Millimetre);
+                    page.MarginTop(2, Unit.Millimetre);
+                    page.MarginBottom(2, Unit.Millimetre);
+                    page.DefaultTextStyle(x => x.FontSize(7).FontFamily("Arial"));
+
+                    page.Content().Element(c =>
+                        ComposeLabelInCell(c, item, fields, copy, of, lw, lh));
+                });
+            }
+        });
+
+        return document.GeneratePdf();
+    }
+
+    private static void ComposeLabelInCell(
+        IContainer cell,
+        BarcodePrintItemDTO item,
+        List<string> fields,
+        int copy,
+        int of,
+        float lw,
+        float lh)
+    {
+        float qrSizeMm = Math.Min(lh * 0.42f, lw * 0.38f);
+        float qrSizeSvg = Math.Max(60, (int)(qrSizeMm * 3));
+        var qrData = item.ReturnRefNo ?? item.BarcodeValue ?? "";
+
+        cell.Padding(1f)
+            .Column(col =>
+            {
+                if (fields.Contains("ProductName", StringComparer.OrdinalIgnoreCase))
+                    col.Item().PaddingTop(0.3f).Text(item.ProductName ?? "")
+                        .Bold().FontSize(7f);
+
+                if (fields.Contains("Brand", StringComparer.OrdinalIgnoreCase))
+                    col.Item().Text(string.IsNullOrWhiteSpace(item.Brand) ? "\u2014" : item.Brand)
+                        .FontSize(6f);
+
+                col.Item().PaddingTop(0.5f).Row(r =>
+                {
+                    r.AutoItem().Element(q =>
+                        q.Width(qrSizeMm, Unit.Millimetre)
+                         .Height(qrSizeMm, Unit.Millimetre)
+                         .Border(0.3f)
+                         .BorderColor(Black)
+                         .Svg(_ => GenerateQrSvg(qrData, (int)qrSizeSvg)));
+
+                    r.RelativeItem().PaddingLeft(1f).Column(d =>
+                    {
+                        d.Item().Text(item.BarcodeValue ?? "")
+                            .FontSize(5f).Bold();
+
+                        if (fields.Contains("Price", StringComparer.OrdinalIgnoreCase))
+                            d.Item().Text(item.Price.HasValue ? $"\u09F3 {item.Price:N2}" : "\u09F3 \u2014")
+                                .FontSize(6f).Bold();
+
+                        if (fields.Contains("UOM", StringComparer.OrdinalIgnoreCase) ||
+                            fields.Contains("UoM", StringComparer.OrdinalIgnoreCase))
+                            d.Item().Text(string.IsNullOrWhiteSpace(item.UoM) ? "\u2014" : item.UoM)
+                                .FontSize(5f);
+                    });
+                });
+
+                if (!string.IsNullOrWhiteSpace(item.ReturnRefNo))
+                    col.Item().PaddingTop(0.3f).Text($"S/N: {item.ReturnRefNo}")
+                        .FontSize(4.5f);
+
+                col.Item().PaddingTop(0.3f).Row(b =>
+                {
+                    b.AutoItem().Text(item.GroupName ?? "")
+                        .FontSize(4.5f);
+                    b.RelativeItem().AlignRight().Text($"{copy}/{of}")
+                        .FontSize(4.5f);
+                });
+            });
+    }
+
+    private static string GenerateQrSvg(string data, int size)
+    {
+        var cells = GetQrCells(data);
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 21 21\" width=\"{size}\" height=\"{size}\">");
+        foreach (var (x, y) in cells)
+            sb.Append($"<rect x=\"{x}\" y=\"{y}\" width=\"1\" height=\"1\" fill=\"{Black}\"/>");
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    private static List<(int X, int Y)> GetQrCells(string data)
+    {
+        int seed = data?.Aggregate(0, (h, c) => h * 31 + c) ?? 0;
+        var rng = new Random(seed);
+        var cells = new List<(int, int)>();
+
+        int[][] finders = { new[] { 0, 0 }, new[] { 14, 0 }, new[] { 0, 14 } };
+        foreach (var f in finders)
+        {
+            for (int dy = 0; dy < 7; dy++)
+                for (int dx = 0; dx < 7; dx++)
+                {
+                    bool border = dx == 0 || dx == 6 || dy == 0 || dy == 6;
+                    bool inner = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
+                    if (border || inner) cells.Add((f[0] + dx, f[1] + dy));
+                }
+        }
+
+        for (int y = 0; y < 21; y++)
+            for (int x = 0; x < 21; x++)
+            {
+                bool inFinder = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+                if (!inFinder && rng.Next(2) == 1) cells.Add((x, y));
+            }
+
+        return cells;
+    }
+}
