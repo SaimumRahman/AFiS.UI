@@ -2,6 +2,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using JM.UI.Entities.Model.Barcodes;
+using QRCoder;
 
 namespace JM.UI.Service.Reports;
 
@@ -115,40 +116,12 @@ public class BarcodePrintPdfService
 
     private static string GenerateQrSvg(string data, int size)
     {
-        var cells = GetQrCells(data);
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 21 21\" width=\"{size}\" height=\"{size}\">");
-        foreach (var (x, y) in cells)
-            sb.Append($"<rect x=\"{x}\" y=\"{y}\" width=\"1\" height=\"1\" fill=\"{Black}\"/>");
-        sb.Append("</svg>");
-        return sb.ToString();
-    }
+        if (string.IsNullOrWhiteSpace(data))
+            data = "\u200B";
 
-    private static List<(int X, int Y)> GetQrCells(string data)
-    {
-        int seed = data?.Aggregate(0, (h, c) => h * 31 + c) ?? 0;
-        var rng = new Random(seed);
-        var cells = new List<(int, int)>();
-
-        int[][] finders = { new[] { 0, 0 }, new[] { 14, 0 }, new[] { 0, 14 } };
-        foreach (var f in finders)
-        {
-            for (int dy = 0; dy < 7; dy++)
-                for (int dx = 0; dx < 7; dx++)
-                {
-                    bool border = dx == 0 || dx == 6 || dy == 0 || dy == 6;
-                    bool inner = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
-                    if (border || inner) cells.Add((f[0] + dx, f[1] + dy));
-                }
-        }
-
-        for (int y = 0; y < 21; y++)
-            for (int x = 0; x < 21; x++)
-            {
-                bool inFinder = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
-                if (!inFinder && rng.Next(2) == 1) cells.Add((x, y));
-            }
-
-        return cells;
+        var generator = new QRCodeGenerator();
+        var qrData = generator.CreateQrCode(data, QRCodeGenerator.ECCLevel.Q);
+        var svg = new SvgQRCode(qrData);
+        return svg.GetGraphic(size);
     }
 }
