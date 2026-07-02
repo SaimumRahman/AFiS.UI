@@ -50,6 +50,7 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ExampleService>();
 builder.Services.AddScoped<PurchaseReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
+builder.Services.AddScoped<BarcodePrintPdfService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
 builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
 builder.Services.AddAIChatService(options =>

@@ -1,9 +1,11 @@
 using JM.UI.Entities.Model.Barcodes;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.Purchases;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 
 namespace JM.UI.Client.Pages.Barcode;
@@ -21,6 +23,8 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool ShowPreview { get; set; } = false;
     protected bool ShowPrinterConfig { get; set; } = false;
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+    [Inject] public BarcodePrintPdfService _barcodePrintPdfService { get; set; } = default!;
+    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
 
     // ── Template State ───────────────────────────────────────────
     protected List<BarcodeTemplateDTO> BarcodeTemplates { get; set; } = new();
@@ -33,7 +37,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsLoadingTemplates { get; set; } = false;
 
     // ── Filter State ─────────────────────────────────────────────
-    protected DateTime FromDate { get; set; } = DateTime.Today;
+    protected DateTime FromDate { get; set; } = DateTime.Today.AddDays(-30);
     protected DateTime ToDate { get; set; } = DateTime.Today;
 
     // ── Purchase Dropdown ────────────────────────────────────────
@@ -56,6 +60,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsLoadingPurchases { get; set; } = false;
     protected bool IsLoadingBarcodes { get; set; } = false;
     protected bool IsPrinting { get; set; } = false;
+    protected bool IsDownloadingPdf { get; set; } = false;
     protected bool IsLoadingConfig { get; set; } = false;
 
     // ────────────────────────────────────────────────────────────
@@ -366,7 +371,9 @@ public partial class BarcodePrintComponent : PosComponentBase
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
-                TemplateId = SelectedTemplateId ?? 0
+                TemplateId = SelectedTemplateId ?? 0,
+                SalesPrice = barcode.SalePrice.ToString() ?? "0",
+                ReturnRefNo = barcode.ReturnRefNo ?? "N/A"
             }
         };
         }
@@ -433,6 +440,50 @@ public partial class BarcodePrintComponent : PosComponentBase
         }
         finally { IsPrinting = false; }
     }
+    // ── Download PDF ─────────────────────────────────────────────────────────
+    protected async Task DownloadPdfAsync()
+    {
+        if (!PrintItems.Any())
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Nothing to Download",
+                "Please add barcodes to the print queue first.");
+            return;
+        }
+
+        try
+        {
+            IsDownloadingPdf = true;
+
+            var pdfBytes = _barcodePrintPdfService.GeneratePdf(
+                PrintItems,
+                TemplateFields,
+                55,
+                33);
+
+            if (pdfBytes.Length == 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Empty PDF",
+                    "Generated PDF is empty.");
+                return;
+            }
+
+            var fileName = $"BarcodeLabels_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            await JsRuntime.InvokeVoidAsync("downloadFileFromBytes",
+                fileName,
+                "application/pdf",
+                pdfBytes);
+
+            notificationService.Notify(NotificationSeverity.Success, "PDF Downloaded",
+                $"{PrintItems.Sum(x => x.PrintQty)} label(s) saved as {fileName}");
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "PDF Error",
+                $"Failed to generate PDF: {ex.Message}");
+        }
+        finally { IsDownloadingPdf = false; }
+    }
+
     // ── Preview ──────────────────────────────────────────────────────────────
     protected void OpenPreview()
     {
