@@ -8,7 +8,6 @@ namespace JM.UI.Service.Reports;
 
 public class BarcodePrintPdfService
 {
-    private const string Black = "#000000";
 
     public byte[] GeneratePdf(
         List<BarcodePrintItemDTO> items,
@@ -80,14 +79,12 @@ public class BarcodePrintPdfService
                     r.AutoItem().Element(q =>
                         q.Width(qrSizeMm, Unit.Millimetre)
                          .Height(qrSizeMm, Unit.Millimetre)
-                         .Border(0.3f)
-                         .BorderColor(Black)
                          .Svg(_ => GenerateQrSvg(qrData, (int)qrSizeSvg)));
 
                     r.RelativeItem().PaddingLeft(1f).Column(d =>
                     {
                         d.Item().Text(item.BarcodeValue ?? "")
-                            .FontSize(5f).Bold();
+                            .FontSize(7f).Bold();
 
                         if (fields.Contains("Price", StringComparer.OrdinalIgnoreCase))
                             d.Item().Text(item.Price.HasValue ? $"\u09F3 {item.Price:N2}" : "\u09F3 \u2014")
@@ -101,15 +98,15 @@ public class BarcodePrintPdfService
                 });
 
                 if (!string.IsNullOrWhiteSpace(item.ReturnRefNo))
-                    col.Item().PaddingTop(0.3f).Text($"S/N: {item.ReturnRefNo}")
-                        .FontSize(4.5f);
+                    col.Item().PaddingTop(0.3f).Text(item.ReturnRefNo)
+                        .FontSize(6f);
 
                 col.Item().PaddingTop(0.3f).Row(b =>
                 {
                     b.AutoItem().Text(item.GroupName ?? "")
-                        .FontSize(4.5f);
+                        .FontSize(6f);
                     b.RelativeItem().AlignRight().Text($"{copy}/{of}")
-                        .FontSize(4.5f);
+                        .FontSize(6f);
                 });
             });
     }
