@@ -838,7 +838,7 @@ namespace JM.UI.Client.Pages.Purchases
                         CountStockByColor = item.CountStockByColor,
                         CountStockBySize = item.CountStockBySize,
                         Quantity = 0,
-                        StockQuantity = response.Stock?.Quantity ?? 0,
+                        StockQuantity = item.CurrentStock,
                         SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
                         OtherCost = SharedOtherCost,
                         CarryingCost = SharedCarryingCost,
@@ -1324,7 +1324,7 @@ namespace JM.UI.Client.Pages.Purchases
 
             // Sync shared pricing fields so the bar shows the item's current prices
             SharedPurchasePrice = item.PurchasePrice;
-            SharedSalePrice = item.SalePrice ?? 0;
+            //SharedSalePrice = item.SalePrice ?? 0;
             SharedVatPercentage = item.VatPercentage;
             SharedOtherCost = item.OtherCost;
             SharedCarryingCost = item.CarryingCost;
@@ -2180,9 +2180,8 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.OriginId = item.OriginId;
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
-
             SharedPurchasePrice = item.PurchasePrice ?? 0;
-            SharedSalePrice = item.SalePrice ?? 0;
+            //SharedSalePrice = item.SalePrice ?? 0;
 
             if (item.GroupId.HasValue)
             {
@@ -2242,7 +2241,6 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.CatalogueId = item.CatalogueId;
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
-
             SharedPurchasePrice = item.PurchasePrice;
             SharedSalePrice = item.SalePrice ?? 0;
 
