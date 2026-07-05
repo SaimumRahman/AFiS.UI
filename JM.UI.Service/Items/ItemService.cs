@@ -64,6 +64,7 @@ public class ItemService : IItemService
             IsSaleable = createItemRequest.IsSaleable,
             IsConsume = createItemRequest.IsConsume,
             CatalogueId = createItemRequest.CatalogueId,
+            FeatureIds = createItemRequest.FeatureIds,
             Features = createItemRequest.FeatureIds != null && createItemRequest.FeatureIds.Any()
     ? string.Join(",", createItemRequest.FeatureIds)
     : string.Empty

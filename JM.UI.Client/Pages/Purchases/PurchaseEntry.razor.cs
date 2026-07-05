@@ -947,9 +947,9 @@ namespace JM.UI.Client.Pages.Purchases
                         row.CatalogueId = CurrentItem.CatalogueId;
                         row.CatalogueName = Catalogues.FirstOrDefault(c => c.CatalogueId == CurrentItem.CatalogueId)?.CatalogueName ?? row.CatalogueName;
                     }
-                    row.FeatureIds = SelectedFeatureIds.ToList();
+                    row.FeatureIds = CurrentItem.FeatureIds?.ToList() ?? new List<int>();
                     row.FeaturesDisplay = string.Join(", ", Features
-                        .Where(f => SelectedFeatureIds.Contains(f.FeatureId))
+                        .Where(f => (CurrentItem.FeatureIds ?? new List<int>()).Contains(f.FeatureId))
                         .Select(f => f.FeatureName));
                 }
 
@@ -1959,7 +1959,7 @@ namespace JM.UI.Client.Pages.Purchases
                         newRow.OriginId = CurrentItem.OriginId;
                     if (!newRow.CatalogueId.HasValue && CurrentItem.CatalogueId.HasValue)
                         newRow.CatalogueId = CurrentItem.CatalogueId;
-                    newRow.FeatureIds = SelectedFeatureIds.ToList();
+                    newRow.FeatureIds = CurrentItem.FeatureIds?.ToList() ?? new List<int>();
                 }
 
                 var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
