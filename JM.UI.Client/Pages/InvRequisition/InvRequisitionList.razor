@@ -120,14 +120,16 @@
                                           Variant="Variant.Flat"
                                           Click="@(() => DeleteRequisition(item))"
                                           MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
-
-                            <RadzenDropDown Data="@Statuses"
-                                            Value="@item.StatusID"
-                                            ValueProperty="Id"
-                                            TextProperty="StatusName"
-                                            Placeholder="Change Status"
-                                            Width="140px"
-                                            Change="@(args => OnStatusChanged(args, item))" />
+                            @if (CurrentUserId==1){
+                                <RadzenDropDown Data="@Statuses"
+                                                Value="@item.StatusID"
+                                                ValueProperty="Id"
+                                                TextProperty="StatusName"
+                                                Placeholder="Change Status"
+                                                Width="140px"
+                                                Change="@(args => OnStatusChanged(args, item))" />
+                            }
+                            
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
