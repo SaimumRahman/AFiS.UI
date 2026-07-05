@@ -929,6 +929,8 @@ namespace JM.UI.Client.Pages.Purchases
                 bool lookupsResolved = await ResolveNewLookupEntriesAsync(CurrentItem);
                 if (!lookupsResolved) return;
 
+                SelectedFeatureIds = CurrentItem.FeatureIds?.ToList() ?? new List<int>();
+
                 // Update each preview row with resolved IDs
                 foreach (var row in validRows)
                 {
@@ -1953,6 +1955,7 @@ namespace JM.UI.Client.Pages.Purchases
                 bool lookupsResolved = await ResolveNewLookupEntriesAsync(CurrentItem);
                 if (lookupsResolved)
                 {
+                    SelectedFeatureIds = CurrentItem.FeatureIds?.ToList() ?? new List<int>();
                     if (!newRow.BrandId.HasValue && CurrentItem.BrandId.HasValue)
                         newRow.BrandId = CurrentItem.BrandId;
                     if (!newRow.OriginId.HasValue && CurrentItem.OriginId.HasValue)
