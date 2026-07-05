@@ -920,6 +920,39 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
 
+                // Resolve new brand/origin/catalogue/features before adding items
+                if (IsNewBrand)
+                    CurrentItem.BrandName = BrandSearchText;
+                if (IsNewCatalogue)
+                    CurrentItem.CatalogueName = CatalogueSearchText;
+
+                bool lookupsResolved = await ResolveNewLookupEntriesAsync(CurrentItem);
+                if (!lookupsResolved) return;
+
+                // Update each preview row with resolved IDs
+                foreach (var row in validRows)
+                {
+                    if (!row.BrandId.HasValue && CurrentItem.BrandId.HasValue)
+                    {
+                        row.BrandId = CurrentItem.BrandId;
+                        row.BrandName = Brands.FirstOrDefault(b => b.BrandId == CurrentItem.BrandId)?.BrandName ?? row.BrandName;
+                    }
+                    if (!row.OriginId.HasValue && CurrentItem.OriginId.HasValue)
+                    {
+                        row.OriginId = CurrentItem.OriginId;
+                        row.OriginName = Origins.FirstOrDefault(o => o.OriginId == CurrentItem.OriginId)?.OriginName ?? row.OriginName;
+                    }
+                    if (!row.CatalogueId.HasValue && CurrentItem.CatalogueId.HasValue)
+                    {
+                        row.CatalogueId = CurrentItem.CatalogueId;
+                        row.CatalogueName = Catalogues.FirstOrDefault(c => c.CatalogueId == CurrentItem.CatalogueId)?.CatalogueName ?? row.CatalogueName;
+                    }
+                    row.FeatureIds = SelectedFeatureIds.ToList();
+                    row.FeaturesDisplay = string.Join(", ", Features
+                        .Where(f => SelectedFeatureIds.Contains(f.FeatureId))
+                        .Select(f => f.FeatureName));
+                }
+
                 int addedCount = 0;
 
                 foreach (var row in validRows)
@@ -1910,6 +1943,25 @@ namespace JM.UI.Client.Pages.Purchases
                         FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
+
+                // Resolve new brand/origin/catalogue/features before creating the item
+                if (IsNewBrand)
+                    CurrentItem.BrandName = BrandSearchText;
+                if (IsNewCatalogue)
+                    CurrentItem.CatalogueName = CatalogueSearchText;
+
+                bool lookupsResolved = await ResolveNewLookupEntriesAsync(CurrentItem);
+                if (lookupsResolved)
+                {
+                    if (!newRow.BrandId.HasValue && CurrentItem.BrandId.HasValue)
+                        newRow.BrandId = CurrentItem.BrandId;
+                    if (!newRow.OriginId.HasValue && CurrentItem.OriginId.HasValue)
+                        newRow.OriginId = CurrentItem.OriginId;
+                    if (!newRow.CatalogueId.HasValue && CurrentItem.CatalogueId.HasValue)
+                        newRow.CatalogueId = CurrentItem.CatalogueId;
+                    newRow.FeatureIds = SelectedFeatureIds.ToList();
+                }
+
                 var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
                 if (newItemId > 0)
                 {
