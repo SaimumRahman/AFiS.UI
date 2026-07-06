@@ -1,4 +1,5 @@
 ﻿using JM.UI.Entities.Model.Colors;
+using JM.UI.Entities.Model.InvRequisition;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.Sizes;
@@ -25,6 +26,9 @@ namespace JM.UI.Client.Pages.Transfers
         [Inject] ProtectedLocalStorage _localStorage { get; set; }
         [Parameter] 
         public int? Id { get; set; }
+        [Parameter]
+        public int? RequisitionId { get; set; }
+        protected bool IsFromRequisitionMode => RequisitionId.HasValue && RequisitionId.Value > 0;
         protected bool IsFromStoreReadOnly { get; set; } = false;
         protected bool IsDamagedMode { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
@@ -33,23 +37,11 @@ namespace JM.UI.Client.Pages.Transfers
         protected TransferDetailDTO CurrentDetail { get; set; } = new();
 
         protected TransferDetailDTO? _editingItem = null;
-
-
-        // â”€â”€ Preview Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
         protected List<TransferPreviewRow> PreviewItems { get; set; } = new();
         protected RadzenDataGrid<TransferPreviewRow> PreviewGrid = new();
-
-
-        // â”€â”€ Shared fields (propagated to all preview rows) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
-
-
-        // â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
@@ -57,9 +49,6 @@ namespace JM.UI.Client.Pages.Transfers
         protected IEnumerable<SizesDTO> Sizes { get; set; } = new List<SizesDTO>();
         protected IEnumerable<MesurementUnitModelDTO> Units { get; set; } = new List<MesurementUnitModelDTO>();
         protected IEnumerable<ItemDTO> AvailableItems { get; set; } = new List<ItemDTO>();
-
-
-        // â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         protected bool IsLoading { get; set; } = false;
         protected bool IsProcessing { get; set; } = false;
@@ -73,7 +62,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected string ScanBarcodeText { get; set; } = string.Empty;
         private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
-        protected string PageTitle => IsEditMode ? "Edit Item Transfer" : "New Item Transfer";
+        protected string PageTitle => IsEditMode ? "Edit Item Transfer" : IsFromRequisitionMode ? "Transfer from Requisition" : "New Item Transfer";
 
         protected RadzenDataGrid<TransferDetailDTO> ItemsGrid = default!;
 
@@ -190,6 +179,10 @@ namespace JM.UI.Client.Pages.Transfers
                         Id = tt.TransferTypeId,
                         Name = tt.TransferTypeName
                     }).ToList();
+
+                // If coming from requisition, load requisition data
+                if (IsFromRequisitionMode)
+                    await LoadFromRequisition();
             }
             catch (Exception ex)
             {
@@ -197,6 +190,80 @@ namespace JM.UI.Client.Pages.Transfers
                     NotificationSeverity.Error,
                     "Error",
                     $"Failed to load lookup data: {ex.Message}");
+            }
+        }
+        private async Task LoadFromRequisition()
+        {
+            try
+            {
+                IsLoading = true;
+
+                var requisition = await _serviceUnitOfWork.InvRequisitionService.GetById(RequisitionId!.Value);
+                if (requisition == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Not Found",
+                        $"Requisition #{RequisitionId} could not be found.");
+                    NavigationManager.NavigateTo("/InvRequisitionList");
+                    return;
+                }
+
+                Transfer.RequisitionID = requisition.RequisitionID;
+                Transfer.StoreId = requisition.FromStore;
+                Transfer.ToStoreId = requisition.ToStore;
+                Transfer.Comments = requisition.Remarks;
+                Transfer.TransferDate = requisition.RequisitionDate;
+
+                PreviewItems = new List<TransferPreviewRow>();
+
+                var allItems = (await _serviceUnitOfWork.ItemService.GetItems())?.ToList() ?? new List<ItemDTO>();
+                var itemLookup = new Dictionary<int, ItemDTO>();
+                foreach (var i in allItems)
+                {
+                    if (!itemLookup.ContainsKey(i.Id))
+                        itemLookup[i.Id] = i;
+                }
+
+                foreach (var detail in requisition.Details.Where(d => !d.IsDeleted))
+                {
+                    var item = itemLookup.GetValueOrDefault(detail.ItemID);
+                    if (item == null) continue;
+
+                    PreviewItems.Add(new TransferPreviewRow
+                    {
+                        ItemId = item.Id,
+                        Barcode = item.Barcode ?? detail.Barcode ?? string.Empty,
+                        ItemName = item.Name ?? detail.ItemName ?? string.Empty,
+                        ColorId = item.ColorId,
+                        ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
+                        SizeId = item.SizeId,
+                        SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
+                        GroupId = item.GroupId,
+                        SubGroupId = item.SubGroupId,
+                        DesignId = item.DesignId,
+                        UnitId = item.MesurementUnitId,
+                        UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty,
+                        IssueQty = detail.Qty,
+                        SalePrice = item.SalePrice ?? 0,
+                        StockQuantity = item.CurrentStock,
+                        IsNewItem = false,
+                    });
+                }
+
+                PreviewGrid?.Reload();
+                StateHasChanged();
+
+                notificationService.Notify(NotificationSeverity.Info, "Requisition Loaded",
+                    $"Requisition '{requisition.RequisitionNo}' loaded with {PreviewItems.Count} item(s).");
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Failed to load requisition: {ex.Message}");
+                NavigationManager.NavigateTo("/InvRequisitionList");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
         protected async Task LoadTransfer()
@@ -997,6 +1064,10 @@ namespace JM.UI.Client.Pages.Transfers
                 notificationService.Notify(NotificationSeverity.Info, "Cancelled",
                     "Edit cancelled. No changes were saved.");
             }
+            else if (IsFromRequisitionMode)
+            {
+                NavigationManager.NavigateTo("/InvRequisitionList");
+            }
             else
             {
                 NavigationManager.NavigateTo("/TransferList");
@@ -1019,6 +1090,11 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected void ResetLeftPanel()
         {
+            if (IsFromRequisitionMode)
+            {
+                NavigationManager.NavigateTo("/InvRequisitionList");
+                return;
+            }
             Transfer.StoreId = null;
             Transfer.ToStoreId = null;
             Transfer.TransTypeID = 0;
