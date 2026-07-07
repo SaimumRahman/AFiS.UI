@@ -51,6 +51,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected List<PurchaseItemDTO> PurchaseItems { get; set; } = new();
         protected PurchaseItemDTO CurrentItem { get; set; } = new();
         protected PurchaseItemDTO? _editingItem = null;
+        protected int _editingItemIndex = -1;
 
         // â”€â”€â”€ Preview Grid Items (editable, loaded from barcode/color/size search) â”€â”€â”€
         protected List<PreviewItemRow> PreviewItems { get; set; } = new();
@@ -64,7 +65,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected decimal? SharedVatPercentage { get; set; }
         protected decimal? SharedTransportCost { get; set; }
         protected decimal? SharedOperationalCost { get; set; }
-        protected int? SharedQuantity { get; set; }
+        protected decimal? SharedQuantity { get; set; }
 
         // â”€â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€
         protected IEnumerable<SupplierModelDTO> Suppliers { get; set; } = new List<SupplierModelDTO>();
@@ -1183,17 +1184,30 @@ namespace JM.UI.Client.Pages.Purchases
             // If we were already editing something, restore it first
             if (IsEditItemMode && _editingItem != null && _editingItem != item)
             {
-                // Discard unsaved changes to the previous item â€” nothing to do
-                // because the item was never removed from the list
+                if (_editingItemIndex >= 0 && !PurchaseItems.Contains(_editingItem))
+                {
+                    PurchaseItems.Insert(
+                        Math.Min(_editingItemIndex, PurchaseItems.Count), _editingItem);
+                }
             }
 
             _editingItem = item;
+            _editingItemIndex = PurchaseItems.IndexOf(item);
             IsEditItemMode = true;
 
-            // Clear the preview grid â€” irrelevant while editing a confirmed item
-            // Load the item being edited into the preview grid so the user can edit it there
+            // Remove from bottom table so it isn't shown in both places at once
+            if (_editingItemIndex >= 0)
+                PurchaseItems.RemoveAt(_editingItemIndex);
+
             PreviewItems.Clear();
             ResetSharedPricing();
+
+            // Derive the base (pre-cost) purchase price from the stored final price
+            var basePrice = item.PurchasePrice
+                          - (item.OtherCost ?? 0)
+                          - (item.CarryingCost ?? 0)
+                          - (item.TransportCost ?? 0)
+                          - (item.OperationalCost ?? 0);
 
             PreviewItems.Add(new PreviewItemRow
             {
@@ -1224,9 +1238,9 @@ namespace JM.UI.Client.Pages.Purchases
                 MaterialType = item.MaterialType,
                 CountStockByColor = item.CountStockByColor,
                 CountStockBySize = item.CountStockBySize,
-                // Keep quantity from the saved item â€” the user is editing it
                 Quantity = item.Quantity,
-                StockQuantity = 0,   // not available from PurchaseItemDTO
+                StockQuantity = 0,
+                BasePurchasePrice = Math.Max(0, basePrice),
                 PurchasePrice = item.PurchasePrice,
                 SalePrice = item.SalePrice ?? 0,
                 OtherCost = item.OtherCost,
@@ -1322,15 +1336,6 @@ namespace JM.UI.Client.Pages.Purchases
                 Designs = await LoadDesignsBySubGroup(item.SubGroupId.Value);
             }
 
-            // Sync shared pricing fields so the bar shows the item's current prices
-            SharedPurchasePrice = item.PurchasePrice;
-            //SharedSalePrice = item.SalePrice ?? 0;
-            SharedVatPercentage = item.VatPercentage;
-            SharedOtherCost = item.OtherCost;
-            SharedCarryingCost = item.CarryingCost;
-            SharedTransportCost = item.TransportCost;
-            SharedOperationalCost = item.OperationalCost;
-
             // Scroll / notify
             notificationService.Notify(NotificationSeverity.Info, "Edit Mode",
                 $"Editing '{item.ItemName}' â€” make changes then click Update.");
@@ -1387,11 +1392,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             CalculateItemTotal();
 
-            var idx = PurchaseItems.IndexOf(_editingItem);
-            if (idx < 0)
+            var idx = _editingItemIndex;
+            if (idx < 0 || idx > PurchaseItems.Count)
                 PurchaseItems.Add(BuildUpdatedItem());
             else
-                PurchaseItems[idx] = BuildUpdatedItem();
+                PurchaseItems.Insert(idx, BuildUpdatedItem());
 
             await ItemsGrid.Reload();
             CalculateTotals();
@@ -1504,7 +1509,15 @@ namespace JM.UI.Client.Pages.Purchases
         /// </summary>
         protected void CancelEditItem()
         {
+            // Re-insert the item at its original position since edit was cancelled
+            if (_editingItem != null && _editingItemIndex >= 0
+                && !PurchaseItems.Contains(_editingItem))
+            {
+                PurchaseItems.Insert(
+                    Math.Min(_editingItemIndex, PurchaseItems.Count), _editingItem);
+            }
             _editingItem = null;
+            _editingItemIndex = -1;
             IsEditItemMode = false;
             IsNewItemMode = false;
             DisableItemFields = false;
