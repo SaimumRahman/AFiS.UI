@@ -1199,6 +1199,8 @@ namespace JM.UI.Client.Pages.Purchases
             if (_editingItemIndex >= 0)
                 PurchaseItems.RemoveAt(_editingItemIndex);
 
+            ItemsGrid?.Reload();
+
             PreviewItems.Clear();
             ResetSharedPricing();
 
@@ -1400,6 +1402,9 @@ namespace JM.UI.Client.Pages.Purchases
 
             await ItemsGrid.Reload();
             CalculateTotals();
+            // Clear editing state before CancelEditItem so it doesn't re-insert the old item
+            _editingItem = null;
+            _editingItemIndex = -1;
             CancelEditItem();
 
             notificationService.Notify(NotificationSeverity.Success, "Updated",
@@ -1528,6 +1533,7 @@ namespace JM.UI.Client.Pages.Purchases
             PreviewGrid?.Reload();
             ResetSharedPricing();
             ResetItemFormSelections();
+            ItemsGrid?.Reload();
             StateHasChanged();
         }
 
