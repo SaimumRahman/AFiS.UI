@@ -249,6 +249,15 @@ namespace JM.UI.Client.Pages.Transfers
                     });
                 }
 
+                // Auto-select Internal Transfer type and disable switching
+                var internalTransfer = TransferTypes.FirstOrDefault(t =>
+                    t.Name.Equals("Internal Transfer", StringComparison.OrdinalIgnoreCase));
+                if (internalTransfer != null)
+                {
+                    Transfer.TransTypeID = internalTransfer.Id;
+                    OnTransferTypeChanged(internalTransfer.Id);
+                }
+
                 PreviewGrid?.Reload();
                 StateHasChanged();
 
