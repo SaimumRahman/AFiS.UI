@@ -12,7 +12,7 @@ namespace JM.UI.Entities.Model.Purchases
         public string? SystemInvoiceNo { get; set; }
         public string? BillInvoiceNumber { get; set; }
         public string? BillInvoiceName { get; set; }
-        public DateTime PurchaseDate { get; set; }
+        public DateTime? PurchaseDate { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal? DiscountAmount { get; set; } = 0m;
         public decimal? VatAmount { get; set; } = 0m;
