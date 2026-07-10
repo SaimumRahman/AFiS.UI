@@ -14,5 +14,6 @@ namespace JM.UI.Entities.Model.Purchases
         public int? GroupId { get; set; }
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
+        public int? ColorId { get; set; }
     }
 }

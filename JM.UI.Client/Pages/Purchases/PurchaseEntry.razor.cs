@@ -230,9 +230,9 @@ namespace JM.UI.Client.Pages.Purchases
             IsNewCatalogue = false;
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Data Loading
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         private async Task LoadLookupData()
         {
             try
@@ -471,9 +471,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Brand Auto-Complete Handlers
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected void OnBrandTextChanged(object value)
         {
             var text = value?.ToString();
@@ -537,9 +537,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Origin Auto-Complete Handlers
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected void OnOriginTextChanged(object value)
         {
             var text = value?.ToString();
@@ -588,9 +588,9 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Features Multi-Select Handlers
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected void AddNewFeature()
         {
             var trimmed = NewFeatureInput?.Trim();
@@ -623,9 +623,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Save â€“ Brand / Origin / Features pre-save resolution
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         private async Task<bool> ResolveNewLookupEntriesAsync(PurchaseItemDTO item)
         {
             try
@@ -1600,9 +1600,9 @@ namespace JM.UI.Client.Pages.Purchases
             return (true, string.Empty);
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Save Purchase
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected async Task SavePurchase()
         {
             Purchase.StoreId = (await _serviceUnitOfWork.StoreService.GetStores()).Where(x => x.Name.Equals("Head Office", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Id;
@@ -1660,9 +1660,9 @@ namespace JM.UI.Client.Pages.Purchases
             return true;
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Save As Draft
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected async Task SaveAsDraft()
         {
             try
@@ -1762,9 +1762,7 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // Cascade / Product name / Barcode Events
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
@@ -2040,7 +2038,6 @@ namespace JM.UI.Client.Pages.Purchases
         {
             CurrentItem.DesignId = designId;
             GenerateProductName();
-            await GenerateBarcode();
         }
 
         protected void OnBrandChanged(string? brand) { CurrentItem.BrandName = brand; GenerateProductName(); }
@@ -2285,7 +2282,8 @@ namespace JM.UI.Client.Pages.Purchases
                     GroupId = CurrentItem.GroupId,
                     ExistingBarcode = CurrentItem.Barcode,
                     SubGroupId = CurrentItem.SubGroupId,
-                    DesignId = CurrentItem.DesignId
+                    DesignId = CurrentItem.DesignId,
+                    ColorId = CurrentItem.ColorId,
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
@@ -2339,9 +2337,9 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         // Calculation
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        
         protected void CalculateItemTotal()
         {
             CurrentItem.TotalAmount = _serviceUnitOfWork.PurchaseService.CalculateItemTotal(CurrentItem);
