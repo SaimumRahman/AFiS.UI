@@ -98,6 +98,11 @@ public class ItemService : IItemService
             }
         }
 
+        public async Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId)
+        {
+            return await _unitOfWork.ItemRepository.GetItemByGroupIdWithStock(groupId);
+        }
+
         public async Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes()
         {
             return await _unitOfWork.ItemRepository.GetTransactionTypes();

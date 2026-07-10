@@ -16,5 +16,6 @@ namespace JM.UI.Service.Items
         Task<int> CreateItem(PreviewItemRow createItemRequest);
         Task<IEnumerable<ItemDTO>> GetItemByPurchaseId(int purchaseId);
         Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes();
+        Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId);
     }
 }
