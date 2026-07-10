@@ -2283,7 +2283,6 @@ namespace JM.UI.Client.Pages.Purchases
                     ExistingBarcode = CurrentItem.Barcode,
                     SubGroupId = CurrentItem.SubGroupId,
                     DesignId = CurrentItem.DesignId,
-                    ColorId = CurrentItem.ColorId,
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
