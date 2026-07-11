@@ -786,7 +786,8 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected async Task RemovePreviewRow(PreviewItemRow row)
         {
-            await _serviceUnitOfWork.ItemService.DeleteItem(row.ItemId);
+            if (row.StockQuantity <= 0)
+                await _serviceUnitOfWork.ItemService.DeleteItem(row.ItemId);
             PreviewItems.Remove(row);
 
             PreviewGrid?.Reload();
@@ -1779,9 +1780,8 @@ namespace JM.UI.Client.Pages.Purchases
         // â”€â”€â”€ Color Change: clear image, then load barcode preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected async Task OnColorChanged(int? colorId)
         {
-            if (!colorId.HasValue) return;
-            if (!CurrentItem.SizeId.HasValue) return;
             CurrentItem.ColorId = colorId;
+            CurrentItem.SizeId = null;
 
             // Clear the current image so the user uploads a new one for this color
             CurrentItemImageBase64 = string.Empty;
@@ -2117,9 +2117,10 @@ namespace JM.UI.Client.Pages.Purchases
                     if (result.ItemDetails != null)
                     {
                         await PopulateFromExistingItem(result.ItemDetails.FirstOrDefault()!, result.itemWiseFeatures);
-                        DisableItemFields = true;
+                        DisableItemFields = false;
 
                         PreviewItems.Clear();
+                        ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
                         foreach (var row in newRows)
                             PreviewItems.Add(row);
@@ -2137,6 +2138,7 @@ namespace JM.UI.Client.Pages.Purchases
                         DisableItemFields = false;
 
                         PreviewItems.Clear();
+                        ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
                         foreach (var row in newRows)
                             PreviewItems.Add(row);
@@ -2151,6 +2153,7 @@ namespace JM.UI.Client.Pages.Purchases
                     DisableItemFields = false;
 
                     PreviewItems.Clear();
+                    ResetSharedPricing();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
                     foreach (var row in newRows)
                         PreviewItems.Add(row);
