@@ -106,7 +106,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : IsDraftMode ? "Purchase Entry (From Draft)" : "New Purchase Entry";
-        protected bool IsNewItemMode { get; set; } = false;
+        protected bool IsNewItemMode => PreviewItems.Count == 0;
         protected bool IsSearchingBarcode { get; set; } = false;
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
@@ -122,7 +122,6 @@ namespace JM.UI.Client.Pages.Purchases
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
-            IsNewItemMode = true;
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
             Purchase.StoreId = Stores.FirstOrDefault()?.Id;
@@ -1071,7 +1070,6 @@ namespace JM.UI.Client.Pages.Purchases
                 ResetSharedPricing();
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
-                IsNewItemMode = false;
 
                 // Clear only Color, Size, ShadeNo â€” leave rest of left panel intact
                 CurrentItem.ColorId = null;
@@ -1326,7 +1324,6 @@ namespace JM.UI.Client.Pages.Purchases
             // In edit mode the item already exists, so fields should be editable
             // but item identity (barcode) must not be changed
             DisableItemFields = false;
-            IsNewItemMode = item.IsNewItem;
             IsProductNameFieldChange = false;
 
             // Load cascaded dropdowns
@@ -1525,7 +1522,6 @@ namespace JM.UI.Client.Pages.Purchases
             _editingItem = null;
             _editingItemIndex = -1;
             IsEditItemMode = false;
-            IsNewItemMode = false;
             DisableItemFields = false;
             BarcodeSearchText = string.Empty;
             IsProductNameFieldChange = false;
@@ -2122,7 +2118,6 @@ namespace JM.UI.Client.Pages.Purchases
                     {
                         await PopulateFromExistingItem(result.ItemDetails.FirstOrDefault()!, result.itemWiseFeatures);
                         DisableItemFields = true;
-                        IsNewItemMode = false;
 
                         PreviewItems.Clear();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
@@ -2154,7 +2149,6 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     CurrentItem.Barcode = barcode;
                     DisableItemFields = false;
-                    IsNewItemMode = true;
 
                     PreviewItems.Clear();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
@@ -2306,18 +2300,14 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected void ToggleCreateNewItem()
         {
-            IsNewItemMode = !IsNewItemMode;
-            CurrentItem.IsNewItem = IsNewItemMode;
-
-            if (IsNewItemMode)
-            {
-                CurrentItem.ItemId = 0;
-            }
-            else
-            {
-               
-            }
-
+            PreviewItems.Clear();
+            PreviewGrid?.Reload();
+            CurrentItem = CreateNewItem();
+            CurrentItem.ItemId = 0;
+            DisableItemFields = false;
+            BarcodeSearchText = string.Empty;
+            ResetSharedPricing();
+            ResetItemFormSelections();
             StateHasChanged();
         }
 
@@ -2325,7 +2315,6 @@ namespace JM.UI.Client.Pages.Purchases
         {
             BarcodeSearchText = string.Empty;
             DisableItemFields = false;
-            IsNewItemMode = false;
             CurrentItem = CreateNewItem();
             PreviewItems.Clear();
             PreviewGrid?.Reload();
