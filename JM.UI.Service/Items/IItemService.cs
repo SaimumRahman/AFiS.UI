@@ -13,7 +13,7 @@ namespace JM.UI.Service.Items
         Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
         Task<ResponseResult> DeleteItem(int id);
         Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);
-        Task<int> CreateItem(PreviewItemRow createItemRequest);
+        Task<ResponseResult> CreateItem(PreviewItemRow createItemRequest);
         Task<IEnumerable<ItemDTO>> GetItemByPurchaseId(int purchaseId);
         Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes();
         Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId);

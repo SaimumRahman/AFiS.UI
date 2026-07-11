@@ -122,6 +122,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
+            IsNewItemMode = true;
             await TokenService.InitializeTokenAsync();
             await LoadLookupData();
             Purchase.StoreId = Stores.FirstOrDefault()?.Id;
@@ -1982,14 +1983,19 @@ namespace JM.UI.Client.Pages.Purchases
                         newRow.CatalogueId = CurrentItem.CatalogueId;
                     newRow.FeatureIds = CurrentItem.FeatureIds?.ToList() ?? new List<int>();
                 }
-
-                var newItemId = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
-                if (newItemId > 0)
+                newRow.IsNewItem = IsNewItemMode;
+                var result = await _serviceUnitOfWork.ItemService.CreateItem(newRow);
+                if (result.IsSuccessStatus)
                 {
-                    newRow.ItemId = newItemId;
+                    newRow.ItemId = Convert.ToInt32(result.Id);
                     PreviewItems.Add(newRow);
                     PreviewGrid?.Reload();
                     StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        $"Preview load failed: {result.Message}");
                 }
                 
             }
@@ -2283,6 +2289,7 @@ namespace JM.UI.Client.Pages.Purchases
                     ExistingBarcode = CurrentItem.Barcode,
                     SubGroupId = CurrentItem.SubGroupId,
                     DesignId = CurrentItem.DesignId,
+                    IsNewItemMode = IsNewItemMode,
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);
@@ -2304,20 +2311,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (IsNewItemMode)
             {
-                DisableItemFields = false;
                 CurrentItem.ItemId = 0;
-                GenerateProductName();
-                notificationService.Notify(NotificationSeverity.Info, "Create Mode",
-                    "Fill in the details to create a new item");
             }
             else
             {
-                CurrentItem = CreateNewItem();
-                DisableItemFields = false;
-                BarcodeSearchText = string.Empty;
-                PreviewItems.Clear();
-                PreviewGrid?.Reload();
-                ResetItemFormSelections();
+               
             }
 
             StateHasChanged();

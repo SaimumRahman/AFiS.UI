@@ -31,6 +31,7 @@ namespace JM.UI.Entities.Model.Items
         public bool RawMaterial { get; set; }
         public bool IsSaleable { get; set; }
         public bool IsConsume { get; set; }
+        public bool IsNewItemMode { get; set; }
         public int? CatalogueId { get; set; }
         public string Barcode { get; set; }
         public List<int> FeatureIds { get; set; } = new();

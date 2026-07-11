@@ -835,7 +835,7 @@
                                            @*  <RadzenCheckBox @bind-Value="CurrentItem.IsSaleable" Name="isSaleable2" />
                                             <RadzenLabel Text="Is Saleable" Component="isSaleable2" Style="font-size:0.75rem;" /> *@
                                         </RadzenStack>
-                                        @if (IsNewItemMode)
+                                       @*  @if (IsNewItemMode)
                                         {
                                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                                 <RadzenCheckBox @bind-Value="CurrentItem.CountStockByColor" Name="byColor2" />
@@ -845,7 +845,7 @@
                                                 <RadzenCheckBox @bind-Value="CurrentItem.CountStockBySize" Name="bySize2" />
                                                 <RadzenLabel Text="By Size" Component="bySize2" Style="font-size:0.75rem;" />
                                             </RadzenStack>
-                                        }
+                                        } *@
                                         <RadzenButton Icon="@(IsNewItemMode ? "close" : "add_circle")"
                                                       ButtonStyle="@(IsNewItemMode ? ButtonStyle.Warning : ButtonStyle.Info)"
                                                       Click="@ToggleCreateNewItem"
