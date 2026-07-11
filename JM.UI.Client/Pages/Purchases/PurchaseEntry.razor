@@ -298,20 +298,20 @@
                                                 Change="@(args => OnGroupChanged((int?)args))"
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                Disabled="@(IsProcessing || DisableItemFields)" />
-                                </RadzenColumn>
-                            </RadzenRow>
+                                                Disabled="@(IsProcessing || DisableItemFields || !IsNewItemMode)" />
+                                                </RadzenColumn>
+                                            </RadzenRow>
 
-                            <!-- SubProduct -->
-                            <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
-                                <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
-                                <RadzenColumn Size="8">
-                                <RadzenDropDown @bind-Value="CurrentItem.SubGroupId" Data="@SubGroups"
-                                                TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
-                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                Change="@(args => OnSubGroupChanged((int?)args))"
-                                                Disabled="@(IsProcessing || DisableItemFields)" />
+                                            <!-- SubProduct -->
+                                            <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                                                <RadzenColumn Size="4"><RadzenLabel Text="Product" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                                                <RadzenColumn Size="8">
+                                                <RadzenDropDown @bind-Value="CurrentItem.SubGroupId" Data="@SubGroups"
+                                                                TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
+                                                                Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
+                                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                Change="@(args => OnSubGroupChanged((int?)args))"
+                                                                Disabled="@(IsProcessing || DisableItemFields || !IsNewItemMode)" />
                                 </RadzenColumn>
                             </RadzenRow>
 
@@ -324,7 +324,7 @@
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                 Change="@(args => OnDesignChanged(CurrentItem.DesignId))"
-                                                Disabled="@(IsProcessing || DisableItemFields || !CurrentItem.SubGroupId.HasValue)" />
+                                                Disabled="@(IsProcessing || DisableItemFields || !CurrentItem.SubGroupId.HasValue || !IsNewItemMode)" />
                                 </RadzenColumn>
                             </RadzenRow>
 
