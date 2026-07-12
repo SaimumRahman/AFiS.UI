@@ -22,6 +22,10 @@ namespace JM.UI.Client.Pages.Transfer
         protected bool IsSaving { get; set; } = false;
         protected int? StoreId { get; set; } = null;
 
+        // Selected transfer (single selection)
+        protected TransferMasterDTO? SelectedTransfer { get; set; } = null;
+        protected bool HasSelectedTransfer => SelectedTransfer != null;
+
         // Barcode scan
         protected string BarcodeInput { get; set; } = string.Empty;
         protected string? BarcodeMatchMessage { get; set; } = null;
@@ -55,53 +59,48 @@ namespace JM.UI.Client.Pages.Transfer
             var barcode = BarcodeInput?.Trim();
             if (string.IsNullOrWhiteSpace(barcode)) return;
 
-            // Make sure all masters have their details loaded so we can search inside them.
-            // For masters whose details haven't been loaded yet we call the service.
-            foreach (var master in Transfers)
+            if (!HasSelectedTransfer)
             {
-                if (master.Details == null)
-                {
-                    try
-                    {
-                        var details = await _serviceUnitOfWork.TransferService.GetDetailsByTransferId(master.TransferId);
-                        master.Details = details.ToList();
-                    }
-                    catch { /* skip if fails */ }
-                }
-            }
-
-            // Find masters that contain a detail with this barcode
-            var matchingMasters = Transfers
-                .Where(t => t.Details != null &&
-                            t.Details.Any(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
-
-            if (!matchingMasters.Any())
-            {
-                BarcodeMatchMessage = $"No match for \"{barcode}\"";
-                BarcodeMatchBadgeStyle = BadgeStyle.Danger;
-                FilteredTransfers = Transfers; // reset filter
+                BarcodeMatchMessage = "Please select a transfer first.";
+                BarcodeMatchBadgeStyle = BadgeStyle.Warning;
                 StateHasChanged();
                 return;
             }
 
-            // Filter grid to matching masters
-            FilteredTransfers = matchingMasters;
-
-            // Auto-check the matched detail rows (set IsReceived = 1 locally)
-            foreach (var master in matchingMasters)
+            // Ensure details are loaded for selected transfer
+            if (SelectedTransfer!.Details == null)
             {
-                var matchedDetails = master.Details!
-                    .Where(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
-
-                foreach (var detail in matchedDetails)
-                    detail.IsReceived = true;
-
-                // If all details of this master are now received, flag master too (locally)
-                CheckAndFlagMasterReceived(master);
+                try
+                {
+                    var details = await _serviceUnitOfWork.TransferService.GetDetailsByTransferId(SelectedTransfer.TransferId);
+                    SelectedTransfer.Details = details.ToList();
+                }
+                catch
+                {
+                    BarcodeMatchMessage = "Failed to load transfer details.";
+                    BarcodeMatchBadgeStyle = BadgeStyle.Danger;
+                    StateHasChanged();
+                    return;
+                }
             }
 
-            BarcodeMatchMessage = $"{matchingMasters.Count} transfer(s) matched";
+            // Search only within selected transfer
+            var matchedDetail = SelectedTransfer.Details
+                .FirstOrDefault(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedDetail == null)
+            {
+                BarcodeMatchMessage = $"Barcode \"{barcode}\" not found in {SelectedTransfer.TransferNo}";
+                BarcodeMatchBadgeStyle = BadgeStyle.Danger;
+                StateHasChanged();
+                return;
+            }
+
+            // Mark the matched item as received
+            matchedDetail.IsReceived = true;
+            CheckAndFlagMasterReceived(SelectedTransfer);
+
+            BarcodeMatchMessage = $"Matched: {matchedDetail.ItemName} in {SelectedTransfer.TransferNo}";
             BarcodeMatchBadgeStyle = BadgeStyle.Success;
 
             StateHasChanged();
@@ -111,7 +110,6 @@ namespace JM.UI.Client.Pages.Transfer
         {
             BarcodeInput = string.Empty;
             BarcodeMatchMessage = null;
-            FilteredTransfers = Transfers;
             StateHasChanged();
         }
 
@@ -148,10 +146,54 @@ namespace JM.UI.Client.Pages.Transfer
             }
         }
 
+        protected bool CanMarkReceived(TransferMasterDTO master)
+        {
+            if (master.Details == null || !master.Details.Any()) return false;
+            return master.Details.All(d => d.IsReceived == true);
+        }
+
+        protected async Task SelectTransfer(TransferMasterDTO transfer)
+        {
+            // Toggle selection — clicking the same transfer deselects
+            SelectedTransfer = SelectedTransfer?.TransferId == transfer.TransferId ? null : transfer;
+
+            if (HasSelectedTransfer)
+            {
+                // Load details for the selected transfer
+                if (SelectedTransfer!.Details == null)
+                {
+                    try
+                    {
+                        var details = await _serviceUnitOfWork.TransferService.GetDetailsByTransferId(SelectedTransfer.TransferId);
+                        SelectedTransfer.Details = details.ToList();
+                    }
+                    catch
+                    {
+                        // Ignore load failure; user can expand manually
+                    }
+                }
+
+                // Auto-expand the selected row
+                if (SelectedTransfer.Details != null)
+                    await TransferGrid.ExpandRow(SelectedTransfer);
+            }
+
+            BarcodeInput = string.Empty;
+            BarcodeMatchMessage = null;
+            StateHasChanged();
+        }
+
         // ─── Mark single master received (button) ────────────────────────────────
 
         protected async Task MarkMasterReceived(TransferMasterDTO transfer)
         {
+            if (!CanMarkReceived(transfer))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Warning",
+                    "All items must be marked as received before confirming.");
+                return;
+            }
+
             try
             {
                 IsLoading = true;
@@ -162,10 +204,6 @@ namespace JM.UI.Client.Pages.Transfer
                     var details = await _serviceUnitOfWork.TransferService.GetDetailsByTransferId(transfer.TransferId);
                     transfer.Details = details.ToList();
                 }
-
-                // Mark all details received locally
-                foreach (var d in transfer.Details)
-                    d.IsReceived = true;
 
                 // Mark master locally
                 transfer.IsReceived = true;
@@ -293,6 +331,7 @@ namespace JM.UI.Client.Pages.Transfer
                 IsLoading = true;
                 BarcodeMatchMessage = null;
                 BarcodeInput = string.Empty;
+                SelectedTransfer = null;
 
                 Transfers = await _serviceUnitOfWork.TransferService.GetDispatchedTransfers(storeId ?? 0);
                 FilteredTransfers = Transfers;

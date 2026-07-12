@@ -198,9 +198,9 @@ namespace JM.UI.Client.Pages.InvRequisition
                     ItemId = i.Id,
                     ItemName = i.Name ?? "Unknown",
                     Barcode = i.Barcode ?? barcode,
-                    Qty = SharedQty ?? 1,
+                    Qty = SharedQty ?? 0,
                     UnitPrice = i.SalePrice ?? 0,
-                    Amount = (SharedQty ?? 1) * (i.SalePrice ?? 0),
+                    Amount = (SharedQty ?? 0) * (i.SalePrice ?? 0),
                     Remarks = SharedRemarks
                 }).ToList();
 

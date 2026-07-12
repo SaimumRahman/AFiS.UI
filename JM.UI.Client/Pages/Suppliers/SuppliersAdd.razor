@@ -38,15 +38,6 @@
                                 </RadzenStack>
 
                                 <RadzenStack Gap="0.5rem">
-                                    <RadzenLabel Text="Account" Component="AccountId" />
-                                    <RadzenDropDown TValue="int" @bind-Value="@Supplier.AccountId" 
-                                                    Data="@Accounts" TextProperty="Name" ValueProperty="Id"
-                                                    Placeholder="Select Account..." class="w-100" Name="AccountId" 
-                                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true"/>
-                                    <RadzenRequiredValidator Component="AccountId" Text="Account is required" DefaultValue="0" />
-                                </RadzenStack>
-
-                                <RadzenStack Gap="0.5rem">
                                     <RadzenLabel Text="Short Code" Component="ShortCode" />
                                     <RadzenTextBox Name="ShortCode" @bind-Value="@Supplier.ShortCode" class="w-100" />
                                 </RadzenStack>
