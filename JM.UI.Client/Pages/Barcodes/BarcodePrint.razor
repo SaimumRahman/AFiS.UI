@@ -240,28 +240,33 @@
         </RadzenFieldset>
 
         @* ── Single Barcode Add ───────────────────────────────── *@
-         <RadzenFieldset Text="Add Single Barcode" Icon="add_circle_outline">
+        <RadzenFieldset Text="Add Single Barcode" Icon="add_circle_outline">
             <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
 
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Gap="0.25rem">
                         <RadzenLabel Text="Select Barcode" Component="SingleBarcode" />
                         <RadzenDropDownDataGrid @bind-Value="SelectedBarcodeId"
-                                                Data="@AllBarcodes"
-                                                TextProperty="Name"
+                                                Data="@BarcodeSelectItems"
+                                                TextProperty="SearchText"
                                                 ValueProperty="Id"
                                                 Name="SingleBarcode"
-                                                Placeholder="-- Search and select barcode --"
+                                                Placeholder="-- Search by name, barcode, or ref no --"
                                                 Style="width:100%;"
+                                                IsLoading="@IsLoadingBarcodes"
                                                 AllowFiltering="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                IsLoading="@IsLoadingBarcodes">
+                                                FilterOperator="StringFilterOperator.Contains"
+                                                AllowClear="true">
                             <Columns>
-                                <RadzenDropDownDataGridColumn Property="Name"
+                                <RadzenDropDownDataGridColumn Property="ProductName"
                                                               Title="Name"
                                                               Width="150px" />
-                                <RadzenDropDownDataGridColumn Property="Barcode"
-                                                              Title="Barcode"
+                                <RadzenDropDownDataGridColumn Property="BarcodeValue"
+                                                              Title="BarcodeValue"
+                                                              Width="120px" />
+                                <RadzenDropDownDataGridColumn Property="ReturnRefNo"
+                                                              Title="Ref No"
                                                               Width="120px" />
                             </Columns>
                         </RadzenDropDownDataGrid>
@@ -286,7 +291,7 @@
                                   ButtonStyle="ButtonStyle.Secondary"
                                   Click="@AddSingleBarcode"
                                   Style="width:100%;"
-                                  Disabled="@(SelectedTemplateId == null)" />
+                                  Disabled="@(SelectedTemplateId == null || SelectedBarcodeId == null)" />
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="2">
@@ -303,7 +308,7 @@
                 </RadzenColumn>
 
             </RadzenRow>
-        </RadzenFieldset> 
+        </RadzenFieldset>
 
     </RadzenCard>
 
