@@ -18,6 +18,7 @@ namespace JM.UI.Entities.Model.Purchases
         public decimal? VatAmount { get; set; } = 0m;
 
         public bool IsVatIncluded { get; set; }
+        public bool IsOpenningStock { get; set; }
         public decimal? OtherCostTotal { get; set; }
         public decimal? CarryingCostTotal { get; set; }
         public decimal? OperationalCostTotal { get; set; }

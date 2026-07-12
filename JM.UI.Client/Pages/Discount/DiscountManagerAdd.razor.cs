@@ -83,10 +83,9 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
 
             DiscountTypes = (await _serviceUnitOfWork.DiscountManagerService.GetDiscountTypes()).ToList();
 
-            var items = await _serviceUnitOfWork.ItemService.GetItems();
-            AllItems = items.ToList();
+        AllItems = new List<ItemDTO>();
 
-            // Load filter lookup data
+        // Load filter lookup data
             Campaigns = (await _serviceUnitOfWork.DiscountManagerService.GetAll()).ToList();
             Groups = (await _serviceUnitOfWork.GroupService.GetGroups()).ToList();
             AllSubGroups = (await _serviceUnitOfWork.SubGroupService.GetSubGroups()).ToList();
@@ -110,7 +109,7 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 Campaign = _serviceUnitOfWork.DiscountManagerService.CreateNew();
             }
 
-            BuildGridItems();
+            await BuildGridItemsAsync();
         }
         catch (Exception ex)
         {
@@ -124,8 +123,19 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         }
     }
 
-    private void BuildGridItems()
+    private bool AnyFilterActive() =>
+        SelectedGroupId.HasValue || SelectedSubGroupId.HasValue || SelectedDesignId.HasValue ||
+        SelectedColorId.HasValue || SelectedSizeId.HasValue || SelectedCatalogueId.HasValue;
+
+    private async Task EnsureItemsLoadedAsync()
     {
+        if (AllItems.Any() || !AnyFilterActive()) return;
+        AllItems = (await _serviceUnitOfWork.ItemService.GetItems()).ToList();
+    }
+
+    private async Task BuildGridItemsAsync()
+    {
+        await EnsureItemsLoadedAsync();
         var filtered = FilterItems();
         GridItems = new List<DiscountGridItem>();
 
@@ -193,11 +203,11 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         BulkDiscountValue = 0;
         SearchText = string.Empty;
 
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnGroupChanged(int? groupId)
+    protected async Task OnGroupChanged(int? groupId)
     {
         SelectedGroupId = groupId;
         SelectedSubGroupId = null;
@@ -214,11 +224,11 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
             FilteredDesigns = AllDesigns;
         }
 
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnSubGroupChanged(int? subGroupId)
+    protected async Task OnSubGroupChanged(int? subGroupId)
     {
         SelectedSubGroupId = subGroupId;
         SelectedDesignId = null;
@@ -228,35 +238,35 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         else
             FilteredDesigns = AllDesigns;
 
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnDesignChanged(int? designId)
+    protected async Task OnDesignChanged(int? designId)
     {
         SelectedDesignId = designId;
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnColorChanged(int? colorId)
+    protected async Task OnColorChanged(int? colorId)
     {
         SelectedColorId = colorId;
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnSizeChanged(int? sizeId)
+    protected async Task OnSizeChanged(int? sizeId)
     {
         SelectedSizeId = sizeId;
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected void OnCatalogueChanged(int? catalogueId)
+    protected async Task OnCatalogueChanged(int? catalogueId)
     {
         SelectedCatalogueId = catalogueId;
-        BuildGridItems();
+        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
