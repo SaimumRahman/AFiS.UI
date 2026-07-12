@@ -1817,6 +1817,12 @@ namespace JM.UI.Client.Pages.Purchases
         {
             try
             {
+                if (!CurrentItem.SizeId.HasValue)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Size Required",
+                        "Please select a Size before adding items to the preview.");
+                    return;
+                }
                 if (PreviewItems.Any(p => p.Barcode == barcode)) return;
 
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
@@ -2104,6 +2110,14 @@ namespace JM.UI.Client.Pages.Purchases
         {
             var barcode = value?.ToString();
             if (string.IsNullOrWhiteSpace(barcode)) return;
+
+            if (!CurrentItem.SizeId.HasValue)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Size Required",
+                    "Please select a Size before adding items to the preview.");
+                StateHasChanged();
+                return;
+            }
 
             try
             {
