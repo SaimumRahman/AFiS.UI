@@ -57,7 +57,10 @@ namespace JM.UI.Service.Purchases
             purchase.DueAmount = purchase.NetAmount - (purchase.PaidAmount ?? 0);
 
             if (purchase.Id == 0)
+            {
                 purchase.CreatedDate = DateTime.Now;
+                purchase.PurchaseDate = purchase.PurchaseDate?.Date ?? default;
+            }
             else
                 purchase.LastModifiedDate = DateTime.Now;
 

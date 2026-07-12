@@ -50,5 +50,6 @@ namespace JM.UI.Entities.Model.Items
         public string? ProductType { get; set; }
         public string? Catalogue { get; set; }
         public string? ReturnRefNo { get; set; }
+        public int ItemCode { get; set; }
     }
 }

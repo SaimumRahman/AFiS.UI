@@ -126,6 +126,11 @@ namespace JM.UI.Client.Pages.InvRequisition
             NavigationManager.NavigateTo($"/InvRequisitionAdd/{requisition.RequisitionID}");
         }
 
+        protected void CreateTransfer(InvRequisitionMasterDTO requisition)
+        {
+            NavigationManager.NavigateTo($"/ItemTransferEntry/FromRequisition/{requisition.RequisitionID}");
+        }
+
         protected async Task DeleteRequisition(InvRequisitionMasterDTO requisition)
         {
             var confirm = await dialogService.Confirm(

@@ -1,5 +1,6 @@
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.PurchaseItems;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,5 +17,6 @@ namespace JM.UI.DataService.DAL.Items
         Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);
         Task<ResponseResult> CreateItem(CreateItemRequestDTO createItemRequest);
         Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes();
+        Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId);
     }
 }
