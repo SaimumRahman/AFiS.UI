@@ -30,6 +30,7 @@ namespace JM.UI.Client.Pages.Transfer
         protected string BarcodeInput { get; set; } = string.Empty;
         protected string? BarcodeMatchMessage { get; set; } = null;
         protected BadgeStyle BarcodeMatchBadgeStyle { get; set; } = BadgeStyle.Info;
+        protected Dictionary<int, int> BarcodeScanCounts { get; set; } = new();
 
         /// <summary>
         /// True when any loaded detail (across all expanded masters) has IsReceived == 1
@@ -96,11 +97,22 @@ namespace JM.UI.Client.Pages.Transfer
                 return;
             }
 
-            // Mark the matched item as received
-            matchedDetail.IsReceived = true;
-            CheckAndFlagMasterReceived(SelectedTransfer);
+            // Increment scan count for this item (cap at IssueQty)
+            var detailId = matchedDetail.TransferDetailID;
+            if (!BarcodeScanCounts.ContainsKey(detailId))
+                BarcodeScanCounts[detailId] = 0;
 
-            BarcodeMatchMessage = $"Matched: {matchedDetail.ItemName} in {SelectedTransfer.TransferNo}";
+            if (BarcodeScanCounts[detailId] < (int)matchedDetail.IssueQty)
+                BarcodeScanCounts[detailId]++;
+
+            // Auto-check only when scan count reaches the required quantity
+            if (BarcodeScanCounts[detailId] >= (int)matchedDetail.IssueQty)
+            {
+                matchedDetail.IsReceived = true;
+                CheckAndFlagMasterReceived(SelectedTransfer);
+            }
+
+            BarcodeMatchMessage = $"Scanned: {matchedDetail.ItemName} ({BarcodeScanCounts[detailId]}/{matchedDetail.IssueQty}) in {SelectedTransfer.TransferNo}";
             BarcodeMatchBadgeStyle = BadgeStyle.Success;
 
             StateHasChanged();
@@ -118,6 +130,10 @@ namespace JM.UI.Client.Pages.Transfer
         protected void ToggleDetailReceived(TransferMasterDTO master, TransferDetailDTO detail, bool isChecked)
         {
             detail.IsReceived = isChecked ? true : false;
+            if (isChecked)
+                BarcodeScanCounts[detail.TransferDetailID] = (int)detail.IssueQty;
+            else
+                BarcodeScanCounts.Remove(detail.TransferDetailID);
             CheckAndFlagMasterReceived(master);
             StateHasChanged();
         }
@@ -126,7 +142,13 @@ namespace JM.UI.Client.Pages.Transfer
         {
             if (master.Details == null) return;
             foreach (var d in master.Details)
+            {
                 d.IsReceived = isChecked ? true : false;
+                if (isChecked)
+                    BarcodeScanCounts[d.TransferDetailID] = (int)d.IssueQty;
+                else
+                    BarcodeScanCounts.Remove(d.TransferDetailID);
+            }
             CheckAndFlagMasterReceived(master);
             StateHasChanged();
         }
@@ -180,6 +202,7 @@ namespace JM.UI.Client.Pages.Transfer
 
             BarcodeInput = string.Empty;
             BarcodeMatchMessage = null;
+            BarcodeScanCounts.Clear();
             StateHasChanged();
         }
 
@@ -332,6 +355,7 @@ namespace JM.UI.Client.Pages.Transfer
                 BarcodeMatchMessage = null;
                 BarcodeInput = string.Empty;
                 SelectedTransfer = null;
+                BarcodeScanCounts.Clear();
 
                 Transfers = await _serviceUnitOfWork.TransferService.GetDispatchedTransfers(storeId ?? 0);
                 FilteredTransfers = Transfers;
