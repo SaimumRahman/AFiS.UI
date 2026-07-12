@@ -247,11 +247,11 @@
                     <RadzenStack Gap="0.25rem">
                         <RadzenLabel Text="Select Barcode" Component="SingleBarcode" />
                         <RadzenDropDownDataGrid @bind-Value="SelectedBarcodeId"
-                                                Data="@AllBarcodes"
-                                                TextProperty="ProductName"
+                                                Data="@BarcodeSelectItems"
+                                                TextProperty="SearchText"
                                                 ValueProperty="Id"
                                                 Name="SingleBarcode"
-                                                Placeholder="-- Select barcode --"
+                                                Placeholder="-- Search by name, barcode, or ref no --"
                                                 Style="width:100%;"
                                                 IsLoading="@IsLoadingBarcodes"
                                                 AllowFiltering="true"
@@ -291,7 +291,7 @@
                                   ButtonStyle="ButtonStyle.Secondary"
                                   Click="@AddSingleBarcode"
                                   Style="width:100%;"
-                                  Disabled="@(SelectedTemplateId == null)" />
+                                  Disabled="@(SelectedTemplateId == null || SelectedBarcodeId == null)" />
                 </RadzenColumn>
 
                 <RadzenColumn Size="12" SizeMD="2">

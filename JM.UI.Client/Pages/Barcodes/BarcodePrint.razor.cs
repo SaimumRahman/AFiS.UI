@@ -47,8 +47,19 @@ public partial class BarcodePrintComponent : PosComponentBase
 
     // ── Single-Barcode Dropdown ──────────────────────────────────
     protected List<BarcodeItemDTO> AllBarcodes { get; set; } = new();
+    protected List<BarcodeSelectItem> BarcodeSelectItems { get; set; } = new();
     protected int? SelectedBarcodeId { get; set; }
     protected int SinglePrintQty { get; set; } = 1;
+
+    public class BarcodeSelectItem
+    {
+        public int Id { get; set; }
+        public string ProductName { get; set; } = "";
+        public string BarcodeValue { get; set; } = "";
+        public string ReturnRefNo { get; set; } = "";
+        /// <summary>Combined search text so the built-in filter searches all fields.</summary>
+        public string SearchText => $"{ProductName} {BarcodeValue} {ReturnRefNo}";
+    }
 
     // ── Print Preview List ───────────────────────────────────────
     protected List<BarcodePrintItemDTO> PrintItems { get; set; } = new();
@@ -237,6 +248,13 @@ public partial class BarcodePrintComponent : PosComponentBase
         {
             IsLoadingBarcodes = true;
             AllBarcodes = (await _serviceUnitOfWork.BarcodePrintConfigService.GetAllItemsForBarcodePrint())?.ToList() ?? new();
+            BarcodeSelectItems = AllBarcodes.Select(b => new BarcodeSelectItem
+            {
+                Id = b.Id,
+                ProductName = b.ProductName,
+                BarcodeValue = b.BarcodeValue,
+                ReturnRefNo = b.ReturnRefNo
+            }).ToList();
         }
         catch (Exception ex)
         {
