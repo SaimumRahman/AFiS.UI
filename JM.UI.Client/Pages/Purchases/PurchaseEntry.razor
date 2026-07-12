@@ -218,6 +218,14 @@
                     <RadzenColumn Size="12" SizeLG="4" Style="border-right: 1px solid #dee2e6; padding-right: 0.4rem;">
                         <RadzenStack Gap="0.2rem">
 
+                            <!-- Opening Stock -->
+                            <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                                <RadzenColumn Size="4"><RadzenLabel Text="Opening Stock" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                                <RadzenColumn Size="8">
+                                    <RadzenCheckBox TValue="bool" @bind-Value="Purchase.IsOpenningStock" Disabled="@IsProcessing" />
+                                </RadzenColumn>
+                            </RadzenRow>
+
                             <!-- Supplier -->
                             <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                                 <RadzenColumn Size="4"><RadzenLabel Text="Supplier" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
