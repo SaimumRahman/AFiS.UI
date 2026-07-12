@@ -1,6 +1,5 @@
 @page "/DispatchedTransferList"
 @using JM.UI.Client.Pages.Transfer
-@using JM.UI.Client.Pages.Dialog
 @using JM.UI.Entities.Model.Transfer
 @inherits DispatchedTransferListComponent
 @attribute [Authorize]
@@ -268,6 +267,20 @@
                                 <RadzenDataGridColumn TItem="TransferDetailDTO" Property="Barcode" Title="Barcode" Width="130px" TextAlign="TextAlign.Center">
                                     <Template Context="detail">
                                         <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@(detail.Barcode ?? "N/A")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Scanned Qty (barcode scan progress) -->
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Title="Scanned" Width="100px" TextAlign="TextAlign.Center"
+                                                      Filterable="false" Sortable="false">
+                                    <Template Context="detail">
+                                        @{
+                                            var scanned = BarcodeScanCounts.GetValueOrDefault(detail.TransferDetailID, 0);
+                                            var qty = (int)detail.IssueQty;
+                                            var isComplete = scanned >= qty;
+                                            <RadzenBadge BadgeStyle="@(isComplete ? BadgeStyle.Success : (scanned > 0 ? BadgeStyle.Info : BadgeStyle.Light))"
+                                                         Text="@($"{scanned}/{qty}")" />
+                                        }
                                     </Template>
                                 </RadzenDataGridColumn>
 

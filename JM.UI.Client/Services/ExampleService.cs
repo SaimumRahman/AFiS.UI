@@ -303,7 +303,7 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name        = "Dispatched Transfers",
+                        Name        = "Receive Transfers",
                         Path        = "/DispatchedTransferList",
                         Icon        = "\ue40a",
                         Title       = "Dispatched Transfer List",
