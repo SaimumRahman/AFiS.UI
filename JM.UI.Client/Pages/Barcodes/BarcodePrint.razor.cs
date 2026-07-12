@@ -46,7 +46,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected PurchaseInvoiceDTO? SelectedPurchase { get; set; }
 
     // ── Single-Barcode Dropdown ──────────────────────────────────
-    protected List<ItemDTO> AllBarcodes { get; set; } = new();
+    protected List<BarcodeItemDTO> AllBarcodes { get; set; } = new();
     protected int? SelectedBarcodeId { get; set; }
     protected int SinglePrintQty { get; set; } = 1;
 
@@ -236,7 +236,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         try
         {
             IsLoadingBarcodes = true;
-            AllBarcodes = (await _serviceUnitOfWork.ItemService.GetItems())?.ToList() ?? new();
+            AllBarcodes = (await _serviceUnitOfWork.BarcodePrintConfigService.GetAllItemsForBarcodePrint())?.ToList() ?? new();
         }
         catch (Exception ex)
         {
@@ -314,7 +314,7 @@ public partial class BarcodePrintComponent : PosComponentBase
 
         AddOrUpdatePrintItemFromItem(barcode, SinglePrintQty);
         notificationService.Notify(NotificationSeverity.Success, "Added",
-            $"Barcode {barcode.Barcode} added ({SinglePrintQty}×).");
+            $"Barcode {barcode.BarcodeValue} added ({SinglePrintQty}×).");
     }
 
     // ── Print Item Helpers ───────────────────────────────────────
@@ -350,7 +350,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         }
         StateHasChanged();
     }
-    private void AddOrUpdatePrintItemFromItem(ItemDTO barcode, int qty)
+    private void AddOrUpdatePrintItemFromItem(BarcodeItemDTO barcode, int qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
@@ -365,15 +365,18 @@ public partial class BarcodePrintComponent : PosComponentBase
             new BarcodePrintItemDTO
             {
                 BarcodeId = barcode.Id,
-                BarcodeValue = barcode.Barcode,
-                ProductName = barcode.Name,
+                BarcodeValue = barcode.BarcodeValue,
+                ProductName = barcode.ProductName,
+                Brand = barcode.BrandName,
+                Price = barcode.SalesPrice,
+                UoM = barcode.UnitName,
+                GroupId = barcode.GroupId,
                 GroupName = barcode.GroupName,
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
                 TemplateId = SelectedTemplateId ?? 0,
-                SalesPrice = barcode.SalePrice.ToString() ?? "0",
-                ReturnRefNo = barcode.ReturnRefNo ?? "N/A"
+                ReturnRefNo = barcode.ReturnRefNo,
             }
         };
         }
