@@ -393,6 +393,13 @@ else
                                             </Template>
                                         </RadzenDataGridColumn>
 
+                                        <RadzenDataGridColumn TItem="InvRequisitionPreviewRow" Property="CurrentStock"
+                                                              Title="CurrentStock" Width="90px">
+                                            <Template Context="row">
+                                                <span style="font-size:0.65rem; font-weight:600;">@row.CurrentStock.ToString("N2")</span>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
                                         <RadzenDataGridColumn TItem="InvRequisitionPreviewRow" Title="Qty" Width="75px">
                                             <Template Context="row">
                                                 <RadzenNumeric @bind-Value="row.Qty"

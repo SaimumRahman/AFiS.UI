@@ -294,7 +294,7 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name        = "Undispatched Transfers",
+                        Name        = "Dispatch Goods",
                         Path        = "/UndispatchedTransferList",
                         Icon        = "\ue40a",
                         Title       = "Undispatched Transfer List",
@@ -407,6 +407,23 @@ namespace JM.UI.Client.Services
                         Title       = "Chart of Accounts",
                         Description = "Manage ledger accounts and structure",
                         Tags        = new[] { "account", "ledger", "chart", "finance" }
+                    }
+                }
+            },
+            new Example
+            {
+                Name = "CRM",
+                Icon = "\ue8b0",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "Registration",
+                        Path        = "/CustomerDetailsList",
+                        Icon        = "\ue8b0",
+                        Title       = "Account Groups",
+                        Description = "Organize accounts into categories and groups",
+                        Tags        = new[] { "account", "group", "finance", "coa" }
                     }
                 }
             },

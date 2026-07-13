@@ -201,7 +201,8 @@ namespace JM.UI.Client.Pages.InvRequisition
                     Qty = SharedQty ?? 0,
                     UnitPrice = i.SalePrice ?? 0,
                     Amount = (SharedQty ?? 0) * (i.SalePrice ?? 0),
-                    Remarks = SharedRemarks
+                    Remarks = SharedRemarks,
+                    CurrentStock = i.CurrentStock
                 }).ToList();
 
                 PreviewGrid?.Reload();
