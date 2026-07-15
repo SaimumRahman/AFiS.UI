@@ -1171,6 +1171,7 @@ namespace JM.UI.Client.Pages.Purchases
         }
         private void ResetSharedPricing()
         {
+            SharedQuantity = null;
             SharedPurchasePrice = 0;
             SharedSalePrice = 0;
             SharedOtherCost = null;
@@ -2124,7 +2125,7 @@ namespace JM.UI.Client.Pages.Purchases
                     {
                         await PopulateFromExistingItem(result.ItemDetails.FirstOrDefault()!, result.itemWiseFeatures);
                         DisableItemFields = false;
-
+                        Purchase.SupplierId = result.ItemDetails.FirstOrDefault().SupplierId;
                         PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
@@ -2207,6 +2208,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
             SharedPurchasePrice = item.PurchasePrice ?? 0;
+            
             //SharedSalePrice = item.SalePrice ?? 0;
 
             if (item.GroupId.HasValue)
