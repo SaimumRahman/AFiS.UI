@@ -1,0 +1,292 @@
+@page "/SalesPOS"
+@using JM.UI.Entities.Model.SalesPOS
+@inherits SalesPOSComponent
+@attribute [Authorize]
+<PageTitle>Sales POS</PageTitle>
+
+<style>
+    .pos-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f0f2f5; }
+    .pos-header { display: flex; align-items: center; padding: 6px 16px; background: #1a1a2e; color: #fff; gap: 16px; flex-shrink: 0; }
+    .pos-header .brand { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+    .pos-header .mode-tabs { display: flex; gap: 2px; background: #16213e; border-radius: 6px; padding: 2px; }
+    .pos-header .mode-tab { padding: 6px 20px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; border: none; background: transparent; color: #8899aa; transition: all .15s; }
+    .pos-header .mode-tab.active { background: #0f3460; color: #fff; font-weight: 600; }
+    .pos-header .mode-tab:hover:not(.active) { color: #ccc; }
+    .pos-header .header-actions { margin-left: auto; display: flex; gap: 8px; }
+    .pos-body { display: flex; flex: 1; overflow: hidden; }
+    .pos-left { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 8px; gap: 8px; overflow: hidden; }
+    .pos-right { width: 340px; min-width: 340px; display: flex; flex-direction: column; padding: 8px 8px 8px 0; gap: 8px; overflow-y: auto; }
+
+    .pos-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 12px; }
+    .pos-card-title { font-size: 0.8rem; font-weight: 600; color: #333; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .barcode-row { display: flex; gap: 6px; align-items: center; }
+    .barcode-row .rz-textbox { flex: 1; }
+
+    .product-preview { display: flex; gap: 12px; padding: 8px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+    .product-preview .info { flex: 1; }
+    .product-preview .info .name { font-weight: 600; font-size: 0.9rem; }
+    .product-preview .info .price { color: #28a745; font-weight: 700; font-size: 1rem; }
+
+    .cart-grid { flex: 1; overflow: auto; min-height: 120px; }
+    .cart-grid .rz-datatable { font-size: 0.75rem; }
+    .cart-actions { display: flex; gap: 6px; }
+
+    .sidebar-section { margin-bottom: 8px; }
+    .sidebar-section:last-child { margin-bottom: 0; }
+
+    .customer-search { position: relative; }
+    .customer-search .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .customer-search .suggestion-item { padding: 6px 10px; cursor: pointer; font-size: 0.8rem; }
+    .customer-search .suggestion-item:hover { background: #f0f7ff; }
+
+    .customer-profile { padding: 8px; background: #f8f9fa; border-radius: 6px; }
+    .customer-profile .name { font-weight: 600; font-size: 0.9rem; }
+    .customer-profile .phone { font-size: 0.8rem; color: #666; }
+
+    .billing-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.8rem; }
+    .billing-row.total { font-weight: 700; font-size: 1rem; border-top: 2px solid #333; padding-top: 6px; margin-top: 4px; color: #28a745; }
+    .billing-row .label { color: #666; }
+    .billing-row .value { font-weight: 600; }
+
+    .payment-summary { background: #f0f9ff; border-radius: 6px; padding: 8px; }
+    .payment-summary .row-due { color: #dc3545; font-weight: 700; }
+
+    .hotkey-bar { display: flex; gap: 12px; padding: 4px 16px; background: #1a1a2e; color: #8899aa; font-size: 0.75rem; flex-shrink: 0; }
+    .hotkey-bar kbd { background: #16213e; padding: 2px 6px; border-radius: 3px; color: #fff; font-size: 0.7rem; }
+
+    .tab-content { flex: 1; overflow-y: auto; }
+    .tab-header { display: flex; gap: 4px; margin-bottom: 8px; }
+    .tab-header .tab-btn { padding: 4px 16px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #dee2e6; background: #fff; cursor: pointer; }
+    .tab-header .tab-btn.active { background: #0f3460; color: #fff; border-color: #0f3460; }
+
+    .scanned-badge { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; white-space: nowrap; }
+</style>
+
+<div class="pos-root">
+    @* Header *@
+    <div class="pos-header">
+        <div class="brand">AFiS POS</div>
+        <div class="mode-tabs">
+            <button class="@SaleTabClass" @onclick="SwitchToSale">Sale</button>
+            <button class="@BookingTabClass" @onclick="SwitchToBooking">Booking</button>
+            <button class="@InvoicesTabClass" @onclick="SwitchToInvoices">Invoices</button>
+        </div>
+        <div class="header-actions">
+            <button class="rz-button rz-button-sm rz-variant-outlined" style="color:#fff;border-color:#556;" @onclick="HoldAsDraft">Draft</button>
+            <button class="rz-button rz-button-sm rz-variant-outlined" style="color:#fff;border-color:#556;" @onclick="ResetForNewSale">Reset</button>
+        </div>
+    </div>
+
+    @* Body *@
+    <div class="pos-body">
+        <div class="pos-left">
+            @* Barcode Entry *@
+            <div class="pos-card">
+                <div class="barcode-row">
+                    <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" />
+                    <RadzenNumeric @bind-Value="QtyInput" Min="1" Max="9999" Style="width:70px" />
+                    <button class="rz-button rz-button-sm rz-button-icon-only rz-variant-primary" @onclick="@(async () => await AddItemByBarcode(BarcodeInput))">+</button>
+                    <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="OpenProductSearch">Search</button>
+                </div>
+            </div>
+
+            @* Product Preview *@
+            @if (SearchedProduct != null)
+            {
+                <div class="product-preview">
+                    <div class="info">
+                        <div class="name">@SearchedProduct.ItemName</div>
+                        <div class="price">@SearchedProduct.SalePrice?.ToString("N2")</div>
+                        <div style="font-size:0.75rem;color:#888">
+                            @SearchedProduct.Barcode
+                            @if (SearchedProduct.ColorName != null) { <span> | @SearchedProduct.ColorName</span> }
+                            @if (SearchedProduct.SizeName != null) { <span> | @SearchedProduct.SizeName</span> }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Cart / Bookings / Invoices tabs *@
+            <div class="pos-card" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+                <div class="tab-header">
+                    <button class="@CartTabClass" @onclick="SetSaleMode">Cart (@CartItems.Count)</button>
+                    <button class="@BookingListTabClass" @onclick="SetBookingMode">Bookings</button>
+                    <button class="@InvoiceListTabClass" @onclick="SetInvoicesMode">Invoices</button>
+                </div>
+                <div class="tab-content">
+                    @if (IsSaleMode || IsBookingMode)
+                    {
+                        <div class="cart-grid">
+                            <RadzenDataGrid @ref="CartGrid" Data="@CartItems" AllowColumnResize="true" ShowPaging="false" RowAlternate="true" AllowSorting="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ItemName" Title="Item" Width="160" />
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="80">
+                                        <Template Context="item">
+                                            <RadzenNumeric @bind-Value="item.Quantity" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
+                                        <Template Context="item">
+                                            <span>@item.SalePrice.ToString("N2")</span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
+                                        <Template Context="item">
+                                            <span style="font-weight:600">@item.TotalPrice.ToString("N2")</span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Stock" Width="60">
+                                        <Template Context="item">
+                                            @if (item.StockQuantity.HasValue)
+                                            {
+                                                <span class="scanned-badge">@item.StockQuantity</span>
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="50">
+                                        <Template Context="item">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" @onclick="() => RemoveCartItem(item)">X</RadzenButton>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </div>
+                        <div class="cart-actions" style="margin-top:6px">
+                            <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="ClearCart">Clear Cart</button>
+                        </div>
+                    }
+                    @if (IsInvoicesMode)
+                    {
+                        <div style="padding:20px;text-align:center;color:#999">Invoice history view - coming soon</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* RIGHT SIDEBAR *@
+        <div class="pos-right">
+            @* Customer Profile Card *@
+            <div class="pos-card sidebar-section">
+                <div class="pos-card-title">Customer</div>
+                @if (SelectedCustomer != null)
+                {
+                    <div class="customer-profile">
+                        <div class="name">@SelectedCustomer.Name</div>
+                        <div class="phone">@SelectedCustomer.Phone</div>
+                        @if (!string.IsNullOrEmpty(SelectedCustomer.MembershipType))
+                        {
+                            <div style="font-size:0.75rem;color:#28a745">
+                                @SelectedCustomer.MembershipType
+                                @if (SelectedCustomer.DiscountRate.HasValue) { <span> (@(SelectedCustomer.DiscountRate)%)</span> }
+                            </div>
+                        }
+                        <button class="rz-button rz-button-xs rz-variant-outlined" style="margin-top:4px" @onclick="ClearCustomer">Change</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="customer-search">
+                        <RadzenTextBox @bind-Value="CustomerSearchText" Placeholder="Search customer..." @oninput="@OnCustomerSearch" />
+                        @if (CustomerSuggestions.Any())
+                        {
+                            <div class="suggestions">
+                                @foreach (var c in CustomerSuggestions)
+                                {
+                                    <div class="suggestion-item" @onclick="() => SelectCustomer(c)">
+                                        <strong>@c.Name</strong> - @c.Phone
+                                        @if (!string.IsNullOrEmpty(c.MembershipType)) { <span style="color:#28a745"> (@c.MembershipType)</span> }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        <button class="rz-button rz-button-xs rz-variant-outlined" style="margin-top:4px;width:100%" @onclick="OpenAddCustomerModal">+ New Customer</button>
+                    </div>
+                }
+            </div>
+
+            @* Billing Summary Card *@
+            <div class="pos-card sidebar-section">
+                <div class="pos-card-title">Billing Summary</div>
+                <div class="billing-row">
+                    <span class="label">Sub Total</span>
+                    <span class="value">@SubTotal.ToString("N2")</span>
+                </div>
+                @if (SelectedCustomer?.DiscountRate > 0)
+                {
+                    <div class="billing-row" style="color:#28a745">
+                        <span class="label">Membership Discount (@(SelectedCustomer.DiscountRate)%)</span>
+                        <span class="value">-@MembershipDiscountAmount.ToString("N2")</span>
+                    </div>
+                }
+                <div class="billing-row">
+                    <span class="label">Invoice Discount</span>
+                    <span class="value">
+                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" />
+                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:70px" />
+                    </span>
+                </div>
+                @if (Sale.InvoiceDiscount.HasValue && Sale.InvoiceDiscount > 0)
+                {
+                    <div class="billing-row" style="color:#28a745">
+                        <span class="label">Discount Amount</span>
+                        <span class="value">-@InvoiceDiscountAmount.ToString("N2")</span>
+                    </div>
+                }
+                <div class="billing-row">
+                    <span class="label">VAT (@(Sale.VatPercentage)%)</span>
+                    <span class="value">@CalculatedVat.ToString("N2")</span>
+                </div>
+                @if (Sale.ExchangeAmount > 0)
+                {
+                    <div class="billing-row" style="color:#dc3545">
+                        <span class="label">Exchange (Return)</span>
+                        <span class="value">-@Sale.ExchangeAmount?.ToString("N2")</span>
+                    </div>
+                }
+                @if (Sale.RoundingAmount.HasValue && Sale.RoundingAmount != 0)
+                {
+                    <div class="billing-row">
+                        <span class="label">Rounding</span>
+                        <span class="value">@(Sale.RoundingAmount > 0 ? "+" : "")@Sale.RoundingAmount?.ToString("N2")</span>
+                    </div>
+                }
+                <div class="billing-row total">
+                    <span class="label">Net Payable</span>
+                    <span class="value">@NetPayable.ToString("N2")</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:8px">
+                    <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="OpenExchangeModal">Exchange</button>
+                    <button class="rz-button rz-button-sm rz-variant-primary rz-w-100" @onclick="OpenPaymentModal" disabled="@(CartItems.Count == 0)">Finalize Payment</button>
+                </div>
+            </div>
+
+            @* Validation *@
+            @if (CartItems.Any(i => i.SalePrice <= 0))
+            {
+                <div class="pos-card" style="border-left:3px solid #dc3545">
+                    <div style="font-size:0.75rem;color:#dc3545">Some items have zero sale price. Please update prices.</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Footer Hotkeys *@
+    <div class="hotkey-bar">
+        <span><kbd>F1</kbd> Barcode Focus</span>
+        <span><kbd>F2</kbd> Search Product</span>
+        <span><kbd>F3</kbd> Customer</span>
+        <span><kbd>F4</kbd> Payment</span>
+        <span><kbd>Ctrl+H</kbd> Hold Draft</span>
+        <span><kbd>Esc</kbd> Clear Cart</span>
+    </div>
+</div>
+
+
+
+
+
+
+
+

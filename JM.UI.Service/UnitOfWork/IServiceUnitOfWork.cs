@@ -64,6 +64,7 @@ using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
@@ -133,5 +134,6 @@ namespace JM.UI.Service.UnitOfWork
         ICouponTypeService CouponTypeService { get; }
         ICouponService CouponService { get; }
         ITransferTypeService TransferTypeService { get; }
+        ISaleService SaleService { get; }
     }
 }

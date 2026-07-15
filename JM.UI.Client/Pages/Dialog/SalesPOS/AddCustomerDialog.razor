@@ -1,0 +1,14 @@
+@using JM.UI.Entities.Model.CustomerDetails
+@using Radzen
+@inherits AddCustomerDialogComponent
+
+<div style="display:flex;flex-direction:column;gap:8px">
+    <div><label>Name *</label><RadzenTextBox @bind-Value="NewCustomer.Name" Placeholder="Customer name" class="rz-w-100" /></div>
+    <div><label>Phone *</label><RadzenTextBox @bind-Value="NewCustomer.Phone" Placeholder="Phone number" class="rz-w-100" /></div>
+    <div><label>Email</label><RadzenTextBox @bind-Value="NewCustomer.Email" Placeholder="Email (optional)" class="rz-w-100" /></div>
+    <div><label>Address</label><RadzenTextBox @bind-Value="NewCustomer.Address" Placeholder="Address (optional)" class="rz-w-100" /></div>
+    <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
+        <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" @onclick="SaveNewCustomer" />
+    </div>
+</div>

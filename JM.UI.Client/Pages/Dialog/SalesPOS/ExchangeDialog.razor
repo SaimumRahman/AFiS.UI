@@ -1,0 +1,36 @@
+@using JM.UI.Entities.Model.SalesPOS
+@using Radzen
+@inherits ExchangeDialogComponent
+
+<div style="display:flex;gap:8px;margin-bottom:12px">
+    <RadzenTextBox @bind-Value="ExchangeInvoiceNo" Placeholder="Enter invoice number..." class="rz-w-100" @onkeydown="@OnExchangeSearchKeyPress" />
+    <RadzenButton Text="Search" ButtonStyle="ButtonStyle.Primary" @onclick="SearchExchangeInvoice" />
+</div>
+@if (ExchangeSale != null)
+{
+    <div style="font-size:0.8rem;margin-bottom:8px">
+        Invoice: @ExchangeSale.InvoiceNo | Date: @ExchangeSale.SalesDate.ToString("dd/MM/yyyy") | Customer: @ExchangeSale.CustomerName
+    </div>
+    <RadzenDataGrid Data="@ExchangeItems" AllowColumnResize="true" ShowPaging="false">
+        <Columns>
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ItemName" Title="Item" Width="180" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Quantity" Title="Qty" Width="60" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="TotalPrice" Title="Amount" Width="80" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="60">
+                <Template Context="item">
+                    <RadzenButton Text="Exchange" ButtonStyle="ButtonStyle.Warning" ButtonSize="ExtraSmall" @onclick="() => SelectExchangeItem(item)" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+    <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
+    </div>
+}
+else
+{
+    <div style="margin-top:8px;display:flex;justify-content:flex-end">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
+    </div>
+}

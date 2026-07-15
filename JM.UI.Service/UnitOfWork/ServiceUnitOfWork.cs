@@ -55,6 +55,7 @@ using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
 using JM.UI.Service.VoucherDetails;
@@ -118,6 +119,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICouponTypeService CouponTypeService { get; private set; }
         public ICouponService CouponService { get; private set; }
         public ITransferTypeService TransferTypeService { get; private set; }
+        public ISaleService SaleService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -174,6 +176,7 @@ namespace JM.UI.Service.UnitOfWork
             CouponTypeService = new CouponTypeService(_repoUow);
             CouponService = new CouponService(_repoUow);
             TransferTypeService = new TransferTypeService(_repoUow);
+            SaleService = new SaleService(_repoUow);
         }
         public void Dispose()
         {

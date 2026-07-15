@@ -48,6 +48,7 @@ using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UnitOfWork;
 using JM.UI.Service.UserGroup;
@@ -123,6 +124,7 @@ namespace JM.UI.Service
             services.AddScoped<ICouponService, CouponService>();
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
+            services.AddScoped<ISaleService, SaleService>();
         }
     }
 }
