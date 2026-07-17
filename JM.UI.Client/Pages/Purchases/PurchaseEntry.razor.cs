@@ -1814,6 +1814,13 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
+        private static string GetBarcodeBase(string barcode)
+        {
+            var parts = barcode.Split('-');
+            if (parts.Length <= 2) return parts[0];
+            return string.Join("-", parts.Take(parts.Length - 2));
+        }
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
@@ -1825,6 +1832,18 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
                 if (PreviewItems.Any(p => p.Barcode == barcode)) return;
+                if (PreviewItems.Count > 0)
+                {
+                    var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
+                    var newBase = GetBarcodeBase(barcode);
+                    if (!string.Equals(existingBase, newBase, StringComparison.OrdinalIgnoreCase))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Base Mismatch",
+                            $"Barcode base '{newBase}' does not match existing items base '{existingBase}'. " +
+                            "All items in preview must share the same barcode prefix.");
+                        return;
+                    }
+                }
 
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
 
@@ -2013,6 +2032,19 @@ namespace JM.UI.Client.Pages.Purchases
         {
             try
             {
+                if (PreviewItems.Count > 0)
+                {
+                    var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
+                    var newBase = GetBarcodeBase(barcode);
+                    if (!string.Equals(existingBase, newBase, StringComparison.OrdinalIgnoreCase))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Base Mismatch",
+                            $"Barcode base '{newBase}' does not match existing items base '{existingBase}'. " +
+                            "All items in preview must share the same barcode prefix.");
+                        return;
+                    }
+                }
+
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
                 var newRows = BuildPreviewRowsFromResponse(response, barcode);
 
