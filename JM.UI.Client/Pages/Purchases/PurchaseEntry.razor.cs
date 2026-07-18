@@ -848,8 +848,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
-                        // Carry current image if this row's color matches the currently selected color
-                        ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null,
+                        ImageBase64 = item.ImageBase64 ?? CurrentItemImageBase64,
                         BasePurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                         PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                     };
@@ -1814,6 +1813,13 @@ namespace JM.UI.Client.Pages.Purchases
             }
         }
 
+        private static string GetBarcodeBase(string barcode)
+        {
+            var parts = barcode.Split('-');
+            if (parts.Length <= 2) return parts[0];
+            return string.Join("-", parts.Take(parts.Length - 2));
+        }
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
@@ -1825,6 +1831,18 @@ namespace JM.UI.Client.Pages.Purchases
                     return;
                 }
                 if (PreviewItems.Any(p => p.Barcode == barcode)) return;
+                if (PreviewItems.Count > 0)
+                {
+                    var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
+                    var newBase = GetBarcodeBase(barcode);
+                    if (!string.Equals(existingBase, newBase, StringComparison.OrdinalIgnoreCase))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Base Mismatch",
+                            $"Barcode base '{newBase}' does not match existing items base '{existingBase}'. " +
+                            "All items in preview must share the same barcode prefix.");
+                        return;
+                    }
+                }
 
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
 
@@ -1921,8 +1939,7 @@ namespace JM.UI.Client.Pages.Purchases
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
-                            // Image is null â€” user must upload for this new color
-                            ImageBase64 = null
+                            ImageBase64 = item.ImageBase64
                         };
                     }
                 }
@@ -1963,7 +1980,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,  
                         // Image is null â€” user must upload for this new color
-                        ImageBase64 = null,
+                        ImageBase64 = CurrentItem.ImageBase64,
                         FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
@@ -2013,6 +2030,19 @@ namespace JM.UI.Client.Pages.Purchases
         {
             try
             {
+                if (PreviewItems.Count > 0)
+                {
+                    var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
+                    var newBase = GetBarcodeBase(barcode);
+                    if (!string.Equals(existingBase, newBase, StringComparison.OrdinalIgnoreCase))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Base Mismatch",
+                            $"Barcode base '{newBase}' does not match existing items base '{existingBase}'. " +
+                            "All items in preview must share the same barcode prefix.");
+                        return;
+                    }
+                }
+
                 var response = await _serviceUnitOfWork.PurchaseService.SearchByBarcode(barcode);
                 var newRows = BuildPreviewRowsFromResponse(response, barcode);
 
@@ -2208,6 +2238,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
             SharedPurchasePrice = item.PurchasePrice ?? 0;
+            
             
             //SharedSalePrice = item.SalePrice ?? 0;
 
