@@ -848,8 +848,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TransportCost = SharedTransportCost,
                         OperationalCost = SharedOperationalCost,
                         TotalAmount = 0,
-                        // Carry current image if this row's color matches the currently selected color
-                        ImageBase64 = item.ColorId == CurrentItem.ColorId ? CurrentItemImageBase64 : null,
+                        ImageBase64 = item.ImageBase64 ?? CurrentItemImageBase64,
                         BasePurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                         PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
                     };
@@ -1940,8 +1939,7 @@ namespace JM.UI.Client.Pages.Purchases
                             TransportCost = SharedTransportCost,
                             OperationalCost = SharedOperationalCost,
                             TotalAmount = 0,
-                            // Image is null â€” user must upload for this new color
-                            ImageBase64 = null
+                            ImageBase64 = item.ImageBase64
                         };
                     }
                 }
@@ -1982,7 +1980,7 @@ namespace JM.UI.Client.Pages.Purchases
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,  
                         // Image is null â€” user must upload for this new color
-                        ImageBase64 = null,
+                        ImageBase64 = CurrentItem.ImageBase64,
                         FeatureIds = SelectedFeatureIds.ToList(),
                     };
                 }
@@ -2240,6 +2238,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.FeatureIds = itemWiseFeatures?.Select(x => x.FeaturesId).ToList() ?? new List<int>();
             CurrentItem.DesignId = item.DesignId;
             SharedPurchasePrice = item.PurchasePrice ?? 0;
+            
             
             //SharedSalePrice = item.SalePrice ?? 0;
 

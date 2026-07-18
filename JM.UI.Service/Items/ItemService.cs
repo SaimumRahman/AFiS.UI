@@ -65,6 +65,7 @@ public class ItemService : IItemService
             IsConsume = createItemRequest.IsConsume,
             CatalogueId = createItemRequest.CatalogueId,
             FeatureIds = createItemRequest.FeatureIds,
+            ImageBase64 = createItemRequest.ImageBase64,
             IsNewItemMode = createItemRequest.IsNewItem,
             Features = createItemRequest.FeatureIds != null && createItemRequest.FeatureIds.Any()
     ? string.Join(",", createItemRequest.FeatureIds)

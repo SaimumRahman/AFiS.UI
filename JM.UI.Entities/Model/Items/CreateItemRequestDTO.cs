@@ -16,6 +16,7 @@ namespace JM.UI.Entities.Model.Items
         public string? Origin { get; set; }
         public string? Features { get; set; }
         public string? BrandColor { get; set; }
+        public string? ImageBase64 { get; set; }
         public decimal? ProductPricePercentage { get; set; }
         public int MesurementUnitId { get; set; }
         public bool CountStockByColor { get; set; }

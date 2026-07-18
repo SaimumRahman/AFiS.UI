@@ -23,6 +23,7 @@ namespace JM.UI.Entities.Model.Items
         public int CurrentStock { get; set; }
         public string? UnitName { get; set; }
         public string? ShadeNo { get; set; }
+        public string? ImageBase64 { get; set; }
         public string? MaterialType { get; set; }
         public string? Origin { get; set; }
         public string? Features { get; set; }
@@ -36,7 +37,6 @@ namespace JM.UI.Entities.Model.Items
         public int? SupplierId { get; set; }
         public int? CatalogueId { get; set; }
         public string? SupplierName { get; set; }
-        public byte[]? Image { get; set; }
         public bool? RawMaterial { get; set; }
         public bool? FinishedGood { get; set; }
         public int? CreatedBy { get; set; }
