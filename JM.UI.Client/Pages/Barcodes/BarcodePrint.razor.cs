@@ -74,6 +74,8 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsDownloadingPdf { get; set; } = false;
     protected bool IsLoadingConfig { get; set; } = false;
 
+    [Parameter] public int? PurchaseId { get; set; }
+
     // ────────────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
@@ -85,6 +87,12 @@ public partial class BarcodePrintComponent : PosComponentBase
             LoadPurchaseList(),
             LoadAllBarcodes()
         );
+
+        if (PurchaseId.HasValue)
+        {
+            SelectedPurchaseId = PurchaseId;
+            await OnPurchaseSelected((object)PurchaseId.Value);
+        }
     }
 
     // ── Configuration ────────────────────────────────────────────
@@ -122,6 +130,9 @@ public partial class BarcodePrintComponent : PosComponentBase
             {
                 new() { Id = 1, TemplateName = "33*55", Descriptions = "ProductName, Brand, UOM, Price" }
             };
+
+            if (BarcodeTemplates.Any() && SelectedTemplateId == null)
+                OnTemplateSelected(BarcodeTemplates.First().Id);
         }
         catch (Exception ex)
         {

@@ -32,8 +32,8 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     protected bool IsPrinting;
 
     // ── Date filter state ─────────────────────────────────────────────────────
-    protected DateTime? FilterDateFrom;
-    protected DateTime? FilterDateTo;
+    protected DateTime? FilterDateFrom { get; set; }= DateTime.UtcNow;
+    protected DateTime? FilterDateTo { get; set; } = DateTime.UtcNow;
     protected string ReferenceNo;
     protected bool IsFiltered => FilterDateFrom.HasValue || FilterDateTo.HasValue;
 
@@ -301,6 +301,11 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             Detail = message,
             Duration = 3000
         });
+
+    protected void NavigateToBarcodePrint(int purchaseId)
+    {
+        NavigationManager.NavigateTo($"/BarcodePrint/{purchaseId}");
+    }
 
     // ── Dispose ───────────────────────────────────────────────────────────────
 
