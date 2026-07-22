@@ -56,6 +56,7 @@ namespace JM.UI.Client.Pages.Transfer
         }
 
         protected async Task OnBarcodeSearch()
+        
         {
             var barcode = BarcodeInput?.Trim();
             if (string.IsNullOrWhiteSpace(barcode)) return;
@@ -87,7 +88,9 @@ namespace JM.UI.Client.Pages.Transfer
 
             // Search only within selected transfer
             var matchedDetail = SelectedTransfer.Details
-                .FirstOrDefault(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
+    .FirstOrDefault(d => barcode.All(char.IsDigit)
+        ? string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase)
+        : string.Equals(d.ReturnRefNo, barcode, StringComparison.OrdinalIgnoreCase));
 
             if (matchedDetail == null)
             {

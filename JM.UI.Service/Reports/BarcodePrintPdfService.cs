@@ -41,8 +41,10 @@ public class BarcodePrintPdfService
                     page.MarginBottom(2, Unit.Millimetre);
                     page.DefaultTextStyle(x => x.FontSize(7).FontFamily("Arial"));
 
-                    page.Content().Element(c =>
-                        ComposeLabelInCell(c, item, fields, copy, of, lw, lh));
+                    page.Content()
+                        .RotateLeft()
+                        .Element(c =>
+                            ComposeLabelInCell(c, item, fields, copy, of, lw, lh));
                 });
             }
         });

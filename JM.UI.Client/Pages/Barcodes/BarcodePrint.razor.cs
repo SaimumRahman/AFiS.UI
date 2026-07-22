@@ -489,8 +489,8 @@ public partial class BarcodePrintComponent : PosComponentBase
             var pdfBytes = _barcodePrintPdfService.GeneratePdf(
                 PrintItems,
                 TemplateFields,
-                55,
-                33);
+                35,
+                55);
 
             if (pdfBytes.Length == 0)
             {

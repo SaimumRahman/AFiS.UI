@@ -55,6 +55,19 @@ namespace JM.UI.Service.SubGroups
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(subGroup.Code))
+                {
+                    return new ResponseResult("Code is required.", subGroup.Id);
+                }
+                if (subGroup.Code.Length != 3)
+                {
+                    return new ResponseResult("Code must be exactly 3 characters.", subGroup.Id);
+                }
+                var exists = await _unitOfWork.SubGroupRepository.IsCodeExistsAsync(subGroup.Code, subGroup.Id);
+                if (exists)
+                {
+                    return new ResponseResult("Code already exists.", subGroup.Id);
+                }
                 return await _unitOfWork.SubGroupRepository.SaveUpdateSubGroup(subGroup);
             }
             catch (Exception ex)
@@ -74,6 +87,11 @@ namespace JM.UI.Service.SubGroups
             {
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
+        }
+
+        public async Task<bool> IsCodeExists(string code, int id = 0)
+        {
+            return await _unitOfWork.SubGroupRepository.IsCodeExistsAsync(code, id);
         }
     }
 }
