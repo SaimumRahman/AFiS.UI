@@ -13,6 +13,7 @@ public class TransferDetailDTO
 
     // ── UI display helpers (not persisted, resolved in component) ──
     public string? Barcode { get; set; }
+    public string? ReturnRefNo { get; set; } 
     public string? ItemName { get; set; }
     public int? ColorId { get; set; }
     public string? ColorName { get; set; }

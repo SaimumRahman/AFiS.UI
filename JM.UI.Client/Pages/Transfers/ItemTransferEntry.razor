@@ -302,7 +302,8 @@ else
                             <div class="bar-label">🔫 Scan Barcode — adds item directly to transfer list with qty = 1</div>
                             <RadzenRow Gap="0.3rem" AlignItems="AlignItems.Center">
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenTextBox Value="@ScanBarcodeText"
+                                    <RadzenTextBox @ref="@_barcodeInputRef"
+                                                   Value="@ScanBarcodeText"
                                                    ValueChanged="@OnScanBarcodeChange"
                                                    Placeholder="Scan or type barcode then press Enter..."
                                                    Style="width:100%; font-size:0.75rem; height:28px; background:#fffde7;"

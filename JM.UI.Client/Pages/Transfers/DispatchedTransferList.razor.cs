@@ -86,8 +86,11 @@ namespace JM.UI.Client.Pages.Transfer
             }
 
             // Search only within selected transfer
+
             var matchedDetail = SelectedTransfer.Details
-                .FirstOrDefault(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(d => barcode.All(char.IsDigit)
+                    ? string.Equals(d.ReturnRefNo, barcode, StringComparison.OrdinalIgnoreCase)
+                    : string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
 
             if (matchedDetail == null)
             {

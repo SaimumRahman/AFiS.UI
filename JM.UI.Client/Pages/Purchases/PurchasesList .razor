@@ -166,7 +166,14 @@
                 <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="SupplierName" Title="Supplier" Width="140px" />
       @*           <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="TotalItems" Title="Total Items" Width="90px" TextAlign="TextAlign.Center" /> *@
                 <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Property="NetAmount" Title="Net Amount" Width="150px" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Width="120px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="p">
+                        <RadzenButton Text="Print Barcode"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      ButtonSize="ExtraSmall"
+                                      Click="@(() => NavigateToBarcodePrint(p.Id))" />
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
 
         </RadzenDataGrid>

@@ -207,67 +207,34 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         StateHasChanged();
     }
 
-    protected async Task OnGroupChanged(int? groupId)
+    protected void OnGroupCascadeChanged(int? groupId)
     {
-        SelectedGroupId = groupId;
         SelectedSubGroupId = null;
         SelectedDesignId = null;
 
-        if (groupId.HasValue)
-        {
-            FilteredSubGroups = AllSubGroups.Where(sg => sg.GroupId == groupId.Value).ToList();
-            FilteredDesigns = AllDesigns.Where(d => d.SubGroupId == -1).ToList(); // empty
-        }
+        if (SelectedGroupId.HasValue)
+            FilteredSubGroups = AllSubGroups.Where(sg => sg.GroupId == SelectedGroupId.Value).ToList();
         else
-        {
             FilteredSubGroups = AllSubGroups;
-            FilteredDesigns = AllDesigns;
-        }
 
-        await BuildGridItemsAsync();
+        FilteredDesigns = AllDesigns;
         StateHasChanged();
     }
 
-    protected async Task OnSubGroupChanged(int? subGroupId)
+    protected void OnSubGroupCascadeChanged(int? subGroupId)
     {
-        SelectedSubGroupId = subGroupId;
         SelectedDesignId = null;
 
-        if (subGroupId.HasValue)
-            FilteredDesigns = AllDesigns.Where(d => d.SubGroupId == subGroupId.Value).ToList();
+        if (SelectedSubGroupId.HasValue)
+            FilteredDesigns = AllDesigns.Where(d => d.SubGroupId == SelectedSubGroupId.Value).ToList();
         else
             FilteredDesigns = AllDesigns;
-
-        await BuildGridItemsAsync();
         StateHasChanged();
     }
 
-    protected async Task OnDesignChanged(int? designId)
+    protected async Task LoadFilteredItems()
     {
-        SelectedDesignId = designId;
         await BuildGridItemsAsync();
-        StateHasChanged();
-    }
-
-    protected async Task OnColorChanged(int? colorId)
-    {
-        SelectedColorId = colorId;
-        await BuildGridItemsAsync();
-        StateHasChanged();
-    }
-
-    protected async Task OnSizeChanged(int? sizeId)
-    {
-        SelectedSizeId = sizeId;
-        await BuildGridItemsAsync();
-        StateHasChanged();
-    }
-
-    protected async Task OnCatalogueChanged(int? catalogueId)
-    {
-        SelectedCatalogueId = catalogueId;
-        await BuildGridItemsAsync();
-        StateHasChanged();
     }
 
     protected void ToggleItem(DiscountGridItem gridItem)
