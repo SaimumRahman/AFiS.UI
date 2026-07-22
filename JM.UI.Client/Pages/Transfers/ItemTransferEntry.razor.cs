@@ -60,6 +60,8 @@ namespace JM.UI.Client.Pages.Transfers
 
         // â”€â”€ Scan textbox (direct-to-grid, qty = 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected string ScanBarcodeText { get; set; } = string.Empty;
+        protected RadzenTextBox _barcodeInputRef = default!;
+        private bool _shouldFocusBarcodeInput;
         private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Item Transfer" : IsFromRequisitionMode ? "Transfer from Requisition" : "New Item Transfer";
@@ -87,7 +89,13 @@ namespace JM.UI.Client.Pages.Transfers
             {
                 _isFirstRender = false;
                 await LoadLookupData();
-                StateHasChanged(); // Refresh UI after loading data
+                StateHasChanged();
+            }
+
+            if (_shouldFocusBarcodeInput)
+            {
+                _shouldFocusBarcodeInput = false;
+                await _barcodeInputRef.Element.FocusAsync();
             }
         }
         // â”€â”€ Initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -544,6 +552,7 @@ namespace JM.UI.Client.Pages.Transfers
                     "Please select a 'From Store' before scanning items.",
                     duration: 5000);
                 ScanBarcodeText = string.Empty;
+                _shouldFocusBarcodeInput = true;
                 StateHasChanged();
                 return;
             }
@@ -551,7 +560,7 @@ namespace JM.UI.Client.Pages.Transfers
             try
             {
                 IsScanningBarcode = true;
-                StateHasChanged();
+                StateHasChanged(); // no refocus needed — scanning just started
 
                 var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
                                 ?? $"Store #{Transfer.StoreId}";
@@ -580,6 +589,7 @@ namespace JM.UI.Client.Pages.Transfers
                         $"Barcode '{barcode}' was not found in '{storeName}'.",
                         duration: 5000);
                     ScanBarcodeText = string.Empty;
+                    _shouldFocusBarcodeInput = true;
                     StateHasChanged();
                     return;
                 }
@@ -604,6 +614,7 @@ namespace JM.UI.Client.Pages.Transfers
                     if (!confirmed)
                     {
                         ScanBarcodeText = string.Empty;
+                        _shouldFocusBarcodeInput = true;
                         StateHasChanged();
                         return;
                     }
@@ -619,6 +630,7 @@ namespace JM.UI.Client.Pages.Transfers
                             $"'{item.Name}' ({item.Barcode}): Combined qty ({totalQty:N2}) " +
                             $"exceeds available stock ({item.CurrentStock:N0}). Cannot add.");
                         ScanBarcodeText = string.Empty;
+                        _shouldFocusBarcodeInput = true;
                         StateHasChanged();
                         return;
                     }
@@ -635,6 +647,7 @@ namespace JM.UI.Client.Pages.Transfers
 
                     ScanBarcodeText = string.Empty;
                     IsScanningBarcode = false;
+                    _shouldFocusBarcodeInput = true;
                     StateHasChanged();
                     return;
                 }
@@ -646,6 +659,7 @@ namespace JM.UI.Client.Pages.Transfers
                         "Insufficient Stock",
                         $"'{item.Name}': no stock available in '{storeName}'.");
                     ScanBarcodeText = string.Empty;
+                    _shouldFocusBarcodeInput = true;
                     StateHasChanged();
                     return;
                 }
@@ -691,6 +705,7 @@ namespace JM.UI.Client.Pages.Transfers
             {
                 ScanBarcodeText = string.Empty;
                 IsScanningBarcode = false;
+                _shouldFocusBarcodeInput = true;
                 StateHasChanged();
             }
         }
