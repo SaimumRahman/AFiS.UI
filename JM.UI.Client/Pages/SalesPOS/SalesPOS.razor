@@ -2,7 +2,7 @@
 @using JM.UI.Entities.Model.SalesPOS
 @inherits SalesPOSComponent
 @attribute [Authorize]
-<PageTitle>Sales POS</PageTitle>
+<PageTitle>@PageTitle</PageTitle>
 
 <style>
     .pos-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f0f2f5; }
@@ -73,8 +73,8 @@
             <button class="@InvoicesTabClass" @onclick="SwitchToInvoices">Invoices</button>
         </div>
         <div class="header-actions">
-            <button class="rz-button rz-button-sm rz-variant-outlined" style="color:#fff;border-color:#556;" @onclick="HoldAsDraft">Draft</button>
-            <button class="rz-button rz-button-sm rz-variant-outlined" style="color:#fff;border-color:#556;" @onclick="ResetForNewSale">Reset</button>
+            <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Style="color:#fff;border-color:#556;" Click="@HoldAsDraft" Text="Draft" />
+            <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Style="color:#fff;border-color:#556;" Click="@ResetForNewSale" Text="Reset" />
         </div>
     </div>
 
@@ -86,8 +86,8 @@
                 <div class="barcode-row">
                     <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" />
                     <RadzenNumeric @bind-Value="QtyInput" Min="1" Max="9999" Style="width:70px" />
-                    <button class="rz-button rz-button-sm rz-button-icon-only rz-variant-primary" @onclick="@(async () => await AddItemByBarcode(BarcodeInput))">+</button>
-                    <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="OpenProductSearch">Search</button>
+                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" />
                 </div>
             </div>
 
@@ -96,12 +96,12 @@
             {
                 <div class="product-preview">
                     <div class="info">
-                        <div class="name">@SearchedProduct.ItemName</div>
-                        <div class="price">@SearchedProduct.SalePrice?.ToString("N2")</div>
+                        <div class="name">@SearchedProduct.ProductName</div>
+                        <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
                         <div style="font-size:0.75rem;color:#888">
                             @SearchedProduct.Barcode
-                            @if (SearchedProduct.ColorName != null) { <span> | @SearchedProduct.ColorName</span> }
-                            @if (SearchedProduct.SizeName != null) { <span> | @SearchedProduct.SizeName</span> }
+                            @if (!string.IsNullOrEmpty(SearchedProduct.StoreName)) { <span> | @SearchedProduct.StoreName</span> }
+                            @if (SearchedProduct.UomName != null) { <span> | @SearchedProduct.UomName</span> }
                         </div>
                     </div>
                 </div>
@@ -120,29 +120,21 @@
                         <div class="cart-grid">
                             <RadzenDataGrid @ref="CartGrid" Data="@CartItems" AllowColumnResize="true" ShowPaging="false" RowAlternate="true" AllowSorting="true">
                                 <Columns>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ItemName" Title="Item" Width="160" />
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" Width="160" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="80">
                                         <Template Context="item">
-                                            <RadzenNumeric @bind-Value="item.Quantity" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
+                                            <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
                                         <Template Context="item">
-                                            <span>@item.SalePrice.ToString("N2")</span>
+                                            <span>@item.UnitPrice.ToString("N2")</span>
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
                                         <Template Context="item">
-                                            <span style="font-weight:600">@item.TotalPrice.ToString("N2")</span>
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Stock" Width="60">
-                                        <Template Context="item">
-                                            @if (item.StockQuantity.HasValue)
-                                            {
-                                                <span class="scanned-badge">@item.StockQuantity</span>
-                                            }
+                                            <span style="font-weight:600">@item.TotalAmount.ToString("N2")</span>
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="50">
@@ -154,7 +146,7 @@
                             </RadzenDataGrid>
                         </div>
                         <div class="cart-actions" style="margin-top:6px">
-                            <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="ClearCart">Clear Cart</button>
+                            <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@ClearCart" Text="Clear Cart" />
                         </div>
                     }
                     @if (IsInvoicesMode)
@@ -182,7 +174,7 @@
                                 @if (SelectedCustomer.DiscountRate.HasValue) { <span> (@(SelectedCustomer.DiscountRate)%)</span> }
                             </div>
                         }
-                        <button class="rz-button rz-button-xs rz-variant-outlined" style="margin-top:4px" @onclick="ClearCustomer">Change</button>
+                        <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="margin-top:4px" Click="@ClearCustomer" Text="Change" />
                     </div>
                 }
                 else
@@ -201,7 +193,7 @@
                                 }
                             </div>
                         }
-                        <button class="rz-button rz-button-xs rz-variant-outlined" style="margin-top:4px;width:100%" @onclick="OpenAddCustomerModal">+ New Customer</button>
+                        <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="margin-top:4px;width:100%" Click="@OpenAddCustomerModal" Text="+ New Customer" />
                     </div>
                 }
             </div>
@@ -257,16 +249,16 @@
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                    <button class="rz-button rz-button-sm rz-variant-outlined" @onclick="OpenExchangeModal">Exchange</button>
-                    <button class="rz-button rz-button-sm rz-variant-primary rz-w-100" @onclick="OpenPaymentModal" disabled="@(CartItems.Count == 0)">Finalize Payment</button>
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenExchangeModal" Text="Exchange" />
+                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>
 
             @* Validation *@
-            @if (CartItems.Any(i => i.SalePrice <= 0))
+            @if (CartItems.Any(i => i.UnitPrice <= 0))
             {
                 <div class="pos-card" style="border-left:3px solid #dc3545">
-                    <div style="font-size:0.75rem;color:#dc3545">Some items have zero sale price. Please update prices.</div>
+                    <div style="font-size:0.75rem;color:#dc3545">Some items have zero unit price. Please update prices.</div>
                 </div>
             }
         </div>

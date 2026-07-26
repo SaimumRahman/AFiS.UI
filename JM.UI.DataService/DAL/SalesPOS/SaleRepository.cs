@@ -217,43 +217,45 @@ namespace JM.UI.DataService.DAL.SalesPOS
                 throw new Exception("Failed to generate invoice number: " + ex.Message, ex);
             }
         }
-
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string searchTerm)
+     
+        public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int storeId)
         {
             try
             {
-                _logger.LogInformation("Searching products: {SearchTerm}", searchTerm);
+                _logger.LogInformation("Searching by barcode: {Barcode} in store: {StoreId}", returnRefNo, storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/search-products?term={Uri.EscapeDataString(searchTerm)}");
-                response.EnsureSuccessStatusCode();
+                var response = await httpClient.GetAsync($"api/SalePOS/search-barcode/{Uri.EscapeDataString(returnRefNo)}/{storeId}");
 
-                var products = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
-                return products ?? new List<ProductSearchDTO>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error searching products");
-                throw new Exception("Failed to search products: " + ex.Message, ex);
-            }
-        }
-
-        public async Task<ProductSearchDTO?> SearchByBarcode(string barcode)
-        {
-            try
-            {
-                _logger.LogInformation("Searching by barcode: {Barcode}", barcode);
-
-                var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/search-barcode/{Uri.EscapeDataString(barcode)}");
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                    return null;
 
                 return await response.Content.ReadFromJsonAsync<ProductSearchDTO>();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error searching by barcode");
-                throw new Exception("Failed to search by barcode: " + ex.Message, ex);
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
+        {
+            try
+            {
+                _logger.LogInformation("Searching products: {Term}", term);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/SalePOS/search-products/{Uri.EscapeDataString(term)}");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
+                return result ?? new List<ProductSearchDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching products");
+                return new List<ProductSearchDTO>();
             }
         }
     }

@@ -13,10 +13,10 @@
     </div>
     <RadzenDataGrid Data="@ExchangeItems" AllowColumnResize="true" ShowPaging="false">
         <Columns>
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ItemName" Title="Item" Width="180" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" Width="180" />
             <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Quantity" Title="Qty" Width="60" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="TotalPrice" Title="Amount" Width="80" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Qty" Title="Qty" Width="60" />
+            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="TotalAmount" Title="Amount" Width="80" />
             <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="60">
                 <Template Context="item">
                     <RadzenButton Text="Exchange" ButtonStyle="ButtonStyle.Warning" ButtonSize="ExtraSmall" @onclick="() => SelectExchangeItem(item)" />

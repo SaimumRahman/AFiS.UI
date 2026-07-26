@@ -18,7 +18,7 @@ using Radzen.Blazor;
 
 namespace JM.UI.Client.Pages.SalesPOS
 {
-    public partial class SalesPOSComponent : PosComponentBase
+    public partial class SalesPOSComponent : PosComponentBase, IDisposable
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
@@ -27,6 +27,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected bool IsSaleMode => _currentMode == "Sale";
         protected bool IsBookingMode => _currentMode == "Booking";
         protected bool IsInvoicesMode => _currentMode == "Invoices";
+        protected string PageTitle => $"Sales POS - {_currentMode}";
 
         // ── Lookup Data ──
         protected List<StoreDTO> Stores { get; set; } = new();
@@ -52,7 +53,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
 
         // ── Computed Values ──
-        protected decimal SubTotal => CartItems.Sum(c => c.TotalPrice);
+        protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
         protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 5) / 100m);
         protected decimal InvoiceDiscountAmount
         {
@@ -87,6 +88,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected override async Task OnInitializedAsync()
         {
+            NavigationGuard.IsGuardActive = true;
+            await TokenService.InitializeTokenAsync();
             Sale = _serviceUnitOfWork.SaleService.CreateNew();
             await LoadLookupData();
             Sale.StoreId = Stores.FirstOrDefault()?.Id;
@@ -99,17 +102,25 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected async Task LoadLookupData()
         {
-            var storeTask = _serviceUnitOfWork.StoreService.GetStores();
-            var colorTask = _serviceUnitOfWork.ColorsService.GetColorss();
-            var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
-            var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
+            try
+            {
+                var storeTask = _serviceUnitOfWork.StoreService.GetStores();
+                var colorTask = _serviceUnitOfWork.ColorsService.GetColorss();
+                var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
+                var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
 
-            await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask);
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask);
 
-            Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
-            Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
-            Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
-            Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
+                Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
+                Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
+                Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
+                Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Failed to load lookup data: {ex.Message}", 4000);
+            }
         }
 
         // Tab classes
@@ -151,46 +162,50 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected async Task AddItemByBarcode(string barcode)
         {
-            var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode);
-            if (product == null || product.ItemId == 0)
+            try
             {
-                notificationService.Notify(NotificationSeverity.Warning, "Not Found",
-                    $"No product found for barcode: {barcode}", 3000);
-                return;
-            }
+                var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode, Sale.StoreId);
+                if (product == null || product.ItemId == 0)
+                {
+                    var storeName = Stores.FirstOrDefault(s => s.Id == Sale.StoreId)?.Name ?? "current store";
+                    var confirmed = await dialogService.Confirm(
+                        $"Barcode '{barcode}' not found in {storeName}. Do you want to search in other stores?",
+                        "Not Found",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
 
-            var existing = CartItems.FirstOrDefault(c =>
-                c.ItemId == product.ItemId &&
-                c.ColorId == product.ColorId &&
-                c.SizeId == product.SizeId);
+                    if (confirmed == true)
+                    {
+                        await OpenProductSearchWithTerm(barcode);
+                    }
+                    return;
+                }
+
+                SearchedProduct = product;
+                AddProductToCart(product, QtyInput > 0 ? QtyInput : 1);
+                QtyInput = 1;
+                await CartGrid.Reload();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Scan Failed",
+                    $"Error scanning barcode: {ex.Message}", 4000);
+            }
+            StateHasChanged();
+        }
+
+        protected void AddProductToCart(ProductSearchDTO product, decimal qty)
+        {
+            var existing = CartItems.FirstOrDefault(c => c.ItemId == product.ItemId);
 
             if (existing != null)
             {
-                existing.Quantity += (QtyInput > 0 ? QtyInput : 1);
-                existing.TotalPrice = existing.Quantity * existing.SalePrice;
+                existing.Qty += qty;
+                existing.TotalAmount = existing.Qty * existing.UnitPrice;
             }
             else
             {
-                CartItems.Add(new SaleDetailDTO
-                {
-                    ItemId = product.ItemId,
-                    ItemName = product.ItemName,
-                    Barcode = product.Barcode,
-                    Quantity = QtyInput > 0 ? QtyInput : 1,
-                    SalePrice = product.SalePrice ?? 0,
-                    TotalPrice = (QtyInput > 0 ? QtyInput : 1) * (product.SalePrice ?? 0),
-                    ColorId = product.ColorId,
-                    ColorName = product.ColorName,
-                    SizeId = product.SizeId,
-                    SizeName = product.SizeName,
-                    StockQuantity = product.StockQuantity,
-                    StoreId = Sale.StoreId
-                });
+                CartItems.Add(SaleDetailDTO.FromProductSearch(product, qty));
             }
-
-            QtyInput = 1;
-            await CartGrid.Reload();
-            StateHasChanged();
         }
 
         // ── Search Product Modal ──
@@ -198,37 +213,21 @@ namespace JM.UI.Client.Pages.SalesPOS
         {
             var product = await dialogService.OpenAsync<ProductSearchDialogComponent>("Product Search",
                 new Dictionary<string, object>());
-            if (product is ProductSearchDTO selected)
+            if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
-                var existing = CartItems.FirstOrDefault(c =>
-                    c.ItemId == selected.ItemId &&
-                    c.ColorId == selected.ColorId &&
-                    c.SizeId == selected.SizeId);
+                AddProductToCart(selected, 1);
+                await CartGrid.Reload();
+                StateHasChanged();
+            }
+        }
 
-                if (existing != null)
-                {
-                    existing.Quantity += 1;
-                    existing.TotalPrice = existing.Quantity * existing.SalePrice;
-                }
-                else
-                {
-                    CartItems.Add(new SaleDetailDTO
-                    {
-                        ItemId = selected.ItemId,
-                        ItemName = selected.ItemName,
-                        Barcode = selected.Barcode,
-                        Quantity = 1,
-                        SalePrice = selected.SalePrice ?? 0,
-                        TotalPrice = selected.SalePrice ?? 0,
-                        ColorId = selected.ColorId,
-                        ColorName = selected.ColorName,
-                        SizeId = selected.SizeId,
-                        SizeName = selected.SizeName,
-                        StockQuantity = selected.StockQuantity,
-                        StoreId = Sale.StoreId
-                    });
-                }
-
+        protected async Task OpenProductSearchWithTerm(string term)
+        {
+            var product = await dialogService.OpenAsync<ProductSearchDialogComponent>("Product Search",
+                new Dictionary<string, object> { { "InitialSearchTerm", term } });
+            if (product is ProductSearchDTO selected && selected.ItemId > 0)
+            {
+                AddProductToCart(selected, 1);
                 await CartGrid.Reload();
                 StateHasChanged();
             }
@@ -243,8 +242,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
             else
             {
-                item.Quantity = newQty;
-                item.TotalPrice = item.Quantity * item.SalePrice;
+                item.Qty = newQty;
+                item.TotalAmount = item.Qty * item.UnitPrice;
             }
             CartGrid.Reload();
             StateHasChanged();
@@ -274,18 +273,26 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Customer ──
         protected async Task OnCustomerSearch(ChangeEventArgs e)
         {
-            CustomerSearchText = e.Value?.ToString() ?? "";
-            if (CustomerSearchText.Length >= 2)
+            try
             {
-                var all = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
-                CustomerSuggestions = all.Where(c =>
-                    (c.Name?.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (c.Phone?.Contains(CustomerSearchText) ?? false))
-                    .Take(10).ToList();
+                CustomerSearchText = e.Value?.ToString() ?? "";
+                if (CustomerSearchText.Length >= 2)
+                {
+                    var all = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                    CustomerSuggestions = all.Where(c =>
+                        (c.Name?.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (c.Phone?.Contains(CustomerSearchText) ?? false))
+                        .Take(10).ToList();
+                }
+                else
+                {
+                    CustomerSuggestions.Clear();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                CustomerSuggestions.Clear();
+                notificationService.Notify(NotificationSeverity.Error, "Search Failed",
+                    $"Error searching customers: {ex.Message}", 4000);
             }
         }
 
@@ -381,35 +388,57 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {
-            Sale.SubTotal = SubTotal;
-            Sale.VatAmount = CalculatedVat;
-            Sale.NetAmount = NetPayable;
-            Sale.SaleDetails = CartItems.ToList();
+            try
+            {
+                Sale.SubTotal = SubTotal;
+                Sale.VatAmount = CalculatedVat;
+                Sale.NetAmount = NetPayable;
+                Sale.SaleDetails = CartItems.ToList();
 
-            var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
-            if (result.IsSuccessStatus)
-            {
-                notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
-                    $"Draft saved as Invoice: {Sale.InvoiceNo}", 4000);
-                await ResetForNewSale();
+                var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
+                        $"Draft saved as Invoice: {Sale.InvoiceNo}", 4000);
+                    await ResetForNewSale();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message, 4000);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", result.Message, 4000);
+                notificationService.Notify(NotificationSeverity.Error, "Draft Failed",
+                    $"Error saving draft: {ex.Message}", 4000);
             }
         }
 
         protected async Task ResetForNewSale()
         {
-            CartItems.Clear();
-            SelectedCustomer = null;
-            CustomerSearchText = "";
-            SearchedProduct = null;
-            Sale = _serviceUnitOfWork.SaleService.CreateNew();
-            Sale.StoreId = Stores.FirstOrDefault()?.Id;
-            Sale.ShiftId = Shifts.FirstOrDefault()?.Id;
-            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            try
+            {
+                CartItems.Clear();
+                SelectedCustomer = null;
+                CustomerSearchText = "";
+                SearchedProduct = null;
+                Sale = _serviceUnitOfWork.SaleService.CreateNew();
+                Sale.StoreId = Stores.FirstOrDefault()?.Id;
+                Sale.ShiftId = Shifts.FirstOrDefault()?.Id;
+                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Reset Failed",
+                    $"Error resetting sale: {ex.Message}", 4000);
+            }
             StateHasChanged();
+        }
+
+        public void Dispose()
+        {
+            CartGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
         }
     }
 }

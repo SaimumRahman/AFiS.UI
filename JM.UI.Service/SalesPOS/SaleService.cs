@@ -73,14 +73,17 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo();
         }
 
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string searchTerm)
+
+        public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId)
         {
-            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(searchTerm);
+            if (storeId.HasValue && storeId.Value > 0)
+                return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
+            return null;
         }
 
-        public async Task<ProductSearchDTO?> SearchByBarcode(string barcode)
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
         {
-            return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(barcode);
+            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term);
         }
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateSale(SaleMasterDTO sale)
@@ -88,11 +91,11 @@ namespace JM.UI.Service.SalesPOS
             if (sale.SaleDetails == null || sale.SaleDetails.Count == 0)
                 return Task.FromResult((false, "At least one item is required."));
 
-            if (sale.SaleDetails.Any(d => d.Quantity <= 0))
+            if (sale.SaleDetails.Any(d => d.Qty <= 0))
                 return Task.FromResult((false, "Item quantity must be greater than zero."));
 
-            if (sale.SaleDetails.Any(d => d.SalePrice <= 0))
-                return Task.FromResult((false, "Item sale price must be greater than zero."));
+            if (sale.SaleDetails.Any(d => d.UnitPrice <= 0))
+                return Task.FromResult((false, "Item unit price must be greater than zero."));
 
             return Task.FromResult((true, string.Empty));
         }
@@ -112,7 +115,7 @@ namespace JM.UI.Service.SalesPOS
 
         public decimal CalculateSubTotal(List<SaleDetailDTO> details)
         {
-            return details.Sum(d => d.TotalPrice);
+            return details.Sum(d => d.TotalAmount);
         }
 
         public decimal CalculateVat(decimal subTotal, decimal vatPercentage)

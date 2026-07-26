@@ -1,23 +1,45 @@
+using System;
+
 namespace JM.UI.Entities.Model.SalesPOS
 {
     public class SaleDetailDTO
     {
-        public int Id { get; set; }
-        public int SaleMasterId { get; set; }
+        public int SalesDetailsId { get; set; }
+        public int SalesMasterId { get; set; }
         public int ItemId { get; set; }
-        public string? ItemName { get; set; }
         public string? Barcode { get; set; }
-        public decimal Quantity { get; set; } = 1m;
-        public decimal SalePrice { get; set; }
-        public decimal TotalPrice { get; set; }
-        public decimal? DiscountAmount { get; set; }
-        public int? ColorId { get; set; }
-        public string? ColorName { get; set; }
-        public int? SizeId { get; set; }
-        public string? SizeName { get; set; }
-        public int? StoreId { get; set; }
-        public string? ImagePath { get; set; }
-        public decimal? StockQuantity { get; set; }
-        public bool IsActive { get; set; } = true;
+        public string? ReturnRefNo { get; set; }
+        public string? ProductName { get; set; }
+        public int? SalesPersonId { get; set; }
+        public string? SalesPersonName { get; set; }
+        public int? UomId { get; set; }
+        public string? UomName { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Qty { get; set; } = 1m;
+        public decimal Discount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal Vat { get; set; }
+        public int CreatedBy { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public int? UpdatedBy { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public int? DeletedBy { get; set; }
+        public int? DeletedDate { get; set; }
+        public bool? IsDeleted { get; set; }
+
+        public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
+        {
+            ItemId = product.ItemId,
+            Barcode = product.Barcode,
+            ReturnRefNo = product.ReturnRefNo,
+            ProductName = product.ProductName,
+            SalesPersonId = product.SalesPersonId,
+            SalesPersonName = product.SalesPersonName,
+            UomId = product.UomId,
+            UomName = product.UomName,
+            UnitPrice = product.UnitPrice,
+            Qty = qty,
+            TotalAmount = product.UnitPrice * qty
+        };
     }
 }

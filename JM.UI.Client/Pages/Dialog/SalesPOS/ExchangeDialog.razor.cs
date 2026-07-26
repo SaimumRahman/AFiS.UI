@@ -27,7 +27,7 @@ namespace JM.UI.Client.Pages.Dialog.SalesPOS
             ExchangeSale = await _serviceUnitOfWork.SaleService.GetSaleByInvoiceNo(ExchangeInvoiceNo.Trim());
             if (ExchangeSale != null)
             {
-                ExchangeItems = ExchangeSale.SaleDetails.Where(d => d.IsActive).ToList();
+                ExchangeItems = ExchangeSale.SaleDetails.Where(d => d.IsDeleted != true).ToList();
             }
             else
             {
@@ -41,7 +41,7 @@ namespace JM.UI.Client.Pages.Dialog.SalesPOS
             DialogService.Close(new ExchangeResultDTO
             {
                 InvoiceNo = ExchangeInvoiceNo,
-                ExchangeAmount = item.TotalPrice,
+                ExchangeAmount = item.TotalAmount,
                 IsReturnExchange = true
             });
         }
