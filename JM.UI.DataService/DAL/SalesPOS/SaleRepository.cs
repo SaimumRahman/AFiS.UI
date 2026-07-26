@@ -246,7 +246,7 @@ namespace JM.UI.DataService.DAL.SalesPOS
                 _logger.LogInformation("Searching products: {Term}", term);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/search-products/{Uri.EscapeDataString(term)}");
+                var response = await httpClient.GetAsync($"api/SalePOS/search-products?term={Uri.EscapeDataString(term)}");
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
