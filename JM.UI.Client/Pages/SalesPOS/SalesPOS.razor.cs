@@ -92,11 +92,28 @@ namespace JM.UI.Client.Pages.SalesPOS
             await TokenService.InitializeTokenAsync();
             Sale = _serviceUnitOfWork.SaleService.CreateNew();
             await LoadLookupData();
-            Sale.StoreId = Stores.FirstOrDefault()?.Id;
-            Sale.ShiftId = Shifts.FirstOrDefault()?.Id;
+            Sale.StoreId = await GetLocalStorageInt("StoreId");
+            Sale.CreatedBy = await GetLocalStorageInt("UserId");
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
         }
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && !string.IsNullOrEmpty(result.Value))
+                {
+                    if (int.TryParse(result.Value, out int parsed) && parsed > 0)
+                        return parsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
 
+            return 0;
+        }
         protected List<string> PaymentTypeOptions { get; set; } = new() { "Cash", "MFS", "Card" };
         protected List<string> DiscountTypeOptions { get; set; } = new() { "Percentage", "Flat" };
 

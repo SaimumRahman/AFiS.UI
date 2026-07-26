@@ -332,6 +332,27 @@ namespace JM.UI.Client.Services
                     }
                 }
             },
+
+            // ─────────────────────────────────────────
+            // 6. Sales
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Sales",
+                Icon = "\ue558",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "POS",
+                        Path        = "/SalesPOS",
+                        Icon        = "\ue558",
+                        Title       = "POS",
+                        Description = "Manage vendor and supplier records",
+                        Tags        = new[] { "supplier", "vendor" }
+                    }
+                }
+            },
  
             // ─────────────────────────────────────────
             // 6. Suppliers
