@@ -242,8 +242,8 @@
                 <div class="billing-row">
                     <span class="label">Invoice Discount</span>
                     <span class="value">
-                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" />
-                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:70px" />
+                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
+                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:70px" Change="@((object args) => DistributeInvoiceDiscount())" />
                     </span>
                 </div>
                 @if (Sale.InvoiceDiscount.HasValue && Sale.InvoiceDiscount > 0)

@@ -303,11 +303,53 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.CampaignDiscount = null;
             Sale.ExchangeAmount = null;
             Sale.VatPercentage = 5;
+CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // ── Discount Distribution ──
+        protected void DistributeInvoiceDiscount()
+        {
+            if (!CartItems.Any()) return;
+
+            var eligible = CartItems.Where(i => i.Discount == 0).ToList();
+            if (!eligible.Any()) return;
+
+            decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
+                ? SubTotal * (Sale.InvoiceDiscount.Value / 100m)
+                : Sale.InvoiceDiscount ?? 0;
+
+            if (totalDiscountAmount <= 0)
+            {
+                foreach (var item in eligible) item.Discount = 0;
+                CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
+
+            var eligibleSubTotal = eligible.Sum(i => i.TotalAmount);
+            if (eligibleSubTotal <= 0) return;
+
+            var remaining = totalDiscountAmount;
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                var item = eligible[i];
+                if (i == eligible.Count - 1)
+                {
+                    item.Discount = Math.Round(remaining, 2);
+                }
+                else
+                {
+                    var share = Math.Round(totalDiscountAmount * (item.TotalAmount / eligibleSubTotal), 2);
+                    item.Discount = share;
+                    remaining -= share;
+                }
+            }
+
             CartGrid.Reload();
             StateHasChanged();
         }
 
-        // ── Customer ──
         protected async Task LoadCustomers()
         {
             try
