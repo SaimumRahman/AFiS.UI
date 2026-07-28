@@ -19,6 +19,8 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal Discount { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal Vat { get; set; }
+        public decimal StockQuantity { get; set; }
+        public int? StoreId { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public int? UpdatedBy { get; set; }
@@ -39,7 +41,9 @@ namespace JM.UI.Entities.Model.SalesPOS
             UomName = product.UomName,
             UnitPrice = product.UnitPrice,
             Qty = qty,
-            TotalAmount = product.UnitPrice * qty
+            TotalAmount = product.UnitPrice * qty,
+            StockQuantity = product.StockQuantity,
+            StoreId = product.StoreId
         };
     }
 }

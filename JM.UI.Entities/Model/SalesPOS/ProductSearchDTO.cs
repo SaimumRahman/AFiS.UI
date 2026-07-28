@@ -11,7 +11,12 @@ namespace JM.UI.Entities.Model.SalesPOS
         public int? UomId { get; set; }
         public string? UomName { get; set; }
         public string? StoreName { get; set; }
+        public int? StoreId { get; set; }
         public string? SalesPersonName { get; set; }
         public int? SalesPersonId { get; set; }
+        public string? ItemName { get; set; }
+        public decimal SalePrice { get; set; }
+        public decimal Discount { get; set; }
+        public decimal Vat { get; set; }
     }
 }
