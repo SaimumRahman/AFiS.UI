@@ -1,4 +1,5 @@
 using JM.Infrastructure.Models;
+using JM.UI.Client.Pages.Dialog;
 using JM.UI.Client.Pages.Dialog.SalesPOS;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.CustomerDetails;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using Radzen.Blazor;
+using JM.UI.Client.Pages.Dialog;
 
 namespace JM.UI.Client.Pages.SalesPOS
 {
@@ -228,8 +230,9 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Search Product Modal ──
         protected async Task OpenProductSearch()
         {
-            var product = await dialogService.OpenAsync<ProductSearchDialogComponent>("Product Search",
-                new Dictionary<string, object>());
+            var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
+                new Dictionary<string, object>(),
+                new DialogOptions { Width = "700px", Height = "550px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
                 AddProductToCart(selected, 1);
@@ -240,8 +243,9 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected async Task OpenProductSearchWithTerm(string term)
         {
-            var product = await dialogService.OpenAsync<ProductSearchDialogComponent>("Product Search",
-                new Dictionary<string, object> { { "InitialSearchTerm", term } });
+            var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
+                new Dictionary<string, object> { { "Barcode", term } },
+                new DialogOptions { Width = "700px", Height = "550px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
                 AddProductToCart(selected, 1);

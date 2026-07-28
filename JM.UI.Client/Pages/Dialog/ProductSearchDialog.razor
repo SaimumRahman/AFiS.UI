@@ -1,0 +1,91 @@
+@using JM.UI.Entities.Model.SalesPOS
+@using JM.UI.Service.UnitOfWork
+@using Radzen
+@using Radzen.Blazor
+@inject IServiceUnitOfWork ServiceUnitOfWork
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height:100%">
+    <RadzenStack Gap="0.5rem">
+        <RadzenTextBox @bind-Value="SearchTerm" Placeholder="Enter barcode or product name..." @onkeydown="OnSearchKeyPress" />
+        <RadzenButton Text="Search" ButtonStyle="ButtonStyle.Primary" Click="PerformSearch" />
+    </RadzenStack>
+
+    @if (IsLoading)
+    {
+        <div style="text-align:center;padding:2rem">
+            <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+        </div>
+    }
+    else if (SearchResults.Count > 0)
+    {
+        <RadzenDataGrid Data="@SearchResults" TItem="ProductSearchDTO" AllowSorting="true" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="ProductName" Title="Product Name" />
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="Barcode" Title="Barcode" Width="140px" />
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="UnitPrice" Title="Price" Width="100px">
+                    <Template Context="p">
+                        <span style="font-weight:600">@p.UnitPrice.ToString("N2")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StockQuantity" Title="Stock" Width="70px" />
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Width="90px" Sortable="false" Filterable="false">
+                    <Template Context="p">
+                        <RadzenButton Text="Add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success"
+                                      Click="@(() => { DialogService.Close(p); })" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (!string.IsNullOrWhiteSpace(SearchTerm))
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Style="color:var(--rz-text-tertiary-color)">No products found.</RadzenText>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="@(() => DialogService.Close(null))" Variant="Variant.Flat" Text="Cancel" Style="width:120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string Barcode { get; set; } = "";
+
+    string SearchTerm { get; set; } = "";
+    bool IsLoading;
+    List<ProductSearchDTO> SearchResults { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Barcode))
+        {
+            SearchTerm = Barcode;
+            await PerformSearch();
+        }
+    }
+
+    async Task OnSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await PerformSearch();
+    }
+
+    async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(SearchTerm)) return;
+
+        IsLoading = true;
+
+        try
+        {
+            SearchResults = (await ServiceUnitOfWork.SaleService.SearchProducts(SearchTerm)).ToList();
+        }
+        catch
+        {
+            SearchResults = new();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
