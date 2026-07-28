@@ -50,9 +50,10 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected ProductSearchDTO? SearchedProduct { get; set; }
 
         // ── Customer ──
-        protected string CustomerSearchText { get; set; } = "";
-        protected List<CustomerDetailsDTO> CustomerSuggestions { get; set; } = new();
+        protected List<CustomerDetailsDTO> AllCustomers { get; set; } = new();
+        protected int SelectedCustomerId { get; set; }
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
+        protected bool IsCustomerDropdownVisible { get; set; } = true;
 
         // ── Computed Values ──
         protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
@@ -127,13 +128,14 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var colorTask = _serviceUnitOfWork.ColorsService.GetColorss();
                 var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
                 var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
-
-                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask);
+                var allCustomers = _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers);
 
                 Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
                 Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
                 Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
                 Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
+                AllCustomers = (allCustomers.Result ?? new List<CustomerDetailsDTO>()).ToList();
             }
             catch (Exception ex)
             {
@@ -282,7 +284,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             CartItems.Clear();
             SearchedProduct = null;
             SelectedCustomer = null;
-            CustomerSearchText = "";
+            SelectedCustomerId = 0;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
             Sale.ExchangeAmount = null;
@@ -292,48 +294,48 @@ namespace JM.UI.Client.Pages.SalesPOS
         }
 
         // ── Customer ──
-        protected async Task OnCustomerSearch(ChangeEventArgs e)
+        protected async Task LoadCustomers()
         {
             try
             {
-                CustomerSearchText = e.Value?.ToString() ?? "";
-                if (CustomerSearchText.Length >= 2)
-                {
-                    var all = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
-                    CustomerSuggestions = all.Where(c =>
-                        (c.Name?.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (c.Phone?.Contains(CustomerSearchText) ?? false))
-                        .Take(10).ToList();
-                }
-                else
-                {
-                    CustomerSuggestions.Clear();
-                }
+                var all = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                AllCustomers = all.ToList();
             }
             catch (Exception ex)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Search Failed",
-                    $"Error searching customers: {ex.Message}", 4000);
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading customers: {ex.Message}", 4000);
             }
+        }
+
+        protected void SelectCustomerById(int customerId)
+        {
+            if (customerId <= 0)
+            {
+                ClearCustomer();
+                return;
+            }
+            var customer = AllCustomers.FirstOrDefault(c => c.Id == customerId);
+            if (customer != null) SelectCustomer(customer);
         }
 
         protected void SelectCustomer(CustomerDetailsDTO customer)
         {
             SelectedCustomer = customer;
+            SelectedCustomerId = customer.Id;
             Sale.CustomerId = customer.Id;
             Sale.CustomerName = customer.Name;
             Sale.CustomerPhone = customer.Phone;
             Sale.CustomerAddress = customer.Address;
             Sale.MembershipTypeId = customer.MemberTypeId;
             Sale.DiscountRate = customer.DiscountRate;
-            CustomerSearchText = customer.Name ?? customer.Phone ?? "";
-            CustomerSuggestions.Clear();
             StateHasChanged();
         }
 
         protected void ClearCustomer()
         {
             SelectedCustomer = null;
+            SelectedCustomerId = 0;
             Sale.CustomerId = null;
             Sale.CustomerName = null;
             Sale.CustomerPhone = null;
@@ -341,7 +343,6 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipTypeId = null;
             Sale.DiscountRate = null;
             Sale.MembershipDiscount = null;
-            CustomerSearchText = "";
             StateHasChanged();
         }
 
@@ -441,7 +442,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 CartItems.Clear();
                 SelectedCustomer = null;
-                CustomerSearchText = "";
+                SelectedCustomerId = 0;
                 SearchedProduct = null;
                 Sale = _serviceUnitOfWork.SaleService.CreateNew();
                 Sale.StoreId = Stores.FirstOrDefault()?.Id;

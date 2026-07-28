@@ -15,7 +15,16 @@
     .pos-header .header-actions { margin-left: auto; display: flex; gap: 8px; }
     .pos-body { display: flex; flex: 1; overflow: hidden; }
     .pos-left { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 8px; gap: 8px; overflow: hidden; }
-    .pos-right { width: 340px; min-width: 340px; display: flex; flex-direction: column; padding: 8px 8px 8px 0; gap: 8px; overflow-y: auto; }
+
+    .pos-right {
+        width: 600px;
+        min-width: 600px;
+        display: flex;
+        flex-direction: column;
+        padding: 8px 8px 8px 0;
+        gap: 8px;
+        overflow-y: auto;
+    }
 
     .pos-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 12px; }
     .pos-card-title { font-size: 0.8rem; font-weight: 600; color: #333; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
@@ -179,22 +188,26 @@
                 }
                 else
                 {
-                    <div class="customer-search">
-                        <RadzenTextBox @bind-Value="CustomerSearchText" Placeholder="Search customer..." @oninput="@OnCustomerSearch" />
-                        @if (CustomerSuggestions.Any())
-                        {
-                            <div class="suggestions">
-                                @foreach (var c in CustomerSuggestions)
-                                {
-                                    <div class="suggestion-item" @onclick="() => SelectCustomer(c)">
-                                        <strong>@c.Name</strong> - @c.Phone
-                                        @if (!string.IsNullOrEmpty(c.MembershipType)) { <span style="color:#28a745"> (@c.MembershipType)</span> }
-                                    </div>
-                                }
-                            </div>
-                        }
-                        <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="margin-top:4px;width:100%" Click="@OpenAddCustomerModal" Text="+ New Customer" />
+                    <div style="margin-bottom:6px">
+                        <RadzenDropDownDataGrid @bind-Value="SelectedCustomerId"
+                                                Data="@AllCustomers"
+                                                ValueProperty="Id"
+                                                Placeholder="Search customer by name or phone..."
+                                                AllowFiltering="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                AllowClear="true"
+                                                Change="@(args => SelectCustomerById((int)args))"
+                                                Style="width:100%">
+                            <ValueTemplate Context="c">
+                                @(c != null ? $"{c.Name} - {c.Phone}" : "")
+                            </ValueTemplate>
+                            <Columns>
+                                <RadzenDropDownDataGridColumn Property="Name" Title="Name" />
+                                <RadzenDropDownDataGridColumn Property="Phone" Title="Phone" />
+                            </Columns>
+                        </RadzenDropDownDataGrid>
                     </div>
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="width:100%" Click="@OpenAddCustomerModal" Text="+ New Customer" />
                 }
             </div>
 

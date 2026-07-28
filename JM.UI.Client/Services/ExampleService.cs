@@ -112,6 +112,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Customer Details",
+                        Path        = "/CustomerDetailsList",
+                        Icon        = "\ue7fd",
+                        Title       = "Customer Details",
+                        Description = "Manage Customer Details",
+                        Tags        = new[] { "Customer", "type", "hr" }
+                    },
+                    new Example
+                    {
                         Name        = "Membership Types",
                         Path        = "/MembershipTypeList",
                         Icon        = "\ue7fd",
