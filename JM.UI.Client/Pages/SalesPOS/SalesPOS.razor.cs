@@ -3,6 +3,7 @@ using JM.UI.Client.Pages.Dialog;
 using JM.UI.Client.Pages.Dialog.SalesPOS;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.CustomerDetails;
+using JM.UI.Entities.Model.Employees;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Entities.Model.SalesPOS;
@@ -16,7 +17,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using Radzen.Blazor;
-using JM.UI.Client.Pages.Dialog;
 
 namespace JM.UI.Client.Pages.SalesPOS
 {
@@ -53,7 +53,11 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected List<CustomerDetailsDTO> AllCustomers { get; set; } = new();
         protected int SelectedCustomerId { get; set; }
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
-        protected bool IsCustomerDropdownVisible { get; set; } = true;
+
+        // ── Employee ──
+        protected List<EmployeeModelDTO> Employees { get; set; } = new();
+        protected int SelectedEmployeeId { get; set; }
+        protected string? SelectedEmployeeName { get; set; }
 
         // ── Computed Values ──
         protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
@@ -129,13 +133,15 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
                 var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
                 var allCustomers = _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
-                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers);
+                var employeeTask = _serviceUnitOfWork.EmployeeService.GetEmployees();
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, employeeTask);
 
                 Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
                 Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
                 Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
                 Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
                 AllCustomers = (allCustomers.Result ?? new List<CustomerDetailsDTO>()).ToList();
+                Employees = (employeeTask.Result ?? new List<EmployeeModelDTO>()).ToList();
             }
             catch (Exception ex)
             {
@@ -225,7 +231,13 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
             else
             {
-                CartItems.Add(SaleDetailDTO.FromProductSearch(product, qty));
+                var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                if (SelectedEmployeeId > 0)
+                {
+                    detail.SalesPersonId = SelectedEmployeeId;
+                    detail.SalesPersonName = SelectedEmployeeName;
+                }
+                CartItems.Add(detail);
             }
         }
 
@@ -285,6 +297,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             SearchedProduct = null;
             SelectedCustomer = null;
             SelectedCustomerId = 0;
+            SelectedEmployeeId = 0;
+            SelectedEmployeeName = null;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
             Sale.ExchangeAmount = null;
@@ -343,6 +357,22 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipTypeId = null;
             Sale.DiscountRate = null;
             Sale.MembershipDiscount = null;
+            StateHasChanged();
+        }
+
+        // ── Employee Selection ──
+        protected void OnEmployeeChanged(int employeeId)
+        {
+            SelectedEmployeeId = employeeId;
+            var emp = Employees.FirstOrDefault(e => e.Id == employeeId);
+            SelectedEmployeeName = emp?.Name;
+
+            foreach (var item in CartItems)
+            {
+                item.SalesPersonId = employeeId > 0 ? employeeId : null;
+                item.SalesPersonName = SelectedEmployeeName;
+            }
+            CartGrid.Reload();
             StateHasChanged();
         }
 
@@ -443,6 +473,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 CartItems.Clear();
                 SelectedCustomer = null;
                 SelectedCustomerId = 0;
+                SelectedEmployeeId = 0;
+                SelectedEmployeeName = null;
                 SearchedProduct = null;
                 Sale = _serviceUnitOfWork.SaleService.CreateNew();
                 Sale.StoreId = Stores.FirstOrDefault()?.Id;

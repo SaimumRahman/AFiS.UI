@@ -97,6 +97,16 @@
                     <RadzenNumeric @bind-Value="QtyInput" Min="1" Max="9999" Style="width:70px" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" />
                     <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" />
+                    <RadzenDropDown @bind-Value="SelectedEmployeeId"
+                                    Data="@Employees"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="Employee"
+                                    AllowFiltering="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                    AllowClear="true"
+                                    Change="@(args => OnEmployeeChanged((int)args))"
+                                    Style="width:140px" />
                 </div>
             </div>
 
@@ -131,6 +141,7 @@
                                 <Columns>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" Width="160" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="SalesPersonName" Title="Sales Person" Width="100" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="80">
                                         <Template Context="item">
                                             <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
