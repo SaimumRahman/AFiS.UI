@@ -348,7 +348,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Add Customer Modal ──
         protected async Task OpenAddCustomerModal()
         {
-            var customer = await dialogService.OpenAsync<AddCustomerDialogComponent>("New Customer",
+            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer",
                 new Dictionary<string, object>());
             if (customer is CustomerDetailsDTO saved && saved.Id > 0)
             {

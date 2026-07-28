@@ -1,14 +1,237 @@
 @using JM.UI.Entities.Model.CustomerDetails
+@using JM.UI.Entities.Model.MembershipType
+@using JM.UI.Service.UnitOfWork
 @using Radzen
-@inherits AddCustomerDialogComponent
+@using Radzen.Blazor
+@inject IServiceUnitOfWork ServiceUnitOfWork
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 
-<div style="display:flex;flex-direction:column;gap:8px">
-    <div><label>Name *</label><RadzenTextBox @bind-Value="NewCustomer.Name" Placeholder="Customer name" class="rz-w-100" /></div>
-    <div><label>Phone *</label><RadzenTextBox @bind-Value="NewCustomer.Phone" Placeholder="Phone number" class="rz-w-100" /></div>
-    <div><label>Email</label><RadzenTextBox @bind-Value="NewCustomer.Email" Placeholder="Email (optional)" class="rz-w-100" /></div>
-    <div><label>Address</label><RadzenTextBox @bind-Value="NewCustomer.Address" Placeholder="Address (optional)" class="rz-w-100" /></div>
-    <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">
-        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
-        <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" @onclick="SaveNewCustomer" />
-    </div>
-</div>
+<RadzenCard>
+    @if (IsLoading)
+    {
+        <RadzenCard class="text-center p-5">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenTemplateForm TItem="CustomerDetailsDTO" Data="@Customer" Submit="@Save">
+            <RadzenStack Gap="1.5rem">
+                <RadzenFieldset Text="Customer Information" Icon="person">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Name *" Component="Name" />
+                                    <RadzenTextBox @bind-Value="Customer.Name"
+                                                   Name="Name"
+                                                   Placeholder="Enter customer name"
+                                                   Style="width: 100%;"
+                                                   MaxLength="100" />
+                                    <RadzenRequiredValidator Component="Name" Text="Customer name is required" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Email" Component="Email" />
+                                    <RadzenTextBox @bind-Value="Customer.Email"
+                                                   Name="Email"
+                                                   Placeholder="Enter email address"
+                                                   Style="width: 100%;"
+                                                   MaxLength="100" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Phone *" Component="Phone" />
+                                    <RadzenTextBox @bind-Value="Customer.Phone"
+                                                   Name="Phone"
+                                                   Placeholder="Enter phone number"
+                                                   Style="width: 100%;"
+                                                   MaxLength="20" />
+                                    <RadzenRequiredValidator Component="Phone" Text="Phone number is required" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Member Type" Component="MemberTypeId" />
+                                    <RadzenDropDown @bind-Value="Customer.MemberTypeId"
+                                                    Data="@MembershipTypes"
+                                                    TextProperty="Name"
+                                                    ValueProperty="Id"
+                                                    Placeholder="Select Membership Type"
+                                                    Style="width: 100%;"
+                                                    AllowClear="true"
+                                                    AllowFiltering="true" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow>
+                            <RadzenColumn Size="12">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenLabel Text="Address" Component="Address" />
+                                    <RadzenTextArea @bind-Value="Customer.Address"
+                                                    Name="Address"
+                                                    Placeholder="Enter address"
+                                                    Rows="3"
+                                                    MaxLength="200"
+                                                    Style="width: 100%;" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenFieldset>
+
+                <RadzenCard class="mt-2">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Cancel"
+                                      Icon="cancel"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Flat"
+                                      Click="@Cancel"
+                                      Disabled="@IsProcessing" />
+                        <RadzenButton Text="Save & Add New"
+                                      Icon="add"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@SaveAndNew"
+                                      IsBusy="@IsProcessing"
+                                      Disabled="@IsProcessing" />
+                        <RadzenButton Text="Save"
+                                      Icon="save"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      ButtonType="ButtonType.Submit"
+                                      IsBusy="@IsProcessing"
+                                      BusyText="Saving..." />
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenTemplateForm>
+    }
+</RadzenCard>
+
+@code {
+    protected CustomerDetailsDTO Customer { get; set; } = new() { IsForceAdd = true };
+    protected bool IsProcessing { get; set; }
+    protected bool IsLoading { get; set; } = true;
+    protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            MembershipTypes = (await ServiceUnitOfWork.MembershipTypeService.GetAll()).ToList();
+            Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
+            Customer.IsForceAdd = true;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    protected async Task Save()
+    {
+        var validation = await ServiceUnitOfWork.CustomerDetailsService.Validate(Customer);
+        if (!validation.IsValid)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
+            return;
+        }
+
+        try
+        {
+            IsProcessing = true;
+            var result = await ServiceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+
+            if (result.IsSuccessStatus)
+            {
+                var all = await ServiceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                var saved = all.OrderByDescending(c => c.Id).FirstOrDefault();
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                DialogService.Close(saved);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                if (result.StatusCode == StatusCodes.Status304NotModified)
+                {
+                    var confirmed = await DialogService.Confirm(
+                        "Do you want to create a new Customer?",
+                        "Duplicate",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+                    );
+
+                    if (confirmed == true)
+                    {
+                        Customer.IsForceAdd = true;
+                        var retryResult = await ServiceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                        if (retryResult.IsSuccessStatus)
+                        {
+                            var all = await ServiceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                            var saved = all.OrderByDescending(c => c.Id).FirstOrDefault();
+                            NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                            DialogService.Close(saved);
+                        }
+                        else
+                        {
+                            NotificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save customer: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    protected async Task SaveAndNew()
+    {
+        var validation = await ServiceUnitOfWork.CustomerDetailsService.Validate(Customer);
+        if (!validation.IsValid)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
+            return;
+        }
+
+        try
+        {
+            IsProcessing = true;
+            var result = await ServiceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+
+            if (result.IsSuccessStatus)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
+                Customer.IsForceAdd = true;
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save customer: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    protected void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
