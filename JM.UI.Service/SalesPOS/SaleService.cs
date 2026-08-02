@@ -76,7 +76,7 @@ namespace JM.UI.Service.SalesPOS
 
         public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId)
         {
-            if (storeId.Value <= 0) storeId = 2;// Head Office default.
+            if (storeId.Value <= 0) storeId = 4;// Head Office default.
 
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
