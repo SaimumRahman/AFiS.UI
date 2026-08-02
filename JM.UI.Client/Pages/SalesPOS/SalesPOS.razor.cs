@@ -449,7 +449,7 @@ CartGrid.Reload();
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
-            var result = await dialogService.OpenAsync<PaymentDialogComponent>("Payment",
+            var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                 new Dictionary<string, object> { { "NetPayable", NetPayable } });
             if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
             {
@@ -458,12 +458,12 @@ CartGrid.Reload();
                 Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
                 Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
                 Sale.NetAmount = NetPayable;
-                Sale.PaidAmount = paymentResult.Payments.Sum(p => p.Amount);
+                Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
                 Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
                 Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
                     (Sale.PaidAmount > 0 ? "Partial" : "Due");
                 Sale.SaleDetails = CartItems.ToList();
-                Sale.Payments = paymentResult.Payments.ToList();
+                Sale.PaymentTransactions = paymentResult.Payments.ToList();
 
                 var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
                 if (saveResult.IsSuccessStatus)

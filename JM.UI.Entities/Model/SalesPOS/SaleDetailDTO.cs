@@ -1,5 +1,3 @@
-using System;
-
 namespace JM.UI.Entities.Model.SalesPOS
 {
     public class SaleDetailDTO
@@ -15,19 +13,11 @@ namespace JM.UI.Entities.Model.SalesPOS
         public int? UomId { get; set; }
         public string? UomName { get; set; }
         public decimal UnitPrice { get; set; }
-        public decimal Qty { get; set; } = 1m;
-        public decimal Discount { get; set; }
+        public decimal Qty { get; set; }
+        public decimal? Discount { get; set; }
         public decimal TotalAmount { get; set; }
-        public decimal Vat { get; set; }
-        public decimal StockQuantity { get; set; }
-        public int? StoreId { get; set; }
+        public decimal? Vat { get; set; }
         public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-        public int? UpdatedBy { get; set; }
-        public DateTime? UpdatedDate { get; set; }
-        public int? DeletedBy { get; set; }
-        public int? DeletedDate { get; set; }
-        public bool? IsDeleted { get; set; }
 
         public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
         {
@@ -41,9 +31,7 @@ namespace JM.UI.Entities.Model.SalesPOS
             UomName = product.UomName,
             UnitPrice = product.UnitPrice,
             Qty = qty,
-            TotalAmount = product.UnitPrice * qty,
-            StockQuantity = product.StockQuantity,
-            StoreId = product.StoreId
+            TotalAmount = product.UnitPrice * qty
         };
     }
 }

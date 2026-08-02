@@ -1,6 +1,7 @@
 @using JM.UI.Entities.Model.SalesPOS
 @using Radzen
-@inherits PaymentDialogComponent
+@using Radzen.Blazor
+@inject DialogService DialogService
 
 <div style="display:flex;flex-direction:column;gap:10px">
     <div class="payment-summary" style="background:#f0f9ff;border-radius:6px;padding:8px">
@@ -12,7 +13,7 @@
         {
             <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem;color:#28a745">
                 <span style="color:#666">Paid</span>
-                <span style="font-weight:600">@TempPayments.Sum(p => p.Amount).ToString("N2")</span>
+                <span style="font-weight:600">@TempPayments.Sum(p => p.PaidAmount ?? 0).ToString("N2")</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem;color:#dc3545">
                 <span style="color:#666">Due</span>
@@ -20,36 +21,105 @@
             </div>
         }
     </div>
-    @* Payment Entry *@
+
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <RadzenDropDown @bind-Value="PaymentType" Data="@PaymentTypeOptions" Style="width:100px" />
         <RadzenNumeric @bind-Value="PaymentAmount" Min="0" Style="width:120px" />
         @if (PaymentType == "MFS" || PaymentType == "Card")
         {
-            <RadzenTextBox @bind-Value="TransactionId" Placeholder="Transaction ID" Style="width:150px" />
+            <RadzenTextBox @bind-Value="TransactionNo" Placeholder="Transaction ID" Style="width:150px" />
         }
-        <RadzenButton Text="Add Payment" ButtonStyle="ButtonStyle.Success" ButtonSize="Small" @onclick="AddTempPayment" disabled="@(PaymentAmount <= 0)" />
+        <RadzenButton Text="Add Payment" ButtonStyle="ButtonStyle.Success" ButtonSize="Small" Click="@AddTempPayment" Disabled="@(PaymentAmount <= 0)" />
     </div>
+
     @if (TempPayments.Any())
     {
-        <RadzenDataGrid Data="@TempPayments" ShowPaging="false">
+        <RadzenDataGrid Data="@TempPayments" TItem="PaymentTransactionDTO" ShowPaging="false">
             <Columns>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Property="PaymentType" Title="Type" Width="80" />
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Property="Amount" Title="Amount" Width="100" />
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Property="TransactionId" Title="Ref" Width="140" />
+                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="80">
+                    <Template Context="p">
+                        @(p.TransactionTypeId switch { 1 => "MFS", 2 => "Card", _ => "Cash" })
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Amount" Width="100">
+                    <Template Context="p">
+                        @(p.PaidAmount?.ToString("N2") ?? "0.00")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Property="TransactionNo" Title="Ref" Width="140" />
                 <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="" Width="50">
                     <Template Context="p">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" @onclick="() => RemoveTempPayment(p)">X</RadzenButton>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Click="@(() => RemoveTempPayment(p))">X</RadzenButton>
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     }
+
     <div style="display:flex;gap:6px;margin-top:8px">
         <label><RadzenCheckBox @bind-Value="IsBookingPayment" /> Book (partial payment)</label>
     </div>
+
     <div style="display:flex;gap:6px;justify-content:flex-end">
-        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
-        <RadzenButton Text="Confirm Payment" ButtonStyle="ButtonStyle.Primary" @onclick="ConfirmPayment" disabled="@(TempPayments.Count == 0)" />
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Confirm Payment" ButtonStyle="ButtonStyle.Primary" Click="@ConfirmPayment" Disabled="@(TempPayments.Count == 0)" />
     </div>
 </div>
+
+@code {
+    [Parameter] public decimal NetPayable { get; set; }
+
+    decimal PaymentAmount { get; set; }
+    string PaymentType { get; set; } = "Cash";
+    string TransactionNo { get; set; } = "";
+    List<PaymentTransactionDTO> TempPayments { get; set; } = new();
+    decimal RemainingAmount => NetPayable - TempPayments.Sum(p => p.PaidAmount ?? 0);
+    bool IsBookingPayment { get; set; }
+
+    List<string> PaymentTypeOptions { get; set; } = new() { "Cash", "MFS", "Card" };
+
+    int PaymentTypeToId(string type) => type switch
+    {
+        "MFS" => 1,
+        "Card" => 2,
+        _ => 0
+    };
+
+    protected override void OnInitialized()
+    {
+        PaymentAmount = NetPayable;
+    }
+
+    void AddTempPayment()
+    {
+        if (PaymentAmount <= 0) return;
+        TempPayments.Add(new PaymentTransactionDTO
+        {
+            TransactionTypeId = PaymentTypeToId(PaymentType),
+            PaidAmount = Math.Min(PaymentAmount, RemainingAmount > 0 ? RemainingAmount : PaymentAmount),
+            TransactionNo = PaymentType == "MFS" || PaymentType == "Card" ? TransactionNo : null
+        });
+        PaymentType = "Cash";
+        TransactionNo = "";
+        PaymentAmount = RemainingAmount;
+    }
+
+    void RemoveTempPayment(PaymentTransactionDTO payment)
+    {
+        TempPayments.Remove(payment);
+    }
+
+    void ConfirmPayment()
+    {
+        DialogService.Close(new PaymentResultDTO
+        {
+            Payments = TempPayments.ToList(),
+            IsBookingPayment = IsBookingPayment
+        });
+    }
+
+    void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}

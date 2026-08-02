@@ -27,7 +27,7 @@ namespace JM.UI.Client.Pages.Dialog.SalesPOS
             ExchangeSale = await _serviceUnitOfWork.SaleService.GetSaleByInvoiceNo(ExchangeInvoiceNo.Trim());
             if (ExchangeSale != null)
             {
-                ExchangeItems = ExchangeSale.SaleDetails.Where(d => d.IsDeleted != true).ToList();
+                ExchangeItems = ExchangeSale.SaleDetails.ToList();
             }
             else
             {

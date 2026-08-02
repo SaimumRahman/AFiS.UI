@@ -45,6 +45,15 @@ namespace JM.UI.Service.SalesPOS
             sale.PaymentStatus = sale.DueAmount <= 0 ? "Paid" :
                 (sale.PaidAmount > 0 ? "Partial" : "Due");
 
+            // Map to API-aligned fields
+            sale.TotalBill = sale.SubTotal;
+            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0);
+            sale.TotalPaid = sale.PaidAmount ?? 0;
+            sale.TotalDue = sale.DueAmount ?? 0;
+            sale.TotalVat = sale.VatAmount;
+            sale.IsPaid = sale.DueAmount <= 0;
+            sale.IsDraft = false;
+
             return await _repositoryUnitOfWork.SaleRepository.SaveSale(sale);
         }
 
@@ -76,7 +85,11 @@ namespace JM.UI.Service.SalesPOS
 
         public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId)
         {
-            if (storeId.Value <= 0) storeId = 4;// Head Office default.
+            if (string.IsNullOrWhiteSpace(returnRefNo))
+                throw new ArgumentException("Barcode/reference number must be provided.", nameof(returnRefNo));
+
+            if (!storeId.HasValue || storeId.Value <= 0)
+                storeId = 4; // Head Office default.
 
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
@@ -105,6 +118,7 @@ namespace JM.UI.Service.SalesPOS
             return new SaleMasterDTO
             {
                 SalesDate = DateTime.Now,
+                CreatedDate = DateTime.Now,
                 SalesType = "Sale",
                 PaymentStatus = "Due",
                 VatPercentage = 5m,

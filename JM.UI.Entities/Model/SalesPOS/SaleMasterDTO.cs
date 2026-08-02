@@ -5,13 +5,13 @@ namespace JM.UI.Entities.Model.SalesPOS
 {
     public class SaleMasterDTO
     {
-        public int Id { get; set; }
-        public string? InvoiceNo { get; set; }
+        public int SaleMasterId { get; set; }
+        public string InvoiceNo { get; set; } = "";
         public int? CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerPhone { get; set; }
         public string? CustomerAddress { get; set; }
-        public DateTime SalesDate { get; set; } = DateTime.Now;
+        public DateTime SalesDate { get; set; }
         public decimal SubTotal { get; set; }
         public decimal? CampaignDiscount { get; set; }
         public decimal? MembershipDiscount { get; set; }
@@ -38,13 +38,23 @@ namespace JM.UI.Entities.Model.SalesPOS
         public int? MembershipTypeId { get; set; }
         public string? MembershipTypeName { get; set; }
         public int? DiscountRate { get; set; }
-
         public int? CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
         public int? LastModifiedBy { get; set; }
         public DateTime? LastModifiedDate { get; set; }
 
+        // API-aligned fields
+        public decimal TotalBill { get; set; }
+        public decimal TotalDiscount { get; set; }
+        public decimal TotalPaid { get; set; }
+        public decimal TotalDue { get; set; }
+        public decimal? TotalVat { get; set; }
+        public bool? IsPaid { get; set; }
+        public bool? IsBooking { get; set; }
+        public bool? IsDraft { get; set; }
+        public bool? IsDeleted { get; set; }
+
         public List<SaleDetailDTO> SaleDetails { get; set; } = new();
-        public List<PaymentTransactionDTO> Payments { get; set; } = new();
+        public List<PaymentTransactionDTO> PaymentTransactions { get; set; } = new();
     }
 }
