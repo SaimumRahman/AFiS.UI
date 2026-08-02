@@ -49,6 +49,12 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected decimal QtyInput { get; set; } = 1;
         protected ProductSearchDTO? SearchedProduct { get; set; }
 
+        // ── Invoices ──
+        protected List<SaleSummaryDTO> Invoices { get; set; } = new();
+        protected bool IsInvoicesLoading { get; set; }
+        protected Dictionary<int, List<SaleDetailDTO>> ExpandedInvoiceDetails { get; set; } = new();
+        protected Dictionary<int, bool> ExpandedInvoiceLoading { get; set; } = new();
+
         // ── Customer ──
         protected List<CustomerDetailsDTO> AllCustomers { get; set; } = new();
         protected int SelectedCustomerId { get; set; }
@@ -158,23 +164,105 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected string BookingListTabClass => $"tab-btn{(IsBookingMode ? " active" : "")}";
         protected string InvoiceListTabClass => $"tab-btn{(IsInvoicesMode ? " active" : "")}";
 
-        protected void SwitchMode(string mode)
+        protected async Task SwitchMode(string mode)
         {
             _currentMode = mode;
             if (mode == "Invoices")
-                _ = LoadInvoices();
+                await LoadInvoices();
         }
 
-        protected void SwitchToSale() => SwitchMode("Sale");
-        protected void SwitchToBooking() => SwitchMode("Booking");
-        protected void SwitchToInvoices() => SwitchMode("Invoices");
+        protected Task SwitchToSale() => SwitchMode("Sale");
+        protected Task SwitchToBooking() => SwitchMode("Booking");
+        protected Task SwitchToInvoices() => SwitchMode("Invoices");
         protected void SetSaleMode() { _currentMode = "Sale"; }
         protected void SetBookingMode() { _currentMode = "Booking"; }
-        protected void SetInvoicesMode() { _currentMode = "Invoices"; }
+        protected async Task SetInvoicesMode()
+        {
+            if (_currentMode != "Invoices")
+            {
+                _currentMode = "Invoices";
+                await LoadInvoices();
+            }
+            else
+            {
+                _currentMode = "Invoices";
+            }
+        }
 
         protected async Task LoadInvoices()
         {
-            // TODO: Load invoices list for today
+            try
+            {
+                IsInvoicesLoading = false;
+                var all = await _serviceUnitOfWork.SaleService.GetAllSales();
+                Invoices = (all ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoices: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsInvoicesLoading = false;
+            }
+        }
+
+        protected async Task OnInvoiceRowExpand(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            if (ExpandedInvoiceDetails.ContainsKey(invoice.SaleMasterId)) return;
+
+            ExpandedInvoiceLoading[invoice.SaleMasterId] = true;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                ExpandedInvoiceDetails[invoice.SaleMasterId] = sale?.SaleDetails ?? new List<SaleDetailDTO>();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoice details: {ex.Message}", 4000);
+            }
+            finally
+            {
+                ExpandedInvoiceLoading[invoice.SaleMasterId] = false;
+            }
+        }
+
+        protected async Task EditInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                if (sale == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Not Found",
+                        $"Invoice {invoice.InvoiceNo} not found", 3000);
+                    return;
+                }
+
+                _currentMode = "Sale";
+                CartItems.Clear();
+                if (sale.SaleDetails != null)
+                    CartItems.AddRange(sale.SaleDetails);
+
+                Sale = sale;
+                SelectedCustomer = null;
+                SelectedCustomerId = 0;
+
+                var customer = AllCustomers.FirstOrDefault(c => c.Id == sale.CustomerId);
+                if (customer != null) SelectCustomer(customer);
+
+                notificationService.Notify(NotificationSeverity.Info, "Editing",
+                    $"Invoice {sale.InvoiceNo} loaded for editing", 3000);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoice: {ex.Message}", 4000);
+            }
         }
 
         // ── Barcode Scanning ──

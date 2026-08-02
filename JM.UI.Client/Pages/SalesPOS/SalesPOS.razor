@@ -173,7 +173,85 @@
                     }
                     @if (IsInvoicesMode)
                     {
-                        <div style="padding:20px;text-align:center;color:#999">Invoice history view - coming soon</div>
+                        <RadzenDataGrid Data="@Invoices"
+                                        TItem="SaleSummaryDTO"
+                                        AllowColumnResize="true"
+                                        AllowPaging="true"
+                                        AllowSorting="true"
+                                        PageSize="10"
+                                        IsLoading="@IsInvoicesLoading"
+                                        RowExpand="@OnInvoiceRowExpand"
+                                        ExpandMode="DataGridExpandMode.Single"
+                                        Density="Density.Compact"
+                                        ShowPagingSummary="true"
+                                        PagingSummaryFormat="Displaying page {0} of {1} (total {2} records)">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="InvoiceNo" Title="Invoice No" Width="120" />
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="CustomerName" Title="Customer" Width="140" />
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="CreatedDate" Title="Date" Width="90">
+                                    <Template Context="inv">
+                                        <span>@inv.CreatedDate.ToString("dd MMM yyyy")</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalBill" Title="Bill" Width="80">
+                                    <Template Context="inv">
+                                        <span>@inv.TotalBill.ToString("N2")</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalDiscount" Title="Disc" Width="70">
+                                    <Template Context="inv">
+                                        <span>@inv.TotalDiscount.ToString("N2")</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalPaid" Title="Paid" Width="80">
+                                    <Template Context="inv">
+                                        <span>@inv.TotalPaid.ToString("N2")</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalDue" Title="Due" Width="80">
+                                    <Template Context="inv">
+                                        <span style="@(inv.TotalDue > 0 ? "color:#dc3545;font-weight:600" : "color:#28a745")">@inv.TotalDue.ToString("N2")</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalItems" Title="Items" Width="60" />
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">
+                                    <Template Context="inv">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                            <Template Context="inv">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">
+                                        Items for <strong>@inv.InvoiceNo</strong>
+                                    </RadzenText>
+                                    @if (ExpandedInvoiceLoading.ContainsKey(inv.SaleMasterId) && ExpandedInvoiceLoading[inv.SaleMasterId])
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                                            <span>Loading...</span>
+                                        </RadzenStack>
+                                    }
+                                    else if (ExpandedInvoiceDetails.ContainsKey(inv.SaleMasterId))
+                                    {
+                                        <RadzenDataGrid Data="@ExpandedInvoiceDetails[inv.SaleMasterId]"
+                                                        TItem="SaleDetailDTO"
+                                                        ShowPaging="false"
+                                                        Density="Density.Compact"
+                                                        Style="max-height:250px;overflow:auto">
+                                            <Columns>
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" />
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="120" />
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Qty" Title="Qty" Width="60" />
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="UnitPrice" Title="Price" Width="80" />
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Discount" Title="Disc" Width="60" />
+                                                <RadzenDataGridColumn TItem="SaleDetailDTO" Property="TotalAmount" Title="Total" Width="90" />
+                                            </Columns>
+                                        </RadzenDataGrid>
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGrid>
                     }
                 </div>
             </div>
