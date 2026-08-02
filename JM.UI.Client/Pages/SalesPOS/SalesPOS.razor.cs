@@ -29,6 +29,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected bool IsSaleMode => _currentMode == "Sale";
         protected bool IsBookingMode => _currentMode == "Booking";
         protected bool IsInvoicesMode => _currentMode == "Invoices";
+        protected bool IsDraftMode => _currentMode == "Draft";
         protected string PageTitle => $"Sales POS - {_currentMode}";
 
         // ── Lookup Data ──
@@ -49,11 +50,20 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected decimal QtyInput { get; set; } = 1;
         protected ProductSearchDTO? SearchedProduct { get; set; }
 
-        // ── Invoices ──
+        // ── Invoices / Bookings / Drafts ──
         protected List<SaleSummaryDTO> Invoices { get; set; } = new();
         protected bool IsInvoicesLoading { get; set; }
+        protected List<SaleSummaryDTO> Bookings { get; set; } = new();
+        protected bool IsBookingsLoading { get; set; }
+        protected List<SaleSummaryDTO> Drafts { get; set; } = new();
+        protected bool IsDraftsLoading { get; set; }
         protected Dictionary<int, List<SaleDetailDTO>> ExpandedInvoiceDetails { get; set; } = new();
         protected Dictionary<int, bool> ExpandedInvoiceLoading { get; set; } = new();
+
+        protected List<SaleSummaryDTO> CurrentSalesList =>
+            IsDraftMode ? Drafts : (IsBookingMode ? Bookings : Invoices);
+        protected bool IsCurrentSalesListLoading =>
+            IsDraftMode ? IsDraftsLoading : (IsBookingMode ? IsBookingsLoading : IsInvoicesLoading);
 
         // ── Customer ──
         protected List<CustomerDetailsDTO> AllCustomers { get; set; } = new();
@@ -160,22 +170,46 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected string SaleTabClass => $"mode-tab{(IsSaleMode ? " active" : "")}";
         protected string BookingTabClass => $"mode-tab{(IsBookingMode ? " active" : "")}";
         protected string InvoicesTabClass => $"mode-tab{(IsInvoicesMode ? " active" : "")}";
+        protected string DraftTabClass => $"mode-tab{(IsDraftMode ? " active" : "")}";
         protected string CartTabClass => $"tab-btn{(IsSaleMode ? " active" : "")}";
         protected string BookingListTabClass => $"tab-btn{(IsBookingMode ? " active" : "")}";
         protected string InvoiceListTabClass => $"tab-btn{(IsInvoicesMode ? " active" : "")}";
+        protected string DraftListTabClass => $"tab-btn{(IsDraftMode ? " active" : "")}";
 
         protected async Task SwitchMode(string mode)
         {
             _currentMode = mode;
-            if (mode == "Invoices")
-                await LoadInvoices();
+            switch (mode)
+            {
+                case "Invoices":
+                    await LoadInvoices();
+                    break;
+                case "Booking":
+                    await LoadBookings();
+                    break;
+                case "Draft":
+                    await LoadDrafts();
+                    break;
+            }
         }
 
         protected Task SwitchToSale() => SwitchMode("Sale");
         protected Task SwitchToBooking() => SwitchMode("Booking");
         protected Task SwitchToInvoices() => SwitchMode("Invoices");
+        protected Task SwitchToDraft() => SwitchMode("Draft");
         protected void SetSaleMode() { _currentMode = "Sale"; }
-        protected void SetBookingMode() { _currentMode = "Booking"; }
+        protected async Task SetBookingMode()
+        {
+            if (_currentMode != "Booking")
+            {
+                _currentMode = "Booking";
+                await LoadBookings();
+            }
+            else
+            {
+                _currentMode = "Booking";
+            }
+        }
         protected async Task SetInvoicesMode()
         {
             if (_currentMode != "Invoices")
@@ -188,12 +222,24 @@ namespace JM.UI.Client.Pages.SalesPOS
                 _currentMode = "Invoices";
             }
         }
+        protected async Task SetDraftMode()
+        {
+            if (_currentMode != "Draft")
+            {
+                _currentMode = "Draft";
+                await LoadDrafts();
+            }
+            else
+            {
+                _currentMode = "Draft";
+            }
+        }
 
         protected async Task LoadInvoices()
         {
             try
             {
-                IsInvoicesLoading = false;
+                IsInvoicesLoading = true;
                 var all = await _serviceUnitOfWork.SaleService.GetAllSales();
                 Invoices = (all ?? new List<SaleSummaryDTO>()).ToList();
             }
@@ -205,6 +251,44 @@ namespace JM.UI.Client.Pages.SalesPOS
             finally
             {
                 IsInvoicesLoading = false;
+            }
+        }
+
+        protected async Task LoadBookings()
+        {
+            try
+            {
+                IsBookingsLoading = true;
+                var all = await _serviceUnitOfWork.SaleService.GetBookingSales();
+                Bookings = (all ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading bookings: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsBookingsLoading = false;
+            }
+        }
+
+        protected async Task LoadDrafts()
+        {
+            try
+            {
+                IsDraftsLoading = true;
+                var all = await _serviceUnitOfWork.SaleService.GetDraftSales();
+                Drafts = (all ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading drafts: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsDraftsLoading = false;
             }
         }
 
@@ -576,6 +660,7 @@ CartGrid.Reload();
                 Sale.VatAmount = CalculatedVat;
                 Sale.NetAmount = NetPayable;
                 Sale.SaleDetails = CartItems.ToList();
+                Sale.IsDraft = true;
 
                 var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
                 if (result.IsSuccessStatus)

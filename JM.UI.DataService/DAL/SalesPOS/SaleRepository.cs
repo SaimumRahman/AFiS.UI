@@ -45,6 +45,56 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching draft sales");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/SalePOS/getall-draft");
+                response.EnsureSuccessStatusCode();
+
+                var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
+                return sales ?? new List<SaleSummaryDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get draft sales");
+                throw new Exception("Failed to fetch draft sales: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get draft sales");
+                throw new Exception("Unexpected error fetching draft sales: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching booking sales");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/SalePOS/getall-booking");
+                response.EnsureSuccessStatusCode();
+
+                var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
+                return sales ?? new List<SaleSummaryDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get booking sales");
+                throw new Exception("Failed to fetch booking sales: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get booking sales");
+                throw new Exception("Unexpected error fetching booking sales: " + ex.Message, ex);
+            }
+        }
+
         public async Task<SaleMasterDTO?> GetSaleById(int id)
         {
             try

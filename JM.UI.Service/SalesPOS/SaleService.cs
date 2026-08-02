@@ -20,6 +20,16 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSales();
         }
 
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        {
+            return await _repositoryUnitOfWork.SaleRepository.GetDraftSales();
+        }
+
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        {
+            return await _repositoryUnitOfWork.SaleRepository.GetBookingSales();
+        }
+
         public async Task<SaleMasterDTO?> GetSaleById(int id)
         {
             return await _repositoryUnitOfWork.SaleRepository.GetSaleById(id);
@@ -52,7 +62,10 @@ namespace JM.UI.Service.SalesPOS
             sale.TotalDue = sale.DueAmount ?? 0;
             sale.TotalVat = sale.VatAmount;
             sale.IsPaid = sale.DueAmount <= 0;
-            sale.IsDraft = false;
+            if (sale.IsDraft != true)
+                sale.IsDraft = false;
+            if (sale.IsBooking != true)
+                sale.IsBooking = false;
 
             return await _repositoryUnitOfWork.SaleRepository.SaveSale(sale);
         }

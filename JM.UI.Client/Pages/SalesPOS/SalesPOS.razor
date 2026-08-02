@@ -80,6 +80,7 @@
             <button class="@SaleTabClass" @onclick="SwitchToSale">Sale</button>
             <button class="@BookingTabClass" @onclick="SwitchToBooking">Booking</button>
             <button class="@InvoicesTabClass" @onclick="SwitchToInvoices">Invoices</button>
+            <button class="@DraftTabClass" @onclick="SwitchToDraft">Draft</button>
         </div>
         <div class="header-actions">
             <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Style="color:#fff;border-color:#556;" Click="@HoldAsDraft" Text="Draft" />
@@ -132,9 +133,10 @@
                     <button class="@CartTabClass" @onclick="SetSaleMode">Cart (@CartItems.Count)</button>
                     <button class="@BookingListTabClass" @onclick="SetBookingMode">Bookings</button>
                     <button class="@InvoiceListTabClass" @onclick="SetInvoicesMode">Invoices</button>
+                    <button class="@DraftListTabClass" @onclick="SetDraftMode">Draft</button>
                 </div>
                 <div class="tab-content">
-                    @if (IsSaleMode || IsBookingMode)
+                    @if (IsSaleMode)
                     {
                         <div class="cart-grid">
                             <RadzenDataGrid @ref="CartGrid" Data="@CartItems" AllowColumnResize="true" ShowPaging="false" RowAlternate="true" AllowSorting="true">
@@ -171,15 +173,15 @@
                             <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@ClearCart" Text="Clear Cart" />
                         </div>
                     }
-                    @if (IsInvoicesMode)
+                    @if (IsBookingMode || IsInvoicesMode || IsDraftMode)
                     {
-                        <RadzenDataGrid Data="@Invoices"
+                        <RadzenDataGrid Data="@CurrentSalesList"
                                         TItem="SaleSummaryDTO"
                                         AllowColumnResize="true"
                                         AllowPaging="true"
                                         AllowSorting="true"
                                         PageSize="10"
-                                        IsLoading="@IsInvoicesLoading"
+                                        IsLoading="@IsCurrentSalesListLoading"
                                         RowExpand="@OnInvoiceRowExpand"
                                         ExpandMode="DataGridExpandMode.Single"
                                         Density="Density.Compact"
