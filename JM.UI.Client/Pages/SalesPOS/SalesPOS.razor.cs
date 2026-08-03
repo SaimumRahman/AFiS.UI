@@ -418,7 +418,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         {
             var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
                 new Dictionary<string, object>(),
-                new DialogOptions { Width = "700px", Height = "550px" });
+                new DialogOptions { Width = "1000px", Height = "700px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
                 AddProductToCart(selected, 1);

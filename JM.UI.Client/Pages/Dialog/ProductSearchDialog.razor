@@ -22,13 +22,14 @@
         <RadzenDataGrid Data="@SearchResults" TItem="ProductSearchDTO" AllowSorting="true" AllowPaging="true" PageSize="10">
             <Columns>
                 <RadzenDataGridColumn TItem="ProductSearchDTO" Property="ProductName" Title="Product Name" />
-                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="Barcode" Title="Barcode" Width="140px" />
-                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="UnitPrice" Title="Price" Width="100px">
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="Barcode" Title="Barcode"/>
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="UnitPrice" Title="Price">
                     <Template Context="p">
                         <span style="font-weight:600">@p.UnitPrice.ToString("N2")</span>
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StockQuantity" Title="Stock" Width="70px" />
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StockQuantity" Title="Stock"/>
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StoreName" Title="Store" />
                 <RadzenDataGridColumn TItem="ProductSearchDTO" Width="90px" Sortable="false" Filterable="false">
                     <Template Context="p">
                         <RadzenButton Text="Add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success"
