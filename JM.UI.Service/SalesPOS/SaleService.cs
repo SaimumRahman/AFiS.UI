@@ -102,7 +102,7 @@ namespace JM.UI.Service.SalesPOS
                 throw new ArgumentException("Barcode/reference number must be provided.", nameof(returnRefNo));
 
             if (!storeId.HasValue || storeId.Value <= 0)
-                storeId = 4; // Head Office default.
+                throw new ArgumentException("Barcode/reference number must be provided.", nameof(returnRefNo));
 
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
