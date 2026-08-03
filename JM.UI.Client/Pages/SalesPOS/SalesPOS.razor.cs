@@ -484,7 +484,8 @@ CartGrid.Reload();
         {
             if (!CartItems.Any()) return;
 
-            var eligible = CartItems.Where(i => i.Discount == 0).ToList();
+            // Only distribute across items that don't already have a product-level discount.
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
 
             decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
@@ -499,10 +500,10 @@ CartGrid.Reload();
                 return;
             }
 
-            var eligibleSubTotal = eligible.Sum(i => i.TotalAmount);
-            if (eligibleSubTotal <= 0) return;
-
+            // Divide the discount equally across eligible items.
+            var share = Math.Floor(totalDiscountAmount / eligible.Count * 100m) / 100m;
             var remaining = totalDiscountAmount;
+
             for (int i = 0; i < eligible.Count; i++)
             {
                 var item = eligible[i];
@@ -512,7 +513,6 @@ CartGrid.Reload();
                 }
                 else
                 {
-                    var share = Math.Round(totalDiscountAmount * (item.TotalAmount / eligibleSubTotal), 2);
                     item.Discount = share;
                     remaining -= share;
                 }
