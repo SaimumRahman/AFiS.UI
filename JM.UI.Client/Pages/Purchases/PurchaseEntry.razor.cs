@@ -732,56 +732,40 @@ namespace JM.UI.Client.Pages.Purchases
             StateHasChanged();
         }
 
-        private bool _userEditedPurchasePrice = false;
-
         protected void OnPreviewRowPriceChanged(PreviewItemRow row)
         {
-            _userEditedPurchasePrice = true;
-            RecalculatePreviewRow(row);
+            // Direct row edit (Qty / P.Rate / VAT) — keep the row's P.Rate as typed
+            // and recompute Total from P.Rate, Qty and VAT%.
+            RecalculatePreviewRowTotal(row);
             PreviewGrid?.Reload();
             StateHasChanged();
         }
 
+        // Recompute P.Rate from base price + costs, then recompute Total (shared pricing).
         private void RecalculatePreviewRow(PreviewItemRow row)
         {
-            if (_userEditedPurchasePrice)
-            {
-                var baseComponents = row.BasePurchasePrice
-                                    + (row.OtherCost ?? 0)
-                                    + (row.CarryingCost ?? 0)
-                                    + (row.TransportCost ?? 0)
-                                    + (row.OperationalCost ?? 0);
-
-                var calculated = Math.Max(0, baseComponents * row.Quantity);
-                row.TotalAmount = calculated;
-
-                _userEditedPurchasePrice = false;
-                return;
-            }
-
-            // Recalculate P.Rate from components
             row.PurchasePrice = row.BasePurchasePrice
                               + (row.OtherCost ?? 0)
                               + (row.CarryingCost ?? 0)
                               + (row.TransportCost ?? 0)
                               + (row.OperationalCost ?? 0);
 
+            RecalculatePreviewRowTotal(row);
+        }
+
+        // Recompute Total from the row's P.Rate, Qty and VAT%.
+        private void RecalculatePreviewRowTotal(PreviewItemRow row)
+        {
             var baseAmount = row.PurchasePrice * row.Quantity;
 
             decimal vatAmt = 0;
             if (Purchase.IsVatIncluded)
             {
-                var actualVat = Groups.FirstOrDefault(x => x.Id == row.GroupId)?.VAT ?? 0;
+                var actualVat = row.VatPercentage ?? Groups.FirstOrDefault(x => x.Id == row.GroupId)?.VAT ?? 0;
                 vatAmt = baseAmount * actualVat / 100;
             }
 
             row.TotalAmount = baseAmount + vatAmt;
-        }
-
-        protected async Task OnSharedPriceChanged(EditContext context)
-        {
-            _userEditedPurchasePrice = false;
-            await InvokeAsync(StateHasChanged);
         }
 
         protected async Task RemovePreviewRow(PreviewItemRow row)
