@@ -355,7 +355,6 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(BarcodeInput))
             {
                 await AddItemByBarcode(BarcodeInput.Trim());
-                BarcodeInput = "";
             }
         }
 
@@ -382,14 +381,19 @@ namespace JM.UI.Client.Pages.SalesPOS
                 SearchedProduct = product;
                 AddProductToCart(product, QtyInput > 0 ? QtyInput : 1);
                 QtyInput = 1;
-                await CartGrid.Reload();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
             }
             catch (Exception ex)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Scan Failed",
                     $"Error scanning barcode: {ex.Message}", 4000);
             }
-            StateHasChanged();
+            finally
+            {
+                BarcodeInput = "";
+                StateHasChanged();
+            }
         }
 
         protected void AddProductToCart(ProductSearchDTO product, decimal qty)
@@ -422,7 +426,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
                 AddProductToCart(selected, 1);
-                await CartGrid.Reload();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
                 StateHasChanged();
             }
         }
@@ -435,7 +440,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
                 AddProductToCart(selected, 1);
-                await CartGrid.Reload();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
                 StateHasChanged();
             }
         }
@@ -452,14 +458,16 @@ namespace JM.UI.Client.Pages.SalesPOS
                 item.Qty = newQty;
                 item.TotalAmount = item.Qty * item.UnitPrice;
             }
-            CartGrid.Reload();
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 
         protected void RemoveCartItem(SaleDetailDTO item)
         {
             CartItems.Remove(item);
-            CartGrid.Reload();
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 
@@ -475,7 +483,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.CampaignDiscount = null;
             Sale.ExchangeAmount = null;
             Sale.VatPercentage = 5;
-CartGrid.Reload();
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 
@@ -495,7 +504,8 @@ CartGrid.Reload();
             if (totalDiscountAmount <= 0)
             {
                 foreach (var item in eligible) item.Discount = 0;
-                CartGrid.Reload();
+                if (CartGrid != null)
+                    CartGrid.Reload();
                 StateHasChanged();
                 return;
             }
@@ -518,7 +528,8 @@ CartGrid.Reload();
                 }
             }
 
-            CartGrid.Reload();
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 
@@ -586,7 +597,8 @@ CartGrid.Reload();
                 item.SalesPersonId = employeeId > 0 ? employeeId : null;
                 item.SalesPersonName = SelectedEmployeeName;
             }
-            CartGrid.Reload();
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 

@@ -163,7 +163,7 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="50">
                                         <Template Context="item">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" @onclick="() => RemoveCartItem(item)">X</RadzenButton>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Click="@(() => RemoveCartItem(item))">X</RadzenButton>
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
