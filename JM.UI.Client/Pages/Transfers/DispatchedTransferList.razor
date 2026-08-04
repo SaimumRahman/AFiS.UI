@@ -24,7 +24,7 @@
                                     Placeholder="Select store..."
                                     Style="width:200px; font-size:0.75rem;" AllowFiltering="true"
                                     Change="@(args => OnStoreChanged((int)args))"
-                                    Disabled="@IsLoading" />
+                                    Disabled="@(IsLoading || IsStoreDropdownDisabled)" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>

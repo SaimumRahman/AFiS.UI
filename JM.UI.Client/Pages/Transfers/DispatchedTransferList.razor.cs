@@ -21,6 +21,8 @@ namespace JM.UI.Client.Pages.Transfer
         protected bool IsLoading { get; set; } = false;
         protected bool IsSaving { get; set; } = false;
         protected int? StoreId { get; set; } = null;
+        protected int CurrentUserId { get; set; } = 0;
+        protected bool IsStoreDropdownDisabled => CurrentUserId != 1;
 
         // Selected transfer (single selection)
         protected TransferMasterDTO? SelectedTransfer { get; set; } = null;
@@ -43,10 +45,37 @@ namespace JM.UI.Client.Pages.Transfer
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
+            CurrentUserId = await GetLocalStorageInt("UserId");
             await LoadStores();
-            await LoadTransfers(0);
-        }
 
+            if (CurrentUserId == 1)
+            {
+                await LoadTransfers(0);
+            }
+            else
+            {
+                StoreId = await GetLocalStorageInt("StoreId");
+                await LoadTransfers(StoreId);
+            }
+        }
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && !string.IsNullOrEmpty(result.Value))
+                {
+                    if (int.TryParse(result.Value, out int parsed) && parsed > 0)
+                        return parsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
+        }
         // ─── Barcode Scan ─────────────────────────────────────────────────────────
 
         protected async Task OnBarcodeKeyDown(KeyboardEventArgs e)
@@ -341,7 +370,18 @@ namespace JM.UI.Client.Pages.Transfer
         {
             try
             {
-                Stores = await _serviceUnitOfWork.StoreService.GetStores();
+                var stores = await _serviceUnitOfWork.StoreService.GetStores();
+
+                if (CurrentUserId == 1)
+                {
+                    Stores = stores;
+                }
+                else
+                {
+                    var currentStoreId = await GetLocalStorageInt("StoreId");
+                    Stores = stores.Where(s => s.Id == currentStoreId).ToList();
+                    StoreId = Stores.FirstOrDefault()?.Id;
+                }
             }
             catch (Exception ex)
             {

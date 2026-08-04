@@ -20,12 +20,54 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
     protected DateTime? FromDate { get; set; }
     protected DateTime? ToDate { get; set; }
     protected int? SelectedStoreId { get; set; }
+    protected int CurrentUserId { get; set; } = 0;
+    protected bool IsStoreDropdownDisabled => CurrentUserId != 1;
 
     protected override async Task OnInitializedAsync()
     {
         await TokenService.InitializeTokenAsync();
-        StoreList = await _serviceUnitOfWork.StoreService.GetStores();
+        CurrentUserId = await GetLocalStorageInt("UserId");
+        await LoadStores();
         await LoadStockLedger();
+    }
+
+    private async Task LoadStores()
+    {
+        try
+        {
+            var stores = await _serviceUnitOfWork.StoreService.GetStores();
+
+            if (CurrentUserId == 1)
+            {
+                StoreList = stores;
+            }
+            else
+            {
+                var currentStoreId = await GetLocalStorageInt("StoreId");
+                StoreList = stores.Where(s => s.Id == currentStoreId).ToList();
+                SelectedStoreId = StoreList.FirstOrDefault()?.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load stores: {ex.Message}");
+        }
+    }
+
+    private async Task<int> GetLocalStorageInt(string key)
+    {
+        try
+        {
+            var result = await _localStorage.GetAsync<string>(key);
+            if (result.Success && int.TryParse(result.Value, out int value))
+                return value;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+        }
+
+        return 0;
     }
 
     protected async Task LoadStockLedger()

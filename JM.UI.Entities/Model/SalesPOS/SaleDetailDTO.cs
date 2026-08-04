@@ -19,6 +19,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal? Vat { get; set; }
         public bool HasDiscount { get; set; }
         public int CreatedBy { get; set; }
+        public int? StoreId { get; set; }
 
         public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
         {
@@ -34,6 +35,7 @@ namespace JM.UI.Entities.Model.SalesPOS
             Qty = qty,
             Discount = product.Discount > 0 ? product.Discount : null,
             HasDiscount = product.HasDiscount,
+            StoreId = product.StoreId,
             TotalAmount = product.UnitPrice * qty
         };
     }
