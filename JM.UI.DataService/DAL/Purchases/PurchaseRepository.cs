@@ -54,14 +54,25 @@ namespace JM.UI.DataService.DAL.Purchases
         // =============================================
         // Get All Purchases
         // =============================================
-        public async Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases()
+        public async Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases(DateTime? fromDate, DateTime? toDate)
         {
             try
             {
                 _logger.LogInformation("Starting to fetch all purchases");
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/Purchase/getall");
+                var url = "api/Purchase/getall";
+
+                var queryParams = new List<string>();
+                if (fromDate.HasValue)
+                    queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+
+                if (queryParams.Count > 0)
+                    url += "?" + string.Join("&", queryParams);
+
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var purchases = await response.Content.ReadFromJsonAsync<List<PurchaseSummaryDTO>>();

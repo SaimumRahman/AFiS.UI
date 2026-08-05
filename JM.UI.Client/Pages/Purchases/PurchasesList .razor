@@ -42,7 +42,8 @@
                     <RadzenDatePicker @bind-Value="FilterDateFrom"
                                       DateFormat="dd-MMM-yyyy"
                                       Placeholder="Select from date"
-                                      Style="width:100%" />
+                                      Style="width:100%"
+                                      Change="@(async (DateTime? value) => await OnDateFilterChanged())" />
                 </RadzenStack>
             </RadzenColumn>
 
@@ -52,7 +53,8 @@
                     <RadzenDatePicker @bind-Value="FilterDateTo"
                                       DateFormat="dd-MMM-yyyy"
                                       Placeholder="Select to date"
-                                      Style="width:100%" />
+                                      Style="width:100%"
+                                      Change="@(async (DateTime? value) => await OnDateFilterChanged())" />
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="3">

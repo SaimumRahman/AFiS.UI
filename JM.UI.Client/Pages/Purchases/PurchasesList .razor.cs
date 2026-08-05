@@ -51,7 +51,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         try
         {
             IsLoading = true;
-            Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases();
+            Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases(FilterDateFrom, FilterDateTo);
             ApplyFilter();  // respect any active filter after refresh
         }
         catch (Exception ex)
@@ -66,6 +66,11 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
 
     // ── Date filter ───────────────────────────────────────────────────────────
 
+    protected async Task OnDateFilterChanged()
+    {
+        await ApplyDateFilter();
+    }
+
     protected async Task ApplyDateFilter()
     {
         if (FilterDateFrom.HasValue && FilterDateTo.HasValue
@@ -74,6 +79,9 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             NotifyError("'From Date' cannot be later than 'To Date'.");
             return;
         }
+
+        // Query the server with the selected date range.
+        await LoadPurchases();
 
         // If searching by ReturnRefNo, we must pre-load ALL purchase items
         // so the in-memory filter can inspect them.
@@ -105,13 +113,14 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         StateHasChanged();
     }
 
-    protected void ClearDateFilter()
+    protected async Task ClearDateFilter()
     {
         FilterDateFrom = null;
         FilterDateTo = null;
         FilteredPurchases = Purchases;
         ReferenceNo = string.Empty;
         PurchaseItemsCache.Clear();
+        await LoadPurchases();
         StateHasChanged();
     }
 

@@ -8,7 +8,7 @@ namespace JM.UI.Service.Purchases
 {
     public interface IPurchaseService
     {
-        Task<IEnumerable<PurchaseSummaryDTO>> GetAllPurchases();
+        Task<IEnumerable<PurchaseSummaryDTO>> GetAllPurchases(DateTime? fromDate, DateTime? toDate);
         Task<PurchaseDTO?> GetPurchaseById(int id);
         Task<ResponseResult> SaveUpdatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items);
         Task<ResponseResult> DeletePurchase(int id);

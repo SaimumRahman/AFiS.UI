@@ -20,9 +20,9 @@ namespace JM.UI.Service.Purchases
         // =============================================
         // Get All Purchases
         // =============================================
-        public async Task<IEnumerable<PurchaseSummaryDTO>> GetAllPurchases()
+        public async Task<IEnumerable<PurchaseSummaryDTO>> GetAllPurchases(DateTime? fromDate, DateTime? toDate)
         {
-            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchases();
+            return await _repositoryUnitOfWork.PurchaseRepository.GetPurchases(fromDate, toDate);
         }
         public async Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate)
         {

@@ -8,7 +8,7 @@ namespace JM.UI.DataService.DAL.Purchases
 {
     public interface IPurchaseRepository
     {
-        Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases();
+        Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases(DateTime? fromDate, DateTime? toDate);
         Task<PurchaseDTO?> GetPurchaseById(int id);
         Task<ResponseResult> SaveUpdatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items);
         Task DeletePurchase(int id);
