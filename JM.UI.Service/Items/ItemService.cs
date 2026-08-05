@@ -75,6 +75,18 @@ public class ItemService : IItemService
         return res;
     }
 
+    public async Task<ResponseResult> UpdateItem(UpdateItemDTO item)
+    {
+        try
+        {
+            return await _unitOfWork.ItemRepository.UpdateItem(item);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+        }
+    }
+
     public async Task<ResponseResult> DeleteItem(int id)
     {
         try

@@ -14,6 +14,7 @@ namespace JM.UI.Service.Items
         Task<ResponseResult> DeleteItem(int id);
         Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);
         Task<ResponseResult> CreateItem(PreviewItemRow createItemRequest);
+        Task<ResponseResult> UpdateItem(UpdateItemDTO item);
         Task<IEnumerable<ItemDTO>> GetItemByPurchaseId(int purchaseId);
         Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes();
         Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId);

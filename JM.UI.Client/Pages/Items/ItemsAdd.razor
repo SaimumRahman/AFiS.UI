@@ -1,4 +1,3 @@
-@page "/ItemsAdd"
 @page "/ItemsAdd/{Id:int}"
 @using JM.UI.Entities.Model.Items
 @attribute [Authorize]
@@ -37,20 +36,6 @@
                             </RadzenStack>
 
                             <RadzenStack Gap="0.5rem">
-                                <RadzenLabel Text="Sub Group" Component="SubGroupId" class="fw-bold" />
-                                <RadzenDropDown @bind-Value="@Item.SubGroupId" 
-                                                Data="@SubGroupsList" 
-                                                TextProperty="Name" 
-                                                ValueProperty="Id" 
-                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                AllowFiltering="true"
-                                                Placeholder="Select Sub Group" 
-                                                class="w-100" 
-                                                Name="SubGroupId" />
-                                <RadzenNumericRangeValidator Component="SubGroupId" Min="1" Text="Please select a Sub Group" />
-                            </RadzenStack>
-
-                            <RadzenStack Gap="0.5rem">
                                 <RadzenLabel Text="Measurement Unit" Component="MesurementUnitId" class="fw-bold" />
                                 <RadzenDropDown @bind-Value="@Item.MesurementUnitId" 
                                                 Data="@MeasurementUnitsList" 
@@ -79,12 +64,7 @@
                                         <RadzenNumeric Name="SalePrice" @bind-Value="@Item.SalePrice" class="w-100" ShowStep="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="6">
-                                    <RadzenStack Gap="0.5rem">
-                                        <RadzenLabel Text="Wholesale Price" Component="WholeSalePrice" class="fw-bold" />
-                                        <RadzenNumeric Name="WholeSalePrice" @bind-Value="@Item.WholeSalePrice" class="w-100" ShowStep="false" />
-                                    </RadzenStack>
-                                </RadzenColumn>
+                               
                             </RadzenRow>
 
                             <RadzenRow>
@@ -113,10 +93,10 @@
                                   Click="@Cancel" 
                                   Icon="cancel" 
                                   Disabled="@IsProcessing" />
-                    <RadzenButton ButtonType="ButtonType.Submit" 
-                                  Text="@(IsEditMode ? "Update" : "Save")" 
-                                  ButtonStyle="ButtonStyle.Primary" 
-                                  Icon="save" 
+                    <RadzenButton ButtonType="ButtonType.Submit"
+                                  Text="Update"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Icon="save"
                                   IsBusy="@IsProcessing" />
                 </RadzenRow>
             </RadzenCard>

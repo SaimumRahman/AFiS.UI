@@ -28,11 +28,16 @@ namespace JM.UI.Client.Pages.Items
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
-            await LoadLookups();
-            if (IsEditMode)
+
+            // Creating new items is no longer supported from this page.
+            if (!IsEditMode)
             {
-                await LoadItem();
+                NavigationManager.NavigateTo("/ItemsList");
+                return;
             }
+
+            await LoadLookups();
+            await LoadItem();
         }
 
         private async Task LoadLookups()
@@ -76,22 +81,51 @@ namespace JM.UI.Client.Pages.Items
             }
         }
 
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && int.TryParse(result.Value, out int value))
+                    return value;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
+        }
+
         protected async Task Save()
         {
             try
             {
                 IsProcessing = true;
-                var result = true;
+                var currentUserId = await GetLocalStorageInt("UserId");
 
-                if (result)
+                var updateItem = new UpdateItemDTO
+                {
+                    Id = Item.Id,
+                    Name = Item.Name,
+                    SalePrice = Item.SalePrice,
+                    MesurementUnitId = Item.MesurementUnitId,
+                    AlarmLevel = Item.AlarmLevel,
+                    LastModifiedBy = currentUserId,
+                    LastModifiedDate = DateTime.UtcNow
+                };
+
+                var result = await _serviceUnitOfWork.ItemService.UpdateItem(updateItem);
+
+                if (result.IsSuccessStatus)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
-                        IsEditMode ? "Item updated successfully!" : "Item created successfully!");
+                        "Item updated successfully!");
                     NavigationManager.NavigateTo("/ItemsList");
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error");
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
                 }
             }
             catch (Exception ex)

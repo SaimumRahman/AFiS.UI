@@ -116,6 +116,37 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
+        public async Task<ResponseResult> UpdateItem(UpdateItemDTO item)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var request = new
+                {
+                    Item = new UpdateItemDTO
+                    {
+                        Id = item.Id,
+                        Name = item.Name,
+                        SalePrice = item.SalePrice,
+                        MesurementUnitId = item.MesurementUnitId,
+                        AlarmLevel = item.AlarmLevel,
+                        LastModifiedBy = item.LastModifiedBy,
+                        LastModifiedDate = item.LastModifiedDate
+                    }
+                };
+                var response = await httpClient.PutAsJsonAsync("Items/UpdateItem", request);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating item");
+                throw;
+            }
+        }
+
         public async Task<ResponseResult> DeleteItem(int id)
         {
             try

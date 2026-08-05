@@ -42,11 +42,6 @@ namespace JM.UI.Client.Pages.Items
             }
         }
 
-        protected void AddItem()
-        {
-            NavigationManager.NavigateTo("/ItemsAdd");
-        }
-
         protected void EditItem(ItemDTO item)
         {
             NavigationManager.NavigateTo($"/ItemsAdd/{item.Id}");
