@@ -798,7 +798,7 @@ namespace JM.UI.Client.Pages.Purchases
                     var row = new PreviewItemRow
                     {
                         ItemId = item.Id,
-                        ItemName = item.Name ?? string.Empty,
+                        ItemName = !string.IsNullOrWhiteSpace(CurrentItem.ItemName) ? CurrentItem.ItemName : (item.Name ?? string.Empty),
                         Barcode = itemBarcode,
                         ColorId = item.ColorId,
                         ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
@@ -1887,7 +1887,7 @@ namespace JM.UI.Client.Pages.Purchases
                         newRow = new PreviewItemRow
                         {
                             ItemId = item.Id,
-                            ItemName = item.Name ?? string.Empty,
+                            ItemName = !string.IsNullOrWhiteSpace(CurrentItem.ItemName) ? CurrentItem.ItemName : (item.Name ?? string.Empty),
                             Barcode = barcode,
                             ColorId = item.ColorId,
                             ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
