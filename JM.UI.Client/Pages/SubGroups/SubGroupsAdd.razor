@@ -48,10 +48,15 @@
 
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenLabel Text="Code" Component="Code" />
-                        <RadzenTextBox Name="Code" @bind-Value="@SubGroup.Code" class="w-100" MaxLength="3" />
-                        <RadzenRequiredValidator Component="Code" Text="Code is required" />
-                        <RadzenStringLengthValidator Component="Code" Min=3 Max=3 Text="Code must be exactly 3 characters" />
+                        <RadzenLabel Text="Code" />
+                        @if (IsEditMode)
+                        {
+                            <RadzenTextBox Name="Code" @bind-Value="@SubGroup.Code" class="w-100" Disabled="true" />
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity:0.7;">Auto-generated (2 digits) on save</RadzenText>
+                        }
                     </RadzenStack>
                 </RadzenColumn>
             </RadzenRow>

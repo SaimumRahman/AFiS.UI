@@ -464,6 +464,16 @@ namespace JM.UI.Client.Pages.Transfers
                             continue;
                         }
 
+                        // Skip items that have no available stock in the From Store
+                        if (item.CurrentStock <= 0)
+                        {
+                            notificationService.Notify(
+                                NotificationSeverity.Warning,
+                                "No Stock",
+                                $"'{item.Name}' ({itemBarcode}) has no available stock in '{storeName}'. Skipped.");
+                            continue;
+                        }
+
                         PreviewItems.Add(new TransferPreviewRow
                         {
                             ItemId = item.Id,
@@ -622,7 +632,7 @@ namespace JM.UI.Client.Pages.Transfers
                     var totalQty = existingLine.IssueQty + 1;
 
                     // Stock check against combined qty
-                    if (item.CurrentStock > 0 && totalQty > item.CurrentStock)
+                    if (totalQty > item.CurrentStock)
                     {
                         notificationService.Notify(
                             NotificationSeverity.Error,
@@ -652,7 +662,7 @@ namespace JM.UI.Client.Pages.Transfers
                     return;
                 }
                 // Stock check
-                if (item.CurrentStock > 0 && 1 > item.CurrentStock)
+                if (1 > item.CurrentStock)
                 {
                     notificationService.Notify(
                         NotificationSeverity.Error,
@@ -735,11 +745,11 @@ namespace JM.UI.Client.Pages.Transfers
             foreach (var row in validRows)
             {
                 // â”€â”€ Stock check (preview qty vs available stock) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                if (row.StockQuantity > 0 && row.IssueQty > row.StockQuantity)
+                if (row.IssueQty > row.StockQuantity)
                 {
                     notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
                         $"'{row.ItemName}' ({row.Barcode}): Issue qty ({row.IssueQty:N2}) " +
-                        $"exceeds available stock ({row.StockQuantity:N0}). Skipping.");
+                        $"does not match available stock ({row.StockQuantity:N0}). Skipping.");
                     continue;
                 }
 
@@ -765,7 +775,7 @@ namespace JM.UI.Client.Pages.Transfers
                     var totalQty = existingLine.IssueQty + row.IssueQty;
 
                     // Stock check against combined qty
-                    if (row.StockQuantity > 0 && totalQty > row.StockQuantity)
+                    if (totalQty > row.StockQuantity)
                     {
                         notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
                             $"'{row.ItemName}' ({row.Barcode}): Combined qty ({totalQty:N2}) " +
@@ -866,7 +876,7 @@ namespace JM.UI.Client.Pages.Transfers
                 IssueQty = item.IssueQty,
                 SerialNo = item.SerialNo,
                 CreatedRemarks = item.CreatedRemarks,
-                StockQuantity = 0,
+                StockQuantity = AvailableItems.FirstOrDefault(i => i.Id == item.ItemID)?.CurrentStock ?? 0,
                 SalePrice = item.SalePrice
             });
 
@@ -922,6 +932,14 @@ namespace JM.UI.Client.Pages.Transfers
             {
                 notificationService.Notify(NotificationSeverity.Error, "Validation",
                     "Issue quantity must be greater than 0.");
+                return;
+            }
+
+            if (row.StockQuantity > 0 && row.IssueQty > row.StockQuantity)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                    $"'{row.ItemName}' ({row.Barcode}): Issue qty ({row.IssueQty:N2}) " +
+                    $"does not match available stock ({row.StockQuantity:N0}).");
                 return;
             }
 

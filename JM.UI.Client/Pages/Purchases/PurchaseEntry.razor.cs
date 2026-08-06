@@ -1634,6 +1634,12 @@ namespace JM.UI.Client.Pages.Purchases
                 notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a purchase date");
                 return false;
             }
+            if (Purchase.PurchaseDate!.Value.Date < DateTime.Today)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error",
+                    "Backdated purchase is not allowed. Purchase date must be today or a future date.");
+                return false;
+            }
             if (PurchaseItems.Count == 0)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please add at least one item");
@@ -2364,33 +2370,41 @@ namespace JM.UI.Client.Pages.Purchases
             Purchase.DueAmount = Purchase.NetAmount - (Purchase.PaidAmount ?? 0);
             StateHasChanged();
         }
-        protected void ResetLeftPanel()
+        protected async Task ResetPage()
         {
-            // â”€â”€ Header fields 
-            Purchase.SupplierId = null;
-            //Purchase.SystemInvoiceNo = null;
-            Purchase.BillInvoiceNumber = null;
-            //Purchase.PurchaseDate = default;
-            Purchase.StoreId = null;
-            Purchase.IsVatIncluded = false;
+            // â”€â”€ Recreate a fresh purchase (new SystemInvoiceNo, today's date) â”€â”€
+            Purchase = await _serviceUnitOfWork.PurchaseService.CreateNewPurchase();
+            Purchase.StoreId = Stores.FirstOrDefault(s =>
+                s.Name.Contains("Central", StringComparison.OrdinalIgnoreCase))?.Id
+                ?? Stores.FirstOrDefault()?.Id;
 
-            // â”€â”€ Item-type checkboxes 
-            CurrentItem.IsSaleable = false;
-            CurrentItem.IsConsume = false;
-            CurrentItem.IsRawMaterial = false;
+            // â”€â”€ Clear item lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            PurchaseItems = new List<PurchaseItemDTO>();
+            PreviewItems = new List<PreviewItemRow>();
+            CurrentItem = CreateNewItem();
+            _editingItem = null;
+            _editingItemIndex = -1;
+            IsEditItemMode = false;
+            DisableItemFields = false;
+            IsProductNameFieldChange = false;
 
-            // â”€â”€ Cascade dropdowns â”€â”€â”€
-            CurrentItem.GroupId = null;
-            CurrentItem.SubGroupId = null;
-            CurrentItem.DesignId = null;
+            // â”€â”€ Shared pricing fields â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            SharedPurchasePrice = 0;
+            SharedSalePrice = 0;
+            SharedOtherCost = null;
+            SharedCarryingCost = null;
+            SharedVatPercentage = null;
+            SharedTransportCost = null;
+            SharedOperationalCost = null;
+            SharedQuantity = null;
+
+            // â”€â”€ Image â”€â”€â”€â”€â”€â”€â”€â”€
+            CurrentItemImageBase64 = string.Empty;
+            CurrentItemImageMimeType = "image/jpeg";
+
+            // â”€â”€ Cascade dropdowns â”€â”€â”€â”€â”€â”€â”€â”€
             SubGroups = new List<SubGroupModelDTO>();
             Designs = new List<DesignModelDTO>();
-
-            // â”€â”€ UoM â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            CurrentItem.MesurementUnitId = null;
-
-            // â”€â”€ ShadeNo â”€â”€â”€â”€â”€
-            CurrentItem.ShadeNo = null;
 
             // â”€â”€ Brand â”€â”€â”€â”€â”€â”€â”€
             BrandSearchText = string.Empty;
@@ -2400,7 +2414,7 @@ namespace JM.UI.Client.Pages.Purchases
             CurrentItem.BrandId = null;
             CurrentItem.BrandName = null;
 
-            // â”€â”€ Catalogue â”€â”€â”€
+            // â”€â”€ Catalogue â”€â”€â”€â”€
             CatalogueSearchText = string.Empty;
             CatalogueSuggestions = new List<ItemCatalogueDTO>();
             SelectedCatalogueId = null;
@@ -2420,9 +2434,14 @@ namespace JM.UI.Client.Pages.Purchases
             SelectedFeatureIds = new List<int>();
             NewFeatureNames = new List<string>();
             NewFeatureInput = string.Empty;
-            DisableItemFields = false;
-            IsEditItemMode = false;
-            IsProcessing = false;
+
+            // â”€â”€ Barcode search â”€â”€â”€â”€â”€â”€â”€
+            BarcodeSearchText = string.Empty;
+
+            // â”€â”€ Reload grids + totals â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            CalculateTotals();
+            if (ItemsGrid != null) await ItemsGrid.Reload();
+            if (PreviewGrid != null) await PreviewGrid.Reload();
             StateHasChanged();
         }
         private bool HasUnsavedData()
@@ -2431,6 +2450,8 @@ namespace JM.UI.Client.Pages.Purchases
                 || !string.IsNullOrWhiteSpace(Purchase.BillInvoiceNumber)
                 || Purchase.StoreId.HasValue
                 || Purchase.IsVatIncluded
+                || PurchaseItems.Any()
+                || PreviewItems.Any()
                 || CurrentItem.IsSaleable
                 || CurrentItem.IsConsume
                 || CurrentItem.IsRawMaterial
@@ -2453,7 +2474,7 @@ namespace JM.UI.Client.Pages.Purchases
         {
             if (!HasUnsavedData())
             {
-                ResetLeftPanel();
+                await ResetPage();
                 return;
             }
 
@@ -2468,7 +2489,7 @@ namespace JM.UI.Client.Pages.Purchases
                 }) ?? false;
 
             if (confirmed)
-                ResetLeftPanel();
+                await ResetPage();
         }
         protected void OnBrandLoadData(LoadDataArgs args)
         {

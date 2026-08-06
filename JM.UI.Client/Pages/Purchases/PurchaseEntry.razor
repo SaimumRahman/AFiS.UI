@@ -263,7 +263,8 @@
                                 <RadzenColumn Size="8">
                                     <RadzenDatePicker @bind-Value="Purchase.PurchaseDate"
                                                       Style="width:100%; font-size:0.75rem;" DateFormat="dd/MM/yyyy"
-                                                      Placeholder="Pick Date" Disabled="@IsProcessing" />
+                                                      Placeholder="Pick Date" Disabled="@IsProcessing"
+                                                      MinDate="DateTime.Today" />
                                 </RadzenColumn>
                             </RadzenRow>
 

@@ -55,19 +55,7 @@ namespace JM.UI.Service.SubGroups
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(subGroup.Code))
-                {
-                    return new ResponseResult("Code is required.", subGroup.Id);
-                }
-                if (subGroup.Code.Length != 3)
-                {
-                    return new ResponseResult("Code must be exactly 3 characters.", subGroup.Id);
-                }
-                var exists = await _unitOfWork.SubGroupRepository.IsCodeExistsAsync(subGroup.Code, subGroup.Id);
-                if (exists)
-                {
-                    return new ResponseResult("Code already exists.", subGroup.Id);
-                }
+                // Code is auto-generated on the API (MSSQL sequence) for new sub-groups
                 return await _unitOfWork.SubGroupRepository.SaveUpdateSubGroup(subGroup);
             }
             catch (Exception ex)
