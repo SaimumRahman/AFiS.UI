@@ -115,7 +115,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             await TokenService.InitializeTokenAsync();
             Sale = _serviceUnitOfWork.SaleService.CreateNew();
             await LoadLookupData();
-            Sale.StoreId = await GetLocalStorageInt("StoreId");
+            int localStoreId = await GetLocalStorageInt("StoreId");
+            Sale.StoreId = localStoreId > 0 ? localStoreId : Stores.FirstOrDefault()?.Id;
             Sale.CreatedBy = await GetLocalStorageInt("UserId");
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
         }
@@ -377,8 +378,22 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected async Task AddItemByBarcode(string barcode)
         {
+            if (string.IsNullOrWhiteSpace(barcode))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Scan Barcode",
+                    "Please scan or type a barcode first.", 3000);
+                return;
+            }
+
             try
             {
+                if (Sale.StoreId == null || Sale.StoreId <= 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Store Required",
+                        "No store is assigned to your profile. Please contact an administrator.", 4000);
+                    return;
+                }
+
                 var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode, Sale.StoreId);
                 if (product == null || product.ItemId == 0)
                 {
@@ -425,6 +440,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                if (detail.StoreId == null)
+                    detail.StoreId = Sale.StoreId;
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -776,6 +793,9 @@ namespace JM.UI.Client.Pages.SalesPOS
         {
             try
             {
+                int? lastStoreId = Sale.StoreId;
+                int? lastShiftId = Sale.ShiftId;
+
                 CartItems.Clear();
                 SelectedCustomer = null;
                 SelectedCustomerId = 0;
@@ -783,8 +803,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 SelectedEmployeeName = null;
                 SearchedProduct = null;
                 Sale = _serviceUnitOfWork.SaleService.CreateNew();
-                Sale.StoreId = Stores.FirstOrDefault()?.Id;
-                Sale.ShiftId = Shifts.FirstOrDefault()?.Id;
+                Sale.StoreId = lastStoreId > 0 ? lastStoreId : Stores.FirstOrDefault()?.Id;
+                Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
+                Sale.CreatedBy = await GetLocalStorageInt("UserId");
                 Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
             }
             catch (Exception ex)

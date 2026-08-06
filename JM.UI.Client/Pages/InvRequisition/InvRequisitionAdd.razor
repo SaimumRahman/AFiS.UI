@@ -344,7 +344,7 @@ else
                                 <RadzenColumn Size="6" SizeMD="4">
                                     <RadzenLabel Text="QTY" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenNumeric @bind-Value="SharedQty"
-                                                   Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
+                                                   Style="width:100%; font-size:0.68rem;" Min="0" Step="0.01" TValue="decimal?"
                                                    Change="@OnSharedFieldChanged" Disabled="@IsProcessing" />
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
@@ -403,7 +403,7 @@ else
                                         <RadzenDataGridColumn TItem="InvRequisitionPreviewRow" Title="Qty" Width="75px">
                                             <Template Context="row">
                                                 <RadzenNumeric @bind-Value="row.Qty"
-                                                               TValue="decimal" Min="0"
+                                                               TValue="decimal" Min="0" Step="0.01"
                                                                Style="width:100%; font-size:0.65rem; height:22px;"
                                                                Change="@(() => OnPreviewRowChanged(row))"
                                                                Disabled="@IsProcessing" />

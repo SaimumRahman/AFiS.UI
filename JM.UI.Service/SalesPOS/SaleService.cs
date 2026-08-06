@@ -112,7 +112,7 @@ namespace JM.UI.Service.SalesPOS
                 throw new ArgumentException("Barcode/reference number must be provided.", nameof(returnRefNo));
 
             if (!storeId.HasValue || storeId.Value <= 0)
-                throw new ArgumentException("Barcode/reference number must be provided.", nameof(returnRefNo));
+                throw new ArgumentException("A valid store is required to search a barcode.", nameof(storeId));
 
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
