@@ -646,6 +646,15 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
                 Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
                     (Sale.PaidAmount > 0 ? "Partial" : "Due");
+
+                // ── Validation: a due requires a customer ──
+                if (Sale.DueAmount > 0 && SelectedCustomer == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                        "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
+                    return;
+                }
+
                 Sale.SaleDetails = CartItems.ToList();
                 Sale.PaymentTransactions = paymentResult.Payments.ToList();
 
