@@ -20,7 +20,7 @@ namespace JM.UI.Entities.Model.Items
         public int? UnitId { get; set; }
         public int? ColorId { get; set; }
         public int? SizeId { get; set; }
-        public int CurrentStock { get; set; }
+        public decimal CurrentStock { get; set; }
         public string? UnitName { get; set; }
         public string? ShadeNo { get; set; }
         public string? ImageBase64 { get; set; }

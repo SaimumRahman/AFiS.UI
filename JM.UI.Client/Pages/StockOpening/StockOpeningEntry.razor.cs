@@ -53,7 +53,7 @@ namespace JM.UI.Client.Pages.StockOpening
         // â”€â”€â”€ Shared price fields (P.Rate + S.Rate + QTY for Stock Opening) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
         protected decimal SharedSalePrice { get; set; } = 0;
-        protected int? SharedQuantity { get; set; }
+        protected decimal? SharedQuantity { get; set; }
 
         // â”€â”€â”€ Lookup Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();

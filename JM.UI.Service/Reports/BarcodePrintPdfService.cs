@@ -26,7 +26,7 @@ public class BarcodePrintPdfService
         var allLabels = new List<(BarcodePrintItemDTO Item, int Copy, int Of)>();
         foreach (var item in items)
             for (int c = 1; c <= item.PrintQty; c++)
-                allLabels.Add((item, c, item.PrintQty));
+                allLabels.Add((item, c, (int)item.PrintQty));
 
         var document = Document.Create(d =>
         {

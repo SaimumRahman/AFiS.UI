@@ -276,7 +276,7 @@
                                     <Template Context="detail">
                                         @{
                                             var scanned = BarcodeScanCounts.GetValueOrDefault(detail.TransferDetailID, 0);
-                                            var qty = (int)detail.IssueQty;
+                                            var qty = detail.IssueQty;
                                             var isComplete = scanned >= qty;
                                             <RadzenBadge BadgeStyle="@(isComplete ? BadgeStyle.Success : (scanned > 0 ? BadgeStyle.Info : BadgeStyle.Light))"
                                                          Text="@($"{scanned}/{qty}")" />

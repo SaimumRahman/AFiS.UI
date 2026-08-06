@@ -15,6 +15,6 @@ namespace JM.UI.Entities.Model.PurchaseReturnItems
         public string? ColorName { get; set; }
         public string? SizeName { get; set; }
         public string? Barcode { get; set; }
-        public int CurrentStock { get; set; }
+        public decimal CurrentStock { get; set; }
     }
 }

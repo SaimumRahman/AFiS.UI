@@ -705,7 +705,7 @@
                                     <RadzenButton Icon="remove" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text"
                                                   Size="ButtonSize.ExtraSmall" Click="@(() => UpdateQty(item, item.PrintQty - 1))" />
                                     <RadzenNumeric Value="@item.PrintQty"
-                                                   ValueChanged="@((int v) => UpdateQty(item, v))"
+                                                   ValueChanged="@((decimal v) => UpdateQty(item, v))"
                                                    Min="1" Max="999" ShowUpDown="false"
                                                    Style="width:60px; text-align:center;" />
                                     <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text"

@@ -49,7 +49,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected List<BarcodeItemDTO> AllBarcodes { get; set; } = new();
     protected List<BarcodeSelectItem> BarcodeSelectItems { get; set; } = new();
     protected int? SelectedBarcodeId { get; set; }
-    protected int SinglePrintQty { get; set; } = 1;
+    protected decimal SinglePrintQty { get; set; } = 1;
 
     public class BarcodeSelectItem
     {
@@ -300,7 +300,7 @@ public partial class BarcodePrintComponent : PosComponentBase
 
             foreach (var barcode in barcodes)
             {
-                int qty = barcode.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true
+                decimal qty = barcode.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true
                     ? PrintConfig.FabricRepeatCount
                     : 1;
                 AddOrUpdatePrintItem(barcode, qty);
@@ -347,7 +347,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     }
 
     // ── Print Item Helpers ───────────────────────────────────────
-    private void AddOrUpdatePrintItem(BarcodeItemDTO barcode, int qty)
+    private void AddOrUpdatePrintItem(BarcodeItemDTO barcode, decimal qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
@@ -379,7 +379,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         }
         StateHasChanged();
     }
-    private void AddOrUpdatePrintItemFromItem(BarcodeItemDTO barcode, int qty)
+    private void AddOrUpdatePrintItemFromItem(BarcodeItemDTO barcode, decimal qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
@@ -418,7 +418,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     }
 
 
-    protected void UpdateQty(BarcodePrintItemDTO item, int qty)
+    protected void UpdateQty(BarcodePrintItemDTO item, decimal qty)
     {
         if (qty < 1) qty = 1;
         item.PrintQty = qty;

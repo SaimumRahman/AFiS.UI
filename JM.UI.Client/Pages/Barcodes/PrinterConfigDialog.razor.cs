@@ -62,7 +62,7 @@ public partial class PrinterConfigDialog : ComponentBase
     protected PrinterConfigModel Config { get; set; } = new();
     protected bool IsSending { get; set; }
 
-    protected int TotalLabels => Items.Sum(x => x.PrintQty);
+    protected decimal TotalLabels => Items.Sum(x => x.PrintQty);
 
     // ── Protocol help text ────────────────────────────────────────────────────
 

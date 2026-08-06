@@ -32,7 +32,7 @@ namespace JM.UI.Client.Pages.Transfer
         protected string BarcodeInput { get; set; } = string.Empty;
         protected string? BarcodeMatchMessage { get; set; } = null;
         protected BadgeStyle BarcodeMatchBadgeStyle { get; set; } = BadgeStyle.Info;
-        protected Dictionary<int, int> BarcodeScanCounts { get; set; } = new();
+        protected Dictionary<int, decimal> BarcodeScanCounts { get; set; } = new();
 
         /// <summary>
         /// True when any loaded detail (across all expanded masters) has IsReceived == 1
@@ -134,11 +134,11 @@ namespace JM.UI.Client.Pages.Transfer
             if (!BarcodeScanCounts.ContainsKey(detailId))
                 BarcodeScanCounts[detailId] = 0;
 
-            if (BarcodeScanCounts[detailId] < (int)matchedDetail.IssueQty)
+            if (BarcodeScanCounts[detailId] < matchedDetail.IssueQty)
                 BarcodeScanCounts[detailId]++;
 
             // Auto-check only when scan count reaches the required quantity
-            if (BarcodeScanCounts[detailId] >= (int)matchedDetail.IssueQty)
+            if (BarcodeScanCounts[detailId] >= matchedDetail.IssueQty)
             {
                 matchedDetail.IsReceived = true;
                 CheckAndFlagMasterReceived(SelectedTransfer);
@@ -163,7 +163,7 @@ namespace JM.UI.Client.Pages.Transfer
         {
             detail.IsReceived = isChecked ? true : false;
             if (isChecked)
-                BarcodeScanCounts[detail.TransferDetailID] = (int)detail.IssueQty;
+                BarcodeScanCounts[detail.TransferDetailID] = detail.IssueQty;
             else
                 BarcodeScanCounts.Remove(detail.TransferDetailID);
             CheckAndFlagMasterReceived(master);
@@ -177,7 +177,7 @@ namespace JM.UI.Client.Pages.Transfer
             {
                 d.IsReceived = isChecked ? true : false;
                 if (isChecked)
-                    BarcodeScanCounts[d.TransferDetailID] = (int)d.IssueQty;
+                    BarcodeScanCounts[d.TransferDetailID] = d.IssueQty;
                 else
                     BarcodeScanCounts.Remove(d.TransferDetailID);
             }
