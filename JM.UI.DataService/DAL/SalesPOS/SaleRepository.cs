@@ -150,6 +150,38 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy)
+        {
+            try
+            {
+                _logger.LogInformation("Saving due payment for sale: {SaleMasterId}", saleMasterId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var content = JsonContent.Create(new
+                {
+                    SaleMasterId = saleMasterId,
+                    StoreId = storeId,
+                    CreatedBy = createdBy,
+                    Payments = payments
+                });
+                var response = await httpClient.PostAsync("api/SalePOS/save-due-payment", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during save due payment");
+                throw new Exception("Failed to save due payment: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during save due payment");
+                throw new Exception("Unexpected error saving due payment: " + ex.Message, ex);
+            }
+        }
+
         public async Task<ResponseResult> DeleteSale(int id)
         {
             try

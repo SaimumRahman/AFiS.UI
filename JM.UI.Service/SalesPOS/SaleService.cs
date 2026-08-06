@@ -70,6 +70,11 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SaveSale(sale);
         }
 
+        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.SaveDuePayment(saleMasterId, storeId, payments, createdBy);
+        }
+
         public async Task<ResponseResult> DeleteSale(int id)
         {
             return await _repositoryUnitOfWork.SaleRepository.DeleteSale(id);

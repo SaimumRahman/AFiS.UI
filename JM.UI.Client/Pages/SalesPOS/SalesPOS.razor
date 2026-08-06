@@ -221,6 +221,17 @@
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                     </Template>
                                 </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="90" Sortable="false" Filterable="false">
+                                    <Template Context="inv">
+                                        @if (IsBookingMode && inv.TotalDue > 0)
+                                        {
+                                            <RadzenButton Text="Payment"
+                                                          ButtonStyle="ButtonStyle.Success"
+                                                          ButtonSize="ExtraSmall"
+                                                          Click="@(() => OpenBookingPayment(inv))" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
                             </Columns>
                             <Template Context="inv">
                                 <RadzenStack Gap="0.5rem">

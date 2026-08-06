@@ -663,6 +663,59 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        // ── Booking Due Payment Modal ──
+        protected async Task OpenBookingPayment(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(booking.SaleMasterId);
+                decimal due = sale?.TotalDue ?? booking.TotalDue;
+                if (due <= 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "No Due",
+                        $"Invoice {booking.InvoiceNo} has no pending due", 3000);
+                    return;
+                }
+
+                var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
+                    new Dictionary<string, object>
+                    {
+                        { "NetPayable", due },
+                        { "AllowBookingOption", false }
+                    });
+
+                if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
+                {
+                    int storeId = Sale.StoreId ?? 0;
+                    int userId = await GetLocalStorageInt("UserId");
+
+                    var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
+                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId);
+
+                    if (saveResult.IsSuccessStatus)
+                    {
+                        notificationService.Notify(NotificationSeverity.Success, "Payment Saved",
+                            saveResult.Message, 4000);
+                        ExpandedInvoiceDetails.Remove(booking.SaleMasterId);
+                        await LoadBookings();
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Error",
+                            saveResult.Message, 4000);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Payment Failed",
+                    $"Error processing payment: {ex.Message}", 4000);
+            }
+        }
+
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {

@@ -57,7 +57,10 @@
     }
 
     <div style="display:flex;gap:6px;margin-top:8px">
-        <label><RadzenCheckBox @bind-Value="IsBookingPayment" /> Book (partial payment)</label>
+        @if (AllowBookingOption)
+        {
+            <label><RadzenCheckBox @bind-Value="IsBookingPayment" /> Book (partial payment)</label>
+        }
     </div>
 
     <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -68,6 +71,7 @@
 
 @code {
     [Parameter] public decimal NetPayable { get; set; }
+    [Parameter] public bool AllowBookingOption { get; set; } = true;
 
     decimal PaymentAmount { get; set; }
     string PaymentType { get; set; } = "Cash";
