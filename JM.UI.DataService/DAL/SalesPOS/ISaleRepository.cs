@@ -14,6 +14,7 @@ namespace JM.UI.DataService.DAL.SalesPOS
         Task<SaleMasterDTO?> GetSaleById(int id);
         Task<ResponseResult> SaveSale(SaleMasterDTO sale);
         Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy);
+        Task<ResponseResult> UnmarkDraftSale(int saleMasterId);
         Task<ResponseResult> DeleteSale(int id);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId);

@@ -319,6 +319,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (invoice == null) return;
             try
             {
+                bool editingFromDraft = IsDraftMode;
+
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
                 if (sale == null)
                 {
@@ -338,6 +340,21 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 var customer = AllCustomers.FirstOrDefault(c => c.Id == sale.CustomerId);
                 if (customer != null) SelectCustomer(customer);
+
+                // When editing from the Draft list, the draft is now converted to a sale.
+                if (editingFromDraft)
+                {
+                    var unmarkResult = await _serviceUnitOfWork.SaleService.UnmarkDraftSale(sale.SaleMasterId);
+                    if (unmarkResult.IsSuccessStatus)
+                    {
+                        sale.IsDraft = false;
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Draft Status",
+                            $"Could not unmark draft: {unmarkResult.Message}", 4000);
+                    }
+                }
 
                 notificationService.Notify(NotificationSeverity.Info, "Editing",
                     $"Invoice {sale.InvoiceNo} loaded for editing", 3000);

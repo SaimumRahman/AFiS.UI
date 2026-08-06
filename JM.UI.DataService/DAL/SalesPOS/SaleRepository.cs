@@ -182,6 +182,31 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<ResponseResult> UnmarkDraftSale(int saleMasterId)
+        {
+            try
+            {
+                _logger.LogInformation("Unmarking draft for sale: {SaleMasterId}", saleMasterId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.PostAsync($"api/SalePOS/unmark-draft/{saleMasterId}", null);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during unmark draft");
+                throw new Exception("Failed to unmark draft: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during unmark draft");
+                throw new Exception("Unexpected error unmarking draft: " + ex.Message, ex);
+            }
+        }
+
         public async Task<ResponseResult> DeleteSale(int id)
         {
             try
