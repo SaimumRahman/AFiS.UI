@@ -212,7 +212,7 @@ namespace JM.UI.DataService.DAL.Purchases
         // =============================================
         // Delete Purchase
         // =============================================
-        public async Task DeletePurchase(int id)
+        public async Task<ResponseResult> DeletePurchase(int id)
         {
             try
             {
@@ -222,7 +222,13 @@ namespace JM.UI.DataService.DAL.Purchases
                 var response = await httpClient.DeleteAsync($"api/Purchase/delete/{id}");
                 response.EnsureSuccessStatusCode();
 
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
                 _logger.LogInformation("Purchase deleted successfully: {Id}", id);
+                return result ?? new ResponseResult
+                {
+                    IsSuccessStatus = true,
+                    Message = "Purchase deleted successfully"
+                };
             }
             catch (HttpRequestException ex)
             {

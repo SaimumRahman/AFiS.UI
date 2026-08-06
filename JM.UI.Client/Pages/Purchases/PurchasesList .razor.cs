@@ -279,10 +279,18 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         {
             try
             {
-                await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
-                PurchaseItemsCache.Remove(purchase.Id);
-                await LoadPurchases();
-                NotifySuccess("Purchase deleted successfully.");
+                var result = await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
+
+                if (result?.IsSuccessStatus == true)
+                {
+                    PurchaseItemsCache.Remove(purchase.Id);
+                    await LoadPurchases();
+                    NotifySuccess(result.Message ?? "Purchase deleted successfully.");
+                }
+                else
+                {
+                    NotifyError(result?.Message ?? "Failed to delete purchase.");
+                }
             }
             catch (Exception ex)
             {

@@ -176,6 +176,16 @@
                                       Click="@(() => NavigateToBarcodePrint(p.Id))" />
                     </Template>
                 </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="PurchaseSummaryDTO" Width="60px" TextAlign="TextAlign.Center">
+                    <Template Context="p">
+                        <RadzenButton Icon="delete"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      ButtonSize="ExtraSmall"
+                                      Tooltip="Delete Purchase"
+                                      Click="@(() => DeletePurchase(p))" />
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
 
         </RadzenDataGrid>

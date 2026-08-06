@@ -88,12 +88,7 @@ namespace JM.UI.Service.Purchases
         {
             try
             {
-                await _repositoryUnitOfWork.PurchaseRepository.DeletePurchase(id);
-                return new ResponseResult
-                {
-                    IsSuccessStatus = true,
-                    Message = "Purchase deleted successfully!"
-                };
+                return await _repositoryUnitOfWork.PurchaseRepository.DeletePurchase(id);
             }
             catch (Exception ex)
             {

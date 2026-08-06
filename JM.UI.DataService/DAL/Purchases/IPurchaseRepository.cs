@@ -11,7 +11,7 @@ namespace JM.UI.DataService.DAL.Purchases
         Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases(DateTime? fromDate, DateTime? toDate);
         Task<PurchaseDTO?> GetPurchaseById(int id);
         Task<ResponseResult> SaveUpdatePurchase(PurchaseDTO purchase, List<PurchaseItemDTO> items);
-        Task DeletePurchase(int id);
+        Task<ResponseResult> DeletePurchase(int id);
         Task<string> GenerateBarcode(BarcodeGenerationRequestDTO request);
         Task<BarcodeSearchResponseDTO> SearchByBarcode(string barcode);
         Task<IEnumerable<PurchaseDraftDTO>> GetPurchaseDrafts();
