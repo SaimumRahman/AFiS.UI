@@ -169,7 +169,7 @@
                                 <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="ItemName" Title="Item" Width="200px" />
                                 <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="Qty" Title="Qty" Width="90px" TextAlign="TextAlign.Center">
                                     <Template Context="d">
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@d.Qty.ToString("N0")" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@d.Qty.ToString("N2")" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="InvRequisitionDetailDTO" Property="UnitPrice" Title="Unit Price" Width="110px" TextAlign="TextAlign.Right">

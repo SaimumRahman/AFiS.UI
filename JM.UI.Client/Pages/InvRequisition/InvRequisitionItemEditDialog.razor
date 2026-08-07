@@ -23,7 +23,8 @@
                 </RadzenRow>
                 <RadzenRow>
                     <RadzenColumn Size="6">
-                        <RadzenNumeric @bind-Value="@Detail.Qty" Name="Qty" Min="1" Step="0.01">
+                        <RadzenNumeric @bind-Value="@Detail.Qty" Name="Qty" Min="1" Step="0.01"
+                                       TValue="decimal" FormatString="{0:N2}">
                             <LabelTemplate>Quantity</LabelTemplate>
                         </RadzenNumeric>
                     </RadzenColumn>
