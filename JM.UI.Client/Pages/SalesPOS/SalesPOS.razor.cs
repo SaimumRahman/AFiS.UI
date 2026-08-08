@@ -731,6 +731,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 notificationService.Notify(NotificationSeverity.Success, "Customer Saved",
                     "Customer created successfully", 3000);
+                if (AllCustomers.All(c => c.Id != saved.Id))
+                    AllCustomers.Add(saved);
                 SelectCustomer(saved);
             }
         }

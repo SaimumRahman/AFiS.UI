@@ -292,11 +292,11 @@
                     <div class="customer-profile">
                         <div class="name">@SelectedCustomer.Name</div>
                         <div class="phone">@SelectedCustomer.Phone</div>
-                        @if (!string.IsNullOrEmpty(SelectedCustomer.MembershipType))
+                        @if (GetCustomerDiscountRate(SelectedCustomer) > 0)
                         {
                             <div style="font-size:0.75rem;color:#28a745">
                                 @SelectedCustomer.MembershipType
-                                @if (SelectedCustomer.DiscountRate.HasValue) { <span> (@(SelectedCustomer.DiscountRate)%)</span> }
+                                <span> (@(GetCustomerDiscountRate(SelectedCustomer))%)</span>
                             </div>
                         }
                         <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="margin-top:4px" Click="@ClearCustomer" Text="Change" />
@@ -315,7 +315,7 @@
                                                 FilterOperator="StringFilterOperator.Contains"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                 AllowClear="true"
-                                                Change="@(args => SelectCustomerById((int)args))"
+                                                Change="@(args => SelectCustomerById(args == null ? 0 : (int)args))"
                                                 Style="width:100%">
                             <ValueTemplate Context="c">
                                 @(c != null ? $"{c.Name} - {c.Phone}" : "")
@@ -337,10 +337,10 @@
                     <span class="label">Sub Total</span>
                     <span class="value">@SubTotal.ToString("N2")</span>
                 </div>
-                @if (SelectedCustomer?.DiscountRate > 0)
+                @if (SelectedCustomer != null && GetCustomerDiscountRate(SelectedCustomer) > 0)
                 {
                     <div class="billing-row" style="color:#28a745">
-                        <span class="label">Membership Discount (@(SelectedCustomer.DiscountRate)%)</span>
+                        <span class="label">Membership Discount (@(GetCustomerDiscountRate(SelectedCustomer))%)</span>
                         <span class="value">-@MembershipDiscountAmount.ToString("N2")</span>
                     </div>
                 }
