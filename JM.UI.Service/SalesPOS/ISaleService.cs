@@ -18,6 +18,8 @@ namespace JM.UI.Service.SalesPOS
         Task<ResponseResult> UnmarkDraftSale(int saleMasterId);
         Task<ResponseResult> DeleteSale(int id);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate);
+        Task<IEnumerable<SaleSummaryDTO>> GetInvoices(DateTime date, int? storeId);
+        Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId);
         Task<SaleMasterDTO?> GetSaleByInvoiceNo(string invoiceNo);
         Task<string> GetNewInvoiceNo();

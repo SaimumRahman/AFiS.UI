@@ -19,5 +19,6 @@ namespace JM.UI.Entities.Model.SalesPOS
         public bool? IsDraft { get; set; }
         public DateTime CreatedDate { get; set; }
         public int TotalItems { get; set; }
+        public int? StoreId { get; set; }
     }
 }

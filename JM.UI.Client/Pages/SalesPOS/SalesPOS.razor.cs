@@ -52,6 +52,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Invoices / Bookings / Drafts ──
         protected List<SaleSummaryDTO> Invoices { get; set; } = new();
         protected bool IsInvoicesLoading { get; set; }
+        protected string InvoiceSearchText { get; set; } = string.Empty;
         protected List<SaleSummaryDTO> Bookings { get; set; } = new();
         protected bool IsBookingsLoading { get; set; }
         protected List<SaleSummaryDTO> Drafts { get; set; } = new();
@@ -242,13 +243,47 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsInvoicesLoading = true;
-                var all = await _serviceUnitOfWork.SaleService.GetAllSales();
-                Invoices = (all ?? new List<SaleSummaryDTO>()).ToList();
+                var userId = await GetLocalStorageInt("UserId");
+                // User id 1 (admin) sees current-day invoices across all stores;
+                // every other user only sees their own store's current-day invoices.
+                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                var today = DateTime.Today;
+
+                var all = await _serviceUnitOfWork.SaleService.GetInvoices(today, storeId);
+                Invoices = (all ?? new List<SaleSummaryDTO>()).OrderByDescending(i => i.CreatedDate).ToList();
             }
             catch (Exception ex)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Load Failed",
                     $"Error loading invoices: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsInvoicesLoading = false;
+            }
+        }
+
+        protected async Task SearchInvoices()
+        {
+            if (string.IsNullOrWhiteSpace(InvoiceSearchText))
+            {
+                await LoadInvoices();
+                return;
+            }
+
+            try
+            {
+                IsInvoicesLoading = true;
+                var userId = await GetLocalStorageInt("UserId");
+                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+
+                var results = await _serviceUnitOfWork.SaleService.SearchInvoices(InvoiceSearchText.Trim(), storeId);
+                Invoices = (results ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Search Failed",
+                    $"Error searching invoices: {ex.Message}", 4000);
             }
             finally
             {

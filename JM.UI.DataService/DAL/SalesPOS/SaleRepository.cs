@@ -336,6 +336,52 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<IEnumerable<SaleSummaryDTO>> GetInvoices(DateTime date, int? storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching invoices for date {Date} store {StoreId}", date, storeId);
+
+                var storeParam = storeId.HasValue ? $"&storeId={storeId}" : "";
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/SalePOS/by-date-and-store?date={date:yyyy-MM-dd}{storeParam}");
+
+                if (!response.IsSuccessStatusCode)
+                    return new List<SaleSummaryDTO>();
+
+                var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
+                return sales ?? new List<SaleSummaryDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching invoices for date range");
+                throw new Exception($"Failed to fetch invoices: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Searching invoices with term {Term} store {StoreId}", term, storeId);
+
+                var storeParam = storeId.HasValue ? $"&storeId={storeId}" : "";
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/SalePOS/search-invoices?term={Uri.EscapeDataString(term ?? "")}{storeParam}");
+
+                if (!response.IsSuccessStatusCode)
+                    return new List<SaleSummaryDTO>();
+
+                var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
+                return sales ?? new List<SaleSummaryDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching invoices");
+                throw new Exception($"Failed to search invoices: {ex.Message}", ex);
+            }
+        }
+
         public async Task<string> GetNewInvoiceNo()
         {
             try

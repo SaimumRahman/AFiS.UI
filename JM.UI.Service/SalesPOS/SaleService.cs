@@ -95,6 +95,16 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSalesByDateRange(fromDate, toDate);
         }
 
+        public async Task<IEnumerable<SaleSummaryDTO>> GetInvoices(DateTime date, int? storeId)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.GetInvoices(date, storeId);
+        }
+
+        public async Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.SearchInvoices(term, storeId);
+        }
+
         public async Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId)
         {
             return await _repositoryUnitOfWork.SaleRepository.GetSalesByCustomerId(customerId);
