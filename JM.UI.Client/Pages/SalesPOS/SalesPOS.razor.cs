@@ -803,8 +803,9 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Add Customer Modal ──
         protected async Task OpenAddCustomerModal()
         {
+            var userId = await GetLocalStorageInt("UserId");
             var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer",
-                new Dictionary<string, object>());
+                new Dictionary<string, object> { { "CurrentUserId", userId } });
             if (customer is CustomerDetailsDTO saved && saved.Id > 0)
             {
                 notificationService.Notify(NotificationSeverity.Success, "Customer Saved",

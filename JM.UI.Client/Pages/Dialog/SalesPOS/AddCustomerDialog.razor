@@ -65,8 +65,9 @@
                                                     ValueProperty="Id"
                                                     Placeholder="Select Membership Type"
                                                     Style="width: 100%;"
-                                                    AllowClear="true"
-                                                    AllowFiltering="true" />
+                                                    AllowClear="IsAdmin"
+                                                    AllowFiltering="IsAdmin"
+                                                    Disabled="!IsAdmin" />
                                 </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
@@ -115,16 +116,37 @@
 </RadzenCard>
 
 @code {
+    [Parameter] public int CurrentUserId { get; set; }
+
     protected CustomerDetailsDTO Customer { get; set; } = new() { IsForceAdd = true };
     protected bool IsProcessing { get; set; }
     protected bool IsLoading { get; set; } = true;
     protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
 
+    protected bool IsAdmin => CurrentUserId == 1;
+    // Non-admins can only be a General member: the dropdown shows only General and is locked.
+    protected bool IsMemberTypeLocked => !IsAdmin;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            MembershipTypes = (await ServiceUnitOfWork.MembershipTypeService.GetAll()).ToList();
+            var allTypes = (await ServiceUnitOfWork.MembershipTypeService.GetAll()).ToList();
+
+            if (IsAdmin)
+            {
+                // Admin may choose any membership type.
+                MembershipTypes = allTypes;
+            }
+            else
+            {
+                // Non-admin: restrict to General so the membership type cannot be changed.
+                var general = allTypes
+                    .FirstOrDefault(m => string.Equals(m.Name?.Trim(), "General", StringComparison.OrdinalIgnoreCase))
+                    ?? allTypes.FirstOrDefault();
+                MembershipTypes = general != null ? new List<MembershipTypeDTO> { general } : new();
+            }
+
             Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
             Customer.IsForceAdd = true;
             SetDefaultMembershipType();
