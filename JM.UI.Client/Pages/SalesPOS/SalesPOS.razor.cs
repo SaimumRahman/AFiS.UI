@@ -334,7 +334,15 @@ namespace JM.UI.Client.Pages.SalesPOS
                 _currentMode = "Sale";
                 CartItems.Clear();
                 if (sale.SaleDetails != null)
+                {
+                    foreach (var d in sale.SaleDetails)
+                    {
+                        // The price already on the invoice is the floor the user may edit up from.
+                        if (d.BaseUnitPrice == 0)
+                            d.BaseUnitPrice = d.UnitPrice;
+                    }
                     CartItems.AddRange(sale.SaleDetails);
+                }
 
                 Sale = sale;
                 SelectedCustomer = null;
@@ -510,6 +518,27 @@ namespace JM.UI.Client.Pages.SalesPOS
                 item.Qty = newQty;
                 item.TotalAmount = item.Qty * item.UnitPrice;
             }
+            DistributeCustomerDiscount();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // The sale price may be raised in the cart, but never reduced below the
+        // originally loaded price (BaseUnitPrice).
+        protected void UpdateCartItemPrice(SaleDetailDTO item, decimal newPrice)
+        {
+            if (newPrice < item.BaseUnitPrice)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Price Restriction",
+                    $"Sale price cannot be set below the loaded price ({item.BaseUnitPrice:N2}).", 3000);
+                item.UnitPrice = item.BaseUnitPrice;
+            }
+            else
+            {
+                item.UnitPrice = newPrice;
+            }
+            item.TotalAmount = item.Qty * item.UnitPrice;
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();

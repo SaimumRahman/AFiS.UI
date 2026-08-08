@@ -13,6 +13,11 @@ namespace JM.UI.Entities.Model.SalesPOS
         public int? UomId { get; set; }
         public string? UomName { get; set; }
         public decimal UnitPrice { get; set; }
+        /// <summary>
+        /// The sale price originally loaded from the product. The user may raise the price in the
+        /// cart but it cannot be reduced below this value.
+        /// </summary>
+        public decimal BaseUnitPrice { get; set; }
         public decimal Qty { get; set; }
         public decimal? Discount { get; set; }
         public decimal TotalAmount { get; set; }
@@ -30,9 +35,10 @@ namespace JM.UI.Entities.Model.SalesPOS
             SalesPersonId = product.SalesPersonId,
             SalesPersonName = product.SalesPersonName,
             UomId = product.UomId,
-            UomName = product.UomName,
-            UnitPrice = product.UnitPrice,
-            Qty = qty,
+             UomName = product.UomName,
+             UnitPrice = product.UnitPrice,
+             BaseUnitPrice = product.UnitPrice,
+             Qty = qty,
             Discount = product.Discount > 0 ? product.Discount : null,
             HasDiscount = product.HasDiscount,
             StoreId = product.StoreId,

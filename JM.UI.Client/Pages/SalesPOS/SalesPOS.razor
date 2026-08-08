@@ -148,11 +148,11 @@
                                             <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
-                                        <Template Context="item">
-                                            <span>@item.UnitPrice.ToString("N2")</span>
-                                        </Template>
-                                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
+                        <Template Context="item">
+                            <RadzenNumeric @bind-Value="item.UnitPrice" Min="@item.BaseUnitPrice" Max="999999" Step="0.01" Style="width:70px" Change="@((decimal v) => UpdateCartItemPrice(item, v))" />
+                        </Template>
+                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Discount" Title="Disc" Width="70" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
