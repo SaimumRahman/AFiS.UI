@@ -47,7 +47,6 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         // ── Barcode / Product Search ──
         protected string BarcodeInput { get; set; } = "";
-        protected decimal QtyInput { get; set; } = 1;
         protected ProductSearchDTO? SearchedProduct { get; set; }
 
         // ── Invoices / Bookings / Drafts ──
@@ -387,6 +386,13 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
+            if (SelectedEmployeeId <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Salesman Required",
+                    "Please select a salesman before adding items.", 3000);
+                return;
+            }
+
             try
             {
                 if (Sale.StoreId == null || Sale.StoreId <= 0)
@@ -413,10 +419,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 }
 
                 SearchedProduct = product;
-                AddProductToCart(product, QtyInput > 0 ? QtyInput : 1);
-                QtyInput = 1;
-                if (CartGrid != null)
-                    await CartGrid.Reload();
+                await PromptQuantityAndAdd(product);
             }
             catch (Exception ex)
             {
@@ -426,6 +429,23 @@ namespace JM.UI.Client.Pages.SalesPOS
             finally
             {
                 BarcodeInput = "";
+                StateHasChanged();
+            }
+        }
+
+        // Opens a popup showing the item name, stock quantity and a quantity input
+        // (defaults to 1), then adds the chosen quantity to the cart.
+        protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
+        {
+            var qty = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
+                new Dictionary<string, object> { { "Product", product } },
+                new DialogOptions { Width = "420px" });
+
+            if (qty is decimal selectedQty && selectedQty > 0)
+            {
+                AddProductToCart(product, selectedQty);
+                if (CartGrid != null)
+                    await CartGrid.Reload();
                 StateHasChanged();
             }
         }
@@ -463,10 +483,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new DialogOptions { Width = "1000px", Height = "700px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
-                AddProductToCart(selected, 1);
-                if (CartGrid != null)
-                    await CartGrid.Reload();
-                StateHasChanged();
+                await PromptQuantityAndAdd(selected);
             }
         }
 
@@ -477,10 +494,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new DialogOptions { Width = "700px", Height = "550px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
-                AddProductToCart(selected, 1);
-                if (CartGrid != null)
-                    await CartGrid.Reload();
-                StateHasChanged();
+                await PromptQuantityAndAdd(selected);
             }
         }
 

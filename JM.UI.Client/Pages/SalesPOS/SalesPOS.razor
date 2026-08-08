@@ -94,10 +94,9 @@
             @* Barcode Entry *@
             <div class="pos-card">
                 <div class="barcode-row">
-                    <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" />
-                    <RadzenNumeric @bind-Value="QtyInput" Min="1" Max="9999" Style="width:70px" />
-                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" />
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" />
+                    <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" Disabled="@(SelectedEmployeeId <= 0)" />
+                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" Disabled="@(SelectedEmployeeId <= 0)" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" Disabled="@(SelectedEmployeeId <= 0)" />
                     <RadzenDropDown @bind-Value="SelectedEmployeeId"
                                     Data="@Employees"
                                     TextProperty="Name"

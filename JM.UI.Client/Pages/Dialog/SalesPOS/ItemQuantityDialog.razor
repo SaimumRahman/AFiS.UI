@@ -1,0 +1,53 @@
+@using JM.UI.Entities.Model.SalesPOS
+@using Radzen
+@using Radzen.Blazor
+@inject DialogService DialogService
+
+<RadzenCard>
+    <RadzenStack Gap="1rem">
+        <div>
+            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Item</div>
+            <div style="font-weight:600;font-size:1rem">@Product?.ProductName</div>
+        </div>
+
+        <div>
+            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Stock Available</div>
+            <div style="font-weight:600;color:#28a745">@Product?.StockQuantity.ToString("N0")</div>
+        </div>
+
+        <div>
+            <RadzenLabel Text="Quantity" Component="Qty" />
+            <RadzenNumeric @bind-Value="Qty" Min="1" Max="@MaxQty" Name="Qty" Style="width:100%" ShowButtons="true" />
+        </div>
+
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+            <RadzenButton Text="Add to Cart" ButtonStyle="ButtonStyle.Primary" Click="@Confirm" Disabled="@(Qty <= 0)" />
+        </div>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public ProductSearchDTO Product { get; set; } = new();
+
+    decimal Qty { get; set; } = 1;
+    decimal MaxQty => Product?.StockQuantity > 0 ? Product.StockQuantity : 9999;
+
+    protected override void OnInitialized()
+    {
+        Qty = 1;
+    }
+
+    void Confirm()
+    {
+        if (Qty > 0)
+        {
+            DialogService.Close(Qty);
+        }
+    }
+
+    void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}
