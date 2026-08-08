@@ -257,14 +257,22 @@
                             </RadzenColumn>
                         </RadzenRow>
 
-                            <!-- BillDate -->
+                            <!-- Purchase Date (system date) -->
+                            <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                                <RadzenColumn Size="4"><RadzenLabel Text="Purchase Date" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
+                                <RadzenColumn Size="8">
+                                    <RadzenTextBox Value='@DateTime.Today.ToString("dd/MM/yyyy")' Disabled="true"
+                                                   Style="width:100%; font-size:0.75rem; height:24px; padding:2px 6px;" />
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- BillDate (may be any date) -->
                             <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
                                 <RadzenColumn Size="4"><RadzenLabel Text="Bill Date" Style="font-weight:600; font-size:0.75rem;" /></RadzenColumn>
                                 <RadzenColumn Size="8">
-                                    <RadzenDatePicker @bind-Value="Purchase.PurchaseDate"
+                                    <RadzenDatePicker @bind-Value="Purchase.BillDate"
                                                       Style="width:100%; font-size:0.75rem;" DateFormat="dd/MM/yyyy"
-                                                      Placeholder="Pick Date" Disabled="@IsProcessing"
-                                                      MinDate="DateTime.Today" />
+                                                      Placeholder="Pick Date" Disabled="@IsProcessing" />
                                 </RadzenColumn>
                             </RadzenRow>
 

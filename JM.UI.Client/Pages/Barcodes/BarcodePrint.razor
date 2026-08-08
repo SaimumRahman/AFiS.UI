@@ -210,7 +210,7 @@
                                             <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseNo</RadzenText>
                                         </RadzenColumn>
                                         <RadzenColumn Size="6">
-                                            <RadzenText TextStyle="TextStyle.Body2">@purchase.PurchaseDate.ToString("dd MMM yyyy")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2">@((purchase.BillDate ?? purchase.PurchaseDate).ToString("dd MMM yyyy"))</RadzenText>
                                         </RadzenColumn>
                                     </RadzenRow>
                                 </Template>
@@ -229,7 +229,7 @@
                                 <RadzenAlert AlertStyle="AlertStyle.Success" AllowClose="false" Style="width:100%; margin-top:1.45rem; padding: 0.5rem 0.75rem;">
                                     <RadzenStack Gap="0.15rem">
                                         <RadzenText TextStyle="TextStyle.Subtitle2">@selected.PurchaseNo</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption">@selected.ItemCount item(s) · @selected.PurchaseDate.ToString("dd MMM yyyy")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption">@selected.ItemCount item(s) · @((selected.BillDate ?? selected.PurchaseDate).ToString("dd MMM yyyy"))</RadzenText>
                                     </RadzenStack>
                                 </RadzenAlert>
                             }

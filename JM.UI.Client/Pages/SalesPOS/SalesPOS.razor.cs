@@ -759,6 +759,46 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        // ── Cancel Booking ──
+        protected async Task CancelBooking(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Cancel booking {booking.InvoiceNo}? This will revert all stock, payments and requisitions created for this booking.",
+                "Cancel Booking",
+                new ConfirmOptions { OkButtonText = "Yes, Cancel", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int storeId = Sale.StoreId ?? 0;
+                int userId = await GetLocalStorageInt("UserId");
+
+                var result = await _serviceUnitOfWork.SaleService.CancelBooking(
+                    booking.SaleMasterId, storeId, userId);
+
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Booking Cancelled",
+                        result.Message, 4000);
+                    ExpandedInvoiceDetails.Remove(booking.SaleMasterId);
+                    await LoadBookings();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Cancel Failed",
+                    $"Error cancelling booking: {ex.Message}", 4000);
+            }
+        }
+
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {

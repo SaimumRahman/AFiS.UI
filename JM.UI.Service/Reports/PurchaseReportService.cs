@@ -127,7 +127,7 @@ public class PurchaseReportService
                     table.Cell().Padding(2).Text(purchase.BillInvoiceNumber ?? "").FontSize(8);
                     table.Cell().Padding(2).Text("BillDt:").Bold().FontSize(8);
                     table.Cell().Padding(2)
-                        .Text(purchase.PurchaseDate.ToString("dd-MMM-yy")).FontSize(8);
+                        .Text((purchase.BillDate ?? purchase.PurchaseDate).ToString("dd-MMM-yy")).FontSize(8);
                 });
 
                 // ── Groups ────────────────────────────────────────────────

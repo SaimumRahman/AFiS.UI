@@ -322,7 +322,8 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     SupplierId = draft.SupplierId,
                     StoreId = draft.StoreId,
-                    PurchaseDate = draft.PurchaseDate ?? DateTime.Now,
+                    PurchaseDate = DateTime.Now,
+                    BillDate = draft.BillDate ?? draft.PurchaseDate ?? DateTime.Now,
                     BillInvoiceNumber = draft.BillInvoiceNumber,
                     BillInvoiceName = draft.BillInvoiceName,
                     IsVatIncluded = draft.IsVatIncluded,
@@ -1629,15 +1630,9 @@ namespace JM.UI.Client.Pages.Purchases
                 notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a store");
                 return false;
             }
-            if (Purchase.PurchaseDate == default)
+            if (!Purchase.BillDate.HasValue)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a purchase date");
-                return false;
-            }
-            if (Purchase.PurchaseDate!.Value.Date < DateTime.Today)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Validation Error",
-                    "Backdated purchase is not allowed. Purchase date must be today or a future date.");
+                notificationService.Notify(NotificationSeverity.Error, "Validation Error", "Please select a bill date");
                 return false;
             }
             if (PurchaseItems.Count == 0)
@@ -1669,6 +1664,7 @@ namespace JM.UI.Client.Pages.Purchases
                     SupplierId = Purchase.SupplierId,
                     StoreId = Purchase.StoreId,
                     PurchaseDate = Purchase.PurchaseDate,
+                    BillDate = Purchase.BillDate,
                     BillInvoiceNumber = Purchase.BillInvoiceNumber,
                     BillInvoiceName = Purchase.BillInvoiceName,
                     IsVatIncluded = Purchase.IsVatIncluded,

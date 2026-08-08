@@ -9,6 +9,7 @@ namespace JM.UI.Entities.Model.Purchases
         public int Id { get; set; }
         public string PurchaseNo { get; set; } = string.Empty;
         public DateTime PurchaseDate { get; set; }
+        public DateTime? BillDate { get; set; }
         public int ItemCount { get; set; }
     }
 }

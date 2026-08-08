@@ -232,6 +232,18 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="80" Sortable="false" Filterable="false">
+                                    <Template Context="inv">
+                                        @if (IsBookingMode)
+                                        {
+                                            <RadzenButton Text="Cancel"
+                                                          ButtonStyle="ButtonStyle.Danger"
+                                                          ButtonSize="ExtraSmall"
+                                                          Variant="Variant.Outlined"
+                                                          Click="@(() => CancelBooking(inv))" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
                             </Columns>
                             <Template Context="inv">
                                 <RadzenStack Gap="0.5rem">

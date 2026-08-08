@@ -59,7 +59,8 @@ namespace JM.UI.Service.Purchases
             if (purchase.Id == 0)
             {
                 purchase.CreatedDate = DateTime.Now;
-                purchase.PurchaseDate = purchase.PurchaseDate?.Date ?? default;
+                purchase.PurchaseDate = DateTime.Now;
+                purchase.BillDate ??= DateTime.Now;
             }
             else
                 purchase.LastModifiedDate = DateTime.Now;
@@ -129,8 +130,8 @@ namespace JM.UI.Service.Purchases
             if (purchase.SupplierId == null || purchase.SupplierId <= 0)
                 return Task.FromResult((false, "Supplier is required."));
 
-            if (purchase.PurchaseDate == default)
-                return Task.FromResult((false, "Purchase date is required."));
+            if (purchase.BillDate == null)
+                return Task.FromResult((false, "Bill date is required."));
 
             if (purchase.StoreId == null || purchase.StoreId <= 0)
                 return Task.FromResult((false, "Store is required."));
@@ -168,6 +169,7 @@ namespace JM.UI.Service.Purchases
             return new PurchaseDTO
             {
                 PurchaseDate = DateTime.Now,
+                BillDate = DateTime.Now,
                 IsActive = true,
                 IsVatIncluded = false,
                 PurchaseItems = new List<PurchaseItemDTO>(),

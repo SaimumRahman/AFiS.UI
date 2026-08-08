@@ -32,8 +32,8 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     protected bool IsPrinting;
 
     // ── Date filter state ─────────────────────────────────────────────────────
-    protected DateTime? FilterDateFrom { get; set; }= DateTime.UtcNow;
-    protected DateTime? FilterDateTo { get; set; } = DateTime.UtcNow;
+    protected DateTime? FilterDateFrom { get; set; } = DateTime.Now;
+    protected DateTime? FilterDateTo { get; set; } = DateTime.Now;
     protected string ReferenceNo;
     protected bool IsFiltered => FilterDateFrom.HasValue || FilterDateTo.HasValue;
 
@@ -130,10 +130,10 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         var query = Purchases.AsEnumerable();
 
         if (FilterDateFrom.HasValue)
-            query = query.Where(p => p.PurchaseDate.Date >= FilterDateFrom.Value.Date);
+            query = query.Where(p => p.PurchaseDate.ToLocalTime().Date >= FilterDateFrom.Value.Date);
 
         if (FilterDateTo.HasValue)
-            query = query.Where(p => p.PurchaseDate.Date <= FilterDateTo.Value.Date);
+            query = query.Where(p => p.PurchaseDate.ToLocalTime().Date <= FilterDateTo.Value.Date);
 
         // ReferenceNo filter — match against purchase items' ReturnRefNo
         if (!string.IsNullOrWhiteSpace(ReferenceNo))
