@@ -11,5 +11,13 @@ namespace JM.UI.Entities.Model.Items
         public int? AlarmLevel { get; set; }
         public int? LastModifiedBy { get; set; }
         public DateTime? LastModifiedDate { get; set; }
+
+        // Brand / Origin / Features
+        public int? BrandId { get; set; }
+        public string? BrandName { get; set; }
+        public int? OriginId { get; set; }
+        public string? Origin { get; set; }
+        public string? Features { get; set; }
+        public int? ItemWiseFeatureId { get; set; }
     }
 }

@@ -37,24 +37,21 @@
 
                             <RadzenStack Gap="0.5rem">
                                 <RadzenLabel Text="Measurement Unit" Component="MesurementUnitId" class="fw-bold" />
-                                <RadzenDropDown @bind-Value="@Item.MesurementUnitId" 
-                                                Data="@MeasurementUnitsList" 
-                                                TextProperty="Name" 
-                                                ValueProperty="Id" 
+                                <RadzenDropDown @bind-Value="@Item.MesurementUnitId"
+                                                Data="@MeasurementUnitsList"
+                                                TextProperty="Name"
+                                                ValueProperty="Id"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                 AllowFiltering="true"
-                                                Placeholder="Select Unit" 
+                                                Placeholder="Select Unit"
                                                 class="w-100"
                                                 Name="MesurementUnitId" />
                                 <RadzenNumericRangeValidator Component="MesurementUnitId" Min="1" Text="Please select a Unit" />
                             </RadzenStack>
-
-                         
-
                         </RadzenStack>
                     </RadzenColumn>
 
-                    @* Right Column - Pricing & Levels *@
+                    @* Right Column - Pricing, Brand, Origin, Features *@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="1rem">
                             <RadzenRow>
@@ -64,34 +61,73 @@
                                         <RadzenNumeric Name="SalePrice" @bind-Value="@Item.SalePrice" class="w-100" ShowStep="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                               
-                            </RadzenRow>
-
-                            <RadzenRow>
                                 <RadzenColumn Size="6">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Alarm Level" Component="AlarmLevel" class="fw-bold" />
                                         <RadzenNumeric Name="AlarmLevel" @bind-Value="@Item.AlarmLevel" class="w-100" ShowStep="false" />
                                     </RadzenStack>
                                 </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow>
                                 <RadzenColumn Size="6">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Last Cost Price" Component="LastCostPrice" class="fw-bold" />
                                         <RadzenNumeric Name="LastCostPrice" @bind-Value="@Item.LastCostPrice" class="w-100" ShowStep="false" Disabled="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
+                                <RadzenColumn Size="6">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Brand" Component="BrandId" class="fw-bold" />
+                                        <RadzenDropDown @bind-Value="@Item.BrandId"
+                                                        Data="@Brands"
+                                                        TextProperty="BrandName"
+                                                        ValueProperty="BrandId"
+                                                        Placeholder="Select Brand"
+                                                        AllowFiltering="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowClear="true"
+                                                        Name="BrandId"
+                                                        class="w-100" />
+                                    </RadzenStack>
+                                </RadzenColumn>
                             </RadzenRow>
 
-                         
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Origin" Component="OriginId" class="fw-bold" />
+                                        <RadzenDropDown @bind-Value="@Item.OriginId"
+                                                        Data="@Origins"
+                                                        TextProperty="OriginName"
+                                                        ValueProperty="OriginId"
+                                                        Placeholder="Select Origin"
+                                                        AllowFiltering="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowClear="true"
+                                                        Name="OriginId"
+                                                        class="w-100" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow>
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Features" Component="Features" class="fw-bold" />
+                                        <RadzenTextBox Name="Features" @bind-Value="@Item.Features" Placeholder="Enter features (comma separated)" class="w-100" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
                         </RadzenStack>
                     </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
-                    <RadzenButton Text="Cancel" 
-                                  ButtonStyle="ButtonStyle.Light" 
-                                  Click="@Cancel" 
-                                  Icon="cancel" 
+                    <RadzenButton Text="Cancel"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@Cancel"
+                                  Icon="cancel"
                                   Disabled="@IsProcessing" />
                     <RadzenButton ButtonType="ButtonType.Submit"
                                   Text="Update"

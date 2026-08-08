@@ -131,7 +131,12 @@ namespace JM.UI.DataService.DAL.Items
                         MesurementUnitId = item.MesurementUnitId,
                         AlarmLevel = item.AlarmLevel,
                         LastModifiedBy = item.LastModifiedBy,
-                        LastModifiedDate = item.LastModifiedDate
+                        LastModifiedDate = item.LastModifiedDate,
+                        BrandId = item.BrandId,
+                        OriginId = item.OriginId,
+                        Origin = item.Origin,
+                        Features = item.Features,
+                        ItemWiseFeatureId = item.ItemWiseFeatureId
                     }
                 };
                 var response = await httpClient.PutAsJsonAsync("Items/UpdateItem", request);

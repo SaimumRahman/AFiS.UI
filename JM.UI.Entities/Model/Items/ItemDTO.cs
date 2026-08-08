@@ -11,6 +11,7 @@ namespace JM.UI.Entities.Model.Items
         public int? ItemWiseFeatureId { get; set; }
         public List<int> FeatureIds { get; set; }
         public string? GroupName { get; set; }
+        public string? MesurementUnitName { get; set; }
         public string? ReturnRefNo { get; set; }
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
@@ -51,5 +52,10 @@ namespace JM.UI.Entities.Model.Items
         public string? ProductType { get; set; }
         public string? Catalogue { get; set; }
         public int ItemCode { get; set; }
+
+        // Display fields (populated via joins in the API)
+        public string? BrandName { get; set; }
+        public string? OriginName { get; set; }
+        public string? FeaturesDisplay { get; set; }
     }
 }
