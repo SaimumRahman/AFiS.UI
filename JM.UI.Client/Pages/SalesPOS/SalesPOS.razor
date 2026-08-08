@@ -91,39 +91,42 @@
     @* Body *@
     <div class="pos-body">
         <div class="pos-left">
-            @* Barcode Entry *@
-            <div class="pos-card">
-                <div class="barcode-row">
-                    <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" Disabled="@(SelectedEmployeeId <= 0)" />
-                    <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" Disabled="@(SelectedEmployeeId <= 0)" />
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" Disabled="@(SelectedEmployeeId <= 0)" />
-                    <RadzenDropDown @bind-Value="SelectedEmployeeId"
-                                    Data="@Employees"
-                                    TextProperty="Name"
-                                    ValueProperty="Id"
-                                    Placeholder="Employee"
-                                    AllowFiltering="true"
-                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                    AllowClear="true"
-                                    Change="@(args => OnEmployeeChanged((int)args))"
-                                    Style="width:140px" />
-                </div>
-            </div>
-
-            @* Product Preview *@
-            @if (SearchedProduct != null)
+            @* Barcode Entry & Product Preview - only relevant while selling *@
+            @if (IsSaleMode)
             {
-                <div class="product-preview">
-                    <div class="info">
-                        <div class="name">@SearchedProduct.ProductName</div>
-                        <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
-                        <div style="font-size:0.75rem;color:#888">
-                            @SearchedProduct.Barcode
-                            @if (!string.IsNullOrEmpty(SearchedProduct.StoreName)) { <span> | @SearchedProduct.StoreName</span> }
-                            @if (SearchedProduct.UomName != null) { <span> | @SearchedProduct.UomName</span> }
-                        </div>
+                <div class="pos-card">
+                    <div class="barcode-row">
+                        <RadzenTextBox @bind-Value="BarcodeInput" Placeholder="Scan or type barcode..." class="rz-w-100" @onkeydown="@OnBarcodeKeyPress" Disabled="@(SelectedEmployeeId <= 0)" />
+                        <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await AddItemByBarcode(BarcodeInput))" Text="+" Disabled="@(SelectedEmployeeId <= 0)" />
+                        <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" Disabled="@(SelectedEmployeeId <= 0)" />
+                        <RadzenDropDown @bind-Value="SelectedEmployeeId"
+                                        Data="@Employees"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        Placeholder="Employee"
+                                        AllowFiltering="true"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                        AllowClear="true"
+                                        Change="@(args => OnEmployeeChanged((int)args))"
+                                        Style="width:140px" />
                     </div>
                 </div>
+
+                @* Product Preview *@
+                @if (SearchedProduct != null)
+                {
+                    <div class="product-preview">
+                        <div class="info">
+                            <div class="name">@SearchedProduct.ProductName</div>
+                            <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
+                            <div style="font-size:0.75rem;color:#888">
+                                @SearchedProduct.Barcode
+                                @if (!string.IsNullOrEmpty(SearchedProduct.StoreName)) { <span> | @SearchedProduct.StoreName</span> }
+                                @if (SearchedProduct.UomName != null) { <span> | @SearchedProduct.UomName</span> }
+                            </div>
+                        </div>
+                    </div>
+                }
             }
 
             @* Cart / Bookings / Invoices tabs *@
@@ -300,7 +303,7 @@
                 @if (SelectedCustomer != null)
                 {
                     <div class="customer-profile">
-                        <div class="name">@SelectedCustomer.Name</div>
+                        <div class="name">@SelectedCustomer.Name (ID: @SelectedCustomer.Id)</div>
                         <div class="phone">@SelectedCustomer.Phone</div>
                         @if (GetCustomerDiscountRate(SelectedCustomer) > 0)
                         {
@@ -328,10 +331,11 @@
                                                 Change="@(args => SelectCustomerById(args == null ? 0 : (int)args))"
                                                 Style="width:100%">
                             <ValueTemplate Context="c">
-                                @(c != null ? $"{c.Name} - {c.Phone}" : "")
+                                @(c != null ? $"{c.Name} (ID: {c.Id}) - {c.Phone}" : "")
                             </ValueTemplate>
                             <Columns>
                                 <RadzenDropDownDataGridColumn Property="Name" Title="Name" />
+                                <RadzenDropDownDataGridColumn Property="Id" Title="ID" Width="80" />
                                 <RadzenDropDownDataGridColumn Property="Phone" Title="Phone" />
                             </Columns>
                         </RadzenDropDownDataGrid>
