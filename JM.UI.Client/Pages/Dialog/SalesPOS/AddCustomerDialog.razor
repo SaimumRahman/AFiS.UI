@@ -127,11 +127,21 @@
             MembershipTypes = (await ServiceUnitOfWork.MembershipTypeService.GetAll()).ToList();
             Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
             Customer.IsForceAdd = true;
+            SetDefaultMembershipType();
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    private void SetDefaultMembershipType()
+    {
+        // Default to "General" membership type so the customer is eligible for the general discount.
+        var general = MembershipTypes
+            .FirstOrDefault(m => string.Equals(m.Name?.Trim(), "General", StringComparison.OrdinalIgnoreCase))
+            ?? MembershipTypes.FirstOrDefault();
+        Customer.MemberTypeId = general?.Id;
     }
 
     protected async Task Save()
@@ -214,6 +224,7 @@
                 NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
                 Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
                 Customer.IsForceAdd = true;
+                SetDefaultMembershipType();
             }
             else
             {

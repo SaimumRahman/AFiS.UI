@@ -87,8 +87,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Sale.InvoiceDiscount ?? 0;
             }
         }
-        protected decimal MembershipDiscountAmount => SelectedCustomer?.DiscountRate.HasValue == true
-            ? SubTotal * (SelectedCustomer.DiscountRate.Value / 100m)
+        protected decimal MembershipDiscountAmount => SelectedCustomer != null
+            ? SubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
             : 0;
         protected decimal CampaignDiscountAmount => Sale.CampaignDiscount ?? 0;
         protected decimal NetPayable
@@ -151,7 +151,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
                 var allCustomers = _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
                 var employeeTask = _serviceUnitOfWork.EmployeeService.GetEmployees();
-                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, employeeTask);
+                var membershipTask = _serviceUnitOfWork.MembershipTypeService.GetAll();
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, employeeTask, membershipTask);
 
                 Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
                 Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
@@ -159,6 +160,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
                 AllCustomers = (allCustomers.Result ?? new List<CustomerDetailsDTO>()).ToList();
                 Employees = (employeeTask.Result ?? new List<EmployeeModelDTO>()).ToList();
+                MembershipTypes = (membershipTask.Result ?? new List<MembershipTypeDTO>()).ToList();
             }
             catch (Exception ex)
             {
@@ -449,6 +451,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 }
                 CartItems.Add(detail);
             }
+
+            DistributeCustomerDiscount();
         }
 
         // ── Search Product Modal ──
@@ -492,6 +496,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 item.Qty = newQty;
                 item.TotalAmount = item.Qty * item.UnitPrice;
             }
+            DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -500,6 +505,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected void RemoveCartItem(SaleDetailDTO item)
         {
             CartItems.Remove(item);
+            DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -601,7 +607,10 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.CustomerPhone = customer.Phone;
             Sale.CustomerAddress = customer.Address;
             Sale.MembershipTypeId = customer.MemberTypeId;
-            Sale.DiscountRate = customer.DiscountRate;
+            var discountRate = GetCustomerDiscountRate(customer);
+            Sale.DiscountRate = (int)discountRate;
+            Sale.MembershipDiscount = SubTotal * (discountRate / 100m);
+            DistributeCustomerDiscount();
             StateHasChanged();
         }
 
@@ -616,6 +625,83 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipTypeId = null;
             Sale.DiscountRate = null;
             Sale.MembershipDiscount = null;
+
+            // Remove the customer-discount shares from cart items.
+            foreach (var item in CartItems.Where(i => !i.HasDiscount))
+            {
+                item.Discount = 0;
+            }
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // ── Customer / Membership Discount Distribution ──
+        // The customer's discount is equally divided across cart items that do not
+        // already have their own (product-level) discount.
+        // Resolves the discount rate from the customer's DTO, falling back to the
+        // MembershipType table (looked up by MemberTypeId) when the DTO value is missing.
+        protected decimal GetCustomerDiscountRate(CustomerDetailsDTO customer)
+        {
+            if (customer?.DiscountRate.HasValue == true && customer.DiscountRate.Value > 0)
+                return customer.DiscountRate.Value;
+
+            if (customer?.MemberTypeId.HasValue == true)
+            {
+                var membership = MembershipTypes.FirstOrDefault(m => m.Id == customer.MemberTypeId.Value);
+                if (membership?.DiscountRate.HasValue == true && membership.DiscountRate.Value > 0)
+                    return membership.DiscountRate.Value;
+            }
+            return 0;
+        }
+
+        protected void DistributeCustomerDiscount()
+        {
+            if (!CartItems.Any() || SelectedCustomer == null)
+            {
+                return;
+            }
+
+            var discountRate = GetCustomerDiscountRate(SelectedCustomer);
+            if (discountRate <= 0)
+            {
+                return;
+            }
+
+            // Only distribute across items that don't already have a product-level discount.
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
+            if (!eligible.Any()) return;
+
+            decimal totalDiscountAmount = SubTotal * (discountRate / 100m);
+            if (totalDiscountAmount <= 0)
+            {
+                foreach (var item in eligible) item.Discount = 0;
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
+
+            // Divide the discount equally across eligible items.
+            var share = Math.Floor(totalDiscountAmount / eligible.Count * 100m) / 100m;
+            var remaining = totalDiscountAmount;
+
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                var item = eligible[i];
+                if (i == eligible.Count - 1)
+                {
+                    item.Discount = Math.Round(remaining, 2);
+                }
+                else
+                {
+                    item.Discount = share;
+                    remaining -= share;
+                }
+            }
+
+            if (CartGrid != null)
+                CartGrid.Reload();
             StateHasChanged();
         }
 
