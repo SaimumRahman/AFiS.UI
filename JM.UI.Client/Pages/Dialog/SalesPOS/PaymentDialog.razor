@@ -1,6 +1,9 @@
+@using JM.UI.Entities.Model.FinancialAccounts
 @using JM.UI.Entities.Model.SalesPOS
+@using JM.UI.Service.UnitOfWork
 @using Radzen
 @using Radzen.Blazor
+@inject IServiceUnitOfWork _serviceUnitOfWork
 @inject DialogService DialogService
 
 <div style="display:flex;flex-direction:column;gap:10px">
@@ -23,9 +26,15 @@
     </div>
 
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <RadzenDropDown @bind-Value="PaymentType" Data="@PaymentTypeOptions" Style="width:100px" />
+        <label style="display:flex;align-items:center;gap:4px">
+            <RadzenCheckBox TValue="bool" @bind-Value="IsCash" Change="@OnCashChanged" />
+            <span>Cash</span>
+        </label>
+        <RadzenDropDown @bind-Value="SelectedFinancialAccountId" Data="@FinancialAccounts"
+                        TextProperty="AccountName" ValueProperty="Id" Change="@OnFinancialAccountChanged"
+                        Placeholder="Select Financial Account" Filterable="true" AllowClear="true" Style="width:200px" />
         <RadzenNumeric @bind-Value="PaymentAmount" Min="0" Style="width:120px" />
-        @if (PaymentType == "MFS" || PaymentType == "Card")
+        @if (!IsCash)
         {
             <RadzenTextBox @bind-Value="TransactionNo" Placeholder="Transaction ID" Style="width:150px" />
         }
@@ -36,9 +45,9 @@
     {
         <RadzenDataGrid Data="@TempPayments" TItem="PaymentTransactionDTO" ShowPaging="false">
             <Columns>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="80">
+                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="160">
                     <Template Context="p">
-                        @(p.TransactionTypeId switch { 1 => "MFS", 2 => "Card", _ => "Cash" })
+                        @GetPaymentTypeName(p.TransactionTypeId)
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Amount" Width="100">
@@ -74,38 +83,63 @@
     [Parameter] public bool AllowBookingOption { get; set; } = true;
 
     decimal PaymentAmount { get; set; }
-    string PaymentType { get; set; } = "Cash";
+    bool IsCash { get; set; } = true;
+    int? SelectedFinancialAccountId { get; set; }
     string TransactionNo { get; set; } = "";
     List<PaymentTransactionDTO> TempPayments { get; set; } = new();
     decimal RemainingAmount => NetPayable - TempPayments.Sum(p => p.PaidAmount ?? 0);
     bool IsBookingPayment { get; set; }
 
-    List<string> PaymentTypeOptions { get; set; } = new() { "Cash", "MFS", "Card" };
+    List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
 
-    int PaymentTypeToId(string type) => type switch
-    {
-        "MFS" => 1,
-        "Card" => 2,
-        _ => 0
-    };
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         PaymentAmount = NetPayable;
+        await LoadFinancialAccounts();
+    }
+
+    private async Task LoadFinancialAccounts()
+    {
+        try
+        {
+            FinancialAccounts = (await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+        }
+        catch
+        {
+            FinancialAccounts = new();
+        }
+    }
+
+    void OnCashChanged(bool isCash)
+    {
+        if (isCash) SelectedFinancialAccountId = null;
+    }
+
+    void OnFinancialAccountChanged(object value)
+    {
+        if (value != null) IsCash = false;
     }
 
     void AddTempPayment()
     {
         if (PaymentAmount <= 0) return;
+        if (!IsCash && (SelectedFinancialAccountId == null || SelectedFinancialAccountId <= 0)) return;
         TempPayments.Add(new PaymentTransactionDTO
         {
-            TransactionTypeId = PaymentTypeToId(PaymentType),
+            TransactionTypeId = IsCash ? 0 : SelectedFinancialAccountId.Value,
             PaidAmount = Math.Min(PaymentAmount, RemainingAmount > 0 ? RemainingAmount : PaymentAmount),
-            TransactionNo = PaymentType == "MFS" || PaymentType == "Card" ? TransactionNo : null
+            TransactionNo = !IsCash ? TransactionNo : null
         });
-        PaymentType = "Cash";
+        IsCash = true;
+        SelectedFinancialAccountId = null;
         TransactionNo = "";
         PaymentAmount = RemainingAmount;
+    }
+
+    string GetPaymentTypeName(int transactionTypeId)
+    {
+        if (transactionTypeId == 0) return "Cash";
+        return FinancialAccounts.FirstOrDefault(f => f.Id == transactionTypeId)?.AccountName ?? "Account";
     }
 
     void RemoveTempPayment(PaymentTransactionDTO payment)
