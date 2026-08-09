@@ -16,6 +16,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
@@ -75,6 +76,7 @@ namespace JM.UI.DataService
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<IStoreRepository, StoreRepository>();
             services.AddScoped<IBanksRepository, BanksRepository>();
+            services.AddScoped<IFinancialAccountsRepository, FinancialAccountsRepository>();
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();

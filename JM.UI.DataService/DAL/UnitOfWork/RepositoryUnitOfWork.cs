@@ -19,6 +19,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
@@ -96,6 +97,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IDesignationRepository DesignationRepository { get; }
         public ICompanyRepository CompanyRepository { get; }
         public IBanksRepository BanksRepository { get; }
+        public IFinancialAccountsRepository FinancialAccountsRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
         public IGroupRoleRepository GroupRoleRepository { get; }
@@ -159,6 +161,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CompanyRepository = new CompanyRepository(factory, tokenProvider, loggerFactory.CreateLogger<CompanyRepository>());
             DesignationRepository = new DesignationRepository(factory, tokenProvider, loggerFactory.CreateLogger<DesignationRepository>());
             BanksRepository = new BanksRepository(factory, tokenProvider, loggerFactory.CreateLogger<BanksRepository>());
+            FinancialAccountsRepository = new FinancialAccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<FinancialAccountsRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
             GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());

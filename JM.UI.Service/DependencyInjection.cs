@@ -17,6 +17,7 @@ using JM.UI.Service.Colors;
 using JM.UI.Service.Colors;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Employee;
+using JM.UI.Service.FinancialAccounts;
 using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
@@ -83,6 +84,7 @@ namespace JM.UI.Service
             services.AddScoped<IEmployeeService, EmployeeService>();
             services.AddScoped<IStoreService, StoreService>();
             services.AddScoped<IBanksService, BanksService>();
+            services.AddScoped<IFinancialAccountsService, FinancialAccountsService>();
             services.AddScoped<IGroupRoleService, GroupRoleService>();
             services.AddScoped<IUserGroupService, UserGroupService>();
             services.AddScoped<IShiftService, ShiftService>();

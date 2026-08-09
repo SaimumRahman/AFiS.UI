@@ -19,6 +19,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
@@ -89,6 +90,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICompanyRepository CompanyRepository { get; }
         IDesignationRepository DesignationRepository { get; }
         IBanksRepository BanksRepository { get; }
+        IFinancialAccountsRepository FinancialAccountsRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
         IGroupRoleRepository GroupRoleRepository { get; }

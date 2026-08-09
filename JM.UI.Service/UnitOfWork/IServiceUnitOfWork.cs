@@ -20,6 +20,7 @@ using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Designs;
 using JM.UI.Service.Employee;
+using JM.UI.Service.FinancialAccounts;
 using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
@@ -90,6 +91,7 @@ namespace JM.UI.Service.UnitOfWork
         IEmployeeService EmployeeService { get; }
         IStoreService StoreService { get; }
         IBanksService BanksService { get; }
+        IFinancialAccountsService FinancialAccountsService { get; }
         IGroupRoleService GroupRoleService { get; }
         IUserGroupService UserGroupService { get; }
         IShiftService ShiftService { get; }

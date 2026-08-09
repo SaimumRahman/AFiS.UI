@@ -1,0 +1,80 @@
+@page "/FinancialAccountsList"
+@using JM.UI.Entities.Model.FinancialAccounts
+@attribute [Authorize]
+@inherits FinancialAccountsListComponent
+
+<PageTitle>Financial Accounts</PageTitle>
+
+<!-- Header Card -->
+<RadzenCard class="p-3 mb-3">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
+            <RadzenIcon Icon="account_balance" Style="font-size: 32px; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H5"><b>Financial Accounts Management</b></RadzenText>
+        </RadzenStack>
+        <RadzenButton Text="Add New Financial Account"
+                      Icon="add"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@AddFinancialAccount" />
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Grid Card -->
+<RadzenCard class="p-3">
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
+    }
+    else
+    {
+        <RadzenDataGrid @ref="FinancialAccountsGrid"
+                        Data="@FinancialAccounts"
+                        TItem="FinancialAccountDTO"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        Style="border-radius: 12px;">
+            <Columns>
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="FinancialAccountTypeName" Title="Account Type" Width="200px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="MFSTypeName" Title="MFS Type" Width="160px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="BankName" Title="Bank" Width="220px">
+                    <Template Context="data">
+                        @(string.IsNullOrEmpty(data.BankName) ? "-" : data.BankName)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="AccountNo" Title="Account No" Width="220px">
+                    <Template Context="data">
+                        <b>@data.AccountNo</b>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="Remarks" Title="Remarks" Width="280px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Title="Actions" Width="220px">
+                    <Template Context="data">
+                        <RadzenButton Icon="edit"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      Size="ButtonSize.Small"
+                                      Class="mr-1"
+                                      Click="@(() => EditFinancialAccount(data))" />
+
+                        <RadzenButton Icon="delete"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Size="ButtonSize.Small"
+                                      Class="mr-1"
+                                      Click="@(() => DeleteFinancialAccount(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>
