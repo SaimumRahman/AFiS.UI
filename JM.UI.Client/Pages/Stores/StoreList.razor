@@ -38,6 +38,8 @@
                         AllowAlternatingRows="true"
                         AllowPaging="true"
                         AllowSorting="true"
+                        AllowRowExpand="true"
+                        ExpandMode="DataGridExpandMode.Single"
                         PagerHorizontalAlign="HorizontalAlign.Center"
                         PageSize="10"
                         PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
@@ -242,6 +244,38 @@
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
+            <Template Context="store">
+                @if (store.StoreAccounts?.Count > 0)
+                {
+                    <RadzenCard Style="margin:8px 0;padding:12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom:8px;">
+                            <RadzenIcon Icon="account_balance" Style="margin-right:4px;" /> Financial Accounts (@store.StoreAccounts.Count)
+                        </RadzenText>
+                        <RadzenDataGrid Data="@store.StoreAccounts"
+                                        TItem="StoreAccountDTO"
+                                        AllowPaging="false"
+                                        AllowSorting="false"
+                                        AllowFiltering="false"
+                                        GridLines="DataGridGridLines.Horizontal"
+                                        Density="Density.Compact">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="StoreAccountDTO" Property="AccountName" Title="Account Name" Width="220px" />
+                                <RadzenDataGridColumn TItem="StoreAccountDTO" Property="AccountType" Title="Type" Width="100px">
+                                    <Template Context="acct">
+                                        <RadzenBadge BadgeStyle="@(acct.AccountType == "MFS" ? BadgeStyle.Info : BadgeStyle.Success)" Text="@acct.AccountType" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="StoreAccountDTO" Property="AccountNo" Title="Account No" Width="180px" />
+                                <RadzenDataGridColumn TItem="StoreAccountDTO" Property="Remarks" Title="Remarks" Width="250px" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Style="padding:12px;color:var(--rz-text-secondary);">No financial accounts assigned.</RadzenText>
+                }
+            </Template>
         </RadzenDataGrid>
     </RadzenCard>
 </RadzenContent>

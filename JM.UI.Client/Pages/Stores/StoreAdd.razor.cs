@@ -1,4 +1,5 @@
-﻿using JM.UI.Entities.Model.Stores;
+﻿using JM.UI.Entities.Model.FinancialAccounts;
+using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -16,6 +17,7 @@ public partial class StoreAddComponent : AddEditPageBase
     [Parameter] public int? Id { get; set; }
 
     protected StoreDTO Store { get; set; } = new();
+    protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
     protected bool IsProcessing { get; set; } = false;
     protected bool IsLoading { get; set; } = false;
     protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -32,6 +34,7 @@ public partial class StoreAddComponent : AddEditPageBase
     protected override async Task OnInitializedAsync()
     {
         await TokenService.InitializeTokenAsync();
+        await LoadFinancialAccounts();
 
         if (IsEditMode)
         {
@@ -40,6 +43,18 @@ public partial class StoreAddComponent : AddEditPageBase
         else
         {
             InitializeStore();
+        }
+    }
+
+    private async Task LoadFinancialAccounts()
+    {
+        try
+        {
+            FinancialAccounts = (await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load financial accounts: {ex.Message}");
         }
     }
 

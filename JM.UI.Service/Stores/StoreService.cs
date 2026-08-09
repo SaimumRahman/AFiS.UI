@@ -32,7 +32,9 @@ namespace JM.UI.Service.Stores
                 CreatedOn = s.CreatedOn,
                 CreatedBy = s.CreatedBy,
                 ModifiedOn = s.ModifiedOn,
-                ModifiedBy = s.ModifiedBy
+                ModifiedBy = s.ModifiedBy,
+                FinancialAccountIds = s.FinancialAccountIds,
+                StoreAccounts = s.StoreAccounts
             }).ToList();
         }
 

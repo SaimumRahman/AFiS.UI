@@ -15,6 +15,7 @@ namespace JM.UI.Service.FinancialAccounts
         Task<IEnumerable<FinancialAccountTypeDTO>> GetFinancialAccountTypes();
         Task<IEnumerable<MFSTypeDTO>> GetMFSTypes();
         Task<IEnumerable<BanksDTO>> GetBanks();
+        Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown();
         Task<(bool IsValid, string ErrorMessage)> ValidateFinancialAccount(FinancialAccountDTO dto);
         string Truncate(string? value, int maxChars);
     }

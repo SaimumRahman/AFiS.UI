@@ -20,5 +20,7 @@ namespace JM.UI.Entities.Model.Stores
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedOn { get; set; }
         public string? ModifiedBy { get; set; }
+        public List<int> FinancialAccountIds { get; set; } = new();
+        public List<StoreAccountDTO> StoreAccounts { get; set; } = new();
     }
 }

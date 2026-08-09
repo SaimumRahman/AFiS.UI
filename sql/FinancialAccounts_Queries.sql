@@ -42,3 +42,16 @@ INSERT INTO MFSTypes (Name) VALUES ('Nagad');
 INSERT INTO MFSTypes (Name) VALUES ('Rocket');
 INSERT INTO MFSTypes (Name) VALUES ('Upay');
 INSERT INTO MFSTypes (Name) VALUES ('Rupay');
+
+-- =============================================
+-- Store <-> Financial Accounts (many-to-many)
+-- =============================================
+
+-- Table: StoreAccounts
+CREATE TABLE StoreAccounts (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    FinancialAccountTypeId INT NOT NULL,
+    StoreId INT NOT NULL,
+    CONSTRAINT FK_StoreAccounts_FinancialAccount FOREIGN KEY (FinancialAccountTypeId) REFERENCES FinancialAccounts(Id),
+    CONSTRAINT FK_StoreAccounts_Store FOREIGN KEY (StoreId) REFERENCES Stores(Id)
+);

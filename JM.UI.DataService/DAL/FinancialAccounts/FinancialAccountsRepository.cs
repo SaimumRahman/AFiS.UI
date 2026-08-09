@@ -150,5 +150,23 @@ namespace JM.UI.DataService.DAL.FinancialAccounts
                 throw;
             }
         }
+
+        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown()
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("FinancialAccounts/GetFinancialAccountsForDropdown");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<FinancialAccountDropdownDTO>>();
+                return result ?? new List<FinancialAccountDropdownDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching financial accounts for dropdown");
+                throw;
+            }
+        }
     }
 }

@@ -139,6 +139,34 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Financial Accounts" Component="FinancialAccountIds" />
+                                        <RadzenDropDownDataGrid @bind-Value="Store.FinancialAccountIds"
+                                                                Name="FinancialAccountIds"
+                                                                Data="@FinancialAccounts"
+                                                                ValueProperty="Id"
+                                                                TextProperty="AccountName"
+                                                                Placeholder="Select financial accounts..."
+                                                                Multiple="true"
+                                                                Chips="true"
+                                                                AllowFiltering="true"
+                                                                AllowFilteringByAllStringColumns="true"
+                                                                FilterOperator="StringFilterOperator.Contains"
+                                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                AllowClear="true"
+                                                                Style="width: 100%;">
+                                            <Columns>
+                                                <RadzenDropDownDataGridColumn Property="AccountName" Title="Account Name" />
+                                                <RadzenDropDownDataGridColumn Property="AccountType" Title="Type" Width="100" />
+                                                <RadzenDropDownDataGridColumn Property="AccountNo" Title="Account No" Width="160" />
+                                            </Columns>
+                                        </RadzenDropDownDataGrid>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
                     <RadzenStack Gap="0.5rem">

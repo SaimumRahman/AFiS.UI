@@ -42,6 +42,9 @@ namespace JM.UI.Service.FinancialAccounts
         public async Task<IEnumerable<BanksDTO>> GetBanks()
             => await _repositoryUnitOfWork.FinancialAccountsRepository.GetBanks();
 
+        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown()
+            => await _repositoryUnitOfWork.FinancialAccountsRepository.GetFinancialAccountsForDropdown();
+
         public Task<(bool IsValid, string ErrorMessage)> ValidateFinancialAccount(FinancialAccountDTO dto)
         {
             if (dto.FinancialAccountTypeId <= 0)

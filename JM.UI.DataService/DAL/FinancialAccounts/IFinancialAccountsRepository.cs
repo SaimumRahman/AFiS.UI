@@ -15,5 +15,6 @@ namespace JM.UI.DataService.DAL.FinancialAccounts
         Task<IEnumerable<FinancialAccountTypeDTO>> GetFinancialAccountTypes();
         Task<IEnumerable<MFSTypeDTO>> GetMFSTypes();
         Task<IEnumerable<BanksDTO>> GetBanks();
+        Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown();
     }
 }
