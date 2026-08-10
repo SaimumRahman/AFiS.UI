@@ -111,6 +111,15 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
 
+        // Progressive field enabling (new-item mode only; existing barcode loads keep current behavior)
+        protected bool IsFieldGatingActive => IsNewItemMode;
+        protected bool IsBillNoEditable => Purchase.SupplierId.HasValue;
+        protected bool IsGroupSelectable => Purchase.SupplierId.HasValue;
+        protected bool IsProductSelectable => CurrentItem.GroupId.HasValue;
+        protected bool IsSubProductSelectable => CurrentItem.SubGroupId.HasValue;
+        protected bool AreLookupFieldsSelectable => CurrentItem.SubGroupId.HasValue;
+        protected bool AreColorSizeFieldsSelectable => CurrentItem.MesurementUnitId.HasValue;
+
         protected bool IsEditItemMode { get; set; } = false;
 
         protected RadzenDataGrid<PurchaseItemDTO> ItemsGrid = default!;
