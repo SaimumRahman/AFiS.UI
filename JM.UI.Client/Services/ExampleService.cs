@@ -422,6 +422,24 @@ namespace JM.UI.Client.Services
                 {
                     new Example
                     {
+                        Name        = "Financial Accounts",
+                        Path        = "/FinancialAccountsList",
+                        Icon        = "\ue8b0",
+                        Title       = "Account Groups",
+                        Description = "Organize accounts into categories and groups",
+                        Tags        = new[] { "account", "group", "finance", "coa" }
+                    },
+                    new Example
+                    {
+                        Name        = "Banks",
+                        Path        = "/BanksList",
+                        Icon        = "\ue8b0",
+                        Title       = "Account Groups",
+                        Description = "Organize accounts into categories and groups",
+                        Tags        = new[] { "account", "group", "finance", "coa" }
+                    },
+                    new Example
+                    {
                         Name        = "Account Groups",
                         Path        = "/AccountsGroupsList",
                         Icon        = "\ue8b0",
