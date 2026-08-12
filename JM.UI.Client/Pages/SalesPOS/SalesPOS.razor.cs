@@ -15,14 +15,17 @@ using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
+using JM.UI.Service.Reports;
 
 namespace JM.UI.Client.Pages.SalesPOS
 {
     public partial class SalesPOSComponent : PosComponentBase, IDisposable
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public PosInvoicePdfService PosInvoicePdfService { get; set; } = default!;
 
         // ── Mode ──
         protected string _currentMode = "Sale";
@@ -864,12 +867,43 @@ namespace JM.UI.Client.Pages.SalesPOS
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
                         $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                    await DownloadPosInvoice(Sale);
                     await ResetForNewSale();
                 }
                 else
                 {
                     notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
                 }
+            }
+        }
+
+        // ── POS Invoice PDF ──
+        protected async Task DownloadPosInvoice(SaleMasterDTO sale)
+        {
+            try
+            {
+                if (sale == null || sale.SaleDetails == null || sale.SaleDetails.Count == 0) return;
+
+                var store = Stores.FirstOrDefault(s => s.Id == sale.StoreId);
+
+                var pdfBytes = PosInvoicePdfService.GeneratePosInvoice(
+                    sale,
+                    companyName: store?.Name ?? "ASIA FASHION",
+                    companyAddress: store?.Address ?? "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
+                    companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                    companyVat: store?.VAT ?? "",
+                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}");
+
+                var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+
+                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                    $"{fileName}", 3500);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Invoice Failed",
+                    $"Failed to generate invoice: {ex.Message}", 4000);
             }
         }
 
@@ -908,6 +942,13 @@ namespace JM.UI.Client.Pages.SalesPOS
                     {
                         notificationService.Notify(NotificationSeverity.Success, "Payment Saved",
                             saveResult.Message, 4000);
+                        if (sale != null)
+                        {
+                            var existingPaid = sale.PaymentTransactions?.Sum(p => p.PaidAmount ?? 0) ?? 0;
+                            sale.PaidAmount = existingPaid + paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
+                            sale.DueAmount = Math.Max(0, sale.NetAmount - (sale.PaidAmount ?? 0));
+                            await DownloadPosInvoice(sale);
+                        }
                         ExpandedInvoiceDetails.Remove(booking.SaleMasterId);
                         await LoadBookings();
                         StateHasChanged();

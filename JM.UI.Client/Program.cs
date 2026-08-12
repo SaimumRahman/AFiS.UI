@@ -51,6 +51,7 @@ builder.Services.AddScoped<ExampleService>();
 builder.Services.AddScoped<PurchaseReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();
+builder.Services.AddScoped<PosInvoicePdfService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
 builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
 builder.Services.AddAIChatService(options =>
