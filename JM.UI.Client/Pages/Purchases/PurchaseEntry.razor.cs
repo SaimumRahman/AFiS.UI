@@ -110,6 +110,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool IsSearchingBarcode { get; set; } = false;
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
+        protected bool IsSupplierLocked { get; set; } = false;
 
         // Progressive field enabling (new-item mode only; existing barcode loads keep current behavior)
         protected bool IsFieldGatingActive => IsNewItemMode;
@@ -827,6 +828,8 @@ namespace JM.UI.Client.Pages.Purchases
                         CatalogueId = item.CatalogueId,
                         CatalogueName = item.Catalogue ?? string.Empty,
                         DesignId = item.DesignId,
+                        SupplierId = item.SupplierId,
+                        SupplierName = item.SupplierName ?? string.Empty,
                         IsNewItem = false,
                         IsSaleable = item.SalePrice.HasValue && item.SalePrice > 0,
                         ProductType = item.ProductType ?? "Sell Product",
@@ -1065,6 +1068,13 @@ namespace JM.UI.Client.Pages.Purchases
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
 
+                // Keep the item's supplier selected and lock the Supplier dropdown
+                var supplierRow = validRows.FirstOrDefault(r => r.SupplierId.HasValue && r.SupplierId.Value > 0);
+                if (supplierRow != null)
+                    Purchase.SupplierId = supplierRow.SupplierId;
+                if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
+                    IsSupplierLocked = true;
+
                 // Clear only Color, Size, ShadeNo â€” leave rest of left panel intact
                 CurrentItem.ColorId = null;
                 CurrentItem.SizeId = null;
@@ -1151,6 +1161,14 @@ namespace JM.UI.Client.Pages.Purchases
             PurchaseItems.Add(itemToAdd);
             await ItemsGrid.Reload();
             CalculateTotals();
+
+            // Keep the item's supplier selected and lock the Supplier dropdown
+            var supplier = AvailableItems.FirstOrDefault(i => i.Id == CurrentItem.ItemId);
+            if (supplier?.SupplierId is { } supplierId && supplierId > 0)
+            {
+                Purchase.SupplierId = supplierId;
+                IsSupplierLocked = true;
+            }
 
             CurrentItem.Quantity = 1;
             CurrentItem.PurchasePrice = 0;
@@ -1918,6 +1936,8 @@ namespace JM.UI.Client.Pages.Purchases
                             CatalogueId = item.CatalogueId,
                             CatalogueName = item.Catalogue ?? string.Empty,
                             DesignId = item.DesignId,
+                            SupplierId = item.SupplierId,
+                            SupplierName = item.SupplierName ?? string.Empty,
                             IsNewItem = false,
                             IsSaleable = item.SalePrice.HasValue && item.SalePrice > 0,
                             ProductType = item.ProductType ?? "Sell Product",
@@ -2401,6 +2421,7 @@ namespace JM.UI.Client.Pages.Purchases
             IsEditItemMode = false;
             DisableItemFields = false;
             IsProductNameFieldChange = false;
+            IsSupplierLocked = false;
 
             // â”€â”€ Shared pricing fields â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SharedPurchasePrice = 0;
