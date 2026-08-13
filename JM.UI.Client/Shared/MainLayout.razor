@@ -1,5 +1,7 @@
 ﻿@using JM.UI.Client.Services
 @using JM.UI.Entities.Models
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Service.UnitOfWork
 @using Microsoft.AspNetCore.Components
 
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
@@ -14,6 +16,8 @@
 @inject DialogService DialogService
 @inject ITokenService tokenService
 @inject ProtectedSessionStorage sessionStorage
+@inject ProtectedLocalStorage _localStorage
+@inject IServiceUnitOfWork ServiceUnitOfWork
 @inject AuthenticationStateProvider AuthStateProvider
 <Canonical />
 
@@ -36,6 +40,17 @@
                         <RadzenLink Path="/docs/api" Text="API Reference" title="Radzen Blazor Components API Reference" class="rz-mx-2 rz-mx-lg-4" target="_blank" />
                         <RadzenLink Path="https://github.com/radzenhq/radzen-blazor" Text="GitHub" title="Star Radzen Blazor Components on GitHub" class="rz-text-nowrap rz-mx-2 rz-mx-lg-4" target="_blank" />
                     </div> *@
+                    @if (ShowStoreDropdown)
+                    {
+                        <RadzenDropDown @bind-Value="SelectedStoreId"
+                                        Data="@Stores"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        AllowFiltering="true"
+                                        Change="@OnStoreSelected"
+                                        Placeholder="Select Store..."
+                                        Style="width: 200px;" />
+                    }
                     <RadzenAppearanceToggle class="rz-mx-2" />
                     <RadzenSidebarToggle Icon="settings" Click="@(() => configSidebarExpanded = !configSidebarExpanded)" class="rz-m-0" />
                         <RadzenSidebarToggle Icon="logout" Click="@(() => Logout())" class="rz-m-0" />
@@ -116,6 +131,15 @@
 
     Example example;
 
+    protected List<StoreDTO> Stores = new();
+    protected int? SelectedStoreId;
+    protected bool ShowStoreDropdown;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStoreContext();
+    }
+
     protected override void OnInitialized()
     {
         UriHelper.LocationChanged += OnLocationChanged;
@@ -123,6 +147,51 @@
         example = ExampleService.FindCurrent(new Uri(UriHelper.Uri));
 
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+    }
+
+    private async Task LoadStoreContext()
+    {
+        try
+        {
+            var userIdResult = await _localStorage.GetAsync<string>("UserId");
+            if (string.IsNullOrEmpty(userIdResult.Value) || !int.TryParse(userIdResult.Value, out var userId) || userId <= 0)
+                return;
+
+            // Only admins (system 'Admin' group) see the store switcher
+            var adminCount = await ServiceUnitOfWork.UserGroupService.GetAdminGroupCountByUserId(userId);
+            if (adminCount <= 0) return;
+
+            var stores = await ServiceUnitOfWork.StoreService.GetStores();
+            Stores = stores?.ToList() ?? new List<StoreDTO>();
+
+            var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+            if (!string.IsNullOrEmpty(storeIdResult.Value) && int.TryParse(storeIdResult.Value, out var storedStoreId))
+                SelectedStoreId = storedStoreId;
+            else
+                SelectedStoreId = Stores.FirstOrDefault()?.Id;
+
+            ShowStoreDropdown = Stores.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load store context: {ex.Message}");
+        }
+    }
+
+    protected async Task OnStoreSelected(object value)
+    {
+        if (value == null) return;
+
+        var storeId = value is int id
+            ? id
+            : (int.TryParse(value.ToString(), out var parsed) ? parsed : 0);
+
+        if (storeId <= 0) return;
+
+        SelectedStoreId = storeId;
+        await _localStorage.SetAsync("StoreId", storeId.ToString());
+
+        Console.WriteLine($"✅ Store switched to {storeId}");
     }
 
     void OnLocationChanged(object sender, LocationChangedEventArgs args)
