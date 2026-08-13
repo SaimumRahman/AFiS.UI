@@ -121,19 +121,16 @@ namespace JM.UI.Client.Pages.Transfers
         {
             try
             {
-                // â”€â”€ Read from localStorage safely â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 int storeId = await GetLocalStorageInt("StoreId");
                 CurrentUserId = await GetLocalStorageInt("UserId");
 
                 Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
-                // â”€â”€ Load Stores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
 
-                // â”€â”€ Assign From Store based on User â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (CurrentUserId == 1)
                 {
                     var headOfficeStore = stores.FirstOrDefault(s =>
