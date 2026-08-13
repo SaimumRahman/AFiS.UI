@@ -12,3 +12,6 @@
 /JM.UI.Service/bin
 /JM.UI.Service/obj
 /JM.UITests/obj/Release/net8.0
+/JM.UITests/obj/Debug/net8.0/JM.UITests.AssemblyInfo.cs
+/JM.UITests/obj/Debug/net8.0/JM.UITests.AssemblyInfoInputs.cache
+/JM.UITests/obj/Debug/net8.0/JM.UITests.assets.cache
