@@ -31,6 +31,9 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     protected bool IsLoading;
     protected bool IsPrinting;
 
+    // Id of the row currently generating its individual report
+    protected int? IsPrintingId { get; set; }
+
     // ── Date filter state ─────────────────────────────────────────────────────
     protected DateTime? FilterDateFrom { get; set; } = DateTime.Now;
     protected DateTime? FilterDateTo { get; set; } = DateTime.Now;
@@ -244,6 +247,50 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         finally
         {
             IsPrinting = false;
+            StateHasChanged();
+        }
+    }
+
+    protected async Task PrintSingleReport(PurchaseSummaryDTO purchase)
+    {
+        if (purchase == null) return;
+
+        try
+        {
+            IsPrintingId = purchase.Id;
+            StateHasChanged();
+
+            if (!PurchaseItemsCache.ContainsKey(purchase.Id))
+            {
+                var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+                PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+            }
+
+            var cache = new Dictionary<int, List<PurchaseItemDTO>>
+            {
+                [purchase.Id] = PurchaseItemsCache[purchase.Id] ?? new List<PurchaseItemDTO>()
+            };
+
+            var pdfBytes = PurchaseReportService.GeneratePurchaseDetailReport(
+                new[] { purchase },
+                cache,
+                dateFrom: purchase.PurchaseDate,
+                dateTo: purchase.PurchaseDate);
+
+            var fileName =
+                $"PurchaseReport_{purchase.SystemInvoiceNo ?? purchase.Id.ToString()}_{purchase.BillInvoiceNumber ?? "purchase"}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+
+            NotifySuccess($"Report generated for purchase '{purchase.SystemInvoiceNo}'.");
+        }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to generate purchase report: {ex.Message}");
+        }
+        finally
+        {
+            IsPrintingId = null;
             StateHasChanged();
         }
     }

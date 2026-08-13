@@ -201,5 +201,30 @@ namespace JM.UI.DataService.DAL.UserGroup
                 throw new Exception("Unexpected error updating group users: " + ex.Message, ex);
             }
         }
+
+        public async Task<int> GetAdminGroupCountByUserId(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching admin group count for user: {UserId}", userId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"UserGroups/admin-count/{userId}");
+                response.EnsureSuccessStatusCode();
+
+                var count = await response.Content.ReadFromJsonAsync<int>();
+                return count;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get admin group count");
+                throw new Exception("Failed to fetch admin group count: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get admin group count");
+                throw new Exception("Unexpected error fetching admin group count: " + ex.Message, ex);
+            }
+        }
     }
 }

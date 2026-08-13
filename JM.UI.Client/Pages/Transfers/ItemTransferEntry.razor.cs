@@ -121,19 +121,16 @@ namespace JM.UI.Client.Pages.Transfers
         {
             try
             {
-                // â”€â”€ Read from localStorage safely â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 int storeId = await GetLocalStorageInt("StoreId");
                 CurrentUserId = await GetLocalStorageInt("UserId");
 
                 Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
-                // â”€â”€ Load Stores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
 
-                // â”€â”€ Assign From Store based on User â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (CurrentUserId == 1)
                 {
                     var headOfficeStore = stores.FirstOrDefault(s =>
@@ -741,15 +738,19 @@ namespace JM.UI.Client.Pages.Transfers
 
             int addedCount = 0;
             int updatedCount = 0;
+            var processedRows = new List<TransferPreviewRow>();
+            bool hasStockWarnings = false;
 
             foreach (var row in validRows)
             {
                 // â”€â”€ Stock check (preview qty vs available stock) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (row.IssueQty > row.StockQuantity)
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                    hasStockWarnings = true;
+                    notificationService.Notify(NotificationSeverity.Warning, "Insufficient Stock",
                         $"'{row.ItemName}' ({row.Barcode}): Issue qty ({row.IssueQty:N2}) " +
-                        $"does not match available stock ({row.StockQuantity:N0}). Skipping.");
+                        $"exceeds available stock ({row.StockQuantity:N0}). " +
+                        "Row kept in preview — lower the qty and try again.");
                     continue;
                 }
 
@@ -777,9 +778,11 @@ namespace JM.UI.Client.Pages.Transfers
                     // Stock check against combined qty
                     if (totalQty > row.StockQuantity)
                     {
-                        notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                        hasStockWarnings = true;
+                        notificationService.Notify(NotificationSeverity.Warning, "Insufficient Stock",
                             $"'{row.ItemName}' ({row.Barcode}): Combined qty ({totalQty:N2}) " +
-                            $"exceeds available stock ({row.StockQuantity:N0}). Cannot add.");
+                            $"exceeds available stock ({row.StockQuantity:N0}). " +
+                            "Row kept in preview — lower the qty and try again.");
                         continue;
                     }
 
@@ -787,6 +790,7 @@ namespace JM.UI.Client.Pages.Transfers
                     existingLine.IssueQty = totalQty;
                     existingLine.UpdatedAt = DateTime.Now;
                     updatedCount++;
+                    processedRows.Add(row);
                     continue;
                 }
 
@@ -817,26 +821,37 @@ namespace JM.UI.Client.Pages.Transfers
 
                 TransferDetails.Add(newLine);
                 addedCount++;
+                processedRows.Add(row);
             }
 
             // â”€â”€ Reload confirmed grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             await ItemsGrid.Reload();
 
             // â”€â”€ Clear preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            PreviewItems.Clear();
+            foreach (var row in processedRows)
+            {
+                PreviewItems.Remove(row);
+            }
             await PreviewGrid.Reload();
-            ResetSharedFields();
-            BarcodeSearchText = string.Empty;
-            DisableItemFields = false;
-            CurrentDetail.ColorId = null;
-            CurrentDetail.SizeId = null;
-            CurrentDetail.Barcode = null;
+
+            if (processedRows.Count > 0)
+            {
+                ResetSharedFields();
+                BarcodeSearchText = string.Empty;
+                DisableItemFields = false;
+                CurrentDetail.ColorId = null;
+                CurrentDetail.SizeId = null;
+                CurrentDetail.Barcode = null;
+            }
 
             // â”€â”€ Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            if (addedCount == 0 && updatedCount == 0)
+            if (processedRows.Count == 0)
             {
-                notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
-                    "No items were added. Please fix the validation errors and try again.");
+                if (!hasStockWarnings)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Nothing Added",
+                        "No items were added. Please fix the validation errors and try again.");
+                }
                 return;
             }
 
