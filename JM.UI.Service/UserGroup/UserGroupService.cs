@@ -88,5 +88,12 @@ namespace JM.UI.Service.UserGroup
 
             return await _repositoryUnitOfWork.UserGroupRepository.UpdateGroupUsers(groupId, userIds);
         }
+
+        public async Task<int> GetAdminGroupCountByUserId(int userId)
+        {
+            if (userId <= 0) return 0;
+
+            return await _repositoryUnitOfWork.UserGroupRepository.GetAdminGroupCountByUserId(userId);
+        }
     }
 }

@@ -234,7 +234,12 @@
                                                     TextProperty="Name" ValueProperty="Id" Placeholder="Select..."
                                                     Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                    Disabled="@IsProcessing" />
+                                                    Disabled="@(IsProcessing || IsSupplierLocked)" />
+                                        @if (IsSupplierLocked)
+                                        {
+                                            <RadzenBadge Text="Locked to item's supplier"
+                                                         BadgeStyle="BadgeStyle.Warning" Style="font-size:0.62rem; margin-top:2px;" />
+                                        }
                                 </RadzenColumn>
                             </RadzenRow>
 
