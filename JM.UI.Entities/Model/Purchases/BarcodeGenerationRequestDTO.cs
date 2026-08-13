@@ -15,5 +15,8 @@ namespace JM.UI.Entities.Model.Purchases
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
         public bool IsNewItemMode { get; set; } = false;
+        public bool IsSaleable { get; set; }
+        public bool IsConsume { get; set; }
+        public bool IsRawMaterial { get; set; }
     }
 }

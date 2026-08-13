@@ -2306,6 +2306,12 @@ namespace JM.UI.Client.Pages.Purchases
 
         protected async Task GenerateBarcode()
         {
+            if (!CurrentItem.IsRawMaterial && !CurrentItem.IsSaleable && !CurrentItem.IsConsume)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Please select a valid item type");
+                return;
+            }
+
             if (!CurrentItem.GroupId.HasValue && CurrentItem.ItemId == 0) return;
 
             try
@@ -2321,6 +2327,9 @@ namespace JM.UI.Client.Pages.Purchases
                     SubGroupId = CurrentItem.SubGroupId,
                     DesignId = CurrentItem.DesignId,
                     IsNewItemMode = IsNewItemMode,
+                    IsSaleable = CurrentItem.IsSaleable,
+                    IsConsume = CurrentItem.IsConsume,
+                    IsRawMaterial = CurrentItem.IsRawMaterial,
                 };
 
                 var barcode = await _serviceUnitOfWork.PurchaseService.GenerateBarcode(request);

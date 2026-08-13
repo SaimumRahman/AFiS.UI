@@ -75,13 +75,6 @@
 <div class="pos-root">
     @* Header *@
     <div class="pos-header">
-        <div class="brand">AFiS POS</div>
-        <div class="mode-tabs">
-            <button class="@SaleTabClass" @onclick="SwitchToSale">Sale</button>
-            <button class="@BookingTabClass" @onclick="SwitchToBooking">Booking</button>
-            <button class="@InvoicesTabClass" @onclick="SwitchToInvoices">Invoices</button>
-            <button class="@DraftTabClass" @onclick="SwitchToDraft">Draft</button>
-        </div>
         <div class="header-actions">
             <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Style="color:#fff;border-color:#556;" Click="@HoldAsDraft" Text="Draft" />
             <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Style="color:#fff;border-color:#556;" Click="@ResetForNewSale" Text="Reset" />
