@@ -191,6 +191,16 @@
                     <RadzenDataGridColumn TItem="EcommerceItemDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="110px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="EcommerceItemDTO" Property="CurrentStock" Title="Stock" Width="90px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="EcommerceItemDTO" Property="ReturnRefNo" Title="Return Ref No" Width="140px" />
+                    <RadzenDataGridColumn TItem="EcommerceItemDTO" Title="Actions" Width="110px" Filterable="false" Sortable="false">
+                        <Template Context="item">
+                            <RadzenButton Icon="publish"
+                                          ButtonStyle="ButtonStyle.Success"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(args => PostToProductApi(item))"
+                                          MouseEnter="@(args => TooltipService.Open(args, "Post to Product API"))" />
+                        </Template>
+                    </RadzenDataGridColumn>
                 </Columns>
             </RadzenDataGrid>
         </RadzenCard>

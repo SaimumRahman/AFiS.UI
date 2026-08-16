@@ -187,6 +187,55 @@ namespace JM.UI.Client.Pages.Ecommerce
                     ? $"Branch #{ActiveStore.Id}"
                     : ActiveStore.Name;
 
+        protected HashSet<int> PostingItemIds { get; } = new();
+
+        protected async Task PostToProductApi(EcommerceItemDTO item)
+        {
+            try
+            {
+                PostingItemIds.Add(item.Id);
+
+                var currentUser = await GetCurrentUserAsync();
+                var userRole = await GetUserRoleAsync();
+
+                var result = await _serviceUnitOfWork.EcommerceService
+                    .PostItemToProductApi(item, currentUser, userRole);
+
+                if (result.IsSuccess)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Posted", result.Message ?? "Posted to Product API.");
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Failed", result.Message ?? "Failed to post to Product API.");
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to post item: {ex.Message}");
+            }
+            finally
+            {
+                PostingItemIds.Remove(item.Id);
+            }
+        }
+
+        private async Task<string> GetCurrentUserAsync()
+        {
+            var username = (await _localStorage.GetAsync<string>("UserName")).Value;
+            if (!string.IsNullOrWhiteSpace(username))
+                return username;
+
+            var userId = (await _localStorage.GetAsync<string>("UserId")).Value;
+            return userId ?? "system";
+        }
+
+        private async Task<string> GetUserRoleAsync()
+        {
+            var role = (await _localStorage.GetAsync<string>("UserRole")).Value;
+            return role ?? "User";
+        }
+
         public void Dispose()
         {
             ItemsGrid?.Dispose();

@@ -80,6 +80,15 @@ builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// External Product API (anonymous, used by the Ecommerce "Post to Product API" button)
+builder.Services.AddHttpClient("ProductApi", (serviceProvider, client) =>
+{
+    var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
+    client.BaseAddress = new Uri(apiSettings.ProductApiUrl ?? "http://localhost:1009/");
+    client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 builder.Services.AddHttpClient("AuthApi", (serviceProvider, client) =>
 {
     var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;

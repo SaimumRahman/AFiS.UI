@@ -21,7 +21,10 @@ namespace JM.UI.Entities.Model
 
         public string DbServer { get; set; }
 
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
+
+        public string? ProductApiUrl { get; set; }
+        public string? ProductApiHashSecret { get; set; }
 
         public double AccessTokenExpirationMinutes { get; set; }
 

@@ -1,6 +1,9 @@
-﻿using JM.UI.DataService.DAL.GroupActionPermission;
+﻿using JM.UI.DataService.DAL.Ecommerce;
+using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.UnitOfWork;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using JM.UI.Service.Accounts;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
@@ -125,7 +128,7 @@ namespace JM.UI.Service.UnitOfWork
         public ISaleService SaleService { get; private set; }
         public IEcommerceService EcommerceService { get; private set; }
 
-        public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
+        public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _repoUow = repoUow;
            
@@ -182,7 +185,7 @@ namespace JM.UI.Service.UnitOfWork
             CouponService = new CouponService(_repoUow);
             TransferTypeService = new TransferTypeService(_repoUow);
             SaleService = new SaleService(_repoUow);
-            EcommerceService = new EcommerceService(_repoUow.EcommerceRepository);
+            EcommerceService = new EcommerceService(_repoUow, httpClientFactory, configuration);
         }
         public void Dispose()
         {
