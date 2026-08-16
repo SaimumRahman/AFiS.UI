@@ -26,6 +26,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Discount;
+using JM.UI.Service.Ecommerce;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -127,6 +128,7 @@ namespace JM.UI.Service
             services.AddScoped<PurchaseReportService>();
             services.AddScoped<StockService>();
             services.AddScoped<ISaleService, SaleService>();
+            services.AddScoped<IEcommerceService, EcommerceService>();
         }
     }
 }

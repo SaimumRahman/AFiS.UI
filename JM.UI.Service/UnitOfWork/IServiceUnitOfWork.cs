@@ -30,6 +30,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.Discount;
+using JM.UI.Service.Ecommerce;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -137,5 +138,6 @@ namespace JM.UI.Service.UnitOfWork
         ICouponService CouponService { get; }
         ITransferTypeService TransferTypeService { get; }
         ISaleService SaleService { get; }
+        IEcommerceService EcommerceService { get; }
     }
 }

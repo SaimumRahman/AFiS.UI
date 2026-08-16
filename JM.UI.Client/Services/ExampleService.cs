@@ -226,6 +226,15 @@ namespace JM.UI.Client.Services
                         Title       = "Barcodes",
                         Description = "Manage barcode assignments",
                         Tags        = new[] { "barcode", "sku", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name        = "Ecommerce Items",
+                        Path        = "/EcommerceItems",
+                        Icon        = "\ue63b",
+                        Title       = "Ecommerce Items",
+                        Description = "View and filter items of the ecommerce branch",
+                        Tags        = new[] { "ecommerce", "online", "store", "items" }
                     }
                 }
             },

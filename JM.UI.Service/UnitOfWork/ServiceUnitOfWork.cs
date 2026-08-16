@@ -30,6 +30,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Discount;
+using JM.UI.Service.Ecommerce;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
 using JM.UI.Service.ItemFeature;
@@ -122,6 +123,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICouponService CouponService { get; private set; }
         public ITransferTypeService TransferTypeService { get; private set; }
         public ISaleService SaleService { get; private set; }
+        public IEcommerceService EcommerceService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -180,6 +182,7 @@ namespace JM.UI.Service.UnitOfWork
             CouponService = new CouponService(_repoUow);
             TransferTypeService = new TransferTypeService(_repoUow);
             SaleService = new SaleService(_repoUow);
+            EcommerceService = new EcommerceService(_repoUow.EcommerceRepository);
         }
         public void Dispose()
         {

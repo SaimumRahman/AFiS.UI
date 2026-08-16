@@ -29,6 +29,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
+using JM.UI.DataService.DAL.Ecommerce;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
 using JM.UI.DataService.DAL.ItemFeatures;
@@ -143,6 +144,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICouponRepository CouponRepository { get; }
         public ITransferTypeRepository TransferTypeRepository { get; }
         public ISaleRepository SaleRepository { get; }
+        public IEcommerceRepository EcommerceRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -206,6 +208,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CouponRepository = new CouponRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponRepository>());
             TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
             SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
+            EcommerceRepository = new EcommerceRepository(factory, tokenProvider, loggerFactory.CreateLogger<EcommerceRepository>());
         }
 
         public void Dispose()

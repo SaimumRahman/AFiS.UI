@@ -1,0 +1,6 @@
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.csproj.AssemblyReference.cache
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.GeneratedMSBuildEditorConfig.editorconfig
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.AssemblyInfoInputs.cache
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.AssemblyInfo.cs
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.csproj.CoreCompileInputs.cache
+D:\ENGR_Project\Mahbub_Asian_Tailor\Source\AFiS_ERP\UI\SaimumRahman\AFiS.UI\JM.UITests\obj\Debug\net8.0\JM.UITests.sourcelink.json

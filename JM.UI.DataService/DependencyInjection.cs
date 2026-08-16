@@ -15,6 +15,7 @@ using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
+using JM.UI.DataService.DAL.Ecommerce;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
@@ -111,6 +112,7 @@ namespace JM.UI.DataService
             services.AddScoped<ICouponTypeRepository, CouponTypeRepository>();
             services.AddScoped<ICouponRepository, CouponRepository>();
             services.AddScoped<ISaleRepository, SaleRepository>();
+            services.AddScoped<IEcommerceRepository, EcommerceRepository>();
             #endregion
         }
 
