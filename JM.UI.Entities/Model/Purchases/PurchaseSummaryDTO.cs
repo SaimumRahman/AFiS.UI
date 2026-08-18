@@ -14,6 +14,7 @@ public class PurchaseSummaryDTO
     public DateTime? BillDate { get; set; }
     public string? SupplierName { get; set; }
     public string? StoreName { get; set; }
+    public string? Remarks { get; set; }
     public int TotalItems { get; set; }
     public decimal TotalQuantity { get; set; }
     public decimal NetAmount { get; set; }
