@@ -1627,6 +1627,7 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
                         result.Message ?? "Purchase saved successfully");
+                    await ResetPage();
                     NavigationManager.NavigateTo("/PurchaseList");
                 }
                 else
