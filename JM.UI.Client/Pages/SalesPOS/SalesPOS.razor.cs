@@ -508,8 +508,10 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
-                if (detail.StoreId == null)
-                    detail.StoreId = Sale.StoreId;
+                // The sale is being made at the logged-in user's branch, so the
+                // sale detail always records that branch (even when the product
+                // itself was added from another branch).
+                detail.StoreId = Sale.StoreId;
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
