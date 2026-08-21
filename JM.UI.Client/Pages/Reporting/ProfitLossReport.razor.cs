@@ -23,11 +23,15 @@ public partial class ProfitLossReportComponent : PosComponentBase
     protected List<StoreDTO> Stores { get; set; } = new();
     protected int? SelectedStoreId { get; set; }
 
+    protected DateTime? FromDate { get; set; }
+    protected DateTime? ToDate { get; set; }
+
     protected decimal TotalInSum => Report.Sum(x => x.TotalIn);
     protected decimal TotalOutSum => Report.Sum(x => x.TotalOut);
     protected decimal TotalSaleSum => Report.Sum(x => x.TotalSaleAmount);
     protected decimal TotalProfitSum => Report.Sum(x => x.Profit);
     protected decimal CurrentStockSum => Report.Sum(x => x.CurrentStock);
+    protected decimal TotalPurchaseValue => Report.Sum(x => x.PurchaseValue);
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,7 +57,7 @@ public partial class ProfitLossReportComponent : PosComponentBase
         IsLoading = true;
         try
         {
-            var result = await _serviceUnitOfWork.ReportingService.GetProfitLossReport(SelectedStoreId);
+            var result = await _serviceUnitOfWork.ReportingService.GetProfitLossReport(SelectedStoreId, FromDate, ToDate);
             Report = result ?? new List<ProfitLossReportDTO>();
         }
         catch (Exception ex)
@@ -66,10 +70,5 @@ public partial class ProfitLossReportComponent : PosComponentBase
             IsLoading = false;
             StateHasChanged();
         }
-    }
-
-    protected async Task OnStoreChanged()
-    {
-        await LoadReport();
     }
 }

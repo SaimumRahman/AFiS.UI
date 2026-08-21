@@ -18,6 +18,9 @@ namespace JM.UI.Entities.Model.Reporting_D
         /// <summary>Weighted average purchase (cost) price.</summary>
         public decimal AvgPurchasePrice { get; set; }
 
+        /// <summary>Total purchase amount (SUM of PurchaseItems.TotalAmount) for the item in the period.</summary>
+        public decimal PurchaseValue { get; set; }
+
         /// <summary>Total quantity sold.</summary>
         public decimal TotalSaleQty { get; set; }
 

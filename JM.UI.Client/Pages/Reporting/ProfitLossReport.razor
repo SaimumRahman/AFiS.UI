@@ -17,6 +17,14 @@
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 160px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 160px" />
                     <RadzenDropDown @bind-Value="SelectedStoreId"
                                     Data="@Stores"
                                     TextProperty="Name"
@@ -24,8 +32,7 @@
                                     AllowClear="true"
                                     ClearValue="null"
                                     Placeholder="All Stores"
-                                    Style="width: 220px"
-                                    Change="OnStoreChanged" />
+                                    Style="width: 220px" />
                     <RadzenButton Icon="refresh"
                                   Text="Load"
                                   ButtonStyle="ButtonStyle.Primary"
@@ -70,6 +77,9 @@
                     <RadzenDataGridColumn TItem="ProfitLossReportDTO" Property="AvgPurchasePrice" Title="Avg Purchase">
                         <Template Context="r">@r.AvgPurchasePrice.ToString("N2")</Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProfitLossReportDTO" Property="PurchaseValue" Title="Total Purchase">
+                        <Template Context="r">@r.PurchaseValue.ToString("N2")</Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="ProfitLossReportDTO" Property="TotalSaleQty" Title="Sale Qty">
                         <Template Context="r">@r.TotalSaleQty.ToString("N2")</Template>
                     </RadzenDataGridColumn>
@@ -91,6 +101,7 @@
                     <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" Style="width:100%;font-weight:600">
                         <span>Total In: @TotalInSum.ToString("N2")</span>
                         <span>Total Out: @TotalOutSum.ToString("N2")</span>
+                        <span>Grand Total Purchase: @TotalPurchaseValue.ToString("N2")</span>
                         <span>Total Sale: @TotalSaleSum.ToString("N2")</span>
                         <span>Current Stock: @CurrentStockSum.ToString("N2")</span>
                         <span>Total Profit: @TotalProfitSum.ToString("N2")</span>

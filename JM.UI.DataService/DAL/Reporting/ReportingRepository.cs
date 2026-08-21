@@ -18,13 +18,20 @@ namespace JM.UI.DataService.DAL.Reporting
         {
         }
 
-        public async Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId)
+        public async Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate)
         {
             try
             {
                 var url = "api/Reporting/profit-loss";
+                var query = new List<string>();
                 if (storeId.HasValue && storeId.Value > 0)
-                    url += $"?storeId={storeId.Value}";
+                    query.Add($"storeId={storeId.Value}");
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.GetAsync(url);
