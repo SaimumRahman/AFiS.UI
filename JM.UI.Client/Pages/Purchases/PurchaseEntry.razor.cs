@@ -1778,7 +1778,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
-            await _serviceUnitOfWork.ItemService.GetItemByGroupIdWithStock(groupId.Value);
+            //await _serviceUnitOfWork.ItemService.GetItemByGroupIdWithStock(groupId.Value);
             SubGroups = await LoadSubGroupsByGroup(groupId.Value);
             var sad = await _serviceUnitOfWork.GroupService.GetGroupById(groupId.Value);
             CurrentItem.VatPercentage = sad.VAT;
