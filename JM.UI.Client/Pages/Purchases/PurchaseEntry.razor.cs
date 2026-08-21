@@ -112,6 +112,10 @@ namespace JM.UI.Client.Pages.Purchases
         protected string BarcodeSearchText { get; set; } = string.Empty;
         protected bool IsSupplierLocked { get; set; } = false;
 
+        // When true (default), selecting a barcode loads all related variants (current behavior).
+        // When false, only the single selected barcode is added to the preview.
+        protected bool AddAllRelatedItems { get; set; } = true;
+
         // Progressive field enabling (new-item mode only; existing barcode loads keep current behavior)
         protected bool IsFieldGatingActive => IsNewItemMode;
         protected bool IsBillNoEditable => Purchase.SupplierId.HasValue;
@@ -795,7 +799,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (response.Found && response.ItemDetails != null && response.ItemDetails.Any())
             {
-                foreach (var item in response.ItemDetails.Where(x => x != null))
+                var details = response.ItemDetails.Where(x => x != null);
+                if (!AddAllRelatedItems)
+                    details = details.Where(x => !string.IsNullOrWhiteSpace(x.Barcode) && x.Barcode == barcode);
+
+                foreach (var item in details)
                 {
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode

@@ -598,7 +598,16 @@
                                 </RadzenColumn>
                             </RadzenRow>
 
-                          
+                            <!-- Add-all-related checkbox -->
+                            <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.3rem" AlignItems="AlignItems.Center">
+                                        <RadzenCheckBox TValue="bool" @bind-Value="AddAllRelatedItems" Name="addAllRelated" />
+                                        <RadzenLabel Text="Add all related items (variants)" Component="addAllRelated" Style="font-size:0.72rem;" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
                         </RadzenStack>
                     </RadzenColumn>
 
