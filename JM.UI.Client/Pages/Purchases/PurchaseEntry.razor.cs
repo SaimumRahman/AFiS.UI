@@ -1925,7 +1925,7 @@ namespace JM.UI.Client.Pages.Purchases
                         newRow = new PreviewItemRow
                         {
                             ItemId = item.Id,
-                            ItemName = !string.IsNullOrWhiteSpace(CurrentItem.ItemName) ? CurrentItem.ItemName : (item.Name ?? string.Empty),
+                        ItemName = !string.IsNullOrWhiteSpace(item.Name) ? item.Name : CurrentItem.ItemName,
                             Barcode = barcode,
                             ColorId = item.ColorId,
                             ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
@@ -2177,9 +2177,16 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     if (result.ItemDetails != null)
                     {
-                        await PopulateFromExistingItem(result.ItemDetails.FirstOrDefault()!, result.itemWiseFeatures);
+                        // When not adding all related items, derive the form from the actually
+                        // selected barcode (not the first related item in the list).
+                        var selectedItem = !AddAllRelatedItems
+                            ? result.ItemDetails.FirstOrDefault(x => x != null && x.Barcode == barcode)
+                            : result.ItemDetails.FirstOrDefault(x => x != null);
+                        if (selectedItem == null) selectedItem = result.ItemDetails.FirstOrDefault();
+
+                        await PopulateFromExistingItem(selectedItem!, result.itemWiseFeatures);
                         DisableItemFields = false;
-                        Purchase.SupplierId = result.ItemDetails.FirstOrDefault().SupplierId;
+                        Purchase.SupplierId = selectedItem!.SupplierId;
                         PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
