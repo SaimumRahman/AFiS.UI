@@ -1076,10 +1076,6 @@ namespace JM.UI.Client.Pages.Purchases
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
 
-                // Lock supplier to the currently selected supplier after items are added to confirmed list
-                if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
-                    IsSupplierLocked = true;
-
                 // Clear only Color, Size, ShadeNo â€” leave rest of left panel intact
                 CurrentItem.ColorId = null;
                 CurrentItem.SizeId = null;
@@ -1166,10 +1162,6 @@ namespace JM.UI.Client.Pages.Purchases
             PurchaseItems.Add(itemToAdd);
             await ItemsGrid.Reload();
             CalculateTotals();
-
-            // Lock supplier to the currently selected supplier after item is added to confirmed list
-            if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
-                IsSupplierLocked = true;
 
             CurrentItem.Quantity = 1;
             CurrentItem.PurchasePrice = 0;
