@@ -40,12 +40,39 @@ namespace JM.UI.Client.Services
                 Console.WriteLine($"✅ Token found: {token.Substring(0, Math.Min(20, token.Length))}...");
 
                 // Validate token is not expired
-                if (!await _tokenService.ValidateTokenAsync(token))
+                var isValid = await _tokenService.ValidateTokenAsync(token);
+
+                if (!isValid)
                 {
-                    Console.WriteLine("❌ Token invalid or expired - Clearing session");
-                    await ClearSessionAsync();
-                    _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
-                    return new AuthenticationState(_cachedPrincipal);
+                    Console.WriteLine("❌ Token invalid or expired - attempting refresh");
+
+                    // Attempt to refresh the access token
+                    var refreshSuccessful = await _tokenService.RefreshAccessTokenAsync();
+
+                    if (refreshSuccessful)
+                    {
+                        Console.WriteLine("✅ Token refreshed successfully - revalidating");
+                        // Re-read the (new) token from local storage
+                        var newTokenResult = await _localStorage.GetAsync<string>("Credentials");
+                        if (!newTokenResult.Success || string.IsNullOrEmpty(newTokenResult.Value))
+                        {
+                            Console.WriteLine("❌ No token found after refresh - clearing session");
+                            await ClearSessionAsync();
+                            _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+                            return new AuthenticationState(_cachedPrincipal);
+                        }
+
+                        token = newTokenResult.Value;
+                        isValid = await _tokenService.ValidateTokenAsync(token);
+                    }
+
+                    if (!isValid)
+                    {
+                        Console.WriteLine("❌ Refresh failed or token still invalid - clearing session");
+                        await ClearSessionAsync();
+                        _cachedPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+                        return new AuthenticationState(_cachedPrincipal);
+                    }
                 }
 
                 // Get user info from local storage
