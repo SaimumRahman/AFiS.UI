@@ -1076,10 +1076,7 @@ namespace JM.UI.Client.Pages.Purchases
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
 
-                // Keep the item's supplier selected and lock the Supplier dropdown
-                var supplierRow = validRows.FirstOrDefault(r => r.SupplierId.HasValue && r.SupplierId.Value > 0);
-                if (supplierRow != null)
-                    Purchase.SupplierId = supplierRow.SupplierId;
+                // Lock supplier to the currently selected supplier after items are added to confirmed list
                 if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
                     IsSupplierLocked = true;
 
@@ -1170,13 +1167,9 @@ namespace JM.UI.Client.Pages.Purchases
             await ItemsGrid.Reload();
             CalculateTotals();
 
-            // Keep the item's supplier selected and lock the Supplier dropdown
-            var supplier = AvailableItems.FirstOrDefault(i => i.Id == CurrentItem.ItemId);
-            if (supplier?.SupplierId is { } supplierId && supplierId > 0)
-            {
-                Purchase.SupplierId = supplierId;
+            // Lock supplier to the currently selected supplier after item is added to confirmed list
+            if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
                 IsSupplierLocked = true;
-            }
 
             CurrentItem.Quantity = 1;
             CurrentItem.PurchasePrice = 0;
