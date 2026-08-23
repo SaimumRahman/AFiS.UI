@@ -102,7 +102,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected string NewFeatureInput { get; set; } = string.Empty;
 
         // â”€â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        protected bool IsProcessing { get; set; } = false;
+protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : IsDraftMode ? "Purchase Entry (From Draft)" : "New Purchase Entry";
@@ -111,6 +111,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
         protected bool IsSupplierLocked { get; set; } = false;
+        protected bool IsInitialized { get; set; } = false; // Added initialization flag
 
         // When true (default), selecting a barcode loads all related variants (current behavior).
         // When false, only the single selected barcode is added to the preview.
@@ -145,6 +146,7 @@ namespace JM.UI.Client.Pages.Purchases
                 await LoadPurchase();
             else
                 await InitializePurchase();
+            IsInitialized = true; // Mark component as initialized after data load
         }
         private async Task InitializePurchase()
         {
@@ -2476,9 +2478,15 @@ namespace JM.UI.Client.Pages.Purchases
 
             // â”€â”€ Reload grids + totals â”€â”€â”€â”€â”€â”€â”€â”€â”€
             CalculateTotals();
-            if (ItemsGrid != null) await ItemsGrid.Reload();
-            if (PreviewGrid != null) await PreviewGrid.Reload();
-            StateHasChanged();
+            if (IsInitialized)
+            {
+                if (ItemsGrid != null) await ItemsGrid.Reload();
+                if (PreviewGrid != null) await PreviewGrid.Reload();
+            }
+            // Removed StateHasChanged() - grid reload handles its own state
+            ResetSharedPricing();
+            BarcodeSearchText = string.Empty;
+            DisableItemFields = false;
         }
         private bool HasUnsavedData()
         {
