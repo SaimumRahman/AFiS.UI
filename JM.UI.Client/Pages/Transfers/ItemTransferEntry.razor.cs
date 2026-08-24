@@ -1225,7 +1225,8 @@ namespace JM.UI.Client.Pages.Transfers
                 }) ?? false;
 
             if (confirmed)
-                ResetLeftPanel();
+                //ResetLeftPanel();
+                await OnInitializedAsync();
         }
         private void ResetSharedFields()
         {
