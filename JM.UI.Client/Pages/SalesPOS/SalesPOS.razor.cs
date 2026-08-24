@@ -899,8 +899,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
 
+                CartItems.Clear();
                 notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                    $"{fileName}", 3500);
+                    $"Invoice downloaded successfully", 3500);
             }
             catch (Exception ex)
             {
