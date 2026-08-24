@@ -103,8 +103,14 @@ namespace JM.UI.DataService.DAL.Users
                 // Make POST request to the correct login endpoint
                 var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
 
-                // Ensure success status code
-                response.EnsureSuccessStatusCode();
+                // Check status code instead of throwing exception for non-2xx
+                if (!response.IsSuccessStatusCode)
+                {
+                    // Try to read error message from response body
+                    var errorResponse = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                    var errorMessage = errorResponse?.Message ?? "Invalid username or password.";
+                    throw new UnauthorizedAccessException(errorMessage);
+                }
 
                 // Deserialize response to the correct type
                 var authenticatedUser = await response.Content.ReadFromJsonAsync<AuthenticatedUserResponse>();
@@ -119,14 +125,14 @@ namespace JM.UI.DataService.DAL.Users
 
                 return authenticatedUser;
             }
+            catch (Exception ex) when (ex is not HttpRequestException)
+            {
+                // Re-throw HttpRequestException (network errors) as-is
+                throw;
+            }
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "HTTP request failed during login for {LoginId}", loginRequest.LoginId);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error during login for {LoginId}", loginRequest.LoginId);
                 throw;
             }
         }
