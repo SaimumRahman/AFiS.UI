@@ -66,6 +66,7 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.Reporting;
 using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
@@ -143,6 +144,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICouponRepository CouponRepository { get; }
         public ITransferTypeRepository TransferTypeRepository { get; }
         public ISaleRepository SaleRepository { get; }
+        public IReportingRepository ReportingRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -206,6 +208,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CouponRepository = new CouponRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponRepository>());
             TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
             SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
+            ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
         }
 
         public void Dispose()

@@ -24,6 +24,11 @@ namespace JM.UI.Service.CustomerDetails
             return await _repositoryUnitOfWork.CustomerDetailsRepository.GetCustomerById(id);
         }
 
+        public async Task<CustomerDetailsDTO?> GetCustomerByPhone(string phone)
+        {
+            return await _repositoryUnitOfWork.CustomerDetailsRepository.GetCustomerByPhone(phone);
+        }
+
         public async Task<ResponseResult> InsertUpdateCustomer(CustomerDetailsDTO customer)
         {
             var validation = await Validate(customer);

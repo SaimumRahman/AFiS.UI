@@ -80,13 +80,15 @@ builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+builder.Services.AddScoped<AuthTokenHandler>();
 builder.Services.AddHttpClient("AuthApi", (serviceProvider, client) =>
-{
-    var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
-    client.BaseAddress = new Uri(apiSettings.BaseUrlAuth);
-    client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+    {
+        var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
+        client.BaseAddress = new Uri(apiSettings.BaseUrlAuth);
+        client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    })
+    .AddHttpMessageHandler<AuthTokenHandler>();
 
 builder.Services.AddSingleton<ILogger, Logger<ErrorDetails>>();
 builder.Services.AddDataService();

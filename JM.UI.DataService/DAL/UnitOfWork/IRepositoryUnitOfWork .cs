@@ -66,6 +66,7 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.Reporting;
 using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
@@ -135,5 +136,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICouponRepository CouponRepository { get; }
         ITransferTypeRepository TransferTypeRepository { get; }
         ISaleRepository SaleRepository { get; }
+        IReportingRepository ReportingRepository { get; }
     }
 }
