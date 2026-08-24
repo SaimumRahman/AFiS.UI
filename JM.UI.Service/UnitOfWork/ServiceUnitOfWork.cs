@@ -60,6 +60,7 @@ using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.SupplierPayments;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.Reporting;
 using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
@@ -127,6 +128,7 @@ namespace JM.UI.Service.UnitOfWork
         public ITransferTypeService TransferTypeService { get; private set; }
         public ISaleService SaleService { get; private set; }
         public IEcommerceService EcommerceService { get; private set; }
+        public IReportingService ReportingService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -186,6 +188,7 @@ namespace JM.UI.Service.UnitOfWork
             TransferTypeService = new TransferTypeService(_repoUow);
             SaleService = new SaleService(_repoUow);
             EcommerceService = new EcommerceService(_repoUow, httpClientFactory, configuration);
+            ReportingService = new ReportingService(_repoUow);
         }
         public void Dispose()
         {

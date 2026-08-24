@@ -532,6 +532,15 @@ namespace JM.UI.Client.Services
                         Title       = "Current Stock Report",
                         Description = "View current stock levels across all stores",
                         Tags        = new[] { "stock", "report", "inventory", "current" }
+                    },
+                    new Example
+                    {
+                        Name        = "Profit / Loss",
+                        Path        = "/ProfitLossReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Profit / Loss Report",
+                        Description = "Per-item profit & loss: total in, total out, average purchase price and total sale",
+                        Tags        = new[] { "profit", "loss", "report", "item" }
                     }
                 }
             },

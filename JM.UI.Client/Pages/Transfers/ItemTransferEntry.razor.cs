@@ -541,10 +541,36 @@ namespace JM.UI.Client.Pages.Transfers
             await ProcessScannedBarcode();
         }
 
-        protected async Task OnScanBarcodeChange(string value)
+        protected void OnScanBarcodeChange(string value)
         {
             ScanBarcodeText = value;
         }
+
+        private TransferPreviewRow BuildPreviewRow(ItemDTO item, string barcode)
+            => new()
+            {
+                ItemId = item.Id,
+                Barcode = item.Barcode ?? barcode,
+                ItemName = item.Name ?? string.Empty,
+                ColorId = item.ColorId,
+                ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
+                SizeId = item.SizeId,
+                SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty,
+                GroupId = item.GroupId,
+                SubGroupId = item.SubGroupId,
+                DesignId = item.DesignId,
+                UnitId = item.MesurementUnitId,
+                UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty,
+                IsNewItem = false,
+                IssueQty = SharedIssueQty ?? 1,
+                SerialNo = SharedSerialNo,
+                CreatedRemarks = SharedCreatedRemarks,
+                StockQuantity = item.CurrentStock,
+                SalePrice = item.SalePrice ?? 0
+            };
+
+        private TransferPreviewRow? FindPreviewRow(string barcode)
+            => PreviewItems.FirstOrDefault(r => r.Barcode == barcode);
 
         protected async Task ProcessScannedBarcode()
         {
@@ -567,13 +593,12 @@ namespace JM.UI.Client.Pages.Transfers
             try
             {
                 IsScanningBarcode = true;
-                StateHasChanged(); // no refocus needed — scanning just started
+                StateHasChanged();
 
                 var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
                                 ?? $"Store #{Transfer.StoreId}";
 
                 ItemDTO? item = null;
-
                 try
                 {
                     item = await _serviceUnitOfWork.TransferService
@@ -601,40 +626,20 @@ namespace JM.UI.Client.Pages.Transfers
                     return;
                 }
 
-                // Check duplicate in confirmed list
-                var existingLine = TransferDetails.FirstOrDefault(d => d.Barcode == item.Barcode);
+                var itemBarcode = item.Barcode ?? barcode;
+                var issueQty = SharedIssueQty ?? 1;
 
-                if (existingLine != null)
+                // ✅ Already confirmed in the transfer list?
+                var existingConfirmed = TransferDetails.FirstOrDefault(d => d.Barcode == itemBarcode);
+                if (existingConfirmed != null)
                 {
-                    // Ask user
-                    bool confirmed = await dialogService.Confirm(
-                        $"'{item.Name}' ({item.Barcode}) is already in the transfer list " +
-                        $"with qty {existingLine.IssueQty:N2}. " +
-                        $"Do you want to add 1 more?",
-                        "Item Already Added",
-                        new ConfirmOptions
-                        {
-                            OkButtonText = "Yes, Add More",
-                            CancelButtonText = "No"
-                        }) ?? false;
-
-                    if (!confirmed)
-                    {
-                        ScanBarcodeText = string.Empty;
-                        _shouldFocusBarcodeInput = true;
-                        StateHasChanged();
-                        return;
-                    }
-
-                    var totalQty = existingLine.IssueQty + 1;
-
-                    // Stock check against combined qty
+                    var totalQty = existingConfirmed.IssueQty + issueQty;
                     if (totalQty > item.CurrentStock)
                     {
                         notificationService.Notify(
                             NotificationSeverity.Error,
                             "Insufficient Stock",
-                            $"'{item.Name}' ({item.Barcode}): Combined qty ({totalQty:N2}) " +
+                            $"'{item.Name}' ({itemBarcode}): Combined qty ({totalQty:N2}) " +
                             $"exceeds available stock ({item.CurrentStock:N0}). Cannot add.");
                         ScanBarcodeText = string.Empty;
                         _shouldFocusBarcodeInput = true;
@@ -642,9 +647,8 @@ namespace JM.UI.Client.Pages.Transfers
                         return;
                     }
 
-                    // Update qty in confirmed list
-                    existingLine.IssueQty = totalQty;
-                    existingLine.UpdatedAt = DateTime.Now;
+                    existingConfirmed.IssueQty = totalQty;
+                    existingConfirmed.UpdatedAt = DateTime.Now;
                     await ItemsGrid.Reload();
 
                     notificationService.Notify(
@@ -658,47 +662,60 @@ namespace JM.UI.Client.Pages.Transfers
                     StateHasChanged();
                     return;
                 }
-                // Stock check
-                if (1 > item.CurrentStock)
+
+                // ✅ Already in the preview grid?
+                var existingPreview = FindPreviewRow(itemBarcode);
+                if (existingPreview != null)
                 {
+                    var newTotal = existingPreview.IssueQty + issueQty;
+                    if (newTotal > item.CurrentStock)
+                    {
+                        notificationService.Notify(
+                            NotificationSeverity.Error,
+                            "Insufficient Stock",
+                            $"'{item.Name}' ({itemBarcode}): Qty ({newTotal:N2}) " +
+                            $"exceeds available stock ({item.CurrentStock:N0}).");
+                        ScanBarcodeText = string.Empty;
+                        _shouldFocusBarcodeInput = true;
+                        StateHasChanged();
+                        return;
+                    }
+
+                    existingPreview.IssueQty = newTotal;
                     notificationService.Notify(
-                        NotificationSeverity.Error,
-                        "Insufficient Stock",
-                        $"'{item.Name}': no stock available in '{storeName}'.");
-                    ScanBarcodeText = string.Empty;
-                    _shouldFocusBarcodeInput = true;
-                    StateHasChanged();
-                    return;
+                        NotificationSeverity.Success,
+                        "Quantity Updated",
+                        $"'{item.Name}' preview qty updated to {newTotal:N2}.");
+                }
+                else
+                {
+                    // ✅ Fresh add → add to PREVIEW grid (not the confirmed TransferDetails list)
+                    if (issueQty > item.CurrentStock)
+                    {
+                        notificationService.Notify(
+                            NotificationSeverity.Error,
+                            "Insufficient Stock",
+                            $"'{item.Name}': no stock available in '{storeName}'.");
+                        ScanBarcodeText = string.Empty;
+                        _shouldFocusBarcodeInput = true;
+                        StateHasChanged();
+                        return;
+                    }
+
+                    var row = BuildPreviewRow(item, barcode);
+                    row.IsNewItem = true;
+                    row.IssueQty = issueQty;
+
+                    PreviewItems.Add(row);
+
+                    notificationService.Notify(
+                        NotificationSeverity.Success,
+                        "Item Added to Preview",
+                        $"'{item.Name}' scanned and added to preview with qty = {issueQty:N2}.");
                 }
 
-                var newLine = TransferService.CreateNewDetailLine();
-                newLine.TransferID = Transfer.TransferId;
-                newLine.ItemID = item.Id;
-                newLine.Barcode = item.Barcode ?? barcode;
-                newLine.ItemName = item.Name ?? string.Empty;
-                newLine.ColorId = item.ColorId;
-                newLine.ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty;
-                newLine.SizeId = item.SizeId;
-                newLine.SizeName = Sizes.FirstOrDefault(s => s.Id == item.SizeId)?.Name ?? string.Empty;
-                newLine.GroupId = item.GroupId;
-                newLine.SubGroupId = item.SubGroupId;
-                newLine.DesignId = item.DesignId;
-                newLine.UnitID = item.MesurementUnitId ?? 0;
-                newLine.UnitName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name;
-                newLine.IssueQty = 1;
-                newLine.SerialNo = string.Empty;
-                newLine.CreatedRemarks = string.Empty;
-                newLine.IsNewItem = false;
-                newLine.CreatedAt = DateTime.Now;
-                newLine.SalePrice = item.SalePrice ?? 0;
-
-                TransferDetails.Add(newLine);
-                await ItemsGrid.Reload();
-
-                notificationService.Notify(
-                    NotificationSeverity.Success,
-                    "Item Added",
-                    $"'{item.Name}' scanned and added with qty = 1.");
+                PreviewGrid?.Reload();
+                StateHasChanged();
             }
             catch (Exception ex)
             {
@@ -1208,7 +1225,8 @@ namespace JM.UI.Client.Pages.Transfers
                 }) ?? false;
 
             if (confirmed)
-                ResetLeftPanel();
+                //ResetLeftPanel();
+                await OnInitializedAsync();
         }
         private void ResetSharedFields()
         {

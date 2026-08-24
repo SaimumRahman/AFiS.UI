@@ -73,6 +73,15 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected int SelectedCustomerId { get; set; }
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
 
+        // ── Customer Search ──
+        protected string CustomerSearchText { get; set; } = "";
+        protected List<CustomerDetailsDTO> FilteredCustomers =>
+            string.IsNullOrWhiteSpace(CustomerSearchText) ? new() :
+            AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase))
+            ).Take(10).ToList();
+
         // ── Employee ──
         protected List<EmployeeModelDTO> Employees { get; set; } = new();
         protected int SelectedEmployeeId { get; set; }
@@ -508,8 +517,10 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
-                if (detail.StoreId == null)
-                    detail.StoreId = Sale.StoreId;
+                // The sale is being made at the logged-in user's branch, so the
+                // sale detail always records that branch (even when the product
+                // itself was added from another branch).
+                detail.StoreId = Sale.StoreId;
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -803,12 +814,44 @@ namespace JM.UI.Client.Pages.SalesPOS
             StateHasChanged();
         }
 
-        // ── Add Customer Modal ──
-        protected async Task OpenAddCustomerModal()
+        // ── Customer Search ──
+        protected async Task OnCustomerSearchKeyDown(KeyboardEventArgs e)
+        {
+            if (e.Key != "Enter") return;
+
+            var searchText = CustomerSearchText?.Trim() ?? "";
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            var matches = AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            if (matches.Count == 1)
+            {
+                SelectSearchedCustomer(matches[0]);
+            }
+            else if (matches.Count == 0)
+            {
+                await OpenAddCustomerModal(searchText);
+            }
+        }
+
+        protected void SelectSearchedCustomer(CustomerDetailsDTO customer)
+        {
+            SelectedCustomerId = customer.Id;
+            SelectCustomer(customer);
+            CustomerSearchText = "";
+        }
+
+        protected async Task OpenAddCustomerModal(string? preFilledPhone = null)
         {
             var userId = await GetLocalStorageInt("UserId");
-            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer",
-                new Dictionary<string, object> { { "CurrentUserId", userId } });
+            var parameters = new Dictionary<string, object> { { "CurrentUserId", userId } };
+            if (!string.IsNullOrEmpty(preFilledPhone))
+                parameters.Add("PreFilledPhone", preFilledPhone);
+
+            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer", parameters);
             if (customer is CustomerDetailsDTO saved && saved.Id > 0)
             {
                 notificationService.Notify(NotificationSeverity.Success, "Customer Saved",
@@ -897,8 +940,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
 
+                CartItems.Clear();
                 notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                    $"{fileName}", 3500);
+                    $"Invoice downloaded successfully", 3500);
             }
             catch (Exception ex)
             {

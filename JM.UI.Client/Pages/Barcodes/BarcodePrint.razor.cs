@@ -74,7 +74,8 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsDownloadingPdf { get; set; } = false;
     protected bool IsLoadingConfig { get; set; } = false;
 
-    [Parameter] public int? PurchaseId { get; set; }
+    [Parameter] public int? Id { get; set; }
+
 
     // ────────────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
@@ -88,10 +89,10 @@ public partial class BarcodePrintComponent : PosComponentBase
             LoadAllBarcodes()
         );
 
-        if (PurchaseId.HasValue)
+        if (Id.HasValue)
         {
-            SelectedPurchaseId = PurchaseId;
-            await OnPurchaseSelected((object)PurchaseId.Value);
+            SelectedPurchaseId = Id;
+            await OnPurchaseSelected((object)Id.Value);
         }
     }
 

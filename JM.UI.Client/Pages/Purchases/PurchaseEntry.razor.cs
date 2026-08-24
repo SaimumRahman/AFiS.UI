@@ -102,7 +102,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected string NewFeatureInput { get; set; } = string.Empty;
 
         // â”€â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        protected bool IsProcessing { get; set; } = false;
+protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
         protected string PageTitle => IsEditMode ? "Edit Purchase Entry" : IsDraftMode ? "Purchase Entry (From Draft)" : "New Purchase Entry";
@@ -111,6 +111,11 @@ namespace JM.UI.Client.Pages.Purchases
         protected bool DisableItemFields { get; set; } = false;
         protected string BarcodeSearchText { get; set; } = string.Empty;
         protected bool IsSupplierLocked { get; set; } = false;
+        protected bool IsInitialized { get; set; } = false; // Added initialization flag
+
+        // When true (default), selecting a barcode loads all related variants (current behavior).
+        // When false, only the single selected barcode is added to the preview.
+        protected bool AddAllRelatedItems { get; set; } = true;
 
         // Progressive field enabling (new-item mode only; existing barcode loads keep current behavior)
         protected bool IsFieldGatingActive => IsNewItemMode;
@@ -141,6 +146,7 @@ namespace JM.UI.Client.Pages.Purchases
                 await LoadPurchase();
             else
                 await InitializePurchase();
+            IsInitialized = true; // Mark component as initialized after data load
         }
         private async Task InitializePurchase()
         {
@@ -795,7 +801,11 @@ namespace JM.UI.Client.Pages.Purchases
 
             if (response.Found && response.ItemDetails != null && response.ItemDetails.Any())
             {
-                foreach (var item in response.ItemDetails.Where(x => x != null))
+                var details = response.ItemDetails.Where(x => x != null);
+                if (!AddAllRelatedItems)
+                    details = details.Where(x => !string.IsNullOrWhiteSpace(x.Barcode) && x.Barcode == barcode);
+
+                foreach (var item in details)
                 {
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode
@@ -1068,13 +1078,6 @@ namespace JM.UI.Client.Pages.Purchases
                 BarcodeSearchText = string.Empty;
                 DisableItemFields = false;
 
-                // Keep the item's supplier selected and lock the Supplier dropdown
-                var supplierRow = validRows.FirstOrDefault(r => r.SupplierId.HasValue && r.SupplierId.Value > 0);
-                if (supplierRow != null)
-                    Purchase.SupplierId = supplierRow.SupplierId;
-                if (Purchase.SupplierId.HasValue && Purchase.SupplierId.Value > 0)
-                    IsSupplierLocked = true;
-
                 // Clear only Color, Size, ShadeNo â€” leave rest of left panel intact
                 CurrentItem.ColorId = null;
                 CurrentItem.SizeId = null;
@@ -1161,14 +1164,6 @@ namespace JM.UI.Client.Pages.Purchases
             PurchaseItems.Add(itemToAdd);
             await ItemsGrid.Reload();
             CalculateTotals();
-
-            // Keep the item's supplier selected and lock the Supplier dropdown
-            var supplier = AvailableItems.FirstOrDefault(i => i.Id == CurrentItem.ItemId);
-            if (supplier?.SupplierId is { } supplierId && supplierId > 0)
-            {
-                Purchase.SupplierId = supplierId;
-                IsSupplierLocked = true;
-            }
 
             CurrentItem.Quantity = 1;
             CurrentItem.PurchasePrice = 0;
@@ -1627,6 +1622,7 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
                         result.Message ?? "Purchase saved successfully");
+                    await ResetPage();
                     NavigationManager.NavigateTo("/PurchaseList");
                 }
                 else
@@ -1777,7 +1773,7 @@ namespace JM.UI.Client.Pages.Purchases
         protected async Task OnGroupChanged(int? groupId)
         {
             if (!groupId.HasValue) return;
-            await _serviceUnitOfWork.ItemService.GetItemByGroupIdWithStock(groupId.Value);
+            //await _serviceUnitOfWork.ItemService.GetItemByGroupIdWithStock(groupId.Value);
             SubGroups = await LoadSubGroupsByGroup(groupId.Value);
             var sad = await _serviceUnitOfWork.GroupService.GetGroupById(groupId.Value);
             CurrentItem.VatPercentage = sad.VAT;
@@ -1916,7 +1912,7 @@ namespace JM.UI.Client.Pages.Purchases
                         newRow = new PreviewItemRow
                         {
                             ItemId = item.Id,
-                            ItemName = !string.IsNullOrWhiteSpace(CurrentItem.ItemName) ? CurrentItem.ItemName : (item.Name ?? string.Empty),
+                        ItemName = !string.IsNullOrWhiteSpace(item.Name) ? item.Name : CurrentItem.ItemName,
                             Barcode = barcode,
                             ColorId = item.ColorId,
                             ColorName = Colors.FirstOrDefault(c => c.Id == item.ColorId)?.Name ?? string.Empty,
@@ -2168,9 +2164,16 @@ namespace JM.UI.Client.Pages.Purchases
                 {
                     if (result.ItemDetails != null)
                     {
-                        await PopulateFromExistingItem(result.ItemDetails.FirstOrDefault()!, result.itemWiseFeatures);
+                        // When not adding all related items, derive the form from the actually
+                        // selected barcode (not the first related item in the list).
+                        var selectedItem = !AddAllRelatedItems
+                            ? result.ItemDetails.FirstOrDefault(x => x != null && x.Barcode == barcode)
+                            : result.ItemDetails.FirstOrDefault(x => x != null);
+                        if (selectedItem == null) selectedItem = result.ItemDetails.FirstOrDefault();
+
+                        await PopulateFromExistingItem(selectedItem!, result.itemWiseFeatures);
                         DisableItemFields = false;
-                        Purchase.SupplierId = result.ItemDetails.FirstOrDefault().SupplierId;
+                        Purchase.SupplierId = selectedItem!.SupplierId;
                         PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
@@ -2475,9 +2478,15 @@ namespace JM.UI.Client.Pages.Purchases
 
             // â”€â”€ Reload grids + totals â”€â”€â”€â”€â”€â”€â”€â”€â”€
             CalculateTotals();
-            if (ItemsGrid != null) await ItemsGrid.Reload();
-            if (PreviewGrid != null) await PreviewGrid.Reload();
-            StateHasChanged();
+            if (IsInitialized)
+            {
+                if (ItemsGrid != null) await ItemsGrid.Reload();
+                if (PreviewGrid != null) await PreviewGrid.Reload();
+            }
+            // Removed StateHasChanged() - grid reload handles its own state
+            ResetSharedPricing();
+            BarcodeSearchText = string.Empty;
+            DisableItemFields = false;
         }
         private bool HasUnsavedData()
         {

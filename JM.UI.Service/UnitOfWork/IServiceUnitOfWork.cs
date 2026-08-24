@@ -66,6 +66,7 @@ using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.Reporting;
 using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
@@ -139,5 +140,6 @@ namespace JM.UI.Service.UnitOfWork
         ITransferTypeService TransferTypeService { get; }
         ISaleService SaleService { get; }
         IEcommerceService EcommerceService { get; }
+        IReportingService ReportingService { get; }
     }
 }
