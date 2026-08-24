@@ -565,29 +565,24 @@
                 else
                 {
                     <div style="margin-bottom:6px">
-                        <RadzenDropDownDataGrid @bind-Value="SelectedCustomerId"
-                                                Data="@AllCustomers"
-                                                ValueProperty="Id"
-                                                Placeholder="Search customer by name or phone..."
-                                                AllowFiltering="true"
-                                                AllowFilteringByAllStringColumns="true"
-                                                AllowFilteringByWord="true"
-                                                FilterOperator="StringFilterOperator.Contains"
-                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                AllowClear="true"
-                                                Change="@(args => SelectCustomerById(args == null ? 0 : (int)args))"
-                                                Style="width:100%">
-                            <ValueTemplate Context="c">
-                                @(c != null ? $"{c.Name} (ID: {c.Id}) - {c.Phone}" : "")
-                            </ValueTemplate>
-                            <Columns>
-                                <RadzenDropDownDataGridColumn Property="Name" Title="Name" />
-                                <RadzenDropDownDataGridColumn Property="Id" Title="ID" Width="80" />
-                                <RadzenDropDownDataGridColumn Property="Phone" Title="Phone" />
-                            </Columns>
-                        </RadzenDropDownDataGrid>
+                        <RadzenTextBox @bind-Value="CustomerSearchText"
+                                       Placeholder="Phone / Name to search or create..."
+                                       Style="width:100%"
+                                       @onkeydown="OnCustomerSearchKeyDown" />
+                        @if (FilteredCustomers.Any())
+                        {
+                            <div style="border:1px solid #ddd;border-radius:4px;max-height:150px;overflow-y:auto;background:#fff;margin-top:2px;">
+                                @foreach (var c in FilteredCustomers)
+                                {
+                                    <div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.85rem;"
+                                         @onclick="() => SelectSearchedCustomer(c)">
+                                        @c.Name (@c.Phone)
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
-                    <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="width:100%" Click="@OpenAddCustomerModal" Text="+ New Customer" />
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="width:100%" Click="@((args) => OpenAddCustomerModal())" Text="+ New Customer" />
                 }
             </div>
 

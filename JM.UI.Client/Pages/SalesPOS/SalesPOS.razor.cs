@@ -73,6 +73,15 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected int SelectedCustomerId { get; set; }
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
 
+        // ── Customer Search ──
+        protected string CustomerSearchText { get; set; } = "";
+        protected List<CustomerDetailsDTO> FilteredCustomers =>
+            string.IsNullOrWhiteSpace(CustomerSearchText) ? new() :
+            AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase))
+            ).Take(10).ToList();
+
         // ── Employee ──
         protected List<EmployeeModelDTO> Employees { get; set; } = new();
         protected int SelectedEmployeeId { get; set; }
@@ -805,12 +814,44 @@ namespace JM.UI.Client.Pages.SalesPOS
             StateHasChanged();
         }
 
-        // ── Add Customer Modal ──
-        protected async Task OpenAddCustomerModal()
+        // ── Customer Search ──
+        protected async Task OnCustomerSearchKeyDown(KeyboardEventArgs e)
+        {
+            if (e.Key != "Enter") return;
+
+            var searchText = CustomerSearchText?.Trim() ?? "";
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            var matches = AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            if (matches.Count == 1)
+            {
+                SelectSearchedCustomer(matches[0]);
+            }
+            else if (matches.Count == 0)
+            {
+                await OpenAddCustomerModal(searchText);
+            }
+        }
+
+        protected void SelectSearchedCustomer(CustomerDetailsDTO customer)
+        {
+            SelectedCustomerId = customer.Id;
+            SelectCustomer(customer);
+            CustomerSearchText = "";
+        }
+
+        protected async Task OpenAddCustomerModal(string? preFilledPhone = null)
         {
             var userId = await GetLocalStorageInt("UserId");
-            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer",
-                new Dictionary<string, object> { { "CurrentUserId", userId } });
+            var parameters = new Dictionary<string, object> { { "CurrentUserId", userId } };
+            if (!string.IsNullOrEmpty(preFilledPhone))
+                parameters.Add("PreFilledPhone", preFilledPhone);
+
+            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer", parameters);
             if (customer is CustomerDetailsDTO saved && saved.Id > 0)
             {
                 notificationService.Notify(NotificationSeverity.Success, "Customer Saved",
