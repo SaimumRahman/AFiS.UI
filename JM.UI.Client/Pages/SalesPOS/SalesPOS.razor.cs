@@ -131,6 +131,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.StoreId = localStoreId > 0 ? localStoreId : Stores.FirstOrDefault()?.Id;
             Sale.CreatedBy = await GetLocalStorageInt("UserId");
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            await LoadEmployeesByStore();
         }
         private async Task<int> GetLocalStorageInt(string key)
         {
@@ -162,16 +163,14 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
                 var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
                 var allCustomers = _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
-                var employeeTask = _serviceUnitOfWork.EmployeeService.GetEmployees();
                 var membershipTask = _serviceUnitOfWork.MembershipTypeService.GetAll();
-                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, employeeTask, membershipTask);
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, membershipTask);
 
                 Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
                 Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
                 Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
                 Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
                 AllCustomers = (allCustomers.Result ?? new List<CustomerDetailsDTO>()).ToList();
-                Employees = (employeeTask.Result ?? new List<EmployeeModelDTO>()).ToList();
                 MembershipTypes = (membershipTask.Result ?? new List<MembershipTypeDTO>()).ToList();
             }
             catch (Exception ex)
@@ -676,6 +675,32 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 notificationService.Notify(NotificationSeverity.Error, "Load Failed",
                     $"Error loading customers: {ex.Message}", 4000);
+            }
+        }
+
+        protected async Task LoadEmployeesByStore()
+        {
+            try
+            {
+                var storeId = Sale.StoreId ?? 0;
+                if (storeId > 0)
+                {
+                    var employees = await _serviceUnitOfWork.EmployeeService.GetEmployeesByStoreId(storeId);
+                    Employees = employees.ToList();
+                }
+                else
+                {
+                    var employees = await _serviceUnitOfWork.EmployeeService.GetEmployees();
+                    Employees = employees.ToList();
+                }
+                SelectedEmployeeId = 0;
+                SelectedEmployeeName = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading employees: {ex.Message}", 4000);
             }
         }
 
