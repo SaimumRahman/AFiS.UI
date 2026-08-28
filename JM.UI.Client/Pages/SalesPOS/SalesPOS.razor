@@ -568,6 +568,7 @@
                         <RadzenTextBox @bind-Value="CustomerSearchText"
                                        Placeholder="Phone / Name to search or create..."
                                        Style="width:100%"
+                                       @oninput="OnCustomerSearchInput"
                                        @onkeydown="OnCustomerSearchKeyDown" />
                         @if (FilteredCustomers.Any())
                         {

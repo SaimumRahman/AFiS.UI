@@ -840,6 +840,11 @@ namespace JM.UI.Client.Pages.SalesPOS
         }
 
         // ── Customer Search ──
+        protected void OnCustomerSearchInput(ChangeEventArgs args)
+        {
+            CustomerSearchText = args.Value?.ToString() ?? "";
+        }
+
         protected async Task OnCustomerSearchKeyDown(KeyboardEventArgs e)
         {
             if (e.Key != "Enter") return;
