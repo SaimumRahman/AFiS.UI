@@ -73,6 +73,59 @@ namespace JM.UI.Service.Employee
             });
         }
 
+        public async Task<IEnumerable<EmployeeModelDTO>> GetEmployeesByStoreId(int storeId)
+        {
+            var employees = await _repositoryUnitOfWork
+                .EmployeeRepository
+                .GetEmployeesByStoreId(storeId);
+
+            return employees.Select(e => new EmployeeModelDTO
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Surname = e.Surname,
+                EmployeeCode = e.EmployeeCode,
+                DateOfBirth = e.DateOfBirth,
+                Gender = e.Gender,
+                BloodGroup = e.BloodGroup,
+                Religion = e.Religion,
+                FatherName = e.FatherName,
+                MotherName = e.MotherName,
+                MaritalStatus = e.MaritalStatus,
+                SpouseName = e.SpouseName,
+                PresentAddress = e.PresentAddress,
+                PermanentAddress = e.PermanentAddress,
+                Contact = e.Contact,
+                Email = e.Email,
+                EmergencyContact = e.EmergencyContact,
+                EmergencyContactPerson = e.EmergencyContactPerson,
+                EmergencyContactPersonAddress = e.EmergencyContactPersonAddress,
+                Relation = e.Relation,
+                BankId = e.BankId,
+                BankAccountNumber = e.BankAccountNumber,
+                Picture = e.Picture,
+                DateJoined = e.DateJoined,
+                DateReleased = e.DateReleased,
+                NID = e.NID,
+                ReferredBy = e.ReferredBy,
+                AccountId = e.AccountId,
+                StoreId = e.StoreId,
+                DesignationId = e.DesignationId,
+                BasicSalary = e.BasicSalary,
+                DutyType = e.DutyType,
+                ShiftId = e.ShiftId,
+                Status = e.Status,
+                CreatedBy = e.CreatedBy,
+                CreatedOn = e.CreatedOn,
+                ModifiedBy = e.ModifiedBy,
+                ModifiedOn = e.ModifiedOn,
+                BankName = e.BankName,
+                StoreName = e.StoreName,
+                DesignationName = e.DesignationName,
+                ShiftName = e.ShiftName
+            });
+        }
+
         public async Task<EmployeeModelDTO?> GetEmployeeById(int id)
         {
             return await _repositoryUnitOfWork
