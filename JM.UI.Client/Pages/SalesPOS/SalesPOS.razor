@@ -542,8 +542,10 @@
             </div>
         </div>
 
-        @* RIGHT SIDEBAR *@
-        <div class="pos-right">
+        @* RIGHT SIDEBAR - only shown in the Cart tab *@
+        @if (IsSaleMode)
+        {
+            <div class="pos-right">
             @* Customer Profile Card *@
             <div class="pos-card sidebar-section">
                 <div class="pos-card-title">Customer</div>
@@ -568,6 +570,7 @@
                         <RadzenTextBox @bind-Value="CustomerSearchText"
                                        Placeholder="Phone / Name to search or create..."
                                        Style="width:100%"
+                                       @oninput="OnCustomerSearchInput"
                                        @onkeydown="OnCustomerSearchKeyDown" />
                         @if (FilteredCustomers.Any())
                         {
@@ -642,6 +645,7 @@
                 </div>
             </div>
         </div>
+        }
         @* end pos-right *@
     </div>
     @* end pos-body *@
