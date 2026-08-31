@@ -941,6 +941,13 @@ namespace JM.UI.Client.Pages.SalesPOS
                     notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
                         $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
                     await DownloadPosInvoice(Sale);
+
+                    // Clear the cart after the invoice has been downloaded and refresh the UI.
+                    CartItems.Clear();
+                    StateHasChanged();
+                    notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                        "Invoice downloaded successfully. Cart cleared.", 3500);
+
                     await ResetForNewSale();
                 }
                 else
@@ -969,10 +976,6 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
-
-                CartItems.Clear();
-                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                    $"Invoice downloaded successfully", 3500);
             }
             catch (Exception ex)
             {
