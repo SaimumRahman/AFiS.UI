@@ -9,6 +9,7 @@ namespace JM.UI.DataService.DAL.Employees
     public interface IEmployeeRepository
     {
         Task<IEnumerable<EmployeeModelDTO>> GetEmployees();
+        Task<IEnumerable<EmployeeModelDTO>> GetEmployeesByStoreId(int storeId);
         Task<EmployeeModelDTO?> GetEmployeeById(int id);
         Task<EmployeeModelDTO?> GetEmployeeCode();
         Task DeleteEmployee(int id);

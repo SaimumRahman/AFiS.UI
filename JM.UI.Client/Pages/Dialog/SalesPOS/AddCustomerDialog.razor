@@ -52,8 +52,16 @@
                                                    Name="Phone"
                                                    Placeholder="Enter phone number"
                                                    Style="width: 100%;"
-                                                   MaxLength="20" />
+                                                   MaxLength="20"
+                                                   @oninput="ValidatePhone"
+                                                   @onchange="ValidatePhone" />
                                     <RadzenRequiredValidator Component="Phone" Text="Phone number is required" />
+                                    @if (!IsPhoneValid && !string.IsNullOrEmpty(PhoneValidationMessage))
+                                    {
+                                        <div style="color: #dc3545; font-size: 0.85rem; margin-top: 2px;">
+                                            <i class="fa fa-exclamation-triangle"></i> @PhoneValidationMessage
+                                        </div>
+                                    }
                                 </RadzenStack>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="3">
@@ -101,13 +109,14 @@
                                       ButtonStyle="ButtonStyle.Secondary"
                                       Click="@SaveAndNew"
                                       IsBusy="@IsProcessing"
-                                      Disabled="@IsProcessing" />
+                                      Disabled="@IsSaveButtonDisabled" />
                         <RadzenButton Text="Save"
                                       Icon="save"
                                       ButtonStyle="ButtonStyle.Primary"
                                       ButtonType="ButtonType.Submit"
                                       IsBusy="@IsProcessing"
-                                      BusyText="Saving..." />
+                                      BusyText="Saving..."
+                                      Disabled="@IsSaveButtonDisabled" />
                     </RadzenStack>
                 </RadzenCard>
             </RadzenStack>
@@ -123,6 +132,9 @@
     protected bool IsProcessing { get; set; }
     protected bool IsLoading { get; set; } = true;
     protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
+    protected bool IsPhoneValid { get; set; } = true;
+    protected string PhoneValidationMessage { get; set; } = string.Empty;
+    protected bool IsSaveButtonDisabled => IsProcessing || !IsPhoneValid;
 
     protected bool IsAdmin => CurrentUserId == 1;
     // Non-admins can only be a General member: the dropdown shows only General and is locked.
@@ -153,6 +165,7 @@
             if (!string.IsNullOrEmpty(PreFilledPhone))
                 Customer.Phone = PreFilledPhone;
             SetDefaultMembershipType();
+            ValidatePhone();
         }
         finally
         {
@@ -169,8 +182,44 @@
         Customer.MemberTypeId = general?.Id;
     }
 
+    protected void ValidatePhone()
+    {
+        if (string.IsNullOrEmpty(Customer.Phone))
+        {
+            IsPhoneValid = false;
+            PhoneValidationMessage = "Phone number is required";
+            return;
+        }
+
+        // Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX).
+        var digitsOnly = new string(Customer.Phone.Where(char.IsDigit).ToArray());
+
+        if (digitsOnly.Length == 11 && digitsOnly.StartsWith("01"))
+        {
+            IsPhoneValid = true;
+            PhoneValidationMessage = "";
+        }
+        else
+        {
+            IsPhoneValid = false;
+            if (digitsOnly.Length != 11)
+                PhoneValidationMessage = "Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX)";
+            else if (!digitsOnly.StartsWith("01"))
+                PhoneValidationMessage = "Phone must start with '01'";
+            else
+                PhoneValidationMessage = "Invalid phone number format";
+        }
+    }
+
     protected async Task Save()
     {
+        ValidatePhone();
+        if (!IsPhoneValid)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", PhoneValidationMessage);
+            return;
+        }
+
         var validation = await ServiceUnitOfWork.CustomerDetailsService.Validate(Customer);
         if (!validation.IsValid)
         {
@@ -232,6 +281,13 @@
 
     protected async Task SaveAndNew()
     {
+        ValidatePhone();
+        if (!IsPhoneValid)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", PhoneValidationMessage);
+            return;
+        }
+
         var validation = await ServiceUnitOfWork.CustomerDetailsService.Validate(Customer);
         if (!validation.IsValid)
         {
@@ -250,6 +306,7 @@
                 Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
                 Customer.IsForceAdd = true;
                 SetDefaultMembershipType();
+                ValidatePhone();
             }
             else
             {
