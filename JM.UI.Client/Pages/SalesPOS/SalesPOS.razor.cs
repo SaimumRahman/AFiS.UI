@@ -940,6 +940,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
+            // Can only finalize a sale when every line in the cart belongs to
+            // the same store.
+            if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)
+            {
+                await dialogService.Alert(
+                    "You cannot save the sale because all items are not from the same store.",
+                    "Same Store Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
             var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                 new Dictionary<string, object> { { "NetPayable", NetPayable } });
             if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
