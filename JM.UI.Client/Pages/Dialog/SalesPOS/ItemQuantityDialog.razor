@@ -11,9 +11,34 @@
         </div>
 
         <div>
+            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Unit</div>
+            <div style="font-weight:600">@Product?.UomName</div>
+        </div>
+
+        <div>
+            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Barcode</div>
+            <div style="font-weight:600">@Product?.Barcode</div>
+        </div>
+
+        <div>
+            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Sale Price</div>
+            <div style="font-weight:600">@Product?.UnitPrice.ToString("N2")</div>
+        </div>
+
+        <div>
             <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Stock Available</div>
             <div style="font-weight:600;color:#28a745">@Product?.StockQuantity.ToString("N2")</div>
         </div>
+
+        @if (Product?.HasDiscount == true && (Product?.Discount ?? 0) > 0)
+        {
+            <div>
+                <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Campaign Discount</div>
+                <div style="font-weight:600;color:#c62828">
+                    @(Product.DiscountTypeId == 2 ? Product.Discount.ToString("N2") : Product.Discount.ToString("N2") + "%")
+                </div>
+            </div>
+        }
 
         @if (RemainingQty > 0)
         {
