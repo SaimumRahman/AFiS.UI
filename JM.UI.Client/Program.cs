@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using Radzen;
 using RadzenBlazorDemos.Server.Data;
@@ -70,7 +71,9 @@ builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHa
 builder.Services.AddScoped<ITokenProvider, CircuitTokenProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
-
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Staging\AFiS\keys"))
+    .SetApplicationName("JM-AFiS-ERP");
 
 builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
 {

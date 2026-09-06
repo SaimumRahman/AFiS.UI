@@ -12,26 +12,41 @@
 
         <div>
             <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Stock Available</div>
-            <div style="font-weight:600;color:#28a745">@Product?.StockQuantity.ToString("N0")</div>
+            <div style="font-weight:600;color:#28a745">@Product?.StockQuantity.ToString("N2")</div>
         </div>
+
+        @if (RemainingQty > 0)
+        {
+            <div>
+                <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Remaining Available</div>
+                <div style="font-weight:600;color:#ff9800">@RemainingQty.ToString("N2")</div>
+            </div>
+        }
+        else
+        {
+            <div style="background:#fdecea;border:1px solid #f5c6cb;color:#c62828;padding:8px 10px;border-radius:6px;font-size:0.85rem">
+                No stock remaining. @ExistingQty.ToString("N2") already in the cart.
+            </div>
+        }
 
         <div>
             <RadzenLabel Text="Quantity" Component="Qty" />
-            <RadzenNumeric @bind-Value="Qty" Min="1" Max="@MaxQty" Name="Qty" Style="width:100%" ShowButtons="true" />
+            <RadzenNumeric @bind-Value="Qty" Min="1" Max="@RemainingQty" Name="Qty" Style="width:100%" ShowButtons="true" />
         </div>
 
         <div style="display:flex;gap:6px;justify-content:flex-end">
             <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
-            <RadzenButton Text="Add to Cart" ButtonStyle="ButtonStyle.Primary" Click="@Confirm" Disabled="@(Qty <= 0)" />
+            <RadzenButton Text="Add to Cart" ButtonStyle="ButtonStyle.Primary" Click="@Confirm" Disabled="@(Qty <= 0 || RemainingQty <= 0)" />
         </div>
     </RadzenStack>
 </RadzenCard>
 
 @code {
     [Parameter] public ProductSearchDTO Product { get; set; } = new();
+    [Parameter] public decimal ExistingQty { get; set; }
 
     decimal Qty { get; set; } = 1;
-    decimal MaxQty => Product?.StockQuantity > 0 ? Product.StockQuantity : 9999;
+    decimal RemainingQty => Math.Max(0, (Product?.StockQuantity ?? 0) - ExistingQty);
 
     protected override void OnInitialized()
     {
@@ -40,7 +55,7 @@
 
     void Confirm()
     {
-        if (Qty > 0)
+        if (Qty > 0 && Qty <= RemainingQty)
         {
             DialogService.Close(Qty);
         }

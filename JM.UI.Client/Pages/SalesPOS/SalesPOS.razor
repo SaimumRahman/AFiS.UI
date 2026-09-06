@@ -388,6 +388,11 @@
                                             <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@item.Barcode</span>
                                         </Template>
                                     </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Branch" Width="110">
+                                        <Template Context="item">
+                                            <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@GetStoreName(item.StoreId)</span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="SalesPersonName" Title="Sales Person" Width="130">
                                         <Template Context="item">
                                             <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@item.SalesPersonName</span>

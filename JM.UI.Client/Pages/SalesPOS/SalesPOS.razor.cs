@@ -472,6 +472,10 @@ namespace JM.UI.Client.Pages.SalesPOS
                     return;
                 }
 
+                // The barcode lookup is always scoped to the current sale's branch,
+                // so a product without an explicit store belongs to that branch.
+                product.StoreId ??= Sale.StoreId;
+
                 SearchedProduct = product;
                 await PromptQuantityAndAdd(product);
             }
@@ -492,7 +496,11 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
         {
             var qty = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
-                new Dictionary<string, object> { { "Product", product } },
+                new Dictionary<string, object>
+                {
+                    { "Product", product },
+                    { "ExistingQty", ExistingCartQty(product) }
+                },
                 new DialogOptions { Width = "420px" });
 
             if (qty is decimal selectedQty && selectedQty > 0)
@@ -504,9 +512,29 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        private decimal ExistingCartQty(ProductSearchDTO product)
+        {
+            return CartItems
+                .Where(c => c.ItemId == product.ItemId && c.StoreId == product.StoreId)
+                .Sum(c => c.Qty);
+        }
+
         protected void AddProductToCart(ProductSearchDTO product, decimal qty)
         {
-            var existing = CartItems.FirstOrDefault(c => c.ItemId == product.ItemId);
+            var existing = CartItems.FirstOrDefault(c =>
+                c.ItemId == product.ItemId && c.StoreId == product.StoreId);
+
+            var inCartQty = existing?.Qty ?? 0;
+            if (inCartQty + qty > product.StockQuantity)
+            {
+                var remaining = product.StockQuantity - inCartQty;
+                notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                    remaining > 0
+                        ? $"Only {remaining:N2} more available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart."
+                        : $"No more stock available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart.",
+                    5000);
+                return;
+            }
 
             if (existing != null)
             {
@@ -516,10 +544,6 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
-                // The sale is being made at the logged-in user's branch, so the
-                // sale detail always records that branch (even when the product
-                // itself was added from another branch).
-                detail.StoreId = Sale.StoreId;
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -529,6 +553,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             DistributeCustomerDiscount();
+        }
+
+        protected string GetStoreName(int? storeId)
+        {
+            if (storeId == null) return "N/A";
+            return Stores.FirstOrDefault(s => s.Id == storeId)?.Name ?? storeId.ToString();
         }
 
         // ── Search Product Modal ──
