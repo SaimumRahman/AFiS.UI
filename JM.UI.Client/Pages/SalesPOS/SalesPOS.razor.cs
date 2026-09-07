@@ -1045,7 +1045,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
-                        { "AllowBookingOption", false }
+                        { "AllowBookingOption", false },
+                        { "ShowDeliveredOption", true }
                     });
 
                 if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
@@ -1054,7 +1055,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                     int userId = await GetLocalStorageInt("UserId");
 
                     var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
-                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId);
+                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId, paymentResult.IsDelivered);
 
                     if (saveResult.IsSuccessStatus)
                     {

@@ -150,7 +150,7 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy)
+        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered)
         {
             try
             {
@@ -162,7 +162,8 @@ namespace JM.UI.DataService.DAL.SalesPOS
                     SaleMasterId = saleMasterId,
                     StoreId = storeId,
                     CreatedBy = createdBy,
-                    Payments = payments
+                    Payments = payments,
+                    IsDelivered = isDelivered
                 });
                 var response = await httpClient.PostAsync("api/SalePOS/save-due-payment", content);
                 response.EnsureSuccessStatusCode();
