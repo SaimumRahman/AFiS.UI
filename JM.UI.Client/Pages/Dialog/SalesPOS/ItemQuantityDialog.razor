@@ -2,6 +2,7 @@
 @using Radzen
 @using Radzen.Blazor
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <RadzenCard>
     <RadzenStack Gap="1rem">
@@ -21,8 +22,9 @@
         </div>
 
         <div>
-            <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Sale Price</div>
-            <div style="font-weight:600">@Product?.UnitPrice.ToString("N2")</div>
+            <RadzenLabel Text="Sale Price" Component="UnitPrice" />
+            <RadzenNumeric @bind-Value="UnitPrice" Min="@(Product?.UnitPrice ?? 0)" Max="999999" Step="0.01" Name="UnitPrice" Style="width:100%" ShowButtons="true" Change="@((decimal v) => OnUnitPriceChanged(v))" />
+            <div style="font-size:0.75rem;color:#666;margin-top:2px">Loaded price @(Product?.UnitPrice.ToString("N2")) &mdash; can be raised, never lowered below it.</div>
         </div>
 
         <div>
@@ -67,22 +69,42 @@
 </RadzenCard>
 
 @code {
+    public sealed class ItemQuantityDialogResult
+    {
+        public decimal Qty { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
     [Parameter] public ProductSearchDTO Product { get; set; } = new();
     [Parameter] public decimal ExistingQty { get; set; }
 
     decimal Qty { get; set; } = 1;
+    decimal UnitPrice { get; set; }
     decimal RemainingQty => Math.Max(0, (Product?.StockQuantity ?? 0) - ExistingQty);
 
     protected override void OnInitialized()
     {
         Qty = 1;
+        UnitPrice = Product?.UnitPrice ?? 0;
+    }
+
+    // The sale price may be raised, but never reduced below the loaded price.
+    void OnUnitPriceChanged(decimal value)
+    {
+        var floor = Product?.UnitPrice ?? 0;
+        if (value < floor)
+        {
+            UnitPrice = floor;
+            NotificationService.Notify(NotificationSeverity.Warning, "Price Restriction",
+                $"Sale price cannot be set below the loaded price ({floor:N2}).", 3000);
+        }
     }
 
     void Confirm()
     {
         if (Qty > 0 && Qty <= RemainingQty)
         {
-            DialogService.Close(Qty);
+            DialogService.Close(new ItemQuantityDialogResult { Qty = Qty, UnitPrice = UnitPrice });
         }
     }
 

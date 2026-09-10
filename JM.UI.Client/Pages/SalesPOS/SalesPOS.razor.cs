@@ -524,7 +524,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // (defaults to 1), then adds the chosen quantity to the cart.
         protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
         {
-            var qty = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
+            var result = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
                 new Dictionary<string, object>
                 {
                     { "Product", product },
@@ -532,9 +532,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 },
                 new DialogOptions { Width = "420px" });
 
-            if (qty is decimal selectedQty && selectedQty > 0)
+            if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
             {
-                AddProductToCart(product, selectedQty);
+                AddProductToCart(product, selected.Qty, selected.UnitPrice);
                 if (CartGrid != null)
                     await CartGrid.Reload();
                 StateHasChanged();
@@ -548,7 +548,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 .Sum(c => c.Qty);
         }
 
-        protected void AddProductToCart(ProductSearchDTO product, decimal qty)
+        protected void AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
         {
             var existing = CartItems.FirstOrDefault(c =>
                 c.ItemId == product.ItemId && c.StoreId == product.StoreId);
@@ -568,11 +568,18 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (existing != null)
             {
                 existing.Qty += qty;
+                if (unitPrice.HasValue && unitPrice.Value > existing.BaseUnitPrice)
+                    existing.UnitPrice = unitPrice.Value;
                 existing.TotalAmount = existing.Qty * existing.UnitPrice;
             }
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
+                {
+                    detail.UnitPrice = unitPrice.Value;
+                    detail.TotalAmount = detail.Qty * detail.UnitPrice;
+                }
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
