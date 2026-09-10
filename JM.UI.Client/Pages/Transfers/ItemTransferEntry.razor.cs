@@ -220,18 +220,26 @@ namespace JM.UI.Client.Pages.Transfers
 
                 PreviewItems = new List<TransferPreviewRow>();
 
-                var allItems = (await _serviceUnitOfWork.ItemService.GetItems())?.ToList() ?? new List<ItemDTO>();
+                var storeItems = (await _serviceUnitOfWork.ItemService
+                    .GetItemsByStoreId(requisition.FromStore ?? 0))?.ToList() ?? new List<ItemDTO>();
                 var itemLookup = new Dictionary<int, ItemDTO>();
-                foreach (var i in allItems)
+                foreach (var i in storeItems)
                 {
                     if (!itemLookup.ContainsKey(i.Id))
                         itemLookup[i.Id] = i;
                 }
 
+                var zeroStockSkipped = 0;
                 foreach (var detail in requisition.Details.Where(d => !d.IsDeleted))
                 {
                     var item = itemLookup.GetValueOrDefault(detail.ItemID);
                     if (item == null) continue;
+
+                    if (item.CurrentStock <= 0)
+                    {
+                        zeroStockSkipped++;
+                        continue;
+                    }
 
                     PreviewItems.Add(new TransferPreviewRow
                     {
@@ -262,6 +270,15 @@ namespace JM.UI.Client.Pages.Transfers
                     Transfer.TransTypeID = internalTransfer.Id;
                     OnTransferTypeChanged(internalTransfer.Id);
                 }
+
+                if (zeroStockSkipped > 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Zero-Stock Items Hidden",
+                        $"{zeroStockSkipped} requisition line(s) have no stock in the selected store and were skipped.",
+                        duration: 7000);
+                }
+
+                await LoadItemsForStore(Transfer.StoreId);
 
                 PreviewGrid?.Reload();
                 StateHasChanged();
@@ -1268,6 +1285,9 @@ namespace JM.UI.Client.Pages.Transfers
                     AvailableItems = await _serviceUnitOfWork.ItemService.GetItemsByStoreId(storeId.Value)
                                      ?? new List<ItemDTO>();
                 }
+
+                // Hide items with no stock in the current store
+                AvailableItems = AvailableItems.Where(i => i.CurrentStock > 0).ToList();
             }
             catch (Exception ex)
             {
