@@ -1022,6 +1022,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     // Clear the cart after the invoice has been downloaded and refresh the UI.
                     CartItems.Clear();
                     StateHasChanged();
+                    if (CartGrid != null)
+                        await CartGrid.Reload();
                     notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
                         "Invoice downloaded successfully. Cart cleared.", 3500);
 
@@ -1210,6 +1212,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
                 Sale.CreatedBy = await GetLocalStorageInt("UserId");
                 Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
             }
             catch (Exception ex)
             {
