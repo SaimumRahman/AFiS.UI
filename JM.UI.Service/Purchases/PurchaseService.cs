@@ -171,7 +171,7 @@ namespace JM.UI.Service.Purchases
                 PurchaseDate = DateTime.Now,
                 BillDate = DateTime.Now,
                 IsActive = true,
-                IsVatIncluded = false,
+                IsVatIncluded = true,
                 PurchaseItems = new List<PurchaseItemDTO>(),
                 SystemInvoiceNo = (await GetSystemInvoiceNew()).SystemInvoiceNo
             };

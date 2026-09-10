@@ -289,47 +289,8 @@ namespace JM.UI.Client.Services
                         Description = "View opening stock, receipts, issues and closing stock by store",
                         Tags        = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
                     },
- 
-                    // ── Transfers ──
-                   
-                    new Example
-                    {
-                        Name        = "Transfer List",
-                        Path        = "/ItemsTransferList",
-                        Icon        = "\ue40a",
-                        Title       = "Items Transfer List",
-                        Description = "View all item transfers",
-                        Tags        = new[] { "items", "transfer", "inventory" },
-                    },
-                    new Example
-                    {
-                        Name        = "Dispatch Goods",
-                        Path        = "/UndispatchedTransferList",
-                        Icon        = "\ue40a",
-                        Title       = "Undispatched Transfer List",
-                        Description = "Manage transfers pending dispatch",
-                        Tags        = new[] { "transfer", "undispatched", "inventory" },
-                    },
-                    new Example
-                    {
-                        Name        = "Receive Transfers",
-                        Path        = "/DispatchedTransferList",
-                        Icon        = "\ue40a",
-                        Title       = "Dispatched Transfer List",
-                        Description = "Manage completed dispatched transfers",
-                        Tags        = new[] { "transfer", "dispatched", "inventory" },
-                    },
- 
+
                     // ── Other ──
-                    new Example
-                    {
-                        Name        = "Requisition",
-                        Path        = "/InvRequisitionList",
-                        Icon        = "\ue873",
-                        Title       = "Requisition",
-                        Description = "Manage inventory requisitions",
-                        Tags        = new[] { "requisition", "order", "purchase" }
-                    },
                     new Example
                     {
                         Name        = "Barcode Print",
@@ -338,6 +299,63 @@ namespace JM.UI.Client.Services
                         Title       = "Barcode Print",
                         Description = "Print barcodes for inventory items",
                         Tags        = new[] { "barcode", "print", "inventory" }
+                    }
+                }
+            },
+
+            // ─────────────────────────────────────────
+            // Transfer
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Transfer",
+                Icon = "\ue40a",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "New Transfer",
+                        Path        = "/ItemTransferEntry",
+                        Icon        = "\ue40a",
+                        Title       = "New Item Transfer",
+                        Description = "Create a new item transfer between stores",
+                        Tags        = new[] { "transfer", "new", "item", "dispatch" }
+                    },
+                    new Example
+                    {
+                        Name        = "Transfer List",
+                        Path        = "/ItemsTransferList",
+                        Icon        = "\ue40a",
+                        Title       = "Items Transfer List",
+                        Description = "View all item transfers",
+                        Tags        = new[] { "items", "transfer", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name        = "Dispatch",
+                        Path        = "/UndispatchedTransferList",
+                        Icon        = "\ue40a",
+                        Title       = "Undispatched Transfer List",
+                        Description = "Manage transfers pending dispatch",
+                        Tags        = new[] { "transfer", "undispatched", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name        = "TR Receive",
+                        Path        = "/DispatchedTransferList",
+                        Icon        = "\ue40a",
+                        Title       = "Dispatched Transfer List",
+                        Description = "Manage completed dispatched transfers",
+                        Tags        = new[] { "transfer", "dispatched", "inventory" }
+                    },
+                    new Example
+                    {
+                        Name        = "Requisition",
+                        Path        = "/InvRequisitionList",
+                        Icon        = "\ue873",
+                        Title       = "Requisition",
+                        Description = "Manage inventory requisitions",
+                        Tags        = new[] { "requisition", "order", "purchase" }
                     }
                 }
             },

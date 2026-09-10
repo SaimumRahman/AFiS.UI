@@ -103,7 +103,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             ? SubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
             : 0;
         protected decimal CampaignDiscountAmount => Sale.CampaignDiscount ?? 0;
-        protected decimal NetPayable
+
+        // Exact payable before the paisa-to-discount rounding.
+        protected decimal RawNetPayable
         {
             get
             {
@@ -120,6 +122,12 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Math.Max(net, 0);
             }
         }
+
+        // Fractional paisa part of the payable is moved into the discount field
+        // so the payable amount is always a whole taka (no paisa).
+        protected decimal PaisaDiscount => Math.Round(RawNetPayable - Math.Floor(RawNetPayable), 2);
+
+        protected decimal NetPayable => Math.Floor(RawNetPayable);
 
         protected override async Task OnInitializedAsync()
         {
@@ -362,6 +370,27 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        protected async Task DownloadInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                if (sale == null || sale.SaleDetails == null || sale.SaleDetails.Count == 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                        $"Invoice {invoice.InvoiceNo} not found.", 4000);
+                    return;
+                }
+                await DownloadPosInvoice(sale);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                    $"Error downloading invoice: {ex.Message}", 4000);
+            }
+        }
+
         protected async Task EditInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
@@ -472,6 +501,10 @@ namespace JM.UI.Client.Pages.SalesPOS
                     return;
                 }
 
+                // The barcode lookup is always scoped to the current sale's branch,
+                // so a product without an explicit store belongs to that branch.
+                product.StoreId ??= Sale.StoreId;
+
                 SearchedProduct = product;
                 await PromptQuantityAndAdd(product);
             }
@@ -491,35 +524,62 @@ namespace JM.UI.Client.Pages.SalesPOS
         // (defaults to 1), then adds the chosen quantity to the cart.
         protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
         {
-            var qty = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
-                new Dictionary<string, object> { { "Product", product } },
+            var result = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
+                new Dictionary<string, object>
+                {
+                    { "Product", product },
+                    { "ExistingQty", ExistingCartQty(product) }
+                },
                 new DialogOptions { Width = "420px" });
 
-            if (qty is decimal selectedQty && selectedQty > 0)
+            if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
             {
-                AddProductToCart(product, selectedQty);
+                AddProductToCart(product, selected.Qty, selected.UnitPrice);
                 if (CartGrid != null)
                     await CartGrid.Reload();
                 StateHasChanged();
             }
         }
 
-        protected void AddProductToCart(ProductSearchDTO product, decimal qty)
+        private decimal ExistingCartQty(ProductSearchDTO product)
         {
-            var existing = CartItems.FirstOrDefault(c => c.ItemId == product.ItemId);
+            return CartItems
+                .Where(c => c.ItemId == product.ItemId && c.StoreId == product.StoreId)
+                .Sum(c => c.Qty);
+        }
+
+        protected void AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
+        {
+            var existing = CartItems.FirstOrDefault(c =>
+                c.ItemId == product.ItemId && c.StoreId == product.StoreId);
+
+            var inCartQty = existing?.Qty ?? 0;
+            if (inCartQty + qty > product.StockQuantity)
+            {
+                var remaining = product.StockQuantity - inCartQty;
+                notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                    remaining > 0
+                        ? $"Only {remaining:N2} more available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart."
+                        : $"No more stock available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart.",
+                    5000);
+                return;
+            }
 
             if (existing != null)
             {
                 existing.Qty += qty;
+                if (unitPrice.HasValue && unitPrice.Value > existing.BaseUnitPrice)
+                    existing.UnitPrice = unitPrice.Value;
                 existing.TotalAmount = existing.Qty * existing.UnitPrice;
             }
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
-                // The sale is being made at the logged-in user's branch, so the
-                // sale detail always records that branch (even when the product
-                // itself was added from another branch).
-                detail.StoreId = Sale.StoreId;
+                if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
+                {
+                    detail.UnitPrice = unitPrice.Value;
+                    detail.TotalAmount = detail.Qty * detail.UnitPrice;
+                }
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -529,6 +589,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             DistributeCustomerDiscount();
+        }
+
+        protected string GetStoreName(int? storeId)
+        {
+            if (storeId == null) return "N/A";
+            return Stores.FirstOrDefault(s => s.Id == storeId)?.Name ?? storeId.ToString();
         }
 
         // ── Search Product Modal ──
@@ -910,6 +976,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
+            // Can only finalize a sale when every line in the cart belongs to
+            // the same store.
+            if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)
+            {
+                await dialogService.Alert(
+                    "You cannot save the sale because all items are not from the same store.",
+                    "Same Store Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
             var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                 new Dictionary<string, object> { { "NetPayable", NetPayable } });
             if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
@@ -945,6 +1022,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     // Clear the cart after the invoice has been downloaded and refresh the UI.
                     CartItems.Clear();
                     StateHasChanged();
+                    if (CartGrid != null)
+                        await CartGrid.Reload();
                     notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
                         "Invoice downloaded successfully. Cart cleared.", 3500);
 
@@ -1004,7 +1083,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
-                        { "AllowBookingOption", false }
+                        { "AllowBookingOption", false },
+                        { "ShowDeliveredOption", true }
                     });
 
                 if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
@@ -1013,7 +1093,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                     int userId = await GetLocalStorageInt("UserId");
 
                     var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
-                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId);
+                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId, paymentResult.IsDelivered);
 
                     if (saveResult.IsSuccessStatus)
                     {
@@ -1132,6 +1212,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
                 Sale.CreatedBy = await GetLocalStorageInt("UserId");
                 Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
             }
             catch (Exception ex)
             {

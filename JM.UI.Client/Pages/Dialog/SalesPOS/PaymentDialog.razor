@@ -66,6 +66,10 @@
     }
 
     <div style="display:flex;gap:6px;margin-top:8px">
+        @if (ShowDeliveredOption)
+        {
+            <label><RadzenCheckBox @bind-Value="IsDelivered" /> Delivered</label>
+        }
         @if (AllowBookingOption)
         {
             <label><RadzenCheckBox @bind-Value="IsBookingPayment" /> Book (partial payment)</label>
@@ -81,6 +85,7 @@
 @code {
     [Parameter] public decimal NetPayable { get; set; }
     [Parameter] public bool AllowBookingOption { get; set; } = true;
+    [Parameter] public bool ShowDeliveredOption { get; set; }
 
     decimal PaymentAmount { get; set; }
     bool IsCash { get; set; } = true;
@@ -89,6 +94,7 @@
     List<PaymentTransactionDTO> TempPayments { get; set; } = new();
     decimal RemainingAmount => NetPayable - TempPayments.Sum(p => p.PaidAmount ?? 0);
     bool IsBookingPayment { get; set; }
+    bool IsDelivered { get; set; } = true;
 
     List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
 
@@ -152,7 +158,8 @@
         DialogService.Close(new PaymentResultDTO
         {
             Payments = TempPayments.ToList(),
-            IsBookingPayment = IsBookingPayment
+            IsBookingPayment = IsBookingPayment,
+            IsDelivered = IsDelivered
         });
     }
 

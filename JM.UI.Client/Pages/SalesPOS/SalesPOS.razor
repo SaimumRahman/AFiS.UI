@@ -350,7 +350,7 @@
                 @* Product Preview *@
                 @if (SearchedProduct != null)
                 {
-                    <div class="product-preview">
+                   @*  <div class="product-preview">
                         <div class="info">
                             <div class="name">@SearchedProduct.ProductName</div>
                             <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
@@ -366,7 +366,7 @@
                                 }
                             </div>
                         </div>
-                    </div>
+                    </div> *@
                 }
             }
 
@@ -386,6 +386,11 @@
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="130">
                                         <Template Context="item">
                                             <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@item.Barcode</span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Branch" Width="110">
+                                        <Template Context="item">
+                                            <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@GetStoreName(item.StoreId)</span>
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="SalesPersonName" Title="Sales Person" Width="130">
@@ -476,8 +481,9 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalItems" Title="Items" Width="60" />
-                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="110" Sortable="false" Filterable="false">
                                     <Template Context="inv">
+                                        <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Secondary" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => DownloadInvoice(inv))" />
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -610,11 +616,14 @@
                         <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Change="@((object args) => DistributeInvoiceDiscount())" />
                     </span>
                 </div>
-                @if (Sale.InvoiceDiscount.HasValue && Sale.InvoiceDiscount > 0)
+                @{
+                    var posTotalDiscount = InvoiceDiscountAmount + PaisaDiscount;
+                }
+                @if (posTotalDiscount > 0)
                 {
                     <div class="billing-row" style="color:#28a745">
                         <span class="label">Discount Amount</span>
-                        <span class="value">-@InvoiceDiscountAmount.ToString("N2")</span>
+                        <span class="value">-@posTotalDiscount.ToString("N2")</span>
                     </div>
                 }
                 <div class="billing-row">
