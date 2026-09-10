@@ -616,11 +616,14 @@
                         <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Change="@((object args) => DistributeInvoiceDiscount())" />
                     </span>
                 </div>
-                @if (Sale.InvoiceDiscount.HasValue && Sale.InvoiceDiscount > 0)
+                @{
+                    var posTotalDiscount = InvoiceDiscountAmount + PaisaDiscount;
+                }
+                @if (posTotalDiscount > 0)
                 {
                     <div class="billing-row" style="color:#28a745">
                         <span class="label">Discount Amount</span>
-                        <span class="value">-@InvoiceDiscountAmount.ToString("N2")</span>
+                        <span class="value">-@posTotalDiscount.ToString("N2")</span>
                     </div>
                 }
                 <div class="billing-row">

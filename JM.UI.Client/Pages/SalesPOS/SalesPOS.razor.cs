@@ -103,7 +103,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             ? SubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
             : 0;
         protected decimal CampaignDiscountAmount => Sale.CampaignDiscount ?? 0;
-        protected decimal NetPayable
+
+        // Exact payable before the paisa-to-discount rounding.
+        protected decimal RawNetPayable
         {
             get
             {
@@ -120,6 +122,12 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Math.Max(net, 0);
             }
         }
+
+        // Fractional paisa part of the payable is moved into the discount field
+        // so the payable amount is always a whole taka (no paisa).
+        protected decimal PaisaDiscount => Math.Round(RawNetPayable - Math.Floor(RawNetPayable), 2);
+
+        protected decimal NetPayable => Math.Floor(RawNetPayable);
 
         protected override async Task OnInitializedAsync()
         {
