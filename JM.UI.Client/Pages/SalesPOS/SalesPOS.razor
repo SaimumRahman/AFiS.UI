@@ -481,8 +481,9 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalItems" Title="Items" Width="60" />
-                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="110" Sortable="false" Filterable="false">
                                     <Template Context="inv">
+                                        <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Secondary" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => DownloadInvoice(inv))" />
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                     </Template>
                                 </RadzenDataGridColumn>

@@ -362,6 +362,27 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        protected async Task DownloadInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                if (sale == null || sale.SaleDetails == null || sale.SaleDetails.Count == 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                        $"Invoice {invoice.InvoiceNo} not found.", 4000);
+                    return;
+                }
+                await DownloadPosInvoice(sale);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                    $"Error downloading invoice: {ex.Message}", 4000);
+            }
+        }
+
         protected async Task EditInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
