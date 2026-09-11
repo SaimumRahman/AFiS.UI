@@ -646,7 +646,11 @@
                 {
                     <div class="billing-row" style="color:#dc3545">
                         <span class="label">Exchange (Return)</span>
-                        <span class="value">-@Sale.ExchangeAmount?.ToString("N2")</span>
+                        <span class="value">
+                            -@Sale.ExchangeAmount?.ToString("N2")
+                            <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
+                                          Click="@RemoveExchange" Title="Remove exchange" Style="margin-left:6px">&#10005;</RadzenButton>
+                        </span>
                     </div>
                 }
                 @if (Sale.RoundingAmount.HasValue && Sale.RoundingAmount != 0)
@@ -661,7 +665,7 @@
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                   @*  <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenExchangeModal" Text="Exchange" /> *@
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenExchangeModal" Text="Exchange" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>

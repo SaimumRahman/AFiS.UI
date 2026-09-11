@@ -968,9 +968,25 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.ExchangeAmount = (Sale.ExchangeAmount ?? 0) + exchange.ExchangeAmount;
                 Sale.ReturnInvoiceNo = exchange.InvoiceNo;
                 Sale.IsReturnExchange = exchange.IsReturnExchange;
+                Sale.ReturnedItems = exchange.ExchangeItems.Select(x => new ReturnedItemDTO
+                {
+                    SalesDetailsId = x.SalesDetailsId,
+                    Qty = x.Qty
+                }).ToList();
                 notificationService.Notify(NotificationSeverity.Success, "Added",
                     $"Exchange amount: {exchange.ExchangeAmount:N2}", 2000);
             }
+        }
+
+        protected void RemoveExchange()
+        {
+            if (Sale.ExchangeAmount == null || Sale.ExchangeAmount == 0) return;
+            Sale.ExchangeAmount = null;
+            Sale.ReturnInvoiceNo = null;
+            Sale.IsReturnExchange = false;
+            Sale.ReturnedItems = new();
+            notificationService.Notify(NotificationSeverity.Info, "Removed",
+                "Exchange credit removed", 2000);
         }
 
         // ── Payment Modal ──

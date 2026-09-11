@@ -59,7 +59,7 @@ namespace JM.UI.Service.SalesPOS
 
             // Map to API-aligned fields
             sale.TotalBill = sale.SubTotal;
-            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount;
+            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount + (sale.ExchangeAmount ?? 0);
             sale.TotalPaid = sale.PaidAmount ?? 0;
             sale.TotalDue = sale.DueAmount ?? 0;
             sale.TotalVat = sale.VatAmount;

@@ -11,22 +11,42 @@
     <div style="font-size:0.8rem;margin-bottom:8px">
         Invoice: @ExchangeSale.InvoiceNo | Date: @ExchangeSale.SalesDate.ToString("dd/MM/yyyy") | Customer: @ExchangeSale.CustomerName
     </div>
-    <RadzenDataGrid Data="@ExchangeItems" AllowColumnResize="true" ShowPaging="false">
-        <Columns>
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" Width="180" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="100" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Qty" Title="Qty" Width="60" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="TotalAmount" Title="Amount" Width="80" />
-            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="60">
-                <Template Context="item">
-                    <RadzenButton Text="Exchange" ButtonStyle="ButtonStyle.Warning" ButtonSize="ExtraSmall" @onclick="() => SelectExchangeItem(item)" />
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-    <div style="margin-top:8px;display:flex;gap:6px;justify-content:flex-end">
-        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
-    </div>
+    @if (ExchangeItems.Count == 0)
+    {
+        <div style="color:#856404">No line items available to exchange on this invoice.</div>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@ExchangeItems" AllowColumnResize="true" ShowPaging="false" TItem="ExchangeLineEdit">
+            <Columns>
+                <RadzenDataGridColumn TItem="ExchangeLineEdit" Property="ProductName" Title="Item" Width="170" />
+                <RadzenDataGridColumn TItem="ExchangeLineEdit" Property="Barcode" Title="Barcode" Width="90" />
+                <RadzenDataGridColumn TItem="ExchangeLineEdit" Title="Available" Width="70">
+                    <Template Context="e">
+                        <span>@e.Available.ToString("0.##")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ExchangeLineEdit" Title="Return Qty" Width="90">
+                    <Template Context="e">
+                        <RadzenNumeric TValue="decimal" @bind-Value="e.ReturnQty" Min="0" Max="@e.Available" Step="1"
+                                       ShowButtons="true" Change="@((decimal value) => OnReturnQtyChanged(value))" Style="width:80px" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ExchangeLineEdit" Title="Credit" Width="80">
+                    <Template Context="e">
+                        <span>@e.Credit.ToString("N2")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+        <div style="margin-top:8px;display:flex;gap:6px;align-items:center;justify-content:flex-end">
+            <div style="margin-right:auto;font-weight:600">
+                Total Credit: @TotalCredit.ToString("N2")
+            </div>
+            <RadzenButton Text="Apply Exchange" ButtonStyle="ButtonStyle.Warning" Disabled="@(TotalCredit <= 0)" @onclick="ApplyExchange" />
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" @onclick="Cancel" />
+        </div>
+    }
 }
 else
 {

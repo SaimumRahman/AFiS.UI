@@ -56,5 +56,6 @@ namespace JM.UI.Entities.Model.SalesPOS
 
         public List<SaleDetailDTO> SaleDetails { get; set; } = new();
         public List<PaymentTransactionDTO> PaymentTransactions { get; set; } = new();
+        public List<ReturnedItemDTO> ReturnedItems { get; set; } = new();
     }
 }
