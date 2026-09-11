@@ -1164,6 +1164,45 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        // ── Void Invoice ──
+        protected async Task VoidInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Void invoice {invoice.InvoiceNo}? This will revert stock, payments and requisitions created for this invoice.",
+                "Void Invoice",
+                new ConfirmOptions { OkButtonText = "Yes, Void", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int userId = await GetLocalStorageInt("UserId");
+
+                var result = await _serviceUnitOfWork.SaleService.VoidSale(invoice.SaleMasterId, userId > 0 ? userId : null);
+
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Invoice Voided",
+                        result.Message, 4000);
+                    ExpandedInvoiceDetails.Remove(invoice.SaleMasterId);
+                    ExpandedInvoiceLoading.Remove(invoice.SaleMasterId);
+                    await LoadInvoices();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Void Failed",
+                    $"Error voiding invoice: {ex.Message}", 4000);
+            }
+        }
+
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {

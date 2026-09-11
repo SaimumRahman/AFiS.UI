@@ -264,6 +264,36 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy)
+        {
+            try
+            {
+                _logger.LogInformation("Voiding sale: {SaleMasterId}", saleMasterId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var content = JsonContent.Create(new
+                {
+                    SaleMasterId = saleMasterId,
+                    VoidedBy = voidedBy
+                });
+                var response = await httpClient.PostAsync("api/SalePOS/void", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during void sale: {SaleMasterId}", saleMasterId);
+                throw new Exception("Failed to void sale: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during void sale: {SaleMasterId}", saleMasterId);
+                throw new Exception("Unexpected error voiding sale: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate)
         {
             try

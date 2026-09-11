@@ -487,6 +487,18 @@
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                     </Template>
                                 </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">
+                                    <Template Context="inv">
+                                        @if (IsInvoicesMode)
+                                        {
+                                            <RadzenButton Text="Void"
+                                                          ButtonStyle="ButtonStyle.Danger"
+                                                          ButtonSize="ExtraSmall"
+                                                          Variant="Variant.Outlined"
+                                                          Click="@(() => VoidInvoice(inv))" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="90" Sortable="false" Filterable="false">
                                     <Template Context="inv">
                                         @if (IsBookingMode && inv.TotalDue > 0)

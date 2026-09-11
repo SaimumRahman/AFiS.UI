@@ -17,6 +17,7 @@ namespace JM.UI.DataService.DAL.SalesPOS
         Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy);
         Task<ResponseResult> UnmarkDraftSale(int saleMasterId);
         Task<ResponseResult> DeleteSale(int id);
+        Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate);
         Task<IEnumerable<SaleSummaryDTO>> GetInvoices(DateTime date, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId);

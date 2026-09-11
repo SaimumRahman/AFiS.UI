@@ -92,6 +92,11 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.DeleteSale(id);
         }
 
+        public async Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.VoidSale(saleMasterId, voidedBy);
+        }
+
         public async Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate)
         {
             return await _repositoryUnitOfWork.SaleRepository.GetSalesByDateRange(fromDate, toDate);
