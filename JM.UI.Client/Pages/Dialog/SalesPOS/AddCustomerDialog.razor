@@ -184,31 +184,15 @@
 
     protected void ValidatePhone()
     {
-        if (string.IsNullOrEmpty(Customer.Phone))
+        if (string.IsNullOrWhiteSpace(Customer.Phone))
         {
             IsPhoneValid = false;
             PhoneValidationMessage = "Phone number is required";
             return;
         }
 
-        // Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX).
-        var digitsOnly = new string(Customer.Phone.Where(char.IsDigit).ToArray());
-
-        if (digitsOnly.Length == 11 && digitsOnly.StartsWith("01"))
-        {
-            IsPhoneValid = true;
-            PhoneValidationMessage = "";
-        }
-        else
-        {
-            IsPhoneValid = false;
-            if (digitsOnly.Length != 11)
-                PhoneValidationMessage = "Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX)";
-            else if (!digitsOnly.StartsWith("01"))
-                PhoneValidationMessage = "Phone must start with '01'";
-            else
-                PhoneValidationMessage = "Invalid phone number format";
-        }
+        IsPhoneValid = true;
+        PhoneValidationMessage = "";
     }
 
     protected async Task Save()
