@@ -9,6 +9,7 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.Purchases
@@ -254,7 +255,14 @@ namespace JM.UI.DataService.DAL.Purchases
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var content = JsonContent.Create(request);
                 var response = await httpClient.PostAsync("api/Purchase/generate-barcode", content);
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMessage = await ExtractApiErrorMessageAsync(response);
+                    throw new Exception(string.IsNullOrWhiteSpace(errorMessage)
+                        ? "Barcode generation failed. Please try again."
+                        : errorMessage);
+                }
 
                 var result = await response.Content.ReadFromJsonAsync<BarcodeResponse>();
                 return result?.Barcode ?? string.Empty;
@@ -262,8 +270,27 @@ namespace JM.UI.DataService.DAL.Purchases
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating barcode");
-                throw new Exception("Failed to generate barcode: " + ex.Message, ex);
+                throw new Exception(ex.Message, ex);
             }
+        }
+
+        private static async Task<string?> ExtractApiErrorMessageAsync(HttpResponseMessage response)
+        {
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(body)) return null;
+
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("message", out var message))
+                    return message.GetString();
+            }
+            catch
+            {
+                // Non-JSON / unparseable error body — fall back to generic message.
+            }
+
+            return null;
         }
 
         // =============================================

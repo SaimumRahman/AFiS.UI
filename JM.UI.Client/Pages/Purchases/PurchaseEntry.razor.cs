@@ -1798,6 +1798,15 @@ protected bool IsProcessing { get; set; } = false;
             CurrentItem.ImageBase64 = null;
 
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
@@ -1814,12 +1823,42 @@ protected bool IsProcessing { get; set; } = false;
             if (!sizeId.HasValue) return;
             CurrentItem.SizeId = sizeId;
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
             {
                 await SearchSingleBarcodeAndAddToPreview(CurrentItem.Barcode);
             }
+        }
+
+        // Duplicate guard — matched against the Preview Items table (Product + Color + Size)
+        // BEFORE barcode generation so a variant already present never hits the API / 500.
+        // Size is optional at the colour-selection stage; once chosen, the full combo is required.
+        private bool IsVariantAlreadyInPreview()
+        {
+            if (PreviewItems.Count == 0 || !CurrentItem.ColorId.HasValue) return false;
+
+            return PreviewItems.Any(p =>
+                IsSameProductAsCurrent(p)
+                && p.ColorId == CurrentItem.ColorId
+                && (!CurrentItem.SizeId.HasValue || p.SizeId == CurrentItem.SizeId));
+        }
+
+        private bool IsSameProductAsCurrent(PreviewItemRow p)
+        {
+            if (p.ItemId > 0 && p.ItemId == CurrentItem.ItemId) return true;
+
+            return !string.IsNullOrWhiteSpace(CurrentItem.ItemName)
+                && string.Equals(p.ItemName?.Trim(), CurrentItem.ItemName?.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetBarcodeBase(string barcode)
@@ -1839,7 +1878,12 @@ protected bool IsProcessing { get; set; } = false;
                         "Please select a Size before adding items to the preview.");
                     return;
                 }
-                if (PreviewItems.Any(p => p.Barcode == barcode)) return;
+                if (PreviewItems.Any(p => p.Barcode == barcode))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                        "This item is already in the table");
+                    return;
+                }
                 if (PreviewItems.Count > 0)
                 {
                     var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
