@@ -961,7 +961,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Exchange Modal ──
         protected async Task OpenExchangeModal()
         {
-            var result = await dialogService.OpenAsync<ExchangeDialogComponent>("Return / Exchange",
+            var result = await dialogService.OpenAsync<ExchangeDialog>("Return / Exchange",
                 new Dictionary<string, object>());
             if (result is ExchangeResultDTO exchange)
             {
