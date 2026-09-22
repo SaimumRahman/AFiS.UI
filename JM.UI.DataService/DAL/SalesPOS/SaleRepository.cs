@@ -183,6 +183,32 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
+        public async Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request)
+        {
+            try
+            {
+                _logger.LogInformation("Processing return/exchange for invoice {Invoice}", request.ReturnInvoiceNo);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var content = JsonContent.Create(new { Return = request });
+                var response = await httpClient.PostAsync("api/SalePOS/process-return", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during return/exchange");
+                throw new Exception("Failed to process return: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during return/exchange");
+                throw new Exception("Unexpected error processing return: " + ex.Message, ex);
+            }
+        }
+
         public async Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy)
         {
             try

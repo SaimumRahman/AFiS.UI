@@ -1,0 +1,371 @@
+@using JM.UI.Entities.Model.SalesPOS
+@using JM.UI.Entities.Model.FinancialAccounts
+@using JM.UI.Service.UnitOfWork
+@using JM.Infrastructure.Models
+@using Radzen
+@using Radzen.Blazor
+@inject IServiceUnitOfWork ServiceUnitOfWork
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<div style="display:flex;flex-direction:column;gap:12px;min-width:640px">
+
+    @* ── Step 1: search the original invoice ── *@
+    <div>
+        <label style="font-size:0.8rem;font-weight:600">Original Invoice</label>
+        <div style="display:flex;gap:8px">
+            <RadzenTextBox @bind-Value="InvoiceSearch" Placeholder="Enter invoice number..." class="rz-w-100" @onkeydown="@OnInvoiceKeyPress" />
+            <RadzenButton Text="Search" ButtonStyle="ButtonStyle.Primary" Click="@SearchInvoice" />
+        </div>
+    </div>
+
+    @if (OriginalSale != null)
+    {
+        <div style="font-size:0.78rem;color:#555">
+            Invoice <strong>@OriginalSale.InvoiceNo</strong> | @OriginalSale.SalesDate.ToString("dd/MM/yyyy") | @OriginalSale.CustomerName
+        </div>
+
+        @* ── Return lines ── *@
+        <div>
+            <div class="pos-card-title" style="margin-bottom:4px">Items to Return</div>
+            @if (ReturnLines.Count == 0)
+            {
+                <div style="color:#856404">No returnable items on this invoice.</div>
+            }
+            else
+            {
+                <RadzenDataGrid Data="@ReturnLines" AllowColumnResize="true" ShowPaging="false" TItem="ReturnEditLine" Density="Density.Compact">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Property="ProductName" Title="Item" Width="200" />
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Property="Barcode" Title="Barcode" Width="110" />
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Title="Available" Width="70">
+                            <Template Context="e"><span>@e.Available.ToString("0.##")</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Title="Return Qty" Width="100">
+                            <Template Context="e">
+                                <RadzenNumeric TValue="decimal" @bind-Value="e.ReturnQty" Min="0" Max="@e.Available" Step="1" ShowButtons="true"
+                                               Change="@((decimal v) => StateHasChanged())" Style="width:80px" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Property="UnitPrice" Title="Price" Width="80" />
+                        <RadzenDataGridColumn TItem="ReturnEditLine" Title="Credit" Width="90">
+                            <Template Context="e"><span style="font-weight:600;color:#dc3545">@e.Credit.ToString("N2")</span></Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        </div>
+
+        @* ── Mode ── *@
+        <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:0.78rem;color:#666">Type:</span>
+            <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" />
+            <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Exchange"; StateHasChanged(); })" />
+        </div>
+
+        @* ── Replacement items (exchange only) ── *@
+        @if (Mode == "Exchange")
+        {
+            <div>
+                <div class="pos-card-title" style="margin-bottom:4px">Replacement Items</div>
+                <div style="display:flex;gap:8px">
+                    <RadzenTextBox @bind-Value="ProductSearchTerm" Placeholder="Search product (name / barcode)..." class="rz-w-100" @onkeydown="@OnProductKeyPress" />
+                    <RadzenButton Text="Search" ButtonStyle="ButtonStyle.Primary" Click="@SearchProducts" />
+                </div>
+                @if (ProductResults.Any())
+                {
+                    <div style="border:1px solid #ddd;border-radius:4px;max-height:180px;overflow-y:auto;margin-top:4px">
+                        @foreach (var p in ProductResults)
+                        {
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid #f0f0f0">
+                                <div>
+                                    <div style="font-weight:600;font-size:0.8rem">@p.ProductName</div>
+                                    <div style="font-size:0.7rem;color:#666">@p.Barcode | @p.UnitPrice.ToString("N2") | Stock: @p.StockQuantity.ToString("0.##")</div>
+                                </div>
+                                <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" ButtonSize="ExtraSmall" Click="@(() => AddExchangeItem(p))" />
+                            </div>
+                        }
+                    </div>
+                }
+                @if (ExchangeItems.Any())
+                {
+                    <RadzenDataGrid Data="@ExchangeItems" ShowPaging="false" TItem="SaleDetailDTO" Density="Density.Compact" Style="margin-top:6px">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" />
+                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="90">
+                                <Template Context="e">
+                                    <RadzenNumeric TValue="decimal" @bind-Value="e.Qty" Min="1" Step="1" ShowButtons="true"
+                                                   Change="@((decimal v) => OnExchangeQtyChanged(e, v))" Style="width:70px" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="UnitPrice" Title="Price" Width="90" />
+                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
+                                <Template Context="e"><span>@e.TotalAmount.ToString("N2")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="40">
+                                <Template Context="e">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Click="@(() => RemoveExchangeItem(e))">X</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            </div>
+        }
+
+        @* ── Summary ── *@
+        <div style="background:#f8f9fa;border-radius:6px;padding:10px;font-size:0.8rem">
+            <div style="display:flex;justify-content:space-between"><span>Return Credit</span><span style="color:#dc3545;font-weight:600">-@TotalCredit.ToString("N2")</span></div>
+            @if (Mode == "Exchange")
+            {
+                <div style="display:flex;justify-content:space-between"><span>Replacement Total</span><span>@ReplacementSubtotal.ToString("N2")</span></div>
+            }
+            <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #ddd;margin-top:6px;padding-top:6px">
+                <span>@(NetDue >= 0 ? "Customer Pays" : "Refund to Customer")</span>
+                <span style="color:@(NetDue >= 0 ? "#28a745" : "#dc3545")">@Math.Abs(NetDue).ToString("N2")</span>
+            </div>
+        </div>
+
+        @* ── Refund / payment method ── *@
+        <div style="display:flex;gap:12px;align-items:flex-end">
+            <div style="flex:1">
+                <label style="font-size:0.78rem;font-weight:600">@(NetDue >= 0 ? "Payment Method" : "Refund Method")</label>
+                <RadzenDropDown @bind-Value="MethodId" Data="@MethodOptions" TextProperty="Name" ValueProperty="Id" Style="width:100%" />
+            </div>
+            @if (MethodId != 0)
+            {
+                <div style="flex:1">
+                    <label style="font-size:0.78rem;font-weight:600">Transaction Ref</label>
+                    <RadzenTextBox @bind-Value="RefTransactionNo" Style="width:100%" />
+                </div>
+            }
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            <RadzenButton Text="@(Mode == "Exchange" ? "Process Exchange" : "Process Return")"
+                          ButtonStyle="ButtonStyle.Warning" Click="@Process" Disabled="@(TotalCredit <= 0 || (Mode == "Exchange" && ExchangeItems.Count == 0))" />
+        </div>
+    }
+    else
+    {
+        <div style="display:flex;justify-content:flex-end">
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int StoreId { get; set; }
+    [Parameter] public int UserId { get; set; }
+
+    protected string InvoiceSearch { get; set; } = "";
+    protected SaleMasterDTO? OriginalSale { get; set; }
+    protected List<ReturnEditLine> ReturnLines { get; set; } = new();
+    protected string Mode { get; set; } = "Return";
+
+    protected string ProductSearchTerm { get; set; } = "";
+    protected List<ProductSearchDTO> ProductResults { get; set; } = new();
+    protected List<SaleDetailDTO> ExchangeItems { get; set; } = new();
+
+    protected List<MethodOption> MethodOptions { get; set; } = new() { new MethodOption { Id = 0, Name = "Cash" } };
+    protected int MethodId { get; set; }
+    protected string RefTransactionNo { get; set; } = "";
+
+    protected decimal TotalCredit => ReturnLines.Sum(r => r.Credit);
+    protected decimal ReplacementSubtotal => ExchangeItems.Sum(e => e.TotalAmount);
+    protected decimal NetDue => (Mode == "Exchange" ? ReplacementSubtotal : 0) - TotalCredit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFinancialAccounts();
+    }
+
+    private async Task LoadFinancialAccounts()
+    {
+        try
+        {
+            var accounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+            foreach (var a in accounts)
+                MethodOptions.Add(new MethodOption { Id = a.Id, Name = a.AccountName });
+        }
+        catch
+        {
+            // cash only fallback
+        }
+    }
+
+    protected async Task OnInvoiceKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SearchInvoice();
+    }
+
+    protected async Task OnProductKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SearchProducts();
+    }
+
+    protected async Task SearchInvoice()
+    {
+        if (string.IsNullOrWhiteSpace(InvoiceSearch))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Invoice Number", "Please enter an invoice number", 3000);
+            return;
+        }
+
+        try
+        {
+            OriginalSale = await ServiceUnitOfWork.SaleService.GetSaleByInvoiceNo(InvoiceSearch.Trim());
+        }
+        catch (Exception ex)
+        {
+            OriginalSale = null;
+            NotificationService.Notify(NotificationSeverity.Error, "Search Failed", ex.Message, 4000);
+            return;
+        }
+
+        if (OriginalSale == null)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Invoice not found", 3000);
+            return;
+        }
+
+        ReturnLines = OriginalSale.SaleDetails
+            .Where(d => (d.IsBooking ?? 0) != 1 && (d.Qty - (d.ReturnedQty ?? 0)) > 0)
+            .Select(d => new ReturnEditLine
+            {
+                SalesDetailsId = d.SalesDetailsId,
+                ProductName = d.ProductName,
+                Barcode = d.Barcode,
+                UnitPrice = d.UnitPrice,
+                Discount = d.Discount ?? 0,
+                TotalQty = d.Qty,
+                ReturnedQty = d.ReturnedQty ?? 0
+            })
+            .ToList();
+    }
+
+    protected async Task SearchProducts()
+    {
+        if (string.IsNullOrWhiteSpace(ProductSearchTerm)) return;
+        try
+        {
+            ProductResults = (await ServiceUnitOfWork.SaleService.SearchProducts(ProductSearchTerm.Trim())).ToList();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Search Failed", ex.Message, 4000);
+        }
+    }
+
+    protected void AddExchangeItem(ProductSearchDTO product)
+    {
+        var existing = ExchangeItems.FirstOrDefault(e => e.ItemId == product.ItemId);
+        if (existing != null)
+        {
+            existing.Qty += 1;
+            existing.TotalAmount = existing.Qty * existing.UnitPrice;
+        }
+        else
+        {
+            var detail = SaleDetailDTO.FromProductSearch(product, 1);
+            ExchangeItems.Add(detail);
+        }
+        ProductResults = new();
+        ProductSearchTerm = "";
+        StateHasChanged();
+    }
+
+    protected void OnExchangeQtyChanged(SaleDetailDTO item, decimal qty)
+    {
+        item.Qty = qty;
+        item.TotalAmount = item.Qty * item.UnitPrice;
+        StateHasChanged();
+    }
+
+    protected void RemoveExchangeItem(SaleDetailDTO item)
+    {
+        ExchangeItems.Remove(item);
+        StateHasChanged();
+    }
+
+    protected async Task Process()
+    {
+        var selected = ReturnLines.Where(r => r.ReturnQty > 0).ToList();
+        if (selected.Count == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "No Items", "Select at least one item to return", 3000);
+            return;
+        }
+
+        var request = new SalesReturnRequestDTO
+        {
+            ReturnInvoiceNo = OriginalSale!.InvoiceNo,
+            StoreId = StoreId,
+            CreatedBy = UserId,
+            CustomerId = OriginalSale.CustomerId,
+            ReturnItems = selected.Select(r => new ReturnLineDTO
+            {
+                SalesDetailsId = r.SalesDetailsId,
+                ItemId = 0,
+                ProductName = r.ProductName,
+                Barcode = r.Barcode,
+                UnitPrice = r.UnitPrice,
+                Qty = r.ReturnQty,
+                Discount = r.Discount,
+                Credit = r.Credit,
+                AvailableQty = r.Available
+            }).ToList(),
+            ExchangeItems = Mode == "Exchange" ? ExchangeItems.ToList() : new List<SaleDetailDTO>(),
+            VatAmount = 0,
+            RefundMethodId = MethodId,
+            PaymentMethodId = MethodId,
+            RefundTransactionNo = MethodId != 0 ? RefTransactionNo : null,
+            PaymentTransactionNo = MethodId != 0 ? RefTransactionNo : null
+        };
+
+        try
+        {
+            var result = await ServiceUnitOfWork.SaleService.ProcessReturn(request);
+            if (result.IsSuccessStatus)
+            {
+                DialogService.Close(result);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Failed", result.Message, 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message, 5000);
+        }
+    }
+
+    protected void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    public class ReturnEditLine
+    {
+        public int SalesDetailsId { get; set; }
+        public string? ProductName { get; set; }
+        public string? Barcode { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Discount { get; set; }
+        public decimal TotalQty { get; set; }
+        public decimal ReturnedQty { get; set; }
+        public decimal ReturnQty { get; set; }
+        public decimal Available => TotalQty - ReturnedQty;
+        public decimal Credit => ReturnQty > 0
+            ? Math.Round(UnitPrice * ReturnQty - Discount * (ReturnQty / (TotalQty > 0 ? TotalQty : 1)), 2)
+            : 0;
+    }
+
+    public class MethodOption
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+    }
+}

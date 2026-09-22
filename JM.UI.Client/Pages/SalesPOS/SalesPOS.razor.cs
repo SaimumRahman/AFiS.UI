@@ -88,14 +88,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected string? SelectedEmployeeName { get; set; }
 
         // ── Computed Values ──
-        // Sold lines only; exchange-return lines carry a credit in TotalAmount and must not
-        // inflate the sub total (they are netted out via ExchangeCredit below).
-        protected decimal SubTotal => CartItems.Where(c => !c.IsExchangeReturn).Sum(c => c.TotalAmount);
-
-        // Credit granted for returned lines (their TotalAmount holds the per-line credit).
-        protected decimal ExchangeCredit => CartItems.Where(c => c.IsExchangeReturn).Sum(c => c.TotalAmount);
-
-        protected bool HasExchangeReturns => CartItems.Any(c => c.IsExchangeReturn && c.Qty > 0);
+        protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
         protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 5) / 100m);
         protected decimal InvoiceDiscountAmount
         {
@@ -123,7 +116,6 @@ namespace JM.UI.Client.Pages.SalesPOS
                     net -= Sale.InvoiceDiscount ?? 0;
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
-                net -= ExchangeCredit;
                 net += CalculatedVat;
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
@@ -634,27 +626,11 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 CartItems.Remove(item);
             }
-            else if (item.IsExchangeReturn)
-            {
-                // Return lines are capped at the quantity still returnable on the original invoice.
-                if (item.AvailableQty > 0 && newQty > item.AvailableQty)
-                {
-                    newQty = item.AvailableQty;
-                    notificationService.Notify(NotificationSeverity.Warning, "Return Limit",
-                        $"Only {item.AvailableQty:0.##} unit(s) can be returned for this item.", 2500);
-                }
-                item.Qty = newQty;
-                var totalQty = item.AvailableQty + (item.ReturnedQty ?? 0);
-                item.TotalAmount = totalQty > 0
-                    ? Math.Round(item.UnitPrice * newQty - (item.Discount ?? 0) * (newQty / totalQty), 2)
-                    : item.UnitPrice * newQty;
-            }
             else
             {
                 item.Qty = newQty;
                 item.TotalAmount = item.Qty * item.UnitPrice;
             }
-            if (!HasExchangeReturns) ClearExchangeState();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -665,13 +641,6 @@ namespace JM.UI.Client.Pages.SalesPOS
         // originally loaded price (BaseUnitPrice).
         protected void UpdateCartItemPrice(SaleDetailDTO item, decimal newPrice)
         {
-            if (item.IsExchangeReturn)
-            {
-                // Return lines are credited on the original invoice price; not editable.
-                notificationService.Notify(NotificationSeverity.Info, "Price Locked",
-                    "Return line price is fixed to the original invoice price.", 2500);
-                return;
-            }
             if (newPrice < item.BaseUnitPrice)
             {
                 notificationService.Notify(NotificationSeverity.Warning, "Price Restriction",
@@ -692,7 +661,6 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected void RemoveCartItem(SaleDetailDTO item)
         {
             CartItems.Remove(item);
-            if (!HasExchangeReturns) ClearExchangeState();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -709,21 +677,10 @@ namespace JM.UI.Client.Pages.SalesPOS
             SelectedEmployeeName = null;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
-            ClearExchangeState();
             Sale.VatPercentage = 5;
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
-        }
-
-        // Removes all exchange-return state (master fields + placeholder invoice number).
-        private void ClearExchangeState()
-        {
-            Sale.ExchangeAmount = null;
-            Sale.ReturnInvoiceNo = null;
-            Sale.IsReturnExchange = false;
-            Sale.ReturnedItems = new();
-            Sale.InvoiceNo = null;
         }
 
         // ── Discount Distribution ──
@@ -732,8 +689,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (!CartItems.Any()) return;
 
             // Only distribute across items that don't already have a product-level discount.
-            // Exchange-return lines keep their original credit and are never discounted again.
-            var eligible = CartItems.Where(i => !i.HasDiscount && !i.IsExchangeReturn).ToList();
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
 
             decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
@@ -852,7 +808,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipDiscount = null;
 
             // Remove the customer-discount shares from cart items.
-            foreach (var item in CartItems.Where(i => !i.HasDiscount && !i.IsExchangeReturn))
+            foreach (var item in CartItems.Where(i => !i.HasDiscount))
             {
                 item.Discount = 0;
             }
@@ -894,8 +850,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             // Only distribute across items that don't already have a product-level discount.
-            // Exchange-return lines are excluded so their original credit is preserved.
-            var eligible = CartItems.Where(i => !i.HasDiscount && !i.IsExchangeReturn).ToList();
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
 
             decimal totalDiscountAmount = SubTotal * (discountRate / 100m);
@@ -1001,55 +956,42 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
-        // ── Exchange Modal ──
-        protected async Task OpenExchangeModal()
+        // ── Return / Exchange Modal ──
+        protected async Task OpenReturnExchangeModal()
         {
-            var result = await dialogService.OpenAsync<ExchangeDialog>("Return / Exchange",
-                new Dictionary<string, object>());
-            if (result is ExchangeResultDTO exchange)
+            int storeId = Sale.StoreId ?? 0;
+            int userId = await GetLocalStorageInt("UserId");
+
+            var result = await dialogService.OpenAsync<ReturnExchangeDialog>("Return / Exchange",
+                new Dictionary<string, object>
+                {
+                    { "StoreId", storeId },
+                    { "UserId", userId }
+                },
+                new DialogOptions { Width = "760px" });
+
+            if (result is ResponseResult res)
             {
-                // A single exchange invoice is supported per sale; drop any previously
-                // loaded return lines so the master fields stay consistent.
-                CartItems.RemoveAll(c => c.IsExchangeReturn);
+                if (res.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Completed", res.Message, 5000);
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Failed", res.Message, 5000);
+                }
 
-                CartItems.AddRange(exchange.SaleLines);
-
-                Sale.ExchangeAmount = ExchangeCredit;
-                Sale.ReturnInvoiceNo = exchange.InvoiceNo;
-                Sale.IsReturnExchange = exchange.IsReturnExchange;
-                Sale.ReturnedItems = CartItems.Where(c => c.IsExchangeReturn && c.Qty > 0)
-                    .Select(c => new ReturnedItemDTO { SalesDetailsId = c.SourceSalesDetailsId, Qty = c.Qty })
-                    .ToList();
-                Sale.InvoiceNo = null; // saved with an EXC- prefix for exchange invoices
-
-                DistributeCustomerDiscount();
-                if (CartGrid != null)
-                    await CartGrid.Reload();
-                notificationService.Notify(NotificationSeverity.Success, "Added",
-                    $"Exchange amount: {exchange.ExchangeAmount:N2}", 2500);
-                StateHasChanged();
+                // Refresh the invoice list so the new return/exchange document is visible.
+                await LoadInvoices();
             }
-        }
-
-        protected void RemoveExchange()
-        {
-            CartItems.RemoveAll(c => c.IsExchangeReturn);
-            ClearExchangeState();
-            DistributeCustomerDiscount();
-            if (CartGrid != null)
-                CartGrid.Reload();
-            notificationService.Notify(NotificationSeverity.Info, "Removed",
-                "Exchange credit removed", 2000);
-            StateHasChanged();
         }
 
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
             // Can only finalize a sale when every line in the cart belongs to
-            // the same store. Exchange-return lines restore stock into the current
-            // store, so they are not part of this store-consistency check.
-            if (CartItems.Where(c => !c.IsExchangeReturn).Select(c => c.StoreId).Distinct().Count() > 1)
+            // the same store.
+            if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)
             {
                 await dialogService.Alert(
                     "You cannot save the sale because all items are not from the same store.",
@@ -1058,72 +1000,53 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
-            // An exchange always includes replacement items; a pure return has nothing
-            // to invoice and is not supported by the sale flow.
-            if (HasExchangeReturns && CartItems.All(c => c.IsExchangeReturn))
+            var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
+                new Dictionary<string, object> { { "NetPayable", NetPayable } });
+            if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
+                return;
+
+            Sale.SubTotal = SubTotal;
+            Sale.VatAmount = CalculatedVat;
+            Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+            Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+            Sale.NetAmount = NetPayable;
+            Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
+            Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
+            Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
+                (Sale.PaidAmount > 0 ? "Partial" : "Due");
+
+            // ── Validation: a due requires a customer ──
+            if (Sale.DueAmount > 0 && SelectedCustomer == null)
             {
-                notificationService.Notify(NotificationSeverity.Warning, "Item Required",
-                    "An exchange must include at least one new item. Please add a replacement item first.", 4500);
+                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                    "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
                 return;
             }
 
-            var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
-                new Dictionary<string, object> { { "NetPayable", NetPayable } });
-            if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
+            Sale.SaleDetails = CartItems.ToList();
+            Sale.PaymentTransactions = paymentResult.Payments.ToList();
+
+            var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
+
+            if (saveResult.IsSuccessStatus)
             {
-                Sale.SubTotal = SubTotal;
-                Sale.VatAmount = CalculatedVat;
-                Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
-                Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
-                Sale.NetAmount = NetPayable;
-                Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
-                Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
-                Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
-                    (Sale.PaidAmount > 0 ? "Partial" : "Due");
+                notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
+                    $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                await DownloadPosInvoice(Sale);
 
-                // ── Validation: a due requires a customer ──
-                if (Sale.DueAmount > 0 && SelectedCustomer == null)
-                {
-                    notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
-                        "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
-                    return;
-                }
+                // Clear the cart after the invoice has been downloaded and refresh the UI.
+                CartItems.Clear();
+                StateHasChanged();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
+                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                    "Invoice downloaded successfully. Cart cleared.", 3500);
 
-                // Sold lines become the invoice's detail rows (stock out); return lines become
-                // ReturnedItems (stock in via the API exchange step).
-                Sale.SaleDetails = CartItems.Where(c => !c.IsExchangeReturn).ToList();
-                if (HasExchangeReturns)
-                {
-                    Sale.ExchangeAmount = ExchangeCredit;
-                    Sale.ReturnInvoiceNo ??= CartItems.First(c => c.IsExchangeReturn).SourceInvoiceNo;
-                    Sale.IsReturnExchange = true;
-                    Sale.ReturnedItems = CartItems.Where(c => c.IsExchangeReturn && c.Qty > 0)
-                        .Select(c => new ReturnedItemDTO { SalesDetailsId = c.SourceSalesDetailsId, Qty = c.Qty })
-                        .ToList();
-                }
-                Sale.PaymentTransactions = paymentResult.Payments.ToList();
-
-                var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
-                if (saveResult.IsSuccessStatus)
-                {
-                    notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
-                        $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
-                    await DownloadPosInvoice(Sale);
-
-                    // Clear the cart after the invoice has been downloaded and refresh the UI.
-                    CartItems.Clear();
-                    StateHasChanged();
-                    if (CartGrid != null)
-                        await CartGrid.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                        "Invoice downloaded successfully. Cart cleared.", 3500);
-
-                    await ResetForNewSale();
-                }
-                else
-                {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
-                }
+                await ResetForNewSale();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
             }
         }
 
@@ -1299,19 +1222,10 @@ namespace JM.UI.Client.Pages.SalesPOS
         {
             try
             {
-                // Exchange returns are only realized when the sale is finalized; a draft
-                // cannot hold them without losing the exchange credit.
-                if (HasExchangeReturns)
-                {
-                    notificationService.Notify(NotificationSeverity.Warning, "Cannot Draft",
-                        "Finalize the exchange first — exchange returns cannot be held as a draft.", 4000);
-                    return;
-                }
-
                 Sale.SubTotal = SubTotal;
                 Sale.VatAmount = CalculatedVat;
                 Sale.NetAmount = NetPayable;
-                Sale.SaleDetails = CartItems.Where(c => !c.IsExchangeReturn).ToList();
+                Sale.SaleDetails = CartItems.ToList();
                 Sale.IsDraft = true;
 
                 var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);

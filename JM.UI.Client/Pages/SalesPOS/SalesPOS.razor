@@ -378,16 +378,9 @@
                         <div class="cart-grid">
                             <RadzenDataGrid @ref="CartGrid" Data="@CartItems" AllowColumnResize="true" ShowPaging="false" RowAlternate="true" AllowSorting="true">
                                 <Columns>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Item" Width="200">
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" Width="200">
                                         <Template Context="item">
-                                            <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">
-                                                @if (item.IsExchangeReturn)
-                                                {
-                                                    <span title="@($"Returned from invoice {item.SourceInvoiceNo}")"
-                                                          style="display:inline-block;background:#dc3545;color:#fff;font-size:0.65rem;border-radius:3px;padding:0 4px;margin-right:4px;vertical-align:middle;">EXC</span>
-                                                }
-                                                @item.ProductName
-                                            </span>
+                                            <span style="padding-left:6px; display:inline-block; white-space:normal; word-break:break-word;">@item.ProductName</span>
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Barcode" Title="Barcode" Width="130">
@@ -407,7 +400,7 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="80">
                                         <Template Context="item">
-                                            <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="@(item.IsExchangeReturn ? item.AvailableQty : 9999)" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
+                                            <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
@@ -649,17 +642,6 @@
                     <span class="label">VAT (@(Sale.VatPercentage)%)</span>
                     <span class="value">@CalculatedVat.ToString("N2")</span>
                 </div>
-                @if (ExchangeCredit > 0)
-                {
-                    <div class="billing-row" style="color:#dc3545">
-                        <span class="label">Exchange (Return)</span>
-                        <span class="value">
-                            -@ExchangeCredit.ToString("N2")
-                            <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
-                                          Click="@RemoveExchange" Title="Remove exchange" Style="margin-left:6px">&#10005;</RadzenButton>
-                        </span>
-                    </div>
-                }
                 @if (Sale.RoundingAmount.HasValue && Sale.RoundingAmount != 0)
                 {
                     <div class="billing-row">
@@ -672,7 +654,7 @@
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenExchangeModal" Text="Exchange" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Text="Return / Exchange" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>

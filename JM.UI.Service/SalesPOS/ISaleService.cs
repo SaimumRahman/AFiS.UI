@@ -14,6 +14,7 @@ namespace JM.UI.Service.SalesPOS
         Task<SaleMasterDTO?> GetSaleById(int id);
         Task<ResponseResult> SaveSale(SaleMasterDTO sale);
         Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered);
+        Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request);
         Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy);
         Task<ResponseResult> UnmarkDraftSale(int saleMasterId);
         Task<ResponseResult> DeleteSale(int id);

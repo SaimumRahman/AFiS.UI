@@ -29,27 +29,10 @@ namespace JM.UI.Entities.Model.SalesPOS
         public int? StoreId { get; set; }
 
         /// <summary>
-        /// True when this cart line is a returned item from a previous invoice (exchange flow).
-        /// Return lines are credited from the original invoice, never written as new sale details
-        /// nor issued stock; their quantity is restored via the exchange StockIn step on the API.
+        /// True (1) when this line is a returned item on a return/exchange document.
+        /// Returned lines carry a negative TotalAmount and are never stock-issued.
         /// </summary>
-        public bool IsExchangeReturn { get; set; }
-
-        /// <summary>
-        /// Original SalesDetail row id the returned quantity belongs to (exchange flow).
-        /// </summary>
-        public int SourceSalesDetailsId { get; set; }
-
-        /// <summary>
-        /// Original invoice number this line was returned from (exchange flow).
-        /// </summary>
-        public string? SourceInvoiceNo { get; set; }
-
-        /// <summary>
-        /// Max quantity still returnable for an exchange-return line (original qty minus qty
-        /// already returned on the source invoice). Used only by cart edit caps.
-        /// </summary>
-        public decimal AvailableQty { get; set; }
+        public int? IsReturn { get; set; }
 
         public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
         {

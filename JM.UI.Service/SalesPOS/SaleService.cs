@@ -48,9 +48,7 @@ namespace JM.UI.Service.SalesPOS
             }
 
             if (string.IsNullOrEmpty(sale.InvoiceNo))
-                sale.InvoiceNo = sale.IsReturnExchange
-                    ? await GetNewExchangeInvoiceNo()
-                    : await GetNewInvoiceNo();
+                sale.InvoiceNo = await GetNewInvoiceNo();
 
             var rawNet = CalculateNetAmount(sale);
             var paisaDiscount = Math.Round(rawNet - Math.Floor(rawNet), 2);
@@ -61,7 +59,7 @@ namespace JM.UI.Service.SalesPOS
 
             // Map to API-aligned fields
             sale.TotalBill = sale.SubTotal;
-            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount + (sale.ExchangeAmount ?? 0);
+            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount;
             sale.TotalPaid = sale.PaidAmount ?? 0;
             sale.TotalDue = sale.DueAmount ?? 0;
             sale.TotalVat = sale.VatAmount;
@@ -77,6 +75,11 @@ namespace JM.UI.Service.SalesPOS
         public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered)
         {
             return await _repositoryUnitOfWork.SaleRepository.SaveDuePayment(saleMasterId, storeId, payments, createdBy, isDelivered);
+        }
+
+        public async Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.ProcessReturn(request);
         }
 
         public async Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy)
