@@ -432,6 +432,26 @@ namespace JM.UI.DataService.DAL.SalesPOS
                 throw new Exception("Failed to generate invoice number: " + ex.Message, ex);
             }
         }
+
+        public async Task<string> GetNewExchangeInvoiceNo()
+        {
+            try
+            {
+                _logger.LogInformation("Requesting new exchange invoice number");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/SalePOS/new-exchange-invoice-no");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<InvoiceNoResponse>();
+                return result?.InvoiceNo ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching new exchange invoice number");
+                throw new Exception("Failed to generate exchange invoice number: " + ex.Message, ex);
+            }
+        }
      
         public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int storeId)
         {
