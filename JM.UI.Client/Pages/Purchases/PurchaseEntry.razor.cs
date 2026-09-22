@@ -732,18 +732,77 @@ protected bool IsProcessing { get; set; } = false;
             }
         }
 
-        protected void OnSharedPriceChanged()
+        protected void OnSharedPurchasePriceChanged()
         {
             foreach (var row in PreviewItems)
             {
                 row.BasePurchasePrice = SharedPurchasePrice;  // raw price
-                row.SalePrice = SharedSalePrice;
-                row.OtherCost = SharedOtherCost;
-                row.CarryingCost = SharedCarryingCost;
-                row.Quantity = SharedQuantity ?? 0;
-                row.TransportCost = SharedTransportCost;
-                row.OperationalCost = SharedOperationalCost;
                 RecalculatePreviewRow(row);  // this sets row.PurchasePrice
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOtherCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OtherCost = SharedOtherCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedCarryingCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.CarryingCost = SharedCarryingCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedTransportCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.TransportCost = SharedTransportCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOperationalCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OperationalCost = SharedOperationalCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedQuantityChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.Quantity = SharedQuantity ?? 0;
+                RecalculatePreviewRowTotal(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedSalePriceChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.SalePrice = SharedSalePrice;
             }
             PreviewGrid?.Reload();
             StateHasChanged();
@@ -2363,7 +2422,6 @@ Quantity = 0,
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
             SharedPurchasePrice = item.PurchasePrice;
-            SharedSalePrice = item.SalePrice ?? 0;
 
             BrandSearchText = item.BrandName ?? string.Empty;
             OriginSearchText = item.OriginName ?? string.Empty;
