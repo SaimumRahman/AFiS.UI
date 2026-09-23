@@ -1,4 +1,5 @@
 @using JM.UI.Entities.Model.SalesPOS
+@using JM.UI.Entities.Model.CustomerDetails
 @using JM.UI.Entities.Model.FinancialAccounts
 @using JM.UI.Service.UnitOfWork
 @using JM.Infrastructure.Models
@@ -21,8 +22,15 @@
 
     @if (OriginalSale != null)
     {
-        <div style="font-size:0.78rem;color:#555">
-            Invoice <strong>@OriginalSale.InvoiceNo</strong> | @OriginalSale.SalesDate.ToString("dd/MM/yyyy") | @OriginalSale.CustomerName
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#555">
+            <span>
+                Invoice <strong>@OriginalSale.InvoiceNo</strong> | @OriginalSale.SalesDate.ToString("dd/MM/yyyy")
+                | Customer: <strong>@OriginalSale.CustomerName</strong>
+            </span>
+            @if (OriginalSale.CustomerId == null)
+            {
+                <RadzenButton Text="+ New Customer" ButtonStyle="ButtonStyle.Secondary" ButtonSize="Small" Click="@OpenAddCustomer" />
+            }
         </div>
 
         @* ── Return lines ── *@
@@ -203,6 +211,24 @@
     protected async Task OnProductKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await SearchProducts();
+    }
+
+    protected async Task OpenAddCustomer()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "CurrentUserId", UserId }
+        };
+
+        var customer = await DialogService.OpenAsync<AddCustomerDialog>("New Customer", parameters);
+        if (customer is CustomerDetailsDTO saved && saved.Id > 0)
+        {
+            OriginalSale!.CustomerId = saved.Id;
+            OriginalSale.CustomerName = saved.Name;
+            OriginalSale.CustomerPhone = saved.Phone;
+            NotificationService.Notify(NotificationSeverity.Success, "Customer Added", "Customer attached to this return / exchange", 3000);
+            StateHasChanged();
+        }
     }
 
     protected async Task SearchInvoice()
