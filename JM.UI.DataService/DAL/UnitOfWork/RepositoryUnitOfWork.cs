@@ -28,6 +28,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
+using JM.UI.DataService.DAL.DailyExpense;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -145,6 +146,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ITransferTypeRepository TransferTypeRepository { get; }
         public ISaleRepository SaleRepository { get; }
         public IReportingRepository ReportingRepository { get; }
+        public IDailyExpenseRepository DailyExpenseRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -209,6 +211,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
             SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
             ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
+            DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
         }
 
         public void Dispose()

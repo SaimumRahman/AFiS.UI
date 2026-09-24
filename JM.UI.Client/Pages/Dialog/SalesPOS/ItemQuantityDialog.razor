@@ -102,10 +102,27 @@
 
     void Confirm()
     {
-        if (Qty > 0 && Qty <= RemainingQty)
+        if (Qty <= 0)
         {
-            DialogService.Close(new ItemQuantityDialogResult { Qty = Qty, UnitPrice = UnitPrice });
+            NotificationService.Notify(NotificationSeverity.Warning, "Invalid Quantity",
+                "Quantity must be greater than zero.", 3000);
+            return;
         }
+
+        // Never allow more than the stock remaining for this item.
+        if (Qty > RemainingQty)
+        {
+            Qty = Math.Max(0, RemainingQty);
+            NotificationService.Notify(NotificationSeverity.Warning, "Stock Limit",
+                RemainingQty > 0
+                    ? $"Maximum available is {RemainingQty:N2}. Quantity has been set to {RemainingQty:N2}."
+                    : "No stock is available for this item.",
+                4000);
+            StateHasChanged();
+            return;
+        }
+
+        DialogService.Close(new ItemQuantityDialogResult { Qty = Qty, UnitPrice = UnitPrice });
     }
 
     void Cancel()

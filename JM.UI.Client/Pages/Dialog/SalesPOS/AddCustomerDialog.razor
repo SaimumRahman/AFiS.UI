@@ -128,7 +128,7 @@
     [Parameter] public int CurrentUserId { get; set; }
     [Parameter] public string? PreFilledPhone { get; set; }
 
-    protected CustomerDetailsDTO Customer { get; set; } = new() { IsForceAdd = true };
+    protected CustomerDetailsDTO Customer { get; set; } = new();
     protected bool IsProcessing { get; set; }
     protected bool IsLoading { get; set; } = true;
     protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
@@ -161,7 +161,7 @@
             }
 
             Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
-            Customer.IsForceAdd = true;
+            Customer.IsForceAdd = false;
             if (!string.IsNullOrEmpty(PreFilledPhone))
                 Customer.Phone = PreFilledPhone;
             SetDefaultMembershipType();
@@ -184,31 +184,15 @@
 
     protected void ValidatePhone()
     {
-        if (string.IsNullOrEmpty(Customer.Phone))
+        if (string.IsNullOrWhiteSpace(Customer.Phone))
         {
             IsPhoneValid = false;
             PhoneValidationMessage = "Phone number is required";
             return;
         }
 
-        // Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX).
-        var digitsOnly = new string(Customer.Phone.Where(char.IsDigit).ToArray());
-
-        if (digitsOnly.Length == 11 && digitsOnly.StartsWith("01"))
-        {
-            IsPhoneValid = true;
-            PhoneValidationMessage = "";
-        }
-        else
-        {
-            IsPhoneValid = false;
-            if (digitsOnly.Length != 11)
-                PhoneValidationMessage = "Phone must be 11 digits including the leading 0 (e.g. 01XXXXXXXXX)";
-            else if (!digitsOnly.StartsWith("01"))
-                PhoneValidationMessage = "Phone must start with '01'";
-            else
-                PhoneValidationMessage = "Invalid phone number format";
-        }
+        IsPhoneValid = true;
+        PhoneValidationMessage = "";
     }
 
     protected async Task Save()
@@ -263,6 +247,7 @@
                         }
                         else
                         {
+                            Customer.IsForceAdd = false;
                             NotificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
                         }
                     }
@@ -304,13 +289,40 @@
             {
                 NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
                 Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
-                Customer.IsForceAdd = true;
+                Customer.IsForceAdd = false;
                 SetDefaultMembershipType();
                 ValidatePhone();
             }
             else
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                if (result.StatusCode == StatusCodes.Status304NotModified)
+                {
+                    var confirmed = await DialogService.Confirm(
+                        "Do you want to create a new Customer?",
+                        "Duplicate",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+                    );
+
+                    if (confirmed == true)
+                    {
+                        Customer.IsForceAdd = true;
+                        var retryResult = await ServiceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                        if (retryResult.IsSuccessStatus)
+                        {
+                            NotificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                            Customer = ServiceUnitOfWork.CustomerDetailsService.CreateNew();
+                            Customer.IsForceAdd = false;
+                            SetDefaultMembershipType();
+                            ValidatePhone();
+                        }
+                        else
+                        {
+                            Customer.IsForceAdd = false;
+                            NotificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
+                        }
+                    }
+                }
             }
         }
         catch (Exception ex)

@@ -19,12 +19,20 @@ namespace JM.UI.Entities.Model.SalesPOS
         /// </summary>
         public decimal BaseUnitPrice { get; set; }
         public decimal Qty { get; set; }
+        public decimal? ReturnedQty { get; set; }
         public decimal? Discount { get; set; }
+        public int? IsBooking { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal? Vat { get; set; }
         public bool HasDiscount { get; set; }
         public int CreatedBy { get; set; }
         public int? StoreId { get; set; }
+
+        /// <summary>
+        /// True (1) when this line is a returned item on a return/exchange document.
+        /// Returned lines carry a negative TotalAmount and are never stock-issued.
+        /// </summary>
+        public int? IsReturn { get; set; }
 
         public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
         {

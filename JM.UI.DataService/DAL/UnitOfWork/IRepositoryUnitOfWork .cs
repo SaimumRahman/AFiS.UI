@@ -28,6 +28,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
+using JM.UI.DataService.DAL.DailyExpense;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -137,5 +138,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ITransferTypeRepository TransferTypeRepository { get; }
         ISaleRepository SaleRepository { get; }
         IReportingRepository ReportingRepository { get; }
+        IDailyExpenseRepository DailyExpenseRepository { get; }
     }
 }
