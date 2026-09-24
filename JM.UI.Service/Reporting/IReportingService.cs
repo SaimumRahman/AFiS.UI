@@ -8,5 +8,6 @@ namespace JM.UI.Service.Reporting
     public interface IReportingService
     {
         Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate);
     }
 }

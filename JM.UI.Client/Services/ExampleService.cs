@@ -559,6 +559,15 @@ namespace JM.UI.Client.Services
                         Title       = "Profit / Loss Report",
                         Description = "Per-item profit & loss: total in, total out, average purchase price and total sale",
                         Tags        = new[] { "profit", "loss", "report", "item" }
+                    },
+                    new Example
+                    {
+                        Name        = "Booking Report",
+                        Path        = "/BookingReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Booking Report",
+                        Description = "Currently booked (not yet delivered) invoices with rate, quantity, gross, discount, paid and due",
+                        Tags        = new[] { "booking", "report", "invoice", "due" }
                     }
                 }
             },

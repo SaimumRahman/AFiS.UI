@@ -16,5 +16,8 @@ namespace JM.UI.Service.Reporting
 
         public async Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetProfitLossReport(storeId, fromDate, toDate);
+
+        public async Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate)
+            => await _repositoryUnitOfWork.ReportingRepository.GetBookingReport(storeId, fromDate, toDate);
     }
 }

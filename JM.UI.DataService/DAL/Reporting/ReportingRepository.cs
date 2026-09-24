@@ -46,5 +46,34 @@ namespace JM.UI.DataService.DAL.Reporting
                 throw new Exception("Failed to fetch profit loss report: " + ex.Message, ex);
             }
         }
+
+        public async Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var url = "api/BookingReport/booking-report";
+                var query = new List<string>();
+                if (storeId.HasValue && storeId.Value > 0)
+                    query.Add($"storeId={storeId.Value}");
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<BookingReportDTO>>();
+                return result ?? new List<BookingReportDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching booking report");
+                throw new Exception("Failed to fetch booking report: " + ex.Message, ex);
+            }
+        }
     }
 }

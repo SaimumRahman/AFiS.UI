@@ -50,6 +50,7 @@ builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ExampleService>();
 builder.Services.AddScoped<PurchaseReportService>();
+builder.Services.AddScoped<BookingReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();
 builder.Services.AddScoped<PosInvoicePdfService>();

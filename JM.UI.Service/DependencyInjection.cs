@@ -126,6 +126,7 @@ namespace JM.UI.Service
             services.AddScoped<ICouponTypeService, CouponTypeService>();
             services.AddScoped<ICouponService, CouponService>();
             services.AddScoped<PurchaseReportService>();
+            services.AddScoped<BookingReportService>();
             services.AddScoped<StockService>();
             services.AddScoped<ISaleService, SaleService>();
             services.AddScoped<IDailyExpenseService, DailyExpenseService>();

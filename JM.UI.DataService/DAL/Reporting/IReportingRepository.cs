@@ -6,5 +6,6 @@ namespace JM.UI.DataService.DAL.Reporting
     public interface IReportingRepository
     {
         Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate);
     }
 }
