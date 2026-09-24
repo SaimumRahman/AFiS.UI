@@ -656,38 +656,38 @@
                                         <RadzenLabel Text="P.Price" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedPurchasePrice"
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
-                                                       Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                                       Change="@OnSharedPurchasePriceChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
                                     
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="Op.Cost" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedOtherCost"
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
-                                                       Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                                       Change="@OnSharedOtherCostChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="Carrying" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedCarryingCost"
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
-                                                       Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                                       Change="@OnSharedCarryingCostChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="Transport" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedTransportCost"
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
-                                                       Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                                       Change="@OnSharedTransportCostChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
                                 <RadzenColumn Size="6" SizeMD="2">
                                     <RadzenLabel Text="S.Price" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenNumeric @bind-Value="SharedSalePrice"
                                                    Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal"
-                                                   Change="@OnSharedPriceChanged" Disabled="@IsProcessing" />
+                                                   Change="@OnSharedSalePriceChanged" Disabled="@IsProcessing" />
                                 </RadzenColumn>
                                     <RadzenColumn Size="6" SizeMD="2">
                                         <RadzenLabel Text="QTY" Style="font-weight:600; font-size:0.68rem;" />
                                         <RadzenNumeric @bind-Value="SharedQuantity"
                                                        Style="width:100%; font-size:0.68rem;" Min="0" TValue="decimal?"
-                                                       Change="@(() => OnSharedPriceChanged())" Disabled="@IsProcessing" />
+                                                       Change="@OnSharedQuantityChanged" Disabled="@IsProcessing" />
                                     </RadzenColumn>
                                 </RadzenRow>
                             </div>

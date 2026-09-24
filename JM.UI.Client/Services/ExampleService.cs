@@ -473,6 +473,15 @@ namespace JM.UI.Client.Services
                         Title       = "Chart of Accounts",
                         Description = "Manage ledger accounts and structure",
                         Tags        = new[] { "account", "ledger", "chart", "finance" }
+                    },
+                    new Example
+                    {
+                        Name        = "Daily Expense Entry",
+                        Path        = "/DailyExpenses",
+                        Icon        = "\ue8b0",
+                        Title       = "Daily Expenses",
+                        Description = "Record and track daily business expenses",
+                        Tags        = new[] { "expense", "daily", "billing", "finance" }
                     }
                 }
             },

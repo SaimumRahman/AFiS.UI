@@ -77,6 +77,11 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SaveDuePayment(saleMasterId, storeId, payments, createdBy, isDelivered);
         }
 
+        public async Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.ProcessReturn(request);
+        }
+
         public async Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy)
         {
             return await _repositoryUnitOfWork.SaleRepository.CancelBooking(saleMasterId, storeId, createdBy);
@@ -90,6 +95,11 @@ namespace JM.UI.Service.SalesPOS
         public async Task<ResponseResult> DeleteSale(int id)
         {
             return await _repositoryUnitOfWork.SaleRepository.DeleteSale(id);
+        }
+
+        public async Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.VoidSale(saleMasterId, voidedBy);
         }
 
         public async Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate)
@@ -120,6 +130,11 @@ namespace JM.UI.Service.SalesPOS
         public async Task<string> GetNewInvoiceNo()
         {
             return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo();
+        }
+
+        public async Task<string> GetNewExchangeInvoiceNo()
+        {
+            return await _repositoryUnitOfWork.SaleRepository.GetNewExchangeInvoiceNo();
         }
 
 

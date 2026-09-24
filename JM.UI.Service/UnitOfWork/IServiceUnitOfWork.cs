@@ -29,6 +29,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Coupon;
+using JM.UI.Service.DailyExpense;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -139,5 +140,6 @@ namespace JM.UI.Service.UnitOfWork
         ITransferTypeService TransferTypeService { get; }
         ISaleService SaleService { get; }
         IReportingService ReportingService { get; }
+        IDailyExpenseService DailyExpenseService { get; }
     }
 }

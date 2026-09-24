@@ -732,18 +732,77 @@ protected bool IsProcessing { get; set; } = false;
             }
         }
 
-        protected void OnSharedPriceChanged()
+        protected void OnSharedPurchasePriceChanged()
         {
             foreach (var row in PreviewItems)
             {
                 row.BasePurchasePrice = SharedPurchasePrice;  // raw price
-                row.SalePrice = SharedSalePrice;
-                row.OtherCost = SharedOtherCost;
-                row.CarryingCost = SharedCarryingCost;
-                row.Quantity = SharedQuantity ?? 0;
-                row.TransportCost = SharedTransportCost;
-                row.OperationalCost = SharedOperationalCost;
                 RecalculatePreviewRow(row);  // this sets row.PurchasePrice
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOtherCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OtherCost = SharedOtherCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedCarryingCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.CarryingCost = SharedCarryingCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedTransportCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.TransportCost = SharedTransportCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOperationalCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OperationalCost = SharedOperationalCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedQuantityChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.Quantity = SharedQuantity ?? 0;
+                RecalculatePreviewRowTotal(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedSalePriceChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.SalePrice = SharedSalePrice;
             }
             PreviewGrid?.Reload();
             StateHasChanged();
@@ -1798,6 +1857,15 @@ protected bool IsProcessing { get; set; } = false;
             CurrentItem.ImageBase64 = null;
 
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
@@ -1814,12 +1882,42 @@ protected bool IsProcessing { get; set; } = false;
             if (!sizeId.HasValue) return;
             CurrentItem.SizeId = sizeId;
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
             {
                 await SearchSingleBarcodeAndAddToPreview(CurrentItem.Barcode);
             }
+        }
+
+        // Duplicate guard — matched against the Preview Items table (Product + Color + Size)
+        // BEFORE barcode generation so a variant already present never hits the API / 500.
+        // Size is optional at the colour-selection stage; once chosen, the full combo is required.
+        private bool IsVariantAlreadyInPreview()
+        {
+            if (PreviewItems.Count == 0 || !CurrentItem.ColorId.HasValue) return false;
+
+            return PreviewItems.Any(p =>
+                IsSameProductAsCurrent(p)
+                && p.ColorId == CurrentItem.ColorId
+                && (!CurrentItem.SizeId.HasValue || p.SizeId == CurrentItem.SizeId));
+        }
+
+        private bool IsSameProductAsCurrent(PreviewItemRow p)
+        {
+            if (p.ItemId > 0 && p.ItemId == CurrentItem.ItemId) return true;
+
+            return !string.IsNullOrWhiteSpace(CurrentItem.ItemName)
+                && string.Equals(p.ItemName?.Trim(), CurrentItem.ItemName?.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetBarcodeBase(string barcode)
@@ -1839,7 +1937,12 @@ protected bool IsProcessing { get; set; } = false;
                         "Please select a Size before adding items to the preview.");
                     return;
                 }
-                if (PreviewItems.Any(p => p.Barcode == barcode)) return;
+                if (PreviewItems.Any(p => p.Barcode == barcode))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                        "This item is already in the table");
+                    return;
+                }
                 if (PreviewItems.Count > 0)
                 {
                     var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
@@ -2319,7 +2422,6 @@ Quantity = 0,
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
             SharedPurchasePrice = item.PurchasePrice;
-            SharedSalePrice = item.SalePrice ?? 0;
 
             BrandSearchText = item.BrandName ?? string.Empty;
             OriginSearchText = item.OriginName ?? string.Empty;

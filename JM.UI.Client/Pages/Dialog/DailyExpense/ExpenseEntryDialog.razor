@@ -1,0 +1,228 @@
+@using JM.Infrastructure.Models
+@using JM.UI.Entities.Model.DailyExpense
+@using JM.UI.Entities.Model.FinancialAccounts
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Service.UnitOfWork
+@using Radzen
+@using Radzen.Blazor
+@inject IServiceUnitOfWork ServiceUnitOfWork
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenCard>
+    <RadzenStack Gap="1.25rem">
+        <RadzenFieldset Text="@(IsEditMode ? "Edit Expense" : "New Expense")" Icon="request_quote">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Expense Date *" Component="ExpenseDate" />
+                    <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Bill Type *" Component="BillTypeId" />
+                    <RadzenDropDown @bind-Value="Expense.BillTypeId"
+                                    Data="BillTypes"
+                                    TextProperty="Name"
+                                    ValueProperty="BillTypeId"
+                                    Placeholder="Select Bill Type"
+                                    AllowClear="true"
+                                    Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Store *" Component="StoreId" />
+                    <RadzenDropDown @bind-Value="Expense.StoreId"
+                                    Data="Stores"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="Select Store"
+                                    Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Amount *" Component="ExpenseAmount" />
+                    <RadzenNumeric @bind-Value="Expense.Amount" Min="0" Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Paid From" />
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <RadzenButton Text="Cash"
+                                      ButtonSize="ButtonSize.Small"
+                                      ButtonStyle="@(IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                      Click="@(() => SetPaidFrom(true))" />
+                        <RadzenButton Text="Bank / MFS"
+                                      ButtonSize="ButtonSize.Small"
+                                      ButtonStyle="@(!IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                      Click="@(() => SetPaidFrom(false))" />
+                    </div>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Account" Component="FinancialAccountId" />
+                    @if (IsCash)
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;color:var(--rz-text-secondary);background:var(--rz-base-200)">Cash</div>
+                    }
+                    else
+                    {
+                        <RadzenDropDown @bind-Value="Expense.FinancialAccountId"
+                                        Data="FinancialAccounts"
+                                        TextProperty="AccountName"
+                                        ValueProperty="Id"
+                                        Placeholder="Select Account"
+                                        Style="width:100%" />
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Receipt / Bill No" Component="ReceiptBillNo" />
+                    <RadzenTextBox @bind-Value="Expense.ReceiptBillNo" Placeholder="Optional supplier / receipt no" Style="width:100%" MaxLength="50" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    @if (!IsCash)
+                    {
+                        <RadzenLabel Text="Reference No" Component="ReferenceNo" />
+                        <RadzenTextBox @bind-Value="Expense.ReferenceNo" Placeholder="Bank / MFS transaction no" Style="width:100%" MaxLength="50" />
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenLabel Text="Description *" Component="Description" />
+                    <RadzenTextArea @bind-Value="Expense.Description" Rows="3" Placeholder="Describe the expense" Style="width:100%" MaxLength="500" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenFieldset>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+            <RadzenButton Text="Cancel"
+                          Icon="cancel"
+                          ButtonStyle="ButtonStyle.Light"
+                          Variant="Variant.Flat"
+                          Click="@Cancel"
+                          Disabled="@IsProcessing" />
+            <RadzenButton Text="Save"
+                          Icon="save"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@Save"
+                          IsBusy="@IsProcessing" />
+        </div>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public int StoreId { get; set; }
+    [Parameter] public int UserId { get; set; }
+    [Parameter] public int EditId { get; set; }
+
+    protected DailyExpenseDTO Expense { get; set; } = new();
+    protected List<BillTypeDTO> BillTypes { get; set; } = new();
+    protected List<StoreDTO> Stores { get; set; } = new();
+    protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
+    protected bool IsCash { get; set; } = true;
+    protected bool IsProcessing { get; set; }
+
+    protected bool IsEditMode => EditId > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            BillTypes = (await ServiceUnitOfWork.DailyExpenseService.GetBillTypesForDropdown()).ToList();
+            Stores = (await ServiceUnitOfWork.StoreService.GetStores()).ToList();
+            FinancialAccounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+
+            if (IsEditMode)
+            {
+                var existing = await ServiceUnitOfWork.DailyExpenseService.GetDailyExpenseById(EditId);
+                if (existing == null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Expense record not found.");
+                    DialogService.Close(null);
+                    return;
+                }
+
+                Expense = existing;
+                SetPaidFrom(!(existing.FinancialAccountId.HasValue && existing.FinancialAccountId.Value > 0));
+            }
+            else
+            {
+                Expense.ExpenseDate = DateTime.Today;
+                Expense.StoreId = StoreId > 0 ? StoreId : Expense.StoreId;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            DialogService.Close(null);
+        }
+    }
+
+    protected void SetPaidFrom(bool cash)
+    {
+        IsCash = cash;
+        if (cash) Expense.FinancialAccountId = null;
+    }
+
+    protected async Task Save()
+    {
+        if (Expense.BillTypeId <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a bill type.");
+            return;
+        }
+
+        if (Expense.StoreId <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a store.");
+            return;
+        }
+
+        if (Expense.Amount <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Amount must be greater than zero.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Expense.Description))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Description is required.");
+            return;
+        }
+
+        if (!IsCash && (!Expense.FinancialAccountId.HasValue || Expense.FinancialAccountId.Value <= 0))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a bank / MFS account.");
+            return;
+        }
+
+        Expense.CreatedBy = UserId;
+        Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
+        if (IsCash) Expense.FinancialAccountId = null;
+
+        try
+        {
+            IsProcessing = true;
+            var result = await ServiceUnitOfWork.DailyExpenseService.SaveUpdateDailyExpense(Expense);
+            if (result.IsSuccessStatus)
+            {
+                DialogService.Close(result);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Failed", result.Message, 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message, 5000);
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    protected void Cancel() => DialogService.Close(null);
+}

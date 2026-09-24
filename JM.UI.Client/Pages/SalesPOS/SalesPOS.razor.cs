@@ -116,7 +116,6 @@ namespace JM.UI.Client.Pages.SalesPOS
                     net -= Sale.InvoiceDiscount ?? 0;
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
-                net -= Sale.ExchangeAmount ?? 0;
                 net += CalculatedVat;
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
@@ -678,7 +677,6 @@ namespace JM.UI.Client.Pages.SalesPOS
             SelectedEmployeeName = null;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
-            Sale.ExchangeAmount = null;
             Sale.VatPercentage = 5;
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -958,18 +956,33 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
-        // ── Exchange Modal ──
-        protected async Task OpenExchangeModal()
+        // ── Return / Exchange Modal ──
+        protected async Task OpenReturnExchangeModal()
         {
-            var result = await dialogService.OpenAsync<ExchangeDialogComponent>("Return / Exchange",
-                new Dictionary<string, object>());
-            if (result is ExchangeResultDTO exchange)
+            int storeId = Sale.StoreId ?? 0;
+            int userId = await GetLocalStorageInt("UserId");
+
+            var result = await dialogService.OpenAsync<ReturnExchangeDialog>("Return / Exchange",
+                new Dictionary<string, object>
+                {
+                    { "StoreId", storeId },
+                    { "UserId", userId }
+                },
+                new DialogOptions { Width = "760px" });
+
+            if (result is ResponseResult res)
             {
-                Sale.ExchangeAmount = (Sale.ExchangeAmount ?? 0) + exchange.ExchangeAmount;
-                Sale.ReturnInvoiceNo = exchange.InvoiceNo;
-                Sale.IsReturnExchange = exchange.IsReturnExchange;
-                notificationService.Notify(NotificationSeverity.Success, "Added",
-                    $"Exchange amount: {exchange.ExchangeAmount:N2}", 2000);
+                if (res.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Completed", res.Message, 5000);
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Failed", res.Message, 5000);
+                }
+
+                // Refresh the invoice list so the new return/exchange document is visible.
+                await LoadInvoices();
             }
         }
 
@@ -989,50 +1002,51 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                 new Dictionary<string, object> { { "NetPayable", NetPayable } });
-            if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
+            if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
+                return;
+
+            Sale.SubTotal = SubTotal;
+            Sale.VatAmount = CalculatedVat;
+            Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+            Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+            Sale.NetAmount = NetPayable;
+            Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
+            Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
+            Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
+                (Sale.PaidAmount > 0 ? "Partial" : "Due");
+
+            // ── Validation: a due requires a customer ──
+            if (Sale.DueAmount > 0 && SelectedCustomer == null)
             {
-                Sale.SubTotal = SubTotal;
-                Sale.VatAmount = CalculatedVat;
-                Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
-                Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
-                Sale.NetAmount = NetPayable;
-                Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
-                Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
-                Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
-                    (Sale.PaidAmount > 0 ? "Partial" : "Due");
+                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                    "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
+                return;
+            }
 
-                // ── Validation: a due requires a customer ──
-                if (Sale.DueAmount > 0 && SelectedCustomer == null)
-                {
-                    notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
-                        "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
-                    return;
-                }
+            Sale.SaleDetails = CartItems.ToList();
+            Sale.PaymentTransactions = paymentResult.Payments.ToList();
 
-                Sale.SaleDetails = CartItems.ToList();
-                Sale.PaymentTransactions = paymentResult.Payments.ToList();
+            var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
 
-                var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
-                if (saveResult.IsSuccessStatus)
-                {
-                    notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
-                        $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
-                    await DownloadPosInvoice(Sale);
+            if (saveResult.IsSuccessStatus)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
+                    $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                await DownloadPosInvoice(Sale);
 
-                    // Clear the cart after the invoice has been downloaded and refresh the UI.
-                    CartItems.Clear();
-                    StateHasChanged();
-                    if (CartGrid != null)
-                        await CartGrid.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                        "Invoice downloaded successfully. Cart cleared.", 3500);
+                // Clear the cart after the invoice has been downloaded and refresh the UI.
+                CartItems.Clear();
+                StateHasChanged();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
+                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                    "Invoice downloaded successfully. Cart cleared.", 3500);
 
-                    await ResetForNewSale();
-                }
-                else
-                {
-                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
-                }
+                await ResetForNewSale();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
             }
         }
 
@@ -1161,6 +1175,45 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 notificationService.Notify(NotificationSeverity.Error, "Cancel Failed",
                     $"Error cancelling booking: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Void Invoice ──
+        protected async Task VoidInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Void invoice {invoice.InvoiceNo}? This will revert stock, payments and requisitions created for this invoice.",
+                "Void Invoice",
+                new ConfirmOptions { OkButtonText = "Yes, Void", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int userId = await GetLocalStorageInt("UserId");
+
+                var result = await _serviceUnitOfWork.SaleService.VoidSale(invoice.SaleMasterId, userId > 0 ? userId : null);
+
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Invoice Voided",
+                        result.Message, 4000);
+                    ExpandedInvoiceDetails.Remove(invoice.SaleMasterId);
+                    ExpandedInvoiceLoading.Remove(invoice.SaleMasterId);
+                    await LoadInvoices();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Void Failed",
+                    $"Error voiding invoice: {ex.Message}", 4000);
             }
         }
 

@@ -1,0 +1,114 @@
+@page "/DailyExpenses"
+@using JM.UI.Entities.Model.DailyExpense
+@attribute [Authorize]
+@inherits DailyExpensesListComponent
+
+<PageTitle>Daily Expenses</PageTitle>
+
+<!-- Header Card -->
+<RadzenCard class="p-3 mb-3">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
+            <RadzenIcon Icon="request_quote" Style="font-size: 32px; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H5"><b>Daily Expense Entry</b></RadzenText>
+        </RadzenStack>
+        <RadzenButton Text="Add Expense"
+                      Icon="add"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@AddExpense" />
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Filter Card -->
+<RadzenCard class="p-3 mb-3">
+    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+            <label class="rz-mb-1 d-block">From</label>
+            <RadzenDatePicker @bind-Value="FromDate" DateFormat="dd/MM/yyyy" />
+        </div>
+        <div>
+            <label class="rz-mb-1 d-block">To</label>
+            <RadzenDatePicker @bind-Value="ToDate" DateFormat="dd/MM/yyyy" />
+        </div>
+        <div style="min-width:200px">
+            <label class="rz-mb-1 d-block">Store</label>
+            <RadzenDropDown @bind-Value="SelectedStoreId"
+                            Data="@Stores"
+                            TextProperty="Name"
+                            ValueProperty="Id"
+                            AllowClear="true"
+                            Placeholder="All Stores"
+                            Style="width:100%" />
+        </div>
+        <RadzenButton Text="Load" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="@LoadExpenses" />
+    </div>
+</RadzenCard>
+
+<!-- Grid Card -->
+<RadzenCard class="p-3">
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
+    }
+    else
+    {
+        <RadzenDataGrid @ref="ExpensesGrid"
+                        Data="@Expenses"
+                        TItem="DailyExpenseDTO"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        Style="border-radius: 12px;">
+            <Columns>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Date" Width="110px">
+                    <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy")</Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="BillTypeName" Title="Bill Type" Width="150px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="StoreName" Title="Store" Width="120px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Description" Title="Description" Width="240px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="AccountName" Title="Paid From" Width="130px">
+                    <Template Context="data">
+                        @(string.IsNullOrEmpty(data.AccountName) ? "Cash" : data.AccountName)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Bill / Ref" Width="130px">
+                    <Template Context="data">
+                        @{
+                            var billRef = string.IsNullOrEmpty(data.ReceiptBillNo) ? data.ReferenceNo : data.ReceiptBillNo;
+                        }
+                        @(string.IsNullOrEmpty(billRef) ? "-" : billRef)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Amount" Title="Amount" Width="130px">
+                    <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="CreatedByName" Title="Entered By" Width="120px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Actions" Width="130px">
+                    <Template Context="data">
+                        <RadzenButton Icon="edit"
+                                      ButtonStyle="ButtonStyle.Info"
+                                      Size="ButtonSize.Small"
+                                      Class="mr-1"
+                                      Click="@(() => EditExpense(data))" />
+                        <RadzenButton Icon="delete"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => DeleteExpense(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;font-weight:700;font-size:0.95rem">
+            <span>Total Expense: @TotalAmount.ToString("N2")</span>
+        </div>
+    }
+</RadzenCard>

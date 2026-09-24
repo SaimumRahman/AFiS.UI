@@ -11,6 +11,5 @@ namespace JM.UI.Service.Groups
         Task<GroupModelDTO?> GetGroupById(int id);
         Task<ResponseResult> SaveUpdateGroup(GroupModelDTO group);
         Task<ResponseResult> DeleteGroup(int id);
-        Task<string> GetNextGroupCode();
     }
 }
