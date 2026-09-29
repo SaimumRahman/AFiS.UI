@@ -68,91 +68,65 @@
         <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:0.78rem;color:#666">Type:</span>
             <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" />
-            <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Exchange"; StateHasChanged(); })" />
+            <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                          Disabled="@(CartSubTotal <= 0)" Title="@(CartSubTotal <= 0 ? "Add products to the cart to use exchange" : "")"
+                          Click="@(() => { Mode = "Exchange"; StateHasChanged(); })" />
+            @if (CartSubTotal <= 0)
+            {
+                <span style="font-size:0.7rem;color:#856404">Exchange requires items in the current cart.</span>
+            }
         </div>
-
-        @* ── Replacement items (exchange only) ── *@
-        @if (Mode == "Exchange")
-        {
-            <div>
-                <div class="pos-card-title" style="margin-bottom:4px">Replacement Items</div>
-                <div style="display:flex;gap:8px">
-                    <RadzenTextBox @bind-Value="ProductSearchTerm" Placeholder="Search product (name / barcode)..." class="rz-w-100" @onkeydown="@OnProductKeyPress" />
-                    <RadzenButton Text="Search" ButtonStyle="ButtonStyle.Primary" Click="@SearchProducts" />
-                </div>
-                @if (ProductResults.Any())
-                {
-                    <div style="border:1px solid #ddd;border-radius:4px;max-height:180px;overflow-y:auto;margin-top:4px">
-                        @foreach (var p in ProductResults)
-                        {
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;border-bottom:1px solid #f0f0f0">
-                                <div>
-                                    <div style="font-weight:600;font-size:0.8rem">@p.ProductName</div>
-                                    <div style="font-size:0.7rem;color:#666">@p.Barcode | @p.UnitPrice.ToString("N2") | Stock: @p.StockQuantity.ToString("0.##")</div>
-                                </div>
-                                <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" ButtonSize="ExtraSmall" Click="@(() => AddExchangeItem(p))" />
-                            </div>
-                        }
-                    </div>
-                }
-                @if (ExchangeItems.Any())
-                {
-                    <RadzenDataGrid Data="@ExchangeItems" ShowPaging="false" TItem="SaleDetailDTO" Density="Density.Compact" Style="margin-top:6px">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="ProductName" Title="Item" />
-                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="90">
-                                <Template Context="e">
-                                    <RadzenNumeric TValue="decimal" @bind-Value="e.Qty" Min="1" Step="1" ShowButtons="true"
-                                                   Change="@((decimal v) => OnExchangeQtyChanged(e, v))" Style="width:70px" />
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="SaleDetailDTO" Property="UnitPrice" Title="Price" Width="90" />
-                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
-                                <Template Context="e"><span>@e.TotalAmount.ToString("N2")</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="SaleDetailDTO" Title="" Width="40">
-                                <Template Context="e">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Click="@(() => RemoveExchangeItem(e))">X</RadzenButton>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-            </div>
-        }
 
         @* ── Summary ── *@
         <div style="background:#f8f9fa;border-radius:6px;padding:10px;font-size:0.8rem">
             <div style="display:flex;justify-content:space-between"><span>Return Credit</span><span style="color:#dc3545;font-weight:600">-@TotalCredit.ToString("N2")</span></div>
             @if (Mode == "Exchange")
             {
-                <div style="display:flex;justify-content:space-between"><span>Replacement Total</span><span>@ReplacementSubtotal.ToString("N2")</span></div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #ddd;margin-top:6px;padding-top:6px">
+                    <span>Exchange Credit</span>
+                    <span style="color:#28a745">Applied to current sale</span>
+                </div>
+                <div style="font-size:0.7rem;color:#856404;margin-top:4px">
+                    Cart subtotal is @CartSubTotal.ToString("N2"). The exchange credit must be equal to or greater than the cart subtotal.
+                </div>
             }
-            <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #ddd;margin-top:6px;padding-top:6px">
-                <span>@(NetDue >= 0 ? "Customer Pays" : "Refund to Customer")</span>
-                <span style="color:@(NetDue >= 0 ? "#28a745" : "#dc3545")">@Math.Abs(NetDue).ToString("N2")</span>
-            </div>
-        </div>
-
-        @* ── Refund / payment method ── *@
-        <div style="display:flex;gap:12px;align-items:flex-end">
-            <div style="flex:1">
-                <label style="font-size:0.78rem;font-weight:600">@(NetDue >= 0 ? "Payment Method" : "Refund Method")</label>
-                <RadzenDropDown @bind-Value="MethodId" Data="@MethodOptions" TextProperty="Name" ValueProperty="Id" Style="width:100%" />
-            </div>
-            @if (MethodId != 0)
+            else
             {
-                <div style="flex:1">
-                    <label style="font-size:0.78rem;font-weight:600">Transaction Ref</label>
-                    <RadzenTextBox @bind-Value="RefTransactionNo" Style="width:100%" />
+                <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #ddd;margin-top:6px;padding-top:6px">
+                    <span>@(NetDue >= 0 ? "Customer Pays" : "Refund to Customer")</span>
+                    <span style="color:@(NetDue >= 0 ? "#28a745" : "#dc3545")">@Math.Abs(NetDue).ToString("N2")</span>
                 </div>
             }
         </div>
 
+        @* ── Refund / payment method (return only) ── *@
+        @if (Mode == "Return")
+        {
+            <div style="display:flex;gap:12px;align-items:flex-end">
+                <div style="flex:1">
+                    <label style="font-size:0.78rem;font-weight:600">@(NetDue >= 0 ? "Payment Method" : "Refund Method")</label>
+                    <RadzenDropDown @bind-Value="MethodId" Data="@MethodOptions" TextProperty="Name" ValueProperty="Id" Style="width:100%" />
+                </div>
+                @if (MethodId != 0)
+                {
+                    <div style="flex:1">
+                        <label style="font-size:0.78rem;font-weight:600">Transaction Ref</label>
+                        <RadzenTextBox @bind-Value="RefTransactionNo" Style="width:100%" />
+                    </div>
+                }
+            </div>
+        }
+
         <div style="display:flex;gap:8px;justify-content:flex-end">
             <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
-            <RadzenButton Text="@(Mode == "Exchange" ? "Process Exchange" : "Process Return")"
-                          ButtonStyle="ButtonStyle.Warning" Click="@Process" Disabled="@(TotalCredit <= 0 || (Mode == "Exchange" && ExchangeItems.Count == 0))" />
+            @if (Mode == "Exchange")
+            {
+                <RadzenButton Text="Apply Exchange to Cart" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange" Disabled="@(TotalCredit <= 0 || TotalCredit < CartSubTotal)" />
+            }
+            else
+            {
+                <RadzenButton Text="Process Return" ButtonStyle="ButtonStyle.Warning" Click="@Process" Disabled="@(TotalCredit <= 0)" />
+            }
         </div>
     }
     else
@@ -166,23 +140,19 @@
 @code {
     [Parameter] public int StoreId { get; set; }
     [Parameter] public int UserId { get; set; }
+    [Parameter] public decimal CartSubTotal { get; set; }
 
     protected string InvoiceSearch { get; set; } = "";
     protected SaleMasterDTO? OriginalSale { get; set; }
     protected List<ReturnEditLine> ReturnLines { get; set; } = new();
     protected string Mode { get; set; } = "Return";
 
-    protected string ProductSearchTerm { get; set; } = "";
-    protected List<ProductSearchDTO> ProductResults { get; set; } = new();
-    protected List<SaleDetailDTO> ExchangeItems { get; set; } = new();
-
     protected List<MethodOption> MethodOptions { get; set; } = new() { new MethodOption { Id = 0, Name = "Cash" } };
     protected int MethodId { get; set; }
     protected string RefTransactionNo { get; set; } = "";
 
     protected decimal TotalCredit => ReturnLines.Sum(r => r.Credit);
-    protected decimal ReplacementSubtotal => ExchangeItems.Sum(e => e.TotalAmount);
-    protected decimal NetDue => (Mode == "Exchange" ? ReplacementSubtotal : 0) - TotalCredit;
+    protected decimal NetDue => -TotalCredit;
 
     protected override async Task OnInitializedAsync()
     {
@@ -206,11 +176,6 @@
     protected async Task OnInvoiceKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await SearchInvoice();
-    }
-
-    protected async Task OnProductKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") await SearchProducts();
     }
 
     protected async Task OpenAddCustomer()
@@ -271,48 +236,34 @@
             .ToList();
     }
 
-    protected async Task SearchProducts()
+    protected void ApplyExchange()
     {
-        if (string.IsNullOrWhiteSpace(ProductSearchTerm)) return;
-        try
+        if (TotalCredit <= 0)
         {
-            ProductResults = (await ServiceUnitOfWork.SaleService.SearchProducts(ProductSearchTerm.Trim())).ToList();
+            NotificationService.Notify(NotificationSeverity.Warning, "No Items", "Select at least one item to return", 3000);
+            return;
         }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Search Failed", ex.Message, 4000);
-        }
-    }
 
-    protected void AddExchangeItem(ProductSearchDTO product)
-    {
-        var existing = ExchangeItems.FirstOrDefault(e => e.ItemId == product.ItemId);
-        if (existing != null)
+        if (TotalCredit < CartSubTotal)
         {
-            existing.Qty += 1;
-            existing.TotalAmount = existing.Qty * existing.UnitPrice;
+            NotificationService.Notify(NotificationSeverity.Warning, "Insufficient Exchange Credit",
+                $"Exchange credit must be equal to or greater than the current cart subtotal of {CartSubTotal:N2}", 4000);
+            return;
         }
-        else
+
+        var selected = ReturnLines.Where(r => r.ReturnQty > 0).ToList();
+
+        var result = new ExchangeApplyResult
         {
-            var detail = SaleDetailDTO.FromProductSearch(product, 1);
-            ExchangeItems.Add(detail);
-        }
-        ProductResults = new();
-        ProductSearchTerm = "";
-        StateHasChanged();
-    }
-
-    protected void OnExchangeQtyChanged(SaleDetailDTO item, decimal qty)
-    {
-        item.Qty = qty;
-        item.TotalAmount = item.Qty * item.UnitPrice;
-        StateHasChanged();
-    }
-
-    protected void RemoveExchangeItem(SaleDetailDTO item)
-    {
-        ExchangeItems.Remove(item);
-        StateHasChanged();
+            ReturnInvoiceNo = OriginalSale!.InvoiceNo,
+            ExchangeAmount = TotalCredit,
+            ReturnedItems = selected.Select(r => new ReturnedItemDTO
+            {
+                SalesDetailsId = r.SalesDetailsId,
+                Qty = r.ReturnQty
+            }).ToList()
+        };
+        DialogService.Close(result);
     }
 
     protected async Task Process()
@@ -342,7 +293,7 @@
                 Credit = r.Credit,
                 AvailableQty = r.Available
             }).ToList(),
-            ExchangeItems = Mode == "Exchange" ? ExchangeItems.ToList() : new List<SaleDetailDTO>(),
+            ExchangeItems = new List<SaleDetailDTO>(),
             VatAmount = 0,
             RefundMethodId = MethodId,
             PaymentMethodId = MethodId,

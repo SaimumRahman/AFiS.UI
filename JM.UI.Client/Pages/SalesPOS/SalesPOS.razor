@@ -649,12 +649,22 @@
                         <span class="value">@(Sale.RoundingAmount > 0 ? "+" : "")@Sale.RoundingAmount?.ToString("N2")</span>
                     </div>
                 }
+                @if (Sale.IsReturnExchange && (Sale.ExchangeAmount ?? 0) > 0)
+                {
+                    <div class="billing-row" style="color:#dc3545">
+                        <span class="label">Exchange Credit @(!string.IsNullOrWhiteSpace(Sale.ReturnInvoiceNo) ? "(" + Sale.ReturnInvoiceNo + ")" : "")</span>
+                        <span class="value">
+                            -@Sale.ExchangeAmount?.ToString("N2")
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Variant="Variant.Outlined" Style="margin-left:4px" Click="@RemoveAppliedExchange" Title="Remove exchange credit">X</RadzenButton>
+                        </span>
+                    </div>
+                }
                 <div class="billing-row total">
                     <span class="label">Net Payable</span>
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Text="Return / Exchange" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Disabled="@(CartItems.Count == 0)" Text="Return / Exchange" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>

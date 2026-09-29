@@ -117,6 +117,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
                 net += CalculatedVat;
+                net -= Sale.ExchangeAmount ?? 0;
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
             }
@@ -966,11 +967,24 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new Dictionary<string, object>
                 {
                     { "StoreId", storeId },
-                    { "UserId", userId }
+                    { "UserId", userId },
+                    { "CartSubTotal", SubTotal }
                 },
                 new DialogOptions { Width = "760px" });
 
-            if (result is ResponseResult res)
+            if (result is ExchangeApplyResult exchange)
+            {
+                // Apply the exchange credit to the current cart; the amount is
+                // deducted from the payable when this invoice is created.
+                Sale.ExchangeAmount = exchange.ExchangeAmount;
+                Sale.ReturnInvoiceNo = exchange.ReturnInvoiceNo;
+                Sale.ReturnedItems = exchange.ReturnedItems;
+                Sale.IsReturnExchange = true;
+                notificationService.Notify(NotificationSeverity.Success, "Exchange Applied",
+                    $"Credit {exchange.ExchangeAmount:N2} from invoice {exchange.ReturnInvoiceNo} applied to this sale", 5000);
+                StateHasChanged();
+            }
+            else if (result is ResponseResult res)
             {
                 if (res.IsSuccessStatus)
                 {
@@ -984,6 +998,15 @@ namespace JM.UI.Client.Pages.SalesPOS
                 // Refresh the invoice list so the new return/exchange document is visible.
                 await LoadInvoices();
             }
+        }
+
+        protected void RemoveAppliedExchange()
+        {
+            Sale.ExchangeAmount = null;
+            Sale.ReturnInvoiceNo = null;
+            Sale.ReturnedItems = new();
+            Sale.IsReturnExchange = false;
+            StateHasChanged();
         }
 
         // ── Payment Modal ──
