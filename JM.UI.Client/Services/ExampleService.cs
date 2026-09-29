@@ -458,24 +458,6 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name        = "Account Groups",
-                        Path        = "/AccountsGroupsList",
-                        Icon        = "\ue8b0",
-                        Title       = "Account Groups",
-                        Description = "Organize accounts into categories and groups",
-                        Tags        = new[] { "account", "group", "finance", "coa" }
-                    },
-                    new Example
-                    {
-                        Name        = "Accounts (COA)",
-                        Path        = "/AccountsList",
-                        Icon        = "\ue85d",
-                        Title       = "Chart of Accounts",
-                        Description = "Manage ledger accounts and structure",
-                        Tags        = new[] { "account", "ledger", "chart", "finance" }
-                    },
-                    new Example
-                    {
                         Name        = "Daily Expense Entry",
                         Path        = "/DailyExpenses",
                         Icon        = "\ue8b0",
@@ -499,36 +481,6 @@ namespace JM.UI.Client.Services
                         Title       = "Account Groups",
                         Description = "Organize accounts into categories and groups",
                         Tags        = new[] { "account", "group", "finance", "coa" }
-                    }
-                }
-            },
- 
-            // ─────────────────────────────────────────
-            // 8. Vouchers
-            // ─────────────────────────────────────────
-            new Example
-            {
-                Name = "Vouchers",
-                Icon = "\ue873",
-                Children = new[]
-                {
-                    new Example
-                    {
-                        Name        = "Voucher List",
-                        Path        = "/VoucherList",
-                        Icon        = "\ue873",
-                        Title       = "Vouchers",
-                        Description = "Create and manage accounting vouchers",
-                        Tags        = new[] { "voucher", "journal", "entry" }
-                    },
-                    new Example
-                    {
-                        Name        = "Voucher Details",
-                        Path        = "/VoucherDetailsList",
-                        Icon        = "\ue85d",
-                        Title       = "Voucher Lines",
-                        Description = "View and edit individual voucher transactions",
-                        Tags        = new[] { "voucher", "detail", "line", "debit", "credit" }
                     }
                 }
             },
@@ -572,6 +524,54 @@ namespace JM.UI.Client.Services
                 }
             },
  
+            // ─────────────────────────────────────────
+            // 9b. Accounting Reports
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Accounting Reports",
+                Icon = "\ue8b0",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "Trial Balance",
+                        Path        = "/AccountingTrialBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Trial Balance",
+                        Description = "Trial balance for a date range with branch filter: opening, period debit, period credit and closing",
+                        Tags        = new[] { "trial", "balance", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "General Ledger",
+                        Path        = "/AccountingGeneralLedger",
+                        Icon        = "\ue8b0",
+                        Title       = "General Ledger",
+                        Description = "Posted general ledger entries by date range and branch: voucher, account, party, debit, credit and net",
+                        Tags        = new[] { "ledger", "general", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "Party Balance",
+                        Path        = "/AccountingPartyBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Party Balance",
+                        Description = "Outstanding balances per party and account: receivables, payables and advances",
+                        Tags        = new[] { "party", "balance", "outstanding", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "Balance Rollup",
+                        Path        = "/AccountingBalanceRollup",
+                        Icon        = "\ue8b0",
+                        Title       = "Balance Rollup (Group Summary)",
+                        Description = "Group-level totals per period (Tally Group Summary style)",
+                        Tags        = new[] { "rollup", "group", "summary", "accounting", "report" }
+                    }
+                }
+            },
+
             // ─────────────────────────────────────────
             // 10. Security & Access
             // ─────────────────────────────────────────

@@ -17,7 +17,6 @@ namespace JM.UI.Entities.Model.SupplierPayments
         public string? ChequeNo { get; set; }
         public DateTime? ChequeDate { get; set; }
 
-        public int? VoucherId { get; set; }
         public string? Remarks { get; set; }
         public string? UserName { get; set; }
         public DateTime? CreatedDate { get; set; }

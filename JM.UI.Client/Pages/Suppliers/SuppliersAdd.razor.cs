@@ -1,5 +1,4 @@
-﻿using JM.UI.Entities.Model.Accounts;
-using JM.UI.Entities.Model.Suppliers;
+﻿using JM.UI.Entities.Model.Suppliers;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -18,7 +17,6 @@ namespace JM.UI.Client.Pages.Suppliers
         [Parameter] public int? Id { get; set; }
 
         protected SupplierModelDTO Supplier { get; set; } = new();
-        protected IEnumerable<AccountModelDTO> Accounts { get; set; } = new List<AccountModelDTO>();
         
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
@@ -28,32 +26,10 @@ namespace JM.UI.Client.Pages.Suppliers
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
-            await LoadInitialData();
 
             if (IsEditMode)
             {
                 await LoadSupplier();
-            }
-        }
-
-        private async Task LoadInitialData()
-        {
-            try
-            {
-                IsLoading = true;
-                // Fetch accounts for the dropdown
-                var accounts = await _serviceUnitOfWork.AccountsService.GetAccounts();
-                // Filter for relevant accounts if needed (e.g., only liability or expense accounts)
-                // For now, load all or filter as per business logic
-                Accounts = accounts.OrderBy(a => a.Name).ToList();
-            }
-            catch (Exception ex)
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load lookup data: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 

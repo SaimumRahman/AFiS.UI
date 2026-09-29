@@ -1,10 +1,4 @@
 ﻿using JM.UI.DataService.DAL.StockOpenings;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -70,12 +64,6 @@ using JM.UI.Service.Reporting;
 using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.Vouchers;
-using JM.UI.Service.Vouchers;
-using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -100,10 +88,6 @@ namespace JM.UI.Service.UnitOfWork
 
         ISizesService SizesService { get; }
         IBarcodeService BarcodeService { get; }
-        IVoucherDetailsService VoucherDetailsService { get; }
-        IVoucherService VoucherService { get; }
-        IAccountsGroupsService AccountsGroupsService { get; }
-        IAccountsService AccountsService { get; }
         ISupplierService SupplierService { get; }
         IPurchaseOrderService PurchaseOrderService { get; }
         IPurchaseService PurchaseService { get; }

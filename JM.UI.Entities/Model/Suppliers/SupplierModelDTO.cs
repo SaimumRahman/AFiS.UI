@@ -6,7 +6,6 @@ namespace JM.UI.Entities.Model.Suppliers
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public int AccountId { get; set; }
         public string? ShortCode { get; set; }
         public string? Address { get; set; }
         public string? ContactNo { get; set; }

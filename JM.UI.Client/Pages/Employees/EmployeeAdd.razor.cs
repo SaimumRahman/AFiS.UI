@@ -1,5 +1,4 @@
 ﻿// CompanyListComponent.razor.cs
-using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Designations;
@@ -36,7 +35,6 @@ namespace JM.UI.Client.Pages.Employees
         protected List<StoreDTO> Stores { get; set; } = new();
         protected List<DesignationDTO> Designations { get; set; } = new();
        protected List<ShiftDTO> Shifts { get; set; } = new();
-       protected List<AccountModelDTO> Accounts { get; set; } = new();
 
         // Gender Options
         protected List<string> GenderOptions { get; set; } = new() { "Male", "Female", "Other" };
@@ -91,8 +89,6 @@ namespace JM.UI.Client.Pages.Employees
 
                 // Load Shifts
                 Shifts = (await _serviceUnitOfWork.ShiftService.GetShift()).ToList();
-
-                Accounts = (await _serviceUnitOfWork.AccountsService.GetAccounts()).ToList();
             }
             catch (Exception ex)
             {

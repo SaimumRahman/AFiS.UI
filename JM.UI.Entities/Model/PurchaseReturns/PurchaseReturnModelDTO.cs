@@ -12,12 +12,10 @@ namespace JM.UI.Entities.Model.PurchaseReturns
         public int StorePurchaseReturnId { get; set; }
         public string? Remarks { get; set; }
         public string UserName { get; set; } = string.Empty;
-        public int VoucherId { get; set; }
 
         // UI Helpers
         public string? SupplierName { get; set; }
         public string? StoreName { get; set; }
-        public int? VoucherNo { get; set; }
 
         public List<PurchaseReturnItemModelDTO> Items { get; set; } = new();
     }

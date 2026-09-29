@@ -1,7 +1,5 @@
 using JM.UI.Entities.Model.Reporting_D;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace JM.UI.Service.Reporting
 {
@@ -9,5 +7,9 @@ namespace JM.UI.Service.Reporting
     {
         Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode);
+        Task<IEnumerable<GeneralLedgerDTO>> GetGeneralLedger(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode, int? accountId, int? voucherTypeId);
+        Task<IEnumerable<PartyBalanceDTO>> GetPartyBalance(string? companyCode, string? partyType);
+        Task<IEnumerable<BalanceRollupDTO>> GetBalanceRollup(string? companyCode, int? periodId);
     }
 }

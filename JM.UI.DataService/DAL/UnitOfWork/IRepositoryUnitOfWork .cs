@@ -1,10 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.Actions;
+﻿using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
@@ -71,12 +65,6 @@ using JM.UI.DataService.DAL.Reporting;
 using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -101,10 +89,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IColorsRepository ColorsRepository { get; }
         ISizesRepository SizesRepository { get; }
         IBarcodeRepository BarcodeRepository { get; }
-        IVoucherDetailsRepository VoucherDetailsRepository { get; }
-        IVoucherRepository VoucherRepository { get; }
-        IAccountsGroupsRepository AccountsGroupsRepository { get; }
-        IAccountsRepository AccountsRepository { get; }
         ISupplierRepository SupplierRepository { get; }
         IPurchaseOrderRepository PurchaseOrderRepository { get; }
         IPurchaseRepository PurchaseRepository { get; }

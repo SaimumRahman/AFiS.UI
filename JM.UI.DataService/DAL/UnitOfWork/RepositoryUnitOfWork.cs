@@ -1,10 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.Actions;
+﻿using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
@@ -71,12 +65,6 @@ using JM.UI.DataService.DAL.Reporting;
 using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -108,10 +96,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IColorsRepository ColorsRepository { get; }
         public ISizesRepository SizesRepository { get; }
         public IBarcodeRepository BarcodeRepository { get; }
-        public IVoucherDetailsRepository VoucherDetailsRepository { get; }
-        public IVoucherRepository VoucherRepository { get; }
-        public IAccountsGroupsRepository AccountsGroupsRepository { get; }
-        public IAccountsRepository AccountsRepository { get; }
         public ISupplierRepository SupplierRepository { get; }
         public IPurchaseOrderRepository PurchaseOrderRepository { get; }
         public IPurchaseRepository PurchaseRepository { get; }
@@ -173,10 +157,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());
             SizesRepository = new SizesRepository(factory, tokenProvider, loggerFactory.CreateLogger<SizesRepository>());
             BarcodeRepository = new BarcodeRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodeRepository>());
-            VoucherDetailsRepository = new VoucherDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<VoucherDetailsRepository>());
-            VoucherRepository = new VoucherRepository(factory, tokenProvider, loggerFactory.CreateLogger<VoucherRepository>());
-            AccountsGroupsRepository = new AccountsGroupsRepository(factory, tokenProvider, loggerFactory.CreateLogger<AccountsGroupsRepository>());
-            AccountsRepository = new AccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<AccountsRepository>());
             SupplierRepository = new SupplierRepository(factory, tokenProvider, loggerFactory.CreateLogger<SupplierRepository>());
             PurchaseOrderRepository = new PurchaseOrderRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseOrderRepository>());
             PurchaseRepository = new PurchaseRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseRepository>());

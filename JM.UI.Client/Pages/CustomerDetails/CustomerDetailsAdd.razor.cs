@@ -1,5 +1,4 @@
-﻿using JM.UI.Entities.Model.Accounts;
-using JM.UI.Entities.Model.CustomerDetails;
+﻿using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;

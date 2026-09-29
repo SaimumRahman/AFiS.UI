@@ -483,26 +483,6 @@
                                                         AllowFiltering="true" />
                                     </RadzenStack>
                                 </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Component="AccountId">
-                                            Account <span style="color:red"></span>
-                                        </RadzenLabel>
-                                        <RadzenDropDown @bind-Value="Employee.AccountId"
-                                                        Data="@Accounts"
-                                                        TextProperty="Name"
-                                                        ValueProperty="Id"
-                                                        Name="AccountId"
-                                                        Placeholder="Select Account"
-                                                        Style="width: 100%;"
-                                                        AllowClear="true"
-                                                        AllowFiltering="true" />
-
-                    @*                     <RadzenRequiredValidator Component="AccountId"
-                                                                 Text="Account is required"
-                                                                 Popup="false" /> *@
-                                    </RadzenStack>
-                                </RadzenColumn>
 
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">

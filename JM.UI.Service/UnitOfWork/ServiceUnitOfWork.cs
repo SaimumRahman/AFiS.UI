@@ -1,11 +1,6 @@
 ﻿using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.UnitOfWork;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -61,8 +56,6 @@ using JM.UI.Service.Reporting;
 using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -87,10 +80,6 @@ namespace JM.UI.Service.UnitOfWork
         public IShiftService ShiftService { get; }
         public ISizesService SizesService { get; }
         public IBarcodeService BarcodeService { get; }
-        public IVoucherDetailsService VoucherDetailsService { get; }
-        public IVoucherService VoucherService { get; }
-        public IAccountsGroupsService AccountsGroupsService { get; }
-        public IAccountsService AccountsService { get; }
         public ISupplierService SupplierService { get; }
         public IPurchaseOrderService PurchaseOrderService { get; }
         public IPurchaseService PurchaseService { get; private set; }
@@ -147,10 +136,6 @@ namespace JM.UI.Service.UnitOfWork
             UserGroupService = new UserGroupService(_repoUow);
             SizesService = new Sizeservice(_repoUow);
             BarcodeService = new BarcodeService(_repoUow);
-            VoucherDetailsService = new VoucherDetailsService(_repoUow);
-            VoucherService = new VoucherService(_repoUow);
-            AccountsGroupsService = new AccountsGroupsService(_repoUow);
-            AccountsService = new AccountsService(_repoUow);
             SupplierService = new SupplierService(_repoUow);
             PurchaseOrderService = new PurchaseOrderService(_repoUow);
             PurchaseService = new PurchaseService(_repoUow);

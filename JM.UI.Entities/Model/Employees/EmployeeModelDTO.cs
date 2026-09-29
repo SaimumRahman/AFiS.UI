@@ -33,7 +33,6 @@ namespace JM.UI.Entities.Model.Employees
         public DateTime? DateReleased { get; set; }
         public string NID { get; set; } = string.Empty;
         public string ReferredBy { get; set; } = string.Empty;
-        public int? AccountId { get; set; }
         public int? StoreId { get; set; }
         public int? DesignationId { get; set; }
         public decimal? BasicSalary { get; set; }
