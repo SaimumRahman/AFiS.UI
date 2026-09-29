@@ -18,6 +18,7 @@ namespace JM.UI.Client.Pages.Designs
 
         protected DesignModelDTO Design { get; set; } = new();
         protected IEnumerable<SubGroupModelDTO> SubGroups { get; set; } = new List<SubGroupModelDTO>();
+        protected List<DesignModelDTO> ExistingDesigns { get; set; } = new();
 
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoading { get; set; } = false;
@@ -31,6 +32,36 @@ namespace JM.UI.Client.Pages.Designs
             if (IsEditMode)
             {
                 await LoadDesign();
+                await LoadExistingDesigns(Design.SubGroupId);
+            }
+        }
+
+        protected async Task OnParentProductChanged()
+        {
+            await LoadExistingDesigns(Design.SubGroupId);
+        }
+
+        private async Task LoadExistingDesigns(int subGroupId)
+        {
+            try
+            {
+                if (subGroupId <= 0)
+                {
+                    ExistingDesigns = new List<DesignModelDTO>();
+                    return;
+                }
+
+                var designs = await _serviceUnitOfWork.DesignService.LoadDesignsBySubGroup(subGroupId);
+                ExistingDesigns = designs?.ToList() ?? new List<DesignModelDTO>();
+            }
+            catch (Exception ex)
+            {
+                ExistingDesigns = new List<DesignModelDTO>();
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load existing sub products: {ex.Message}");
+            }
+            finally
+            {
+                StateHasChanged();
             }
         }
 

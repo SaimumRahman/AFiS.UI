@@ -33,7 +33,8 @@
                             <RadzenDropDown TValue="int" @bind-Value="@Design.SubGroupId"
                                             Data="@SubGroups" TextProperty="Name" ValueProperty="Id"
                                             Placeholder="Select Parent Product..." class="w-100" Name="SubGroupId"
-                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true"
+                                            Change="@((object args) => OnParentProductChanged())" />
                             <RadzenRequiredValidator Component="SubGroupId" Text="Parent Product is required" DefaultValue="0" />
                         </RadzenStack>
                     </RadzenColumn>
@@ -76,4 +77,29 @@
             </RadzenCard>
         }
     </RadzenTemplateForm>
+
+    @if (Design.SubGroupId > 0)
+    {
+        <RadzenCard class="mt-4">
+            <RadzenRow AlignItems="AlignItems.Center" class="mb-2">
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.H6">Existing Sub Products</RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+            @if (ExistingDesigns.Any())
+            {
+                <RadzenDataGrid Data="@ExistingDesigns" TItem="DesignModelDTO" AllowPaging="true" PageSize="10"
+                                AllowSorting="true" Density="Density.Compact" GridLines="DataGridGridLines.Both">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="DesignModelDTO" Property="Name" Title="Sub Product" />
+                        <RadzenDataGridColumn TItem="DesignModelDTO" Property="Code" Title="Code" Width="120px" />
+                    </Columns>
+                </RadzenDataGrid>
+            }
+            else
+            {
+                <RadzenText TextStyle="TextStyle.Body1" Style="opacity:0.7;">No sub products exist for this parent yet.</RadzenText>
+            }
+        </RadzenCard>
+    }
 </RadzenContent>
