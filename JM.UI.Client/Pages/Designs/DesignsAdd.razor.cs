@@ -32,10 +32,6 @@ namespace JM.UI.Client.Pages.Designs
             {
                 await LoadDesign();
             }
-            else
-            {
-                Design.Code = (await _serviceUnitOfWork.DesignService.GetDesignCode()).Code;
-            }
         }
 
         private async Task LoadInitialData()
