@@ -37,7 +37,7 @@
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenStack Gap="0.5rem">
                             <RadzenLabel Text="Color Code" Component="ColorCode" />
-                            <RadzenTextBox Name="ColorCode" @bind-Value="@Colors.ColorCode" class="w-100" />
+                            <RadzenTextBox Name="ColorCode" @bind-Value="@Colors.ColorCode" class="w-100" Disabled="true" />
                             <RadzenRequiredValidator Component="ColorCode" Text="" />
                         </RadzenStack>
                     </RadzenColumn>
