@@ -869,7 +869,7 @@ protected bool IsProcessing { get; set; } = false;
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode
                         : barcode;
-                    if (PreviewItems.Any(p => p.Barcode == itemBarcode)) continue;
+                    if (IsBarcodeInPreview(itemBarcode)) continue;
                     var features = response.itemWiseFeatures?
                         .Where(f => f?.ItemId == item.Id)
                         .Select(f => f!.FeaturesId)
@@ -924,7 +924,7 @@ protected bool IsProcessing { get; set; } = false;
             }
             else
             {
-                if (!PreviewItems.Any(p => p.Barcode == barcode))
+                if (!IsBarcodeInPreview(barcode))
                 {
                     var newRow = new PreviewItemRow
                     {
@@ -1927,6 +1927,12 @@ protected bool IsProcessing { get; set; } = false;
             return string.Join("-", parts.Take(parts.Length - 2));
         }
 
+        private static bool BarcodesEqual(string? a, string? b) =>
+            string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        private bool IsBarcodeInPreview(string barcode) =>
+            PreviewItems.Any(p => BarcodesEqual(p.Barcode, barcode));
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
@@ -1937,7 +1943,7 @@ protected bool IsProcessing { get; set; } = false;
                         "Please select a Size before adding items to the preview.");
                     return;
                 }
-                if (PreviewItems.Any(p => p.Barcode == barcode))
+                if (IsBarcodeInPreview(barcode))
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
                         "This item is already in the table");
@@ -2161,7 +2167,11 @@ Quantity = 0,
                 var newRows = BuildPreviewRowsFromResponse(response, barcode);
 
                 foreach (var row in newRows)
+                {
+                    if (IsBarcodeInPreview(row.Barcode))
+                        continue;
                     PreviewItems.Add(row);
+                }
 
                 if (newRows.Any())
                 {
