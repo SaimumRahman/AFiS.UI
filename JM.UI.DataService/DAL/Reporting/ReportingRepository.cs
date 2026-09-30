@@ -163,6 +163,33 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
+        public async Task<IEnumerable<GroupWiseSalesDetailsDTO>> GetGroupWiseSalesDetails(DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var url = "api/GroupWiseSalesDetails/detail";
+                var query = new List<string>();
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<GroupWiseSalesDetailsDTO>>();
+                return result ?? new List<GroupWiseSalesDetailsDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching group-wise sales details report");
+                throw new Exception("Failed to fetch group-wise sales details report: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
         {
             try

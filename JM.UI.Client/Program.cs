@@ -54,6 +54,7 @@ builder.Services.AddScoped<BookingReportService>();
 builder.Services.AddScoped<CustomerWiseSalesDetailReportService>();
 builder.Services.AddScoped<ExchangeReportService>();
 builder.Services.AddScoped<GroupWiseSalesSummaryReportService>();
+builder.Services.AddScoped<GroupWiseSalesDetailsReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();
 builder.Services.AddScoped<PosInvoicePdfService>();

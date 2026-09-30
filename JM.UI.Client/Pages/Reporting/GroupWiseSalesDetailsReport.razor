@@ -1,0 +1,153 @@
+@page "/GroupWiseSalesDetailsReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits GroupWiseSalesDetailsReportComponent
+
+<PageTitle>Group-wise Sales Details Report</PageTitle>
+
+<style>
+    .gwd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        border: 1px solid #444;
+    }
+    .gwd-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .gwd-table td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; }
+    .gwd-table .num { text-align: right; white-space: nowrap; }
+    .gwd-table .sub td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .gwd-table .gtd td { background: #f5f5f5; font-weight: bold; border-top: 1px solid #444; }
+    .gwd-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .gwd-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .gwd-doc-header .subtitle { font-size: 0.9rem; }
+    .gwd-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .gwd-doc-header .doc-range { font-size: 0.9rem; }
+    .gwd-note { font-size: 0.8rem; font-style: italic; margin-top: 10px; }
+    .gwd-merged { vertical-align: middle; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="list_alt" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Group-wise Sales Details Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="gwd-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">GROUP-WISE SALES DETAILS REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            <table class="gwd-table">
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>Product Name</th>
+                        <th>SubProduct Name</th>
+                        <th class="num">HLS (Tk)</th>
+                        <th class="num">GEC (Tk)</th>
+                        <th class="num">BTB (Tk)</th>
+                        <th class="num">Total (Tk)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Blocks.Any())
+                    {
+                        <tr>
+                            <td colspan="7" style="text-align:center; color:#616161; padding: 14px;">
+                                No sales records found for the selected period.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var block in Blocks)
+                        {
+                            for (var i = 0; i < block.Rows.Count; i++)
+                            {
+                                var row = block.Rows[i];
+                                <tr>
+                                    @if (i == 0)
+                                    {
+                                        <td class="gwd-merged" rowspan="@block.Rows.Count">@Dash(block.GroupName)</td>
+                                        <td class="gwd-merged" rowspan="@block.Rows.Count">@Dash(block.ProductName)</td>
+                                    }
+                                    <td>@Dash(row.SubProductName)</td>
+                                    <td class="num">@Fmt(row.HlsAmount)</td>
+                                    <td class="num">@Fmt(row.GecAmount)</td>
+                                    <td class="num">@Fmt(row.BtbAmount)</td>
+                                    <td class="num"><strong>@Fmt(row.TotalAmount)</strong></td>
+                                </tr>
+                            }
+
+                            <tr class="sub">
+                                <td colspan="3">SubTotal</td>
+                                <td class="num">@Fmt(block.Rows.Sum(r => r.HlsAmount))</td>
+                                <td class="num">@Fmt(block.Rows.Sum(r => r.GecAmount))</td>
+                                <td class="num">@Fmt(block.Rows.Sum(r => r.BtbAmount))</td>
+                                <td class="num">@Fmt(block.Rows.Sum(r => r.TotalAmount))</td>
+                            </tr>
+                        }
+
+                        <tr class="gtd">
+                            <td colspan="3">Grand Total</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.HlsAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.GecAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.BtbAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.TotalAmount))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (Blocks.Any())
+            {
+                <div class="gwd-note">*ALL SALES AFTER DISCOUNT, NET SALE TAKA</div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>
