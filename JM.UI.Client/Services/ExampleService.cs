@@ -547,6 +547,15 @@ namespace JM.UI.Client.Services
                         Title       = "Exchange Report",
                         Description = "Item exchanges showing old and new invoice, returned and replacement items, adjustment and amount paid",
                         Tags        = new[] { "exchange", "report", "return", "adjustment", "sales" }
+                    },
+                    new Example
+                    {
+                        Name        = "Group-wise Sales Summary",
+                        Path        = "/GroupWiseSalesSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Group-wise Sales Summary Report",
+                        Description = "Net sales (after discount) per product group split across the HLS, GEC and BTB branches, with a computed grand total",
+                        Tags        = new[] { "sales", "report", "group", "summary", "branch", "discount" }
                     }
                 }
             },
