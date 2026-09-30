@@ -538,6 +538,15 @@ namespace JM.UI.Client.Services
                         Title       = "Customer-wise Sales - Detail Report",
                         Description = "Item level sales grouped by customer and invoice, with per-customer subtotals and a grand total",
                         Tags        = new[] { "sales", "report", "customer", "detail", "invoice" }
+                    },
+                    new Example
+                    {
+                        Name        = "Exchange Report",
+                        Path        = "/ExchangeReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Exchange Report",
+                        Description = "Item exchanges showing old and new invoice, returned and replacement items, adjustment and amount paid",
+                        Tags        = new[] { "exchange", "report", "return", "adjustment", "sales" }
                     }
                 }
             },

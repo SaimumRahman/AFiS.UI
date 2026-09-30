@@ -1,0 +1,190 @@
+@page "/ExchangeReport"
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Entities.Model.Stores
+@attribute [Authorize]
+@inherits ExchangeReportComponent
+
+<PageTitle>Exchange Report</PageTitle>
+
+<style>
+    .exr-wrap { overflow-x: auto; }
+    .exr-table {
+        width: 100%;
+        min-width: 1300px;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        border: 1px solid #444;
+    }
+    .exr-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 5px 6px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .exr-table td { padding: 4px 6px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+    .exr-table .num { text-align: right; white-space: nowrap; }
+    .exr-table .gtd td { background: #e0e0e0; font-weight: bold; }
+    .exr-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .exr-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .exr-doc-header .subtitle { font-size: 0.9rem; }
+    .exr-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .exr-doc-header .doc-range { font-size: 0.9rem; }
+    .exr-sub { font-size: 0.7rem; color: #616161; }
+    .exr-note { font-size: 0.75rem; color: #616161; margin-top: 10px; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="swap_horiz" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Exchange Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenDropDown @bind-Value="SelectedStoreId"
+                                    Data="@Stores"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Stores"
+                                    Style="width: 180px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="exr-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">EXCHANGE REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            @if (Exchanges.Any())
+            {
+                <div class="exr-wrap">
+                    <table class="exr-table">
+                        <thead>
+                            <tr>
+                                <th>New Invoice No</th>
+                                <th>Exchange Date</th>
+                                <th>Old Invoice No</th>
+                                <th>Customer Name</th>
+                                <th>Old Item Code</th>
+                                <th class="num">Old Item Price</th>
+                                <th>New Item Code</th>
+                                <th class="num">New Price</th>
+                                <th class="num">Exchange Adjustment</th>
+                                <th class="num">Paid Amount</th>
+                                <th>Handled By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @* One printed row per exchange; the API returns one row per
+                               stacking position, so items are stacked inside the row. *@
+                            @foreach (var exchange in Exchanges)
+                            {
+                                var slots = exchange.Slots;
+
+                                <tr>
+                                    <td>@Dash(exchange.Head.NewInvoiceNo)</td>
+                                    <td>@FmtExchangeDate(exchange.Head.ExchangeDate)</td>
+                                    <td>@Dash(exchange.Head.OldInvoiceNo)</td>
+                                    <td>
+                                        <strong>@Dash(exchange.Head.CustomerName)</strong><br />
+                                        <span class="exr-sub">@Dash(exchange.Head.CustomerPhone)</span>
+                                    </td>
+                                    <td>
+                                        @foreach (var s in slots)
+                                        {
+                                            @Dash(s.OldItemCode)<br />
+                                            <span class="exr-sub">@Dash(s.OldItemName)</span><br />
+                                        }
+                                    </td>
+                                    <td class="num">
+                                        @foreach (var s in slots)
+                                        {
+                                            @Fmt(s.OldValue)<br />
+                                            <span class="exr-sub">@FmtQtyRate(s.OldQty, s.OldRate, s.OldUnit)</span><br />
+                                        }
+                                    </td>
+                                    <td>
+                                        @foreach (var s in slots)
+                                        {
+                                            @Dash(s.NewItemCode)<br />
+                                            <span class="exr-sub">@Dash(s.NewItemName)</span><br />
+                                        }
+                                    </td>
+                                    <td class="num">
+                                        @foreach (var s in slots)
+                                        {
+                                            @Fmt(s.NewValue)<br />
+                                            <span class="exr-sub">@FmtQtyRate(s.NewQty, s.NewRate, s.NewUnit)</span><br />
+                                        }
+                                    </td>
+                                    <td class="num">@Fmt(exchange.Head.ExchangeAdjustment)</td>
+                                    <td class="num">@Fmt(exchange.Head.PaidAmount)</td>
+                                    <td>@Dash(exchange.Head.HandledBy)</td>
+                                </tr>
+                            }
+
+                            <tr class="gtd">
+                                <td colspan="5" style="text-align:right;">GRAND TOTAL</td>
+                                <td class="num">@Fmt(OldTotalOf(Exchanges))</td>
+                                <td></td>
+                                <td class="num">@Fmt(NewTotalOf(Exchanges))</td>
+                                <td class="num">@Fmt(AdjustmentOf(Exchanges))</td>
+                                <td class="num">@Fmt(PaidOf(Exchanges))</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="exr-note">
+                    NOTE: OLD ITEM PRICE IS THE RETURNED QUANTITY OF THE ORIGINAL LINE (RETURNEDQTY &times; RATE),
+                    SO A PARTIAL RETURN SHOWS ONLY ITS SHARE. EXCHANGE ADJUSTMENT = TOTAL NEW PRICE &minus; TOTAL OLD PRICE.
+                    PAID AMOUNT IS THE PAYMENT RECORDED ON THE NEW EXCHANGE INVOICE.
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-4" style="color: #616161;">
+                    No exchange records found for the selected filters.
+                </div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>
