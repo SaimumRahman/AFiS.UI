@@ -20,6 +20,9 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetBookingReport(storeId, fromDate, toDate);
 
+        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate)
+            => await _repositoryUnitOfWork.ReportingRepository.GetCustomerWiseSalesDetail(storeId, customerId, fromDate, toDate);
+
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
             => await _repositoryUnitOfWork.ReportingRepository.GetTrialBalance(companyCode, fromDate, toDate, branchCode);
 

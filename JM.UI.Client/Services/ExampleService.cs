@@ -529,6 +529,15 @@ namespace JM.UI.Client.Services
                         Title       = "Booking Report",
                         Description = "Currently booked (not yet delivered) invoices with rate, quantity, gross, discount, paid and due",
                         Tags        = new[] { "booking", "report", "invoice", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Customer-wise Sales Detail",
+                        Path        = "/CustomerWiseSalesDetailReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Customer-wise Sales - Detail Report",
+                        Description = "Item level sales grouped by customer and invoice, with per-customer subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "customer", "detail", "invoice" }
                     }
                 }
             },

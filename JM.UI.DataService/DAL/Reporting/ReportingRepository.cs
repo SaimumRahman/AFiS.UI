@@ -76,6 +76,37 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
+        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var url = "api/CustomerWiseSalesDetail/detail";
+                var query = new List<string>();
+                if (storeId.HasValue && storeId.Value > 0)
+                    query.Add($"storeId={storeId.Value}");
+                if (customerId.HasValue && customerId.Value > 0)
+                    query.Add($"customerId={customerId.Value}");
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<CustomerWiseSalesDetailDTO>>();
+                return result ?? new List<CustomerWiseSalesDetailDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching customer-wise sales detail report");
+                throw new Exception("Failed to fetch customer-wise sales detail report: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
         {
             try

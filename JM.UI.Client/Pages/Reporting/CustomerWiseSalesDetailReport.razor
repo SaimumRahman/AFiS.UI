@@ -1,0 +1,220 @@
+@page "/CustomerWiseSalesDetailReport"
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Entities.Model.Stores
+@attribute [Authorize]
+@inherits CustomerWiseSalesDetailReportComponent
+
+<PageTitle>Customer-wise Sales - Detail Report</PageTitle>
+
+<style>
+    .cwsd-wrap { overflow-x: auto; }
+    .cwsd-table {
+        width: 100%;
+        min-width: 1400px;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        border: 1px solid #444;
+    }
+    .cwsd-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 5px 6px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .cwsd-table td { padding: 4px 6px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+    .cwsd-table .num { text-align: right; white-space: nowrap; }
+    .cwsd-table .cus { white-space: nowrap; font-weight: 600; }
+    .cwsd-table .tot td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .cwsd-table .gtd td { background: #e0e0e0; font-weight: bold; }
+    .cwsd-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .cwsd-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .cwsd-doc-header .subtitle { font-size: 0.9rem; }
+    .cwsd-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .cwsd-doc-header .doc-range { font-size: 0.9rem; }
+    .cwsd-note { font-size: 0.75rem; color: #616161; margin-top: 10px; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="groups" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Customer-wise Sales - Detail Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenDropDown @bind-Value="SelectedStoreId"
+                                    Data="@Stores"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Stores"
+                                    Style="width: 180px" />
+                    <RadzenDropDown @bind-Value="SelectedCustomerId"
+                                    Data="@Customers"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Customers"
+                                    Style="width: 200px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="cwsd-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">CUSTOMER-WISE SALES - DETAIL REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            @if (Rows.Any())
+            {
+                <div class="cwsd-wrap">
+                    <table class="cwsd-table">
+                        <thead>
+                            <tr>
+                                <th>CusID</th>
+                                <th>SaleDT</th>
+                                <th>InvoiceNo</th>
+                                <th>Barcode &amp; Item</th>
+                                <th class="num">Quantity</th>
+                                <th class="num">Rate</th>
+                                <th class="num">Gross Amt</th>
+                                <th class="num">Inv. Disc.</th>
+                                <th class="num">Camp. Disc.</th>
+                                <th class="num">Total Disc.</th>
+                                <th class="num">Net Paid (Tk)</th>
+                                <th class="num">Due (Tk)</th>
+                                <th>UserID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var customerGroup in Rows.GroupBy(r => new { r.CustomerId, r.CustomerName, r.CustomerPhone, r.CustomerStatus, r.CustomerCode }))
+                            {
+                                var c = customerGroup.First();
+                                var cust = CustomerById(c.CustomerId);
+                                var isWalkIn = c.CustomerId <= 0;
+                                var isFirstCustomerLine = true;
+
+                                @foreach (var invoiceGroup in customerGroup.GroupBy(r => r.SaleMasterId))
+                                {
+                                    var isFirstInvoiceLine = true;
+
+                                    @foreach (var line in invoiceGroup.OrderBy(r => r.SalesDetailsId))
+                                    {
+                                        <tr>
+                                            <td class="cus">
+                                                @if (isFirstCustomerLine)
+                                                {
+                                                    @(isWalkIn ? "WALK-IN CUSTOMER" : Dash(c.CustomerPhone))<br />
+                                                    @($"Status: {Dash(c.CustomerStatus)}")<br />
+                                                    @Dash(c.CustomerCode)<br />
+                                                    @(isWalkIn ? "-" : Dash(c.CustomerName))
+                                                }
+                                            </td>
+                                            <td>@(line.IsBooking ? FmtDate(line.SaleDate) + " (BOOKING)" : FmtDate(line.SaleDate))</td>
+                                            <td>
+                                                @Dash(line.InvoiceNo)
+                                                @if (line.IsBooking)
+                                                {
+                                                    <br />
+                                                    <span style="color:#616161;">BOOKING</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @Dash(line.Barcode)<br />
+                                                @Dash(line.ItemName)
+                                            </td>
+                                            <td class="num">@FmtQty(line.Quantity, line.UnitName)</td>
+                                            <td class="num">@Fmt(line.Rate)</td>
+                                            <td class="num">@Fmt(line.Rate * line.Quantity)</td>
+                                            <td class="num">@(isFirstInvoiceLine ? Fmt(line.InvDisc) : "")</td>
+                                            <td class="num">@(isFirstInvoiceLine ? Fmt(line.CampaignDisc) : "")</td>
+                                            <td class="num">@(isFirstInvoiceLine ? Fmt(line.TotalDiscount) : "")</td>
+                                            <td class="num">@(isFirstInvoiceLine ? Fmt(line.NetPaid) : "")</td>
+                                            <td class="num">@(isFirstInvoiceLine ? Fmt(line.Due) : "")</td>
+                                            <td>@Dash(line.UserId)</td>
+                                        </tr>
+                                        isFirstInvoiceLine = false;
+                                        isFirstCustomerLine = false;
+                                    }
+                                }
+
+                                <tr class="tot">
+                                    <td colspan="4" style="text-align:right;">SubTotal</td>
+                                    <td class="num">@Fmt(QtyOf(customerGroup))</td>
+                                    <td></td>
+                                    <td class="num">@Fmt(GrossOf(customerGroup))</td>
+                                    <td class="num">@Fmt(InvDiscOf(customerGroup))</td>
+                                    <td class="num">@Fmt(CampDiscOf(customerGroup))</td>
+                                    <td class="num">@Fmt(TotalDiscOf(customerGroup))</td>
+                                    <td class="num">@Fmt(NetPaidOf(customerGroup))</td>
+                                    <td class="num">@Fmt(DueOf(customerGroup))</td>
+                                    <td></td>
+                                </tr>
+                            }
+
+                            <tr class="gtd">
+                                <td colspan="4" style="text-align:right;">GRAND TOTAL</td>
+                                <td class="num">@Fmt(QtyOf(Rows))</td>
+                                <td></td>
+                                <td class="num">@Fmt(GrossOf(Rows))</td>
+                                <td class="num">@Fmt(InvDiscOf(Rows))</td>
+                                <td class="num">@Fmt(CampDiscOf(Rows))</td>
+                                <td class="num">@Fmt(TotalDiscOf(Rows))</td>
+                                <td class="num">@Fmt(NetPaidOf(Rows))</td>
+                                <td class="num">@Fmt(DueOf(Rows))</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cwsd-note">
+                    NOTE: INV. DISC. AND CAMP. DISC. ARE SHOWN AS "-" BECAUSE SalesMaster STORES A SINGLE COMBINED
+                    TotalDiscount. TOTAL DISC. IS THE AUTHORITATIVE DISCOUNT FIGURE.
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-4" style="color: #616161;">
+                    No sales records found for the selected filters.
+                </div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>
