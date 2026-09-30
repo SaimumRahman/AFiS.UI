@@ -44,6 +44,9 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseDetailed(fromDate, toDate);
 
+        public async Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate)
+            => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseSummary(fromDate, toDate);
+
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
             => await _repositoryUnitOfWork.ReportingRepository.GetTrialBalance(companyCode, fromDate, toDate, branchCode);
 

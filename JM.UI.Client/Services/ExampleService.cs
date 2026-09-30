@@ -601,6 +601,15 @@ namespace JM.UI.Client.Services
                         Title       = "Salesman-wise Detailed Report",
                         Description = "Item-level sales grouped by salesman with gross, campaign and invoice discounts, exchange, net paid and dues per invoice, with per-salesman subtotals and a grand total",
                         Tags        = new[] { "sales", "report", "salesman", "detail", "invoice", "exchange", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Salesman-wise Summary",
+                        Path        = "/SalesmanWiseSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Salesman-wise Summary Report",
+                        Description = "Sales grouped by salesman and date with product-group totals, discount percentage and amount, exchange and net paid, with per-day DaySum and per-salesman subtotals",
+                        Tags        = new[] { "sales", "report", "salesman", "summary", "product", "discount" }
                     }
                 }
             },
