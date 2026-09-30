@@ -53,6 +53,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
@@ -90,6 +91,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IFinancialAccountsRepository FinancialAccountsRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
+        public ICostCenterRepository CostCenterRepository { get; }
         public IGroupRoleRepository GroupRoleRepository { get; }
         public IUserGroupRepository UserGroupRepository { get; }
         public IShiftRepository ShiftRepository { get; }
@@ -152,6 +154,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             FinancialAccountsRepository = new FinancialAccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<FinancialAccountsRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
+            CostCenterRepository = new CostCenterRepository(factory, tokenProvider, loggerFactory.CreateLogger<CostCenterRepository>());
             GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());
             UserGroupRepository = new UserGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<UserGroupRepository>());
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());

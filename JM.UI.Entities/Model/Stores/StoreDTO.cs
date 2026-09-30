@@ -16,6 +16,9 @@ namespace JM.UI.Entities.Model.Stores
         public string? TIN { get; set; }
         public string? LetterHeadFile { get; set; }
         public bool UseLetterHead { get; set; }
+        public int? CostCenterId { get; set; }
+        public string? CostCenterCode { get; set; }
+        public string? CostCenterName { get; set; }
         public DateTime CreatedOn { get; set; }
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedOn { get; set; }

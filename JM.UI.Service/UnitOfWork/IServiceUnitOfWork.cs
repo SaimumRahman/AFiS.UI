@@ -52,6 +52,7 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
+using JM.UI.Service.CostCenters;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
@@ -80,6 +81,7 @@ namespace JM.UI.Service.UnitOfWork
         ICompanyService CompanyService { get; }
         IEmployeeService EmployeeService { get; }
         IStoreService StoreService { get; }
+        ICostCenterService CostCenterService { get; }
         IBanksService BanksService { get; }
         IFinancialAccountsService FinancialAccountsService { get; }
         IGroupRoleService GroupRoleService { get; }

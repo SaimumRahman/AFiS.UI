@@ -82,6 +82,25 @@
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12">
                                     <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Cost Center *" Component="CostCenterId" />
+                                        <RadzenDropDown @bind-Value="Store.CostCenterId"
+                                                        Name="CostCenterId"
+                                                        Data="@CostCenters"
+                                                        ValueProperty="BranchId"
+                                                        TextProperty="Name"
+                                                        Placeholder="Select a cost center..."
+                                                        AllowClear="false"
+                                                        Style="width: 100%;">
+                                            <RadzenDropDownOption Value="null" Text="-- Select a cost center --" />
+                                        </RadzenDropDown>
+                                        <RadzenRequiredValidator Component="CostCenterId" Text="Cost center is required" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Address" Component="Address" />
                                         <RadzenTextArea @bind-Value="Store.Address"
                                                         Name="Address"

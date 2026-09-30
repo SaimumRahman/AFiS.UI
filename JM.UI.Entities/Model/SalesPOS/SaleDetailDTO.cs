@@ -21,6 +21,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal Qty { get; set; }
         public decimal? ReturnedQty { get; set; }
         public decimal? Discount { get; set; }
+        public int DiscountTypeId { get; set; }
         public int? IsBooking { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal? Vat { get; set; }
@@ -48,6 +49,7 @@ namespace JM.UI.Entities.Model.SalesPOS
              BaseUnitPrice = product.UnitPrice,
              Qty = qty,
             Discount = product.Discount > 0 ? product.Discount : null,
+            DiscountTypeId = product.DiscountTypeId,
             HasDiscount = product.HasDiscount,
             StoreId = product.StoreId,
             TotalAmount = product.UnitPrice * qty

@@ -41,6 +41,15 @@ namespace JM.UI.Client.Services
                         Title       = "Branches",
                         Description = "Manage branches, stores or locations",
                         Tags        = new[] { "branch", "store", "location" }
+                    },
+                    new Example
+                    {
+                        Name        = "Cost Centers",
+                        Path        = "/CostCenterList",
+                        Icon        = "\uea3b",
+                        Title       = "Cost Centers",
+                        Description = "Manage accounting cost centers (ACC_Branch)",
+                        Tags        = new[] { "cost", "center", "branch", "accounting" }
                     }
                 }
             },

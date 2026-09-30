@@ -53,6 +53,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
@@ -83,6 +84,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IFinancialAccountsRepository FinancialAccountsRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
+        ICostCenterRepository CostCenterRepository { get; }
         IGroupRoleRepository GroupRoleRepository { get; }
         IUserGroupRepository UserGroupRepository { get; }
         IShiftRepository ShiftRepository { get; }

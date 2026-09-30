@@ -614,6 +614,13 @@
                     <span class="label">Sub Total</span>
                     <span class="value">@SubTotal.ToString("N2")</span>
                 </div>
+                @if (CampaignDiscountAmount > 0)
+                {
+                    <div class="billing-row" style="color:#c62828">
+                        <span class="label">Campaign Discount</span>
+                        <span class="value">-@CampaignDiscountAmount.ToString("N2")</span>
+                    </div>
+                }
                 @if (SelectedCustomer != null && GetCustomerDiscountRate(SelectedCustomer) > 0)
                 {
                     <div class="billing-row" style="color:#28a745">

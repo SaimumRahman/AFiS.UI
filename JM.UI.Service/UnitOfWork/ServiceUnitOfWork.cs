@@ -46,6 +46,7 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
+using JM.UI.Service.CostCenters;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
@@ -73,6 +74,7 @@ namespace JM.UI.Service.UnitOfWork
         public IDesignationService DesignationService { get; }
         public IEmployeeService EmployeeService { get; }
         public IStoreService StoreService { get; }
+        public ICostCenterService CostCenterService { get; }
         public IBanksService BanksService { get; }
         public IFinancialAccountsService FinancialAccountsService { get; }
         public IGroupRoleService GroupRoleService { get; }
@@ -131,6 +133,7 @@ namespace JM.UI.Service.UnitOfWork
             FinancialAccountsService = new FinancialAccountsService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
+            CostCenterService = new CostCenterService(_repoUow);
             ShiftService = new ShiftService(_repoUow);
             GroupRoleService = new GroupRoleService(_repoUow);
             UserGroupService = new UserGroupService(_repoUow);

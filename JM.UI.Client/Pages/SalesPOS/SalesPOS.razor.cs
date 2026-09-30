@@ -99,10 +99,21 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Sale.InvoiceDiscount ?? 0;
             }
         }
+        // SubTotal of cart lines that do NOT carry a campaign discount.
+        // Customer/membership discount is only allowed on these lines.
+        protected decimal NonCampaignSubTotal => CartItems.Where(i => !i.HasDiscount).Sum(c => c.TotalAmount);
         protected decimal MembershipDiscountAmount => SelectedCustomer != null
-            ? SubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
+            ? NonCampaignSubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
             : 0;
-        protected decimal CampaignDiscountAmount => Sale.CampaignDiscount ?? 0;
+
+        // Campaign discount aggregated from the cart lines that carry one.
+        // Flat discounts (DiscountTypeId == 2) are a per-unit amount;
+        // percentage discounts are applied against the line's sale price.
+        protected decimal CampaignDiscountAmount => CartItems
+            .Where(i => i.HasDiscount && (i.Discount ?? 0) > 0)
+            .Sum(i => i.DiscountTypeId == 2
+                ? (i.Discount ?? 0) * i.Qty
+                : i.UnitPrice * i.Qty * (i.Discount ?? 0) / 100m);
 
         // Exact payable before the paisa-to-discount rounding.
         protected decimal RawNetPayable
@@ -791,7 +802,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipTypeId = customer.MemberTypeId;
             var discountRate = GetCustomerDiscountRate(customer);
             Sale.DiscountRate = (int)discountRate;
-            Sale.MembershipDiscount = SubTotal * (discountRate / 100m);
+            Sale.MembershipDiscount = NonCampaignSubTotal * (discountRate / 100m);
             DistributeCustomerDiscount();
             StateHasChanged();
         }
@@ -854,7 +865,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
 
-            decimal totalDiscountAmount = SubTotal * (discountRate / 100m);
+            decimal totalDiscountAmount = NonCampaignSubTotal * (discountRate / 100m);
             if (totalDiscountAmount <= 0)
             {
                 foreach (var item in eligible) item.Discount = 0;
