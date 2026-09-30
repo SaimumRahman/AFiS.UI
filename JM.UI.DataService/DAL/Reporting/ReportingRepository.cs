@@ -244,6 +244,33 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
+        public async Task<IEnumerable<PurchaseDetailDTO>> GetPurchaseDetail(DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var url = "api/PurchaseDetail/detail";
+                var query = new List<string>();
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<PurchaseDetailDTO>>();
+                return result ?? new List<PurchaseDetailDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching purchase detail report");
+                throw new Exception("Failed to fetch purchase detail report: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
         {
             try

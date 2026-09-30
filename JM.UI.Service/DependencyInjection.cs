@@ -123,6 +123,7 @@ namespace JM.UI.Service
             services.AddScoped<GroupWiseSalesDetailsReportService>();
             services.AddScoped<InvoiceWiseSaleSummaryReportService>();
             services.AddScoped<PayTypeWiseSalesDetailsReportService>();
+            services.AddScoped<PurchaseDetailReportService>();
             services.AddScoped<StockService>();
             services.AddScoped<ISaleService, SaleService>();
             services.AddScoped<IDailyExpenseService, DailyExpenseService>();

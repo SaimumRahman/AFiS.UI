@@ -583,6 +583,15 @@ namespace JM.UI.Client.Services
                         Title       = "Pay Type-wise Sales - Details Report",
                         Description = "Per-invoice net, exchange and payment split across cash, CityPOS, DBBLPOS, Bkash and Nagad with dues, grouped by date with a DaySum per day and a grand total",
                         Tags        = new[] { "sales", "report", "payment", "details", "cash", "bkash", "nagad" }
+                    },
+                    new Example
+                    {
+                        Name        = "Purchase Detail",
+                        Path        = "/PurchaseDetailReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Purchase Detail Report",
+                        Description = "Purchase challan with per-item cost breakdown (product, carrying, transport, operation, VAT), quantity, purchase total and sale total grouped by bill and product group",
+                        Tags        = new[] { "purchase", "report", "challan", "cost", "supplier", "detail" }
                     }
                 }
             },
