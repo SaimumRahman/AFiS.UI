@@ -565,6 +565,15 @@ namespace JM.UI.Client.Services
                         Title       = "Group-wise Sales - Details Report",
                         Description = "SubProduct level net sales (after discount) per product group split across the HLS, GEC and BTB branches, with per-block subtotals and a computed grand total",
                         Tags        = new[] { "sales", "report", "group", "details", "subproduct", "branch" }
+                    },
+                    new Example
+                    {
+                        Name        = "Invoice-wise Sale Summary",
+                        Path        = "/InvoiceWiseSaleSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Invoice-wise Sale Summary Report",
+                        Description = "Per-invoice gross, discount, vat, net, cash, card and due amounts grouped by the user who made the sale, with per-user subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "invoice", "summary", "cash", "due" }
                     }
                 }
             },
