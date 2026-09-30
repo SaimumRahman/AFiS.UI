@@ -574,6 +574,15 @@ namespace JM.UI.Client.Services
                         Title       = "Invoice-wise Sale Summary Report",
                         Description = "Per-invoice gross, discount, vat, net, cash, card and due amounts grouped by the user who made the sale, with per-user subtotals and a grand total",
                         Tags        = new[] { "sales", "report", "invoice", "summary", "cash", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Pay Type-wise Sales Details",
+                        Path        = "/PayTypeWiseSalesDetailsReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Pay Type-wise Sales - Details Report",
+                        Description = "Per-invoice net, exchange and payment split across cash, CityPOS, DBBLPOS, Bkash and Nagad with dues, grouped by date with a DaySum per day and a grand total",
+                        Tags        = new[] { "sales", "report", "payment", "details", "cash", "bkash", "nagad" }
                     }
                 }
             },
