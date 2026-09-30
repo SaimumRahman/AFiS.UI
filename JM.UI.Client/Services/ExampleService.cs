@@ -592,6 +592,15 @@ namespace JM.UI.Client.Services
                         Title       = "Purchase Detail Report",
                         Description = "Purchase challan with per-item cost breakdown (product, carrying, transport, operation, VAT), quantity, purchase total and sale total grouped by bill and product group",
                         Tags        = new[] { "purchase", "report", "challan", "cost", "supplier", "detail" }
+                    },
+                    new Example
+                    {
+                        Name        = "Salesman-wise Detailed",
+                        Path        = "/SalesmanWiseDetailedReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Salesman-wise Detailed Report",
+                        Description = "Item-level sales grouped by salesman with gross, campaign and invoice discounts, exchange, net paid and dues per invoice, with per-salesman subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "salesman", "detail", "invoice", "exchange", "due" }
                     }
                 }
             },
