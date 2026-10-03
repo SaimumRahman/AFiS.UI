@@ -23,6 +23,9 @@ namespace JM.UI.Service.Accounting
         public async Task<IEnumerable<ChartOfAccountDTO>> GetGroupAccounts()
             => await _repositoryUnitOfWork.ChartOfAccountRepository.GetGroupAccounts();
 
+        public async Task<IEnumerable<ChartOfAccountDTO>> GetExpenseAccounts()
+            => await _repositoryUnitOfWork.ChartOfAccountRepository.GetExpenseAccounts();
+
         public async Task<IEnumerable<string>> GetPartyTypes()
             => await _repositoryUnitOfWork.ChartOfAccountRepository.GetPartyTypes();
 

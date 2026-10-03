@@ -1,4 +1,5 @@
 @using JM.Infrastructure.Models
+@using JM.UI.Entities.Model.Accounting_D
 @using JM.UI.Entities.Model.DailyExpense
 @using JM.UI.Entities.Model.FinancialAccounts
 @using JM.UI.Entities.Model.Stores
@@ -8,6 +9,20 @@
 @inject IServiceUnitOfWork ServiceUnitOfWork
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+
+<style>
+    .rz-dropdown-tree-popup {
+        display: none;
+        position: absolute;
+        overflow: hidden;
+        width: 380px;
+        border: var(--rz-panel-border);
+        background-color: var(--rz-panel-background-color);
+        box-shadow: var(--rz-panel-shadow);
+        border-radius: var(--rz-border-radius);
+        z-index: 1000;
+    }
+</style>
 
 <RadzenCard>
     <RadzenStack Gap="1.25rem">
@@ -41,6 +56,24 @@
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Amount *" Component="ExpenseAmount" />
                     <RadzenNumeric @bind-Value="Expense.Amount" Min="0" Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12">
+                    <RadzenLabel Text="Expense Account (Ledger)" />
+                    <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
+                        <div @ref="expenseAccountTrigger" @onclick="ToggleExpenseAccount" style="position:relative; flex:1; cursor:pointer;">
+                            <RadzenTextBox ReadOnly="true" Value="@ExpenseAccountText"
+                                           Placeholder="Select expense ledger (optional)"
+                                           Style="width:100%; cursor:pointer;" />
+                            <RadzenIcon Icon="arrow_drop_down" Style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--rz-text-tertiary-color);" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(ExpenseAccountText))
+                        {
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                          Click="ClearExpenseAccount" Title="Clear" />
+                        }
+                    </div>
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow Gap="1rem">
@@ -111,6 +144,15 @@
     </RadzenStack>
 </RadzenCard>
 
+<RadzenPopup @ref="expenseAccountPopup" Style="padding:0;" class="rz-dropdown-tree-popup"
+             CloseOnClickOutside="true" Close="OnExpenseAccountPopupClose">
+    <RadzenTree Style="width:100%; max-height:300px; overflow:auto;" Data="@ExpenseAccountTree"
+                @bind-Value="@ExpenseAccountSelection" Change="@OnExpenseAccountSelect">
+        <RadzenTreeLevel Text="@(e => ((AccountNode)e).Display)" ChildrenProperty="Children"
+                         HasChildren="@(e => ((AccountNode)e).Children.Any())" Expanded="@(e => true)" />
+    </RadzenTree>
+</RadzenPopup>
+
 @code {
     [Parameter] public int StoreId { get; set; }
     [Parameter] public int UserId { get; set; }
@@ -120,10 +162,27 @@
     protected List<BillTypeDTO> BillTypes { get; set; } = new();
     protected List<StoreDTO> Stores { get; set; } = new();
     protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
+    protected List<AccountNode> ExpenseAccountTree { get; set; } = new();
     protected bool IsCash { get; set; } = true;
     protected bool IsProcessing { get; set; }
 
+    protected ElementReference expenseAccountTrigger;
+    protected RadzenPopup expenseAccountPopup;
+    protected object? ExpenseAccountSelection;
+    protected string? ExpenseAccountText;
+    protected bool isExpenseAccountOpen;
+
     protected bool IsEditMode => EditId > 0;
+
+    protected class AccountNode
+    {
+        public int AccountId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public bool IsGroup { get; set; }
+        public List<AccountNode> Children { get; set; } = new();
+        public string Display => $"{Code} - {Name}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,6 +191,9 @@
             BillTypes = (await ServiceUnitOfWork.DailyExpenseService.GetBillTypesForDropdown()).ToList();
             Stores = (await ServiceUnitOfWork.StoreService.GetStores()).ToList();
             FinancialAccounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+
+            var expenseAccounts = await ServiceUnitOfWork.ChartOfAccountService.GetExpenseAccounts();
+            ExpenseAccountTree = BuildExpenseTree(expenseAccounts?.ToList() ?? new List<ChartOfAccountDTO>());
 
             if (IsEditMode)
             {
@@ -145,6 +207,12 @@
 
                 Expense = existing;
                 SetPaidFrom(!(existing.FinancialAccountId.HasValue && existing.FinancialAccountId.Value > 0));
+
+                ExpenseAccountText = existing.LedgerAccountId.HasValue
+                    ? (string.IsNullOrWhiteSpace(existing.LedgerAccountCode)
+                        ? existing.LedgerAccountName
+                        : $"{existing.LedgerAccountCode} - {existing.LedgerAccountName}")
+                    : null;
             }
             else
             {
@@ -163,6 +231,57 @@
     {
         IsCash = cash;
         if (cash) Expense.FinancialAccountId = null;
+    }
+
+    private static List<AccountNode> BuildExpenseTree(List<ChartOfAccountDTO> accounts)
+    {
+        var nodes = new Dictionary<int, AccountNode>();
+        foreach (var a in accounts)
+            nodes[a.AccountId] = new AccountNode { AccountId = a.AccountId, Code = a.Code, Name = a.Name, IsGroup = a.IsGroup };
+
+        var roots = new List<AccountNode>();
+        foreach (var a in accounts)
+        {
+            var node = nodes[a.AccountId];
+            if (a.ParentId.HasValue && nodes.TryGetValue(a.ParentId.Value, out var parent))
+                parent.Children.Add(node);
+            else
+                roots.Add(node);
+        }
+        return roots;
+    }
+
+    protected async Task ToggleExpenseAccount()
+    {
+        isExpenseAccountOpen = !isExpenseAccountOpen;
+        await expenseAccountPopup.ToggleAsync(expenseAccountTrigger);
+    }
+
+    protected async Task OnExpenseAccountSelect()
+    {
+        if (isExpenseAccountOpen)
+        {
+            if (ExpenseAccountSelection is AccountNode node && !node.IsGroup)
+            {
+                Expense.LedgerAccountId = node.AccountId;
+                ExpenseAccountText = node.Display;
+            }
+
+            isExpenseAccountOpen = false;
+            await expenseAccountPopup.CloseAsync(expenseAccountTrigger);
+        }
+    }
+
+    protected void OnExpenseAccountPopupClose()
+    {
+        isExpenseAccountOpen = false;
+    }
+
+    protected void ClearExpenseAccount()
+    {
+        Expense.LedgerAccountId = null;
+        ExpenseAccountText = null;
+        ExpenseAccountSelection = null;
     }
 
     protected async Task Save()

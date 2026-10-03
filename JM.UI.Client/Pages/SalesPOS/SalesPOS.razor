@@ -11,6 +11,7 @@
         height: 100vh;
         overflow: hidden;
         background: #f0f2f5;
+        zoom: 0.9;
     }
 
     .pos-header {
@@ -24,7 +25,7 @@
     }
 
         .pos-header .brand {
-            font-size: 1.1rem;
+            font-size: 0.98rem;
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -41,7 +42,7 @@
             padding: 6px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             border: none;
             background: transparent;
             color: #8899aa;
@@ -81,8 +82,8 @@
     }
 
     .pos-right {
-        width: 400px;
-        min-width: 400px;
+        width: 300px;
+        min-width: 300px;
         display: flex;
         flex-direction: column;
         padding: 8px 8px 8px 0;
@@ -98,7 +99,7 @@
     }
 
     .pos-card-title {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         font-weight: 600;
         color: #333;
         margin-bottom: 8px;
@@ -131,13 +132,13 @@
 
             .product-preview .info .name {
                 font-weight: 600;
-                font-size: 0.9rem;
+                font-size: 0.82rem;
             }
 
             .product-preview .info .price {
                 color: #28a745;
                 font-weight: 700;
-                font-size: 1rem;
+                font-size: 0.88rem;
             }
 
     .cart-grid {
@@ -147,7 +148,7 @@
     }
 
         .cart-grid .rz-datatable {
-            font-size: 0.75rem;
+            font-size: 0.68rem;
         }
 
             .cart-grid .rz-datatable td {
@@ -190,7 +191,7 @@
         .customer-search .suggestion-item {
             padding: 6px 10px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.72rem;
         }
 
             .customer-search .suggestion-item:hover {
@@ -205,11 +206,11 @@
 
         .customer-profile .name {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
         }
 
         .customer-profile .phone {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             color: #666;
         }
 
@@ -217,12 +218,12 @@
         display: flex;
         justify-content: space-between;
         padding: 3px 0;
-        font-size: 0.8rem;
+        font-size: 0.72rem;
     }
 
         .billing-row.total {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.88rem;
             border-top: 2px solid #333;
             padding-top: 6px;
             margin-top: 4px;
@@ -254,7 +255,7 @@
         padding: 4px 16px;
         background: #1a1a2e;
         color: #8899aa;
-        font-size: 0.75rem;
+        font-size: 0.68rem;
         flex-shrink: 0;
     }
 
@@ -263,7 +264,7 @@
             padding: 2px 6px;
             border-radius: 3px;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.63rem;
         }
 
     .tab-content {
@@ -279,7 +280,7 @@
         .tab-header .tab-btn {
             padding: 4px 16px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             border: 1px solid #556;
             background: transparent;
             color: #8899aa;
@@ -303,7 +304,7 @@
         color: #2e7d32;
         padding: 2px 8px;
         border-radius: 4px;
-        font-size: 0.7rem;
+        font-size: 0.63rem;
         white-space: nowrap;
     }
 </style>
@@ -354,7 +355,7 @@
                         <div class="info">
                             <div class="name">@SearchedProduct.ProductName</div>
                             <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
-                            <div style="font-size:0.75rem;color:#888">
+                            <div style="font-size:0.68rem;color:#888">
                                 @SearchedProduct.Barcode
                                 @if (!string.IsNullOrEmpty(SearchedProduct.StoreName))
                                 {
@@ -574,7 +575,7 @@
                         <div class="phone">@SelectedCustomer.Phone</div>
                         @if (GetCustomerDiscountRate(SelectedCustomer) > 0)
                         {
-                            <div style="font-size:0.75rem;color:#28a745">
+                            <div style="font-size:0.68rem;color:#28a745">
                                 @SelectedCustomer.MembershipType
                                 <span> (@(GetCustomerDiscountRate(SelectedCustomer))%)</span>
                             </div>
@@ -595,7 +596,7 @@
                             <div style="border:1px solid #ddd;border-radius:4px;max-height:150px;overflow-y:auto;background:#fff;margin-top:2px;">
                                 @foreach (var c in FilteredCustomers)
                                 {
-                                    <div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.85rem;"
+                                    <div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.78rem;"
                                          @onclick="() => SelectSearchedCustomer(c)">
                                         @c.Name (@c.Phone)
                                     </div>

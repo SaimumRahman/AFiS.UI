@@ -77,6 +77,24 @@ namespace JM.UI.DataService.DAL.Accounting
             }
         }
 
+        public async Task<IEnumerable<ChartOfAccountDTO>> GetExpenseAccounts()
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/ChartOfAccount/GetExpenseAccounts");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<ChartOfAccountDTO>>();
+                return result ?? new List<ChartOfAccountDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching expense accounts");
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<string>> GetPartyTypes()
         {
             try

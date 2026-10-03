@@ -66,3 +66,11 @@ BEGIN
     CREATE INDEX IX_DailyExpenses_Store_Date   ON dbo.DailyExpenses (StoreId, ExpenseDate);
 END
 GO
+
+-- 4. Selected expense ledger (Chart of Accounts -> acc_account.account_id) -----
+--    Optional; NULL means the expense account is resolved from BillTypeId.
+IF COL_LENGTH('dbo.DailyExpenses', 'LedgerAccountId') IS NULL
+BEGIN
+    ALTER TABLE dbo.DailyExpenses ADD LedgerAccountId INT NULL;
+END
+GO

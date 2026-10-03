@@ -12,6 +12,9 @@ namespace JM.UI.Entities.Model.DailyExpense
         public string StoreName { get; set; } = string.Empty;
         public int? FinancialAccountId { get; set; }
         public string AccountName { get; set; } = string.Empty;
+        public int? LedgerAccountId { get; set; }
+        public string LedgerAccountCode { get; set; } = string.Empty;
+        public string LedgerAccountName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string Description { get; set; } = string.Empty;
         public string ReceiptBillNo { get; set; } = string.Empty;
