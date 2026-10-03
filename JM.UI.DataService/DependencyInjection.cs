@@ -1,4 +1,5 @@
 ﻿using JM.Infrastructure.Base;
+using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -72,6 +73,7 @@ namespace JM.UI.DataService
             services.AddScoped<IStoreRepository, StoreRepository>();
             services.AddScoped<IBanksRepository, BanksRepository>();
             services.AddScoped<IFinancialAccountsRepository, FinancialAccountsRepository>();
+            services.AddScoped<IChartOfAccountRepository, ChartOfAccountRepository>();
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();

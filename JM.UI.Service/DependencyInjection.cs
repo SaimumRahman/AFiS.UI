@@ -2,6 +2,7 @@
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Routes;
+using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -80,6 +81,7 @@ namespace JM.UI.Service
             services.AddScoped<IStoreService, StoreService>();
             services.AddScoped<IBanksService, BanksService>();
             services.AddScoped<IFinancialAccountsService, FinancialAccountsService>();
+            services.AddScoped<IChartOfAccountService, ChartOfAccountService>();
             services.AddScoped<IGroupRoleService, GroupRoleService>();
             services.AddScoped<IUserGroupService, UserGroupService>();
             services.AddScoped<IShiftService, ShiftService>();

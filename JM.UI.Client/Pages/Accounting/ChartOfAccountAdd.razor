@@ -1,0 +1,146 @@
+@page "/ChartOfAccountAdd"
+@page "/ChartOfAccountAdd/{Id:int}"
+@using JM.UI.Entities.Model.Accounting_D
+@attribute [Authorize]
+@inherits ChartOfAccountAddComponent
+
+<PageTitle>@PageTitle</PageTitle>
+
+<style>
+    .rz-dropdown-tree-popup {
+        display: none;
+        position: absolute;
+        overflow: hidden;
+        width: 380px;
+        border: var(--rz-panel-border);
+        background-color: var(--rz-panel-background-color);
+        box-shadow: var(--rz-panel-shadow);
+        border-radius: var(--rz-border-radius);
+        z-index: 1000;
+    }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard Style="width:100%;">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="mb-3">
+            <RadzenIcon Icon="account_tree" Style="font-size: 2rem; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H5" class="mb-0">@PageTitle</RadzenText>
+        </RadzenStack>
+
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <RadzenTemplateForm TItem="ChartOfAccountDTO" Data="@Account" Submit="@Save">
+                <RadzenFieldset Text="Account Information" Icon="account_balance">
+                    <RadzenRow Gap="0.75rem">
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Code *" Component="Code" />
+                            <RadzenTextBox @bind-Value="Account.Code" Name="Code" Placeholder="e.g. 410010" MaxLength="50" Style="width:100%;" />
+                            <RadzenRequiredValidator Component="Code" Text="Code is required" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Name *" Component="Name" />
+                            <RadzenTextBox @bind-Value="Account.Name" Name="Name" Placeholder="Account name" MaxLength="200" Style="width:100%;" />
+                            <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="0.75rem" class="mt-2">
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Nature *" Component="Nature" />
+                            <RadzenDropDown @bind-Value="Account.Nature" Name="Nature" Data="@NatureOptions" TValue="string" Style="width:100%;" />
+                            <RadzenRequiredValidator Component="Nature" Text="Nature is required" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <RadzenLabel Text="Parent Account" Component="ParentId" />
+                            <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
+                                <div @ref="trigger" @onclick="Toggle" style="position:relative; flex:1; cursor:pointer;">
+                                    <RadzenTextBox ReadOnly="true" Name="ParentId" Value="@SelectedParentText"
+                                                   Placeholder="No parent (top-level)" Style="width:100%; cursor:pointer;" />
+                                    <RadzenIcon Icon="arrow_drop_down" Style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--rz-text-tertiary-color);" />
+                                </div>
+                                @if (!string.IsNullOrEmpty(SelectedParentText))
+                                {
+                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                  Click="ClearParent" Title="Clear parent" />
+                                }
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="0.75rem" class="mt-2">
+                        <RadzenColumn Size="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
+                                <RadzenSwitch @bind-Value="Account.IsGroup" Name="IsGroup" />
+                                <RadzenLabel Text="Group (header)" Component="IsGroup" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
+                                <RadzenSwitch @bind-Value="Account.RequiresParty" Name="RequiresParty" />
+                                <RadzenLabel Text="Requires Party" Component="RequiresParty" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
+                                <RadzenSwitch @bind-Value="Account.IsActive" Name="IsActive" />
+                                <RadzenLabel Text="Active" Component="IsActive" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="0.75rem" class="mt-2">
+                        <RadzenColumn Size="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
+                                <RadzenSwitch @bind-Value="Account.RequiresBranch" Name="RequiresBranch" />
+                                <RadzenLabel Text="Requires Branch" Component="RequiresBranch" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
+                                <RadzenSwitch @bind-Value="Account.IsCashBank" Name="IsCashBank" />
+                                <RadzenLabel Text="Cash / Bank" Component="IsCashBank" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (Account.RequiresParty)
+                    {
+                        <RadzenRow Gap="0.75rem" class="mt-2">
+                            <RadzenColumn Size="12">
+                                <RadzenLabel Text="Party Types *" Component="PartyTypes" />
+                                <div style="display:flex; flex-wrap:wrap; gap:0.9rem; align-items:center;">
+                                    @foreach (var pt in PartyTypes)
+                                    {
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                                            <RadzenCheckBox TValue="bool" Value="@Account.PartyTypes.Contains(pt)"
+                                                            Change="@(args => OnPartyTypeChanged(pt, args))" />
+                                            <RadzenLabel Text="@pt" Style="font-size:0.85rem;" />
+                                        </RadzenStack>
+                                    }
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+                </RadzenFieldset>
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="Cancel" />
+                    <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" IsBusy="@IsProcessing" />
+                </RadzenStack>
+            </RadzenTemplateForm>
+        }
+    </RadzenCard>
+
+    <RadzenPopup @ref="popup" Style="padding:0;" class="rz-dropdown-tree-popup"
+                 CloseOnClickOutside="true" Close="OnPopupClose">
+        <RadzenTree Style="width:100%; max-height:300px; overflow:auto;" Data="@ParentTree"
+                    @bind-Value="@ParentSelection" Change="@OnParentSelect">
+            <RadzenTreeLevel Text="@(e => ((AccountTreeNode)e).Display)" ChildrenProperty="Children"
+                             HasChildren="@(e => ((AccountTreeNode)e).Children.Any())" Expanded="@(e => true)" />
+        </RadzenTree>
+    </RadzenPopup>
+</RadzenContent>

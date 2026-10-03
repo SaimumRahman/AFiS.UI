@@ -458,6 +458,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Chart of Accounts",
+                        Path        = "/ChartOfAccountsList",
+                        Icon        = "\ue8b0",
+                        Title       = "Chart of Accounts",
+                        Description = "Manage the general ledger chart of accounts (groups and posting accounts) with nature and party types",
+                        Tags        = new[] { "account", "chart", "ledger", "coa", "accounting" }
+                    },
+                    new Example
+                    {
                         Name        = "Banks",
                         Path        = "/BanksList",
                         Icon        = "\ue8b0",

@@ -1,4 +1,5 @@
 ﻿using JM.UI.DataService.DAL.StockOpenings;
+using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -84,6 +85,7 @@ namespace JM.UI.Service.UnitOfWork
         ICostCenterService CostCenterService { get; }
         IBanksService BanksService { get; }
         IFinancialAccountsService FinancialAccountsService { get; }
+        IChartOfAccountService ChartOfAccountService { get; }
         IGroupRoleService GroupRoleService { get; }
         IUserGroupService UserGroupService { get; }
         IShiftService ShiftService { get; }

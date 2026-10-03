@@ -1,6 +1,7 @@
 ﻿using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.UnitOfWork;
+using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -77,6 +78,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICostCenterService CostCenterService { get; }
         public IBanksService BanksService { get; }
         public IFinancialAccountsService FinancialAccountsService { get; }
+        public IChartOfAccountService ChartOfAccountService { get; }
         public IGroupRoleService GroupRoleService { get; }
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
@@ -131,6 +133,7 @@ namespace JM.UI.Service.UnitOfWork
             CompanyService = new CompanyService(_repoUow);
             BanksService = new BanksService(_repoUow);
             FinancialAccountsService = new FinancialAccountsService(_repoUow);
+            ChartOfAccountService = new ChartOfAccountService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
             CostCenterService = new CostCenterService(_repoUow);

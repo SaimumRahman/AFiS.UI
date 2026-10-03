@@ -1,4 +1,5 @@
-﻿using JM.UI.DataService.DAL.Actions;
+﻿using JM.UI.DataService.DAL.Accounting;
+using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
@@ -82,6 +83,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IDesignationRepository DesignationRepository { get; }
         IBanksRepository BanksRepository { get; }
         IFinancialAccountsRepository FinancialAccountsRepository { get; }
+        IChartOfAccountRepository ChartOfAccountRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
         ICostCenterRepository CostCenterRepository { get; }

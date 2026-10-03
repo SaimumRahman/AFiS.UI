@@ -1,4 +1,5 @@
-﻿using JM.UI.DataService.DAL.Actions;
+﻿using JM.UI.DataService.DAL.Accounting;
+using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Banks;
@@ -89,6 +90,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICompanyRepository CompanyRepository { get; }
         public IBanksRepository BanksRepository { get; }
         public IFinancialAccountsRepository FinancialAccountsRepository { get; }
+        public IChartOfAccountRepository ChartOfAccountRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
         public ICostCenterRepository CostCenterRepository { get; }
@@ -152,6 +154,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             DesignationRepository = new DesignationRepository(factory, tokenProvider, loggerFactory.CreateLogger<DesignationRepository>());
             BanksRepository = new BanksRepository(factory, tokenProvider, loggerFactory.CreateLogger<BanksRepository>());
             FinancialAccountsRepository = new FinancialAccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<FinancialAccountsRepository>());
+            ChartOfAccountRepository = new ChartOfAccountRepository(factory, tokenProvider, loggerFactory.CreateLogger<ChartOfAccountRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
             CostCenterRepository = new CostCenterRepository(factory, tokenProvider, loggerFactory.CreateLogger<CostCenterRepository>());

@@ -1,0 +1,106 @@
+@page "/ChartOfAccountsList"
+@using JM.UI.Entities.Model.Accounting_D
+@attribute [Authorize]
+@inherits ChartOfAccountsListComponent
+
+<PageTitle>Chart of Accounts</PageTitle>
+
+<style>
+    .coa-wrap { max-width: 1100px; }
+    .coa-header-row {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.05em; color: #64748b; border-radius: 8px 8px 0 0;
+    }
+    .coa-row {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.45rem 0.75rem; border-bottom: 1px solid #f1f5f9;
+    }
+    .coa-row:hover { background: #f8fafc; }
+    .coa-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; color: #1e293b; min-width: 90px; }
+    .coa-name { flex: 1; color: #1e293b; }
+    .coa-badge {
+        display: inline-block; padding: 1px 9px; border-radius: 999px;
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;
+    }
+    .coa-actions { display: flex; gap: 0.3rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-3">
+            <RadzenColumn Size="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="account_tree" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Chart of Accounts</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Secondary" Click="@(() => LoadAccounts())" />
+                    <RadzenButton Icon="add" Text="Add Account" ButtonStyle="ButtonStyle.Primary" Click="AddAccount" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else if (!TreeNodes.Any())
+        {
+            <div style="text-align:center; color:#64748b; padding:2rem;">No accounts found.</div>
+        }
+        else
+        {
+            <div class="coa-wrap">
+                <div class="coa-header-row">
+                    <span style="min-width:90px;">Code</span>
+                    <span style="flex:1;">Name</span>
+                    <span style="width:110px;">Nature</span>
+                    <span style="width:70px; text-align:center;">Type</span>
+                    <span style="width:70px; text-align:center;">Status</span>
+                    <span style="width:130px; text-align:right;">Actions</span>
+                </div>
+
+                @foreach (var node in TreeNodes)
+                {
+                    <div class="coa-row" style="padding-left: @(0.75 + node.Depth * 1.75)rem;">
+                        <span class="coa-code">
+                            @if (node.Account.IsGroup)
+                            {
+                                <RadzenIcon Icon="folder" Style="margin-right:0.25rem; color:#64748b;" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="receipt_long" Style="margin-right:0.25rem; color:#94a3b8;" />
+                            }
+                            @node.Account.Code
+                        </span>
+                        <span class="coa-name">@node.Account.Name</span>
+                        <span style="width:110px;"><span class="coa-badge" style="@NatureStyle(node.Account.Nature)">@node.Account.Nature</span></span>
+                        <span style="width:70px; text-align:center;">
+                            <span class="coa-badge" style="@(node.Account.IsGroup ? "background:#e0e7ff;color:#3730a3;" : "background:#e2e8f0;color:#475569;")">
+                                @(node.Account.IsGroup ? "Group" : "Ledger")
+                            </span>
+                        </span>
+                        <span style="width:70px; text-align:center;">
+                            <span class="coa-badge" style="@(node.Account.IsActive ? "background:#dcfce7;color:#15803d;" : "background:#fee2e2;color:#b91c1c;")">
+                                @(node.Account.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </span>
+                        <span style="width:130px; text-align:right;" class="coa-actions">
+                            @if (node.Account.IsGroup)
+                            {
+                                <RadzenButton Icon="playlist_add" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Add child" Click="@(() => AddChild(node.Account))" />
+                            }
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Edit" Click="@(() => EditAccount(node.Account))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Delete" Click="@(() => DeleteAccount(node.Account))" />
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+    </RadzenCard>
+</RadzenContent>
