@@ -31,7 +31,11 @@
             <RadzenColumn Size="5">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Asia Fashion</span>
+                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">Asia Fashion</span>
+                        @if (!string.IsNullOrEmpty(StoreName))
+                        {
+                            <span style="margin-left: 0.5rem; padding: 2px 10px; border-radius: 999px; background: var(--rz-primary); color: #fff; font-size: 0.72rem; font-weight: 600; white-space: nowrap;">@StoreName</span>
+                        }
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="7">
@@ -134,6 +138,7 @@
     protected List<StoreDTO> Stores = new();
     protected int? SelectedStoreId;
     protected bool ShowStoreDropdown;
+    protected string? StoreName;
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,20 +162,22 @@
             if (string.IsNullOrEmpty(userIdResult.Value) || !int.TryParse(userIdResult.Value, out var userId) || userId <= 0)
                 return;
 
-            // Only admins (system 'Admin' group) see the store switcher
-            var adminCount = await ServiceUnitOfWork.UserGroupService.GetAdminGroupCountByUserId(userId);
-            if (adminCount <= 0) return;
-
             var stores = await ServiceUnitOfWork.StoreService.GetStores();
             Stores = stores?.ToList() ?? new List<StoreDTO>();
 
+            // The logged-in user's store is persisted at login (Employees.StoreId).
             var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+            int storeId = 0;
             if (!string.IsNullOrEmpty(storeIdResult.Value) && int.TryParse(storeIdResult.Value, out var storedStoreId))
-                SelectedStoreId = storedStoreId;
-            else
-                SelectedStoreId = Stores.FirstOrDefault()?.Id;
+                storeId = storedStoreId;
 
-            ShowStoreDropdown = Stores.Count > 0;
+            var currentStore = Stores.FirstOrDefault(s => s.Id == storeId) ?? Stores.FirstOrDefault();
+            SelectedStoreId = currentStore?.Id;
+            StoreName = currentStore?.Name;
+
+            // Only admins (system 'Admin' group) see the store switcher
+            var adminCount = await ServiceUnitOfWork.UserGroupService.GetAdminGroupCountByUserId(userId);
+            ShowStoreDropdown = adminCount > 0 && Stores.Count > 0;
         }
         catch (Exception ex)
         {
@@ -190,6 +197,8 @@
 
         SelectedStoreId = storeId;
         await _localStorage.SetAsync("StoreId", storeId.ToString());
+
+        StoreName = Stores.FirstOrDefault(s => s.Id == storeId)?.Name;
 
         Console.WriteLine($"✅ Store switched to {storeId}");
     }
