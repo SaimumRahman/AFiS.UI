@@ -115,8 +115,10 @@ namespace JM.UI.Client.Pages.SalesPOS
                 ? (i.Discount ?? 0) * i.Qty
                 : i.UnitPrice * i.Qty * (i.Discount ?? 0) / 100m);
 
-        // Exact payable before the paisa-to-discount rounding.
-        protected decimal RawNetPayable
+        // Exact payable of the current cart BEFORE the exchange credit is applied.
+        // This is the Billing Summary "Net Payable" ceiling an exchange credit is
+        // allowed to reach, so it must never include Sale.ExchangeAmount.
+        protected decimal BillingTotalBeforeExchange
         {
             get
             {
@@ -128,11 +130,14 @@ namespace JM.UI.Client.Pages.SalesPOS
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
                 net += CalculatedVat;
-                net -= Sale.ExchangeAmount ?? 0;
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
             }
         }
+
+        // Exact payable before the paisa-to-discount rounding.
+        protected decimal RawNetPayable
+            => Math.Max(BillingTotalBeforeExchange - (Sale.ExchangeAmount ?? 0), 0);
 
         // Fractional paisa part of the payable is moved into the discount field
         // so the payable amount is always a whole taka (no paisa).
@@ -497,7 +502,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 }
 
                 var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode, Sale.StoreId);
-                if (product == null || product.ItemId == 0)
+                if (product == null || product.ItemId == 0 || product.StockQuantity == 0)
                 {
                     var storeName = Stores.FirstOrDefault(s => s.Id == Sale.StoreId)?.Name ?? "current store";
                     var confirmed = await dialogService.Confirm(
@@ -979,7 +984,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 {
                     { "StoreId", storeId },
                     { "UserId", userId },
-                    { "CartSubTotal", SubTotal }
+                    { "BillingTotal", BillingTotalBeforeExchange }
                 },
                 new DialogOptions { Width = "760px" });
 
@@ -1258,6 +1263,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 Sale.SubTotal = SubTotal;
                 Sale.VatAmount = CalculatedVat;
+                Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+                Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
                 Sale.NetAmount = NetPayable;
                 Sale.SaleDetails = CartItems.ToList();
                 Sale.IsDraft = true;

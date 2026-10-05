@@ -69,9 +69,9 @@
             <span style="font-size:0.78rem;color:#666">Type:</span>
             <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" />
             <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                          Disabled="@(CartSubTotal <= 0)" Title="@(CartSubTotal <= 0 ? "Add products to the cart to use exchange" : "")"
+                          Disabled="@(BillingTotal <= 0)" Title="@(BillingTotal <= 0 ? "Add products to the cart to use exchange" : "")"
                           Click="@(() => { Mode = "Exchange"; StateHasChanged(); })" />
-            @if (CartSubTotal <= 0)
+            @if (BillingTotal <= 0)
             {
                 <span style="font-size:0.7rem;color:#856404">Exchange requires items in the current cart.</span>
             }
@@ -86,8 +86,13 @@
                     <span>Exchange Credit</span>
                     <span style="color:#28a745">Applied to current sale</span>
                 </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px">
+                    <span>Remaining Payable</span>
+                    <span style="font-weight:700;color:@(RemainingPayable > 0 ? "#dc3545" : "#28a745")">@RemainingPayable.ToString("N2")</span>
+                </div>
                 <div style="font-size:0.7rem;color:#856404;margin-top:4px">
-                    Cart subtotal is @CartSubTotal.ToString("N2"). The exchange credit must be equal to or greater than the cart subtotal.
+                    Billing total is @BillingTotal.ToString("N2"). The exchange credit cannot exceed the billing total;
+                    any excess must be processed as a Return (Refund).
                 </div>
             }
             else
@@ -121,7 +126,7 @@
             <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
             @if (Mode == "Exchange")
             {
-                <RadzenButton Text="Apply Exchange to Cart" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange" Disabled="@(TotalCredit <= 0 || TotalCredit < CartSubTotal)" />
+                <RadzenButton Text="Apply Exchange to Cart" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange" Disabled="@(TotalCredit <= 0 || TotalCredit > BillingTotal)" />
             }
             else
             {
@@ -140,7 +145,7 @@
 @code {
     [Parameter] public int StoreId { get; set; }
     [Parameter] public int UserId { get; set; }
-    [Parameter] public decimal CartSubTotal { get; set; }
+    [Parameter] public decimal BillingTotal { get; set; }
 
     protected string InvoiceSearch { get; set; } = "";
     protected SaleMasterDTO? OriginalSale { get; set; }
@@ -153,6 +158,9 @@
 
     protected decimal TotalCredit => ReturnLines.Sum(r => r.Credit);
     protected decimal NetDue => -TotalCredit;
+
+    // Amount still payable on the current cart after the exchange credit is applied.
+    protected decimal RemainingPayable => Math.Max(BillingTotal - TotalCredit, 0);
 
     protected override async Task OnInitializedAsync()
     {
@@ -244,10 +252,10 @@
             return;
         }
 
-        if (TotalCredit < CartSubTotal)
+        if (TotalCredit > BillingTotal)
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Insufficient Exchange Credit",
-                $"Exchange credit must be equal to or greater than the current cart subtotal of {CartSubTotal:N2}", 4000);
+            NotificationService.Notify(NotificationSeverity.Warning, "Exchange Credit Exceeds Billing Total",
+                $"Exchange credit of {TotalCredit:N2} cannot exceed the current billing total of {BillingTotal:N2}. Process the excess as a Return (Refund).", 6000);
             return;
         }
 
