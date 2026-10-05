@@ -142,7 +142,8 @@ public class PosInvoicePdfService
     private static void ComposeTotals(ColumnDescriptor col, SaleMasterDTO sale)
     {
         var discount = (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0)
-                     + (sale.InvoiceDiscount ?? 0) + (sale.ExchangeAmount ?? 0);
+                     + (sale.InvoiceDiscount ?? 0);
+        var exchange = sale.ExchangeAmount ?? 0;
         var vat = sale.VatAmount ?? 0;
         var netAmount = sale.NetAmount;
         var paid = sale.PaidAmount ?? sale.PaymentTransactions?.Sum(p => p.PaidAmount ?? 0) ?? 0;
@@ -163,6 +164,18 @@ public class PosInvoicePdfService
         }
 
         TotalRow("Discount", $"{discount:N2}");
+        // The exchange credit is a returned-goods allowance, not a price
+        // discount, so it is reported on its own line whenever one applies.
+        if (exchange > 0)
+        {
+            TotalRow("Exchange Credit", $"{exchange:N2}");
+            if (!string.IsNullOrWhiteSpace(sale.ReturnInvoiceNo))
+                col.Item().Row(row =>
+                {
+                    row.RelativeItem().Text("  Exchanged Against").FontSize(7).FontColor(GreyMedium);
+                    row.ConstantItem(62).AlignRight().Text(sale.ReturnInvoiceNo).FontSize(7).FontColor(GreyMedium);
+                });
+        }
         TotalRow("VAT", $"{vat:N2}");
         TotalRow("Net Amount", $"{netAmount:N2}");
 
