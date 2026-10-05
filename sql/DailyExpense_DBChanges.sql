@@ -74,3 +74,38 @@ BEGIN
     ALTER TABLE dbo.DailyExpenses ADD LedgerAccountId INT NULL;
 END
 GO
+
+-- 5. Deferred ledger posting (Post Ledger page) --------------------------------
+--    Expenses are no longer posted to the GL on save. They stay unposted until
+--    they are posted from the Post Ledger page, which writes the voucher and
+--    sets these flags.
+IF COL_LENGTH('dbo.DailyExpenses', 'AccVoucherEntryId') IS NULL
+BEGIN
+    -- Usually created by sql\Accounting\04_erp_mapping.sql; ensured here so this
+    -- script can be applied on its own.
+    ALTER TABLE dbo.DailyExpenses ADD AccVoucherEntryId BIGINT NULL;
+END
+GO
+
+IF COL_LENGTH('dbo.DailyExpenses', 'IsPosted') IS NULL
+BEGIN
+    ALTER TABLE dbo.DailyExpenses ADD IsPosted  BIT      NOT NULL DEFAULT 0;
+    ALTER TABLE dbo.DailyExpenses ADD PostedAt  DATETIME NULL;
+    ALTER TABLE dbo.DailyExpenses ADD PostedBy  INT      NULL;
+END
+GO
+
+-- 5.1 Backfill: any expense that already carries a voucher link was posted by
+--     the old save-time flow, so mark it as posted to keep history intact.
+UPDATE dbo.DailyExpenses
+   SET IsPosted = 1
+ WHERE AccVoucherEntryId IS NOT NULL
+   AND IsPosted = 0;
+GO
+
+-- 5.2 Index to support the Post Ledger page (unposted expenses for a day).
+IF OBJECT_ID('dbo.IX_DailyExpenses_Posted', 'IX') IS NULL
+BEGIN
+    CREATE INDEX IX_DailyExpenses_Posted ON dbo.DailyExpenses (IsPosted, ExpenseDate);
+END
+GO

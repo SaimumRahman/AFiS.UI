@@ -91,17 +91,43 @@
                     <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="CreatedByName" Title="Entered By" Width="120px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Ledger" Width="150px">
+                    <Template Context="data">
+                        @if (data.IsPosted)
+                        {
+                            <span style="color:var(--rz-success);font-weight:600">
+                                <i class="rz-icon rz-icon-check_circle" style="font-size:0.9rem"></i>
+                                Posted@(data.VoucherNo.HasValue ? $" (#{data.VoucherNo})" : "")
+                            </span>
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Unposted" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Actions" Width="130px">
                     <Template Context="data">
-                        <RadzenButton Icon="edit"
-                                      ButtonStyle="ButtonStyle.Info"
-                                      Size="ButtonSize.Small"
-                                      Class="mr-1"
-                                      Click="@(() => EditExpense(data))" />
-                        <RadzenButton Icon="delete"
-                                      ButtonStyle="ButtonStyle.Danger"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => DeleteExpense(data))" />
+                        @if (data.IsPosted)
+                        {
+                            <RadzenButton Icon="lock"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Size="ButtonSize.Small"
+                                          Disabled="true"
+                                          Title="Posted expenses are locked. Unpost it from the Post Ledger page to edit." />
+                        }
+                        else
+                        {
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Class="mr-1"
+                                          Click="@(() => EditExpense(data))" />
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Click="@(() => DeleteExpense(data))" />
+                        }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>

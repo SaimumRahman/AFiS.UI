@@ -114,5 +114,62 @@ namespace JM.UI.DataService.DAL.DailyExpense
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
         }
+
+        public async Task<IEnumerable<DailyExpenseDTO>> GetDailyExpensesForPosting(DateTime businessDay, int? storeId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var url = $"DailyExpenses/GetDailyExpensesForPosting?businessDay={businessDay:yyyy-MM-dd}"
+                        + (storeId.HasValue ? $"&storeId={storeId.Value}" : string.Empty);
+
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<DailyExpenseDTO>>();
+                return result ?? new List<DailyExpenseDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching expenses for business day {Day}", businessDay);
+                return new List<DailyExpenseDTO>();
+            }
+        }
+
+        public async Task<ResponseResult> PostDailyExpenses(PostDailyExpensesDTO request)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.PostAsJsonAsync("DailyExpenses/PostDailyExpenses", new { Request = request });
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<ResponseResult>()
+                    ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error posting daily expenses to the ledger");
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ResponseResult> UnpostDailyExpense(UnpostDailyExpenseDTO request)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.PostAsJsonAsync("DailyExpenses/UnpostDailyExpense", new { Request = request });
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<ResponseResult>()
+                    ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unposting daily expense: {Id}", request?.Id);
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+            }
+        }
     }
 }

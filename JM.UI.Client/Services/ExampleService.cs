@@ -482,6 +482,15 @@ namespace JM.UI.Client.Services
                         Title       = "Daily Expenses",
                         Description = "Record and track daily business expenses",
                         Tags        = new[] { "expense", "daily", "billing", "finance" }
+                    },
+                    new Example
+                    {
+                        Name        = "Post Ledger",
+                        Path        = "/PostLedger",
+                        Icon        = "\ue8b0",
+                        Title       = "Post Ledger",
+                        Description = "Review and post the day's daily expenses to the general ledger",
+                        Tags        = new[] { "ledger", "post", "expense", "finance", "gl", "voucher" }
                     }
                 }
             },

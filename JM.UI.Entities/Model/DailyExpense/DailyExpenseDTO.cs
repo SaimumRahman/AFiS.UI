@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace JM.UI.Entities.Model.DailyExpense
 {
@@ -20,10 +21,32 @@ namespace JM.UI.Entities.Model.DailyExpense
         public string ReceiptBillNo { get; set; } = string.Empty;
         public string ReferenceNo { get; set; } = string.Empty;
         public int CreatedBy { get; set; }
-        public string CreatedByName { get; set; } = string.Empty;
+        public string CreatedByName { get; set; }
         public DateTime CreatedDate { get; set; }
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
+
+        // Ledger posting state. An expense is saved unposted and only reaches the
+        // GL through the Post Ledger page.
+        public bool IsPosted { get; set; }
+        public DateTime? PostedAt { get; set; }
+        public int? PostedBy { get; set; }
+        public string PostedByName { get; set; }
+        public long? AccVoucherEntryId { get; set; }
+        public int? VoucherNo { get; set; }
+        public string VoucherStatus { get; set; }
+    }
+
+    public class PostDailyExpensesDTO
+    {
+        public List<int> Ids { get; set; } = new();
+        public int PostedBy { get; set; }
+    }
+
+    public class UnpostDailyExpenseDTO
+    {
+        public int Id { get; set; }
+        public int UnpostedBy { get; set; }
     }
 
     public class BillTypeDTO

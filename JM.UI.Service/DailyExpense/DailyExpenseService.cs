@@ -54,5 +54,24 @@ namespace JM.UI.Service.DailyExpense
 
             return Task.FromResult((true, string.Empty));
         }
+
+        public async Task<IEnumerable<DailyExpenseDTO>> GetDailyExpensesForPosting(DateTime businessDay, int? storeId)
+            => await _repositoryUnitOfWork.DailyExpenseRepository.GetDailyExpensesForPosting(businessDay, storeId);
+
+        public async Task<ResponseResult> PostDailyExpenses(PostDailyExpensesDTO request)
+        {
+            if (request == null || request.Ids == null || request.Ids.Count == 0)
+                return new() { IsSuccessStatus = false, Message = "Select at least one expense to post" };
+
+            return await _repositoryUnitOfWork.DailyExpenseRepository.PostDailyExpenses(request);
+        }
+
+        public async Task<ResponseResult> UnpostDailyExpense(UnpostDailyExpenseDTO request)
+        {
+            if (request == null || request.Id <= 0)
+                return new() { IsSuccessStatus = false, Message = "Invalid expense" };
+
+            return await _repositoryUnitOfWork.DailyExpenseRepository.UnpostDailyExpense(request);
+        }
     }
 }
