@@ -33,18 +33,6 @@
                     <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
-                    <RadzenLabel Text="Bill Type *" Component="BillTypeId" />
-                    <RadzenDropDown @bind-Value="Expense.BillTypeId"
-                                    Data="BillTypes"
-                                    TextProperty="Name"
-                                    ValueProperty="BillTypeId"
-                                    Placeholder="Select Bill Type"
-                                    AllowClear="true"
-                                    Style="width:100%" />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow Gap="1rem">
-                <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Store *" Component="StoreId" />
                     <RadzenDropDown @bind-Value="Expense.StoreId"
                                     Data="Stores"
@@ -53,6 +41,8 @@
                                     Placeholder="Select Store"
                                     Style="width:100%" />
                 </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Amount *" Component="ExpenseAmount" />
                     <RadzenNumeric @bind-Value="Expense.Amount" Min="0" Style="width:100%" />
@@ -60,11 +50,11 @@
             </RadzenRow>
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12">
-                    <RadzenLabel Text="Expense Account (Ledger)" />
+                    <RadzenLabel Text="Expense Account (Ledger) *" />
                     <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
                         <div @ref="expenseAccountTrigger" @onclick="ToggleExpenseAccount" style="position:relative; flex:1; cursor:pointer;">
                             <RadzenTextBox ReadOnly="true" Value="@ExpenseAccountText"
-                                           Placeholder="Select expense ledger (optional)"
+                                           Placeholder="Select expense ledger"
                                            Style="width:100%; cursor:pointer;" />
                             <RadzenIcon Icon="arrow_drop_down" Style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--rz-text-tertiary-color);" />
                         </div>
@@ -159,7 +149,6 @@
     [Parameter] public int EditId { get; set; }
 
     protected DailyExpenseDTO Expense { get; set; } = new();
-    protected List<BillTypeDTO> BillTypes { get; set; } = new();
     protected List<StoreDTO> Stores { get; set; } = new();
     protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
     protected List<AccountNode> ExpenseAccountTree { get; set; } = new();
@@ -188,7 +177,6 @@
     {
         try
         {
-            BillTypes = (await ServiceUnitOfWork.DailyExpenseService.GetBillTypesForDropdown()).ToList();
             Stores = (await ServiceUnitOfWork.StoreService.GetStores()).ToList();
             FinancialAccounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
 
@@ -286,15 +274,15 @@
 
     protected async Task Save()
     {
-        if (Expense.BillTypeId <= 0)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a bill type.");
-            return;
-        }
-
         if (Expense.StoreId <= 0)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a store.");
+            return;
+        }
+
+        if (!Expense.LedgerAccountId.HasValue || Expense.LedgerAccountId.Value <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select an expense account (ledger).");
             return;
         }
 

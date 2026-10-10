@@ -7,8 +7,6 @@ namespace JM.UI.Entities.Model.DailyExpense
     {
         public int DailyExpenseId { get; set; }
         public DateTime ExpenseDate { get; set; }
-        public int BillTypeId { get; set; }
-        public string BillTypeName { get; set; } = string.Empty;
         public int StoreId { get; set; }
         public string StoreName { get; set; } = string.Empty;
         public int? FinancialAccountId { get; set; }
@@ -47,11 +45,5 @@ namespace JM.UI.Entities.Model.DailyExpense
     {
         public int Id { get; set; }
         public int UnpostedBy { get; set; }
-    }
-
-    public class BillTypeDTO
-    {
-        public int BillTypeId { get; set; }
-        public string Name { get; set; } = string.Empty;
     }
 }

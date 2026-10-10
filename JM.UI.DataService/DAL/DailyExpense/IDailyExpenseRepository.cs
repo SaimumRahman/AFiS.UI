@@ -10,7 +10,6 @@ namespace JM.UI.DataService.DAL.DailyExpense
     {
         Task<IEnumerable<DailyExpenseDTO>> GetDailyExpenses(DateTime fromDate, DateTime toDate, int? storeId);
         Task<DailyExpenseDTO?> GetDailyExpenseById(int id);
-        Task<IEnumerable<BillTypeDTO>> GetBillTypesForDropdown();
         Task<ResponseResult> SaveUpdateDailyExpense(DailyExpenseDTO dailyExpense);
         Task<ResponseResult> DeleteDailyExpense(int id, int? updatedBy);
         Task<IEnumerable<DailyExpenseDTO>> GetDailyExpensesForPosting(DateTime businessDay, int? storeId);

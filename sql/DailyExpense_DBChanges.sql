@@ -68,7 +68,7 @@ END
 GO
 
 -- 4. Selected expense ledger (Chart of Accounts -> acc_account.account_id) -----
---    Optional; NULL means the expense account is resolved from BillTypeId.
+--    Required on every new expense; posting always debits this account.
 IF COL_LENGTH('dbo.DailyExpenses', 'LedgerAccountId') IS NULL
 BEGIN
     ALTER TABLE dbo.DailyExpenses ADD LedgerAccountId INT NULL;
@@ -107,5 +107,17 @@ GO
 IF OBJECT_ID('dbo.IX_DailyExpenses_Posted', 'IX') IS NULL
 BEGIN
     CREATE INDEX IX_DailyExpenses_Posted ON dbo.DailyExpenses (IsPosted, ExpenseDate);
+END
+GO
+
+-- 6. Bill Type removed from the Daily Expense feature -------------------------
+--    The dropdown and its posting fallback are gone; the expense is now driven
+--    by LedgerAccountId alone. The column (and FK) are kept so historical rows
+--    retain their bill type, but it is dropped to NULL for new rows.
+IF EXISTS (SELECT 1 FROM sys.columns
+           WHERE object_id = OBJECT_ID('dbo.DailyExpenses')
+             AND name = 'BillTypeId' AND is_nullable = 0)
+BEGIN
+    ALTER TABLE dbo.DailyExpenses ALTER COLUMN BillTypeId INT NULL;
 END
 GO

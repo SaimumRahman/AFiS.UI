@@ -60,24 +60,6 @@ namespace JM.UI.DataService.DAL.DailyExpense
             }
         }
 
-        public async Task<IEnumerable<BillTypeDTO>> GetBillTypesForDropdown()
-        {
-            try
-            {
-                var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("DailyExpenses/GetBillTypesForDropdown");
-                response.EnsureSuccessStatusCode();
-
-                var result = await response.Content.ReadFromJsonAsync<List<BillTypeDTO>>();
-                return result ?? new List<BillTypeDTO>();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching bill types");
-                throw;
-            }
-        }
-
         public async Task<ResponseResult> SaveUpdateDailyExpense(DailyExpenseDTO dailyExpense)
         {
             try

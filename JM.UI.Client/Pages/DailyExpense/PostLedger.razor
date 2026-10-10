@@ -87,7 +87,6 @@
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
                     <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="BillTypeName" Title="Bill Type" Width="150px" />
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="StoreName" Title="Store" Width="110px" />
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Description" Title="Description" Width="220px" />
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Expense Ledger" Width="200px">
@@ -98,7 +97,7 @@
                         }
                         else
                         {
-                            <span style="color:var(--rz-text-secondary-color)">From bill type</span>
+                            <span style="color:var(--rz-text-secondary-color)">—</span>
                         }
                     </Template>
                 </RadzenDataGridColumn>
@@ -163,7 +162,6 @@
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
                     <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="BillTypeName" Title="Bill Type" Width="150px" />
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Description" Title="Description" Width="220px" />
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Amount" Title="Amount" Width="120px">
                     <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>

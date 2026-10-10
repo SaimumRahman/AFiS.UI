@@ -20,9 +20,6 @@ namespace JM.UI.Service.DailyExpense
         public async Task<DailyExpenseDTO?> GetDailyExpenseById(int id)
             => await _repositoryUnitOfWork.DailyExpenseRepository.GetDailyExpenseById(id);
 
-        public async Task<IEnumerable<BillTypeDTO>> GetBillTypesForDropdown()
-            => await _repositoryUnitOfWork.DailyExpenseRepository.GetBillTypesForDropdown();
-
         public async Task<ResponseResult> SaveUpdateDailyExpense(DailyExpenseDTO dailyExpense)
         {
             var v = await ValidateDailyExpense(dailyExpense);
@@ -40,8 +37,8 @@ namespace JM.UI.Service.DailyExpense
             if (dto.ExpenseDate == default)
                 return Task.FromResult((false, "Expense date is required"));
 
-            if (dto.BillTypeId <= 0)
-                return Task.FromResult((false, "Bill type is required"));
+            if (!dto.LedgerAccountId.HasValue || dto.LedgerAccountId.Value <= 0)
+                return Task.FromResult((false, "Expense account (ledger) is required"));
 
             if (dto.StoreId <= 0)
                 return Task.FromResult((false, "Store is required"));
