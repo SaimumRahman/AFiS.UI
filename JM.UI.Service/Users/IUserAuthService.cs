@@ -13,5 +13,6 @@ namespace JM.UI.Service.Users
         Task<List<User>> GetAllUsers();
         Task<bool> UpdateActiveInactiveUser(string userName, bool isActive);
         Task<string> ResetUserPassword(string userName, string newPassword);
+        Task<string> ChangePassword(string userName, string oldPassword, string newPassword);
     }
 }
