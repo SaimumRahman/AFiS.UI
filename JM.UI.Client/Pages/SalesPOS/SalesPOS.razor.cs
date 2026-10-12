@@ -1110,7 +1110,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     companyAddress: store?.Address ?? "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
                     companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
                     companyVat: store?.VAT ?? "",
-                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}");
+                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
+                    terms: store?.TermsOfService ?? "");
 
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);

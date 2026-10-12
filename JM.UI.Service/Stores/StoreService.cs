@@ -32,6 +32,8 @@ namespace JM.UI.Service.Stores
                 CostCenterId = s.CostCenterId,
                 CostCenterCode = s.CostCenterCode,
                 CostCenterName = s.CostCenterName,
+                ExchangeDay = s.ExchangeDay,
+                TermsOfService = s.TermsOfService,
                 CreatedOn = s.CreatedOn,
                 CreatedBy = s.CreatedBy,
                 ModifiedOn = s.ModifiedOn,

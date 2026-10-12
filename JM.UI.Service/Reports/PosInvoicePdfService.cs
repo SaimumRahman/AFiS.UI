@@ -20,13 +20,27 @@ public class PosInvoicePdfService
         string companyAddress = "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
         string companyContact = "",
         string companyVat = "",
-        string servedBy = "")
+        string servedBy = "",
+        string terms = "")
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
         int itemCount = sale.SaleDetails?.Count ?? 0;
         float widthMm = 80f;
-        float heightMm = 120f + (itemCount * 6f);
+
+        // Estimate the vertical space needed by the (optional) terms block so
+        // the fixed-height thermal page is not clipped.
+        float termsHeightMm = 0;
+        if (!string.IsNullOrWhiteSpace(terms))
+        {
+            var normalized = terms.Replace("\r\n", "\n").Replace('\r', '\n');
+            var lineCount = 0;
+            foreach (var rawLine in normalized.Split('\n'))
+                lineCount += Math.Max(1, (int)Math.Ceiling(rawLine.Length / 46.0));
+            termsHeightMm = 11f + (lineCount * 2.4f);
+        }
+
+        float heightMm = 120f + (itemCount * 6f) + termsHeightMm;
 
         var document = Document.Create(container =>
         {
@@ -45,6 +59,7 @@ public class PosInvoicePdfService
                     ComposeInfo(col, sale, servedBy);
                     ComposeItems(col, sale);
                     ComposeTotals(col, sale);
+                    ComposeTerms(col, terms);
                     ComposeFooter(col);
                 });
             });
@@ -184,6 +199,16 @@ public class PosInvoicePdfService
         TotalRow("Net Payable", $"{netAmount:N2}", bold: true);
         TotalRow("Paid Amount", $"{paid:N2}");
         TotalRow("Due Amount", $"{due:N2}", bold: due > 0);
+    }
+
+    private static void ComposeTerms(ColumnDescriptor col, string terms)
+    {
+        if (string.IsNullOrWhiteSpace(terms))
+            return;
+
+        col.Item().PaddingTop(3).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingTop(2).Text("Terms & Conditions").Bold().FontSize(7.5f);
+        col.Item().Text(terms).FontSize(6.5f).FontColor(GreyDark);
     }
 
     private static void ComposeFooter(ColumnDescriptor col)

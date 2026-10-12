@@ -118,6 +118,23 @@
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12">
                                     <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Invoice Terms & Conditions" Component="TermsOfService" />
+                                        <RadzenTextArea @bind-Value="Store.TermsOfService"
+                                                        Name="TermsOfService"
+                                                        Rows="4"
+                                                        Placeholder="Enter terms & conditions printed on sales invoices"
+                                                        Style="width: 100%;"
+                                                        MaxLength="2000" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                                            Optional. Printed at the bottom of the POS sales invoice.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Address" Component="Address" />
                                         <RadzenTextArea @bind-Value="Store.Address"
                                                         Name="Address"
