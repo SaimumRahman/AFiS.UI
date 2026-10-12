@@ -15,5 +15,6 @@ namespace JM.UI.DataService.DAL.UserGroup
         Task<ResponseResult> RemoveUserFromGroup(int userId, int groupId);
         Task<ResponseResult> UpdateGroupUsers(int groupId, List<int> userIds);
         Task<int> GetAdminGroupCountByUserId(int userId);
+        Task<int> GetSystemGroupCountByUserId(int userId);
     }
 }

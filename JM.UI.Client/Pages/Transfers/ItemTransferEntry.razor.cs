@@ -31,6 +31,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected bool IsFromRequisitionMode => RequisitionId.HasValue && RequisitionId.Value > 0;
         protected bool IsFromStoreReadOnly { get; set; } = false;
         protected bool IsDamagedMode { get; set; } = false;
+        protected bool IsSystemGroupUser { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
@@ -124,6 +125,18 @@ namespace JM.UI.Client.Pages.Transfers
                 int storeId = await GetLocalStorageInt("StoreId");
                 CurrentUserId = await GetLocalStorageInt("UserId");
 
+                // Users in a system group (GroupsRole.IsSystem = 1) may choose any
+                // transfer type; everyone else is restricted to Internal Transfer.
+                try
+                {
+                    IsSystemGroupUser = await _serviceUnitOfWork.UserGroupService
+                                            .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+                }
+                catch
+                {
+                    IsSystemGroupUser = false;
+                }
+
                 Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
@@ -162,8 +175,8 @@ namespace JM.UI.Client.Pages.Transfers
                     IsFromStoreReadOnly = true;
                 }
 
-                // â”€â”€ Exclude From Store from To Store list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                ToStores = stores.Where(s => s.Id != Transfer.StoreId).ToList();
+                // â”€â”€ Build To Store list (excludes From Store and Damaged store) â”€â”€
+                RebuildToStores();
 
                 // â”€â”€ Load Lookup Lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
@@ -184,6 +197,15 @@ namespace JM.UI.Client.Pages.Transfers
                         Id = tt.TransferTypeId,
                         Name = tt.TransferTypeName
                     }).ToList();
+
+                // Non-system-group users can only perform an Internal Transfer.
+                if (!IsSystemGroupUser && !IsEditMode)
+                {
+                    var internalTransferType = TransferTypes.FirstOrDefault(t =>
+                        t.Name.Equals("Internal Transfer", StringComparison.OrdinalIgnoreCase));
+                    if (internalTransferType != null)
+                        Transfer.TransTypeID = internalTransferType.Id;
+                }
 
                 // If coming from requisition, load requisition data
                 if (IsFromRequisitionMode)
@@ -317,7 +339,7 @@ namespace JM.UI.Client.Pages.Transfers
                 TransferDetails = master.Details?.ToList() ?? new List<TransferDetailDTO>();
 
                 if (master.StoreId.HasValue)
-                    ToStores = Stores.Where(s => s.Id != master.StoreId.Value).ToList();
+                    RebuildToStores();
 
                 CurrentDetail = TransferService.CreateNewDetailLine();
                 PreviewItems = new List<TransferPreviewRow>();
@@ -343,7 +365,7 @@ namespace JM.UI.Client.Pages.Transfers
             if (IsFromStoreReadOnly) return;
 
             Transfer.StoreId = storeId;
-            ToStores = Stores.Where(s => s.Id != storeId).ToList();
+            RebuildToStores();
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
@@ -376,11 +398,27 @@ namespace JM.UI.Client.Pages.Transfers
                 if (damagedStore != null)
                     Transfer.ToStoreId = damagedStore.Id;
 
-                ToStores = Stores.Where(s => s.Id != Transfer.StoreId).ToList();
                 _ = LoadItemsForStore(Transfer.StoreId);
             }
 
+            RebuildToStores();
             StateHasChanged();
+        }
+
+        private StoreDTO? DamagedStore => Stores.FirstOrDefault(s =>
+            s.Code?.Equals("dm", StringComparison.OrdinalIgnoreCase) == true);
+
+        // To Store excludes the From Store and the Damaged store (which is only
+        // used implicitly by the Damage transfer type).
+        private void RebuildToStores()
+        {
+            var list = Stores.Where(s => s.Id != Transfer.StoreId).ToList();
+
+            var damaged = DamagedStore;
+            if (damaged != null && !IsDamagedMode)
+                list = list.Where(s => s.Id != damaged.Id).ToList();
+
+            ToStores = list;
         }
 
 

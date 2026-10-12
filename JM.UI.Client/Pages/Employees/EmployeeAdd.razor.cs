@@ -181,15 +181,27 @@ namespace JM.UI.Client.Pages.Employees
 
                 if (Employee.IsUserCreate && result.IsSuccessStatus == true)
                 {
-                    RegisterRequest loginRequest = new RegisterRequest
+                    if (Employee.IsUserCreated)
                     {
-                        Email = Employee.Email,
-                        Username = Employee.Surname,
-                        Password = Employee.Password,
-                        PhoneNumber = Employee.Contact,
-                        ConfirmPassword = Employee.ConfirmPassword,
-                    };
-                    await _userAuthService.Register(loginRequest);
+                        // A login user already exists for this employee — update its
+                        // password when a new one has been provided (edit mode).
+                        if (!string.IsNullOrWhiteSpace(Employee.Password))
+                        {
+                            await _userAuthService.ResetUserPassword(Employee.Surname, Employee.Password);
+                        }
+                    }
+                    else
+                    {
+                        RegisterRequest loginRequest = new RegisterRequest
+                        {
+                            Email = Employee.Email,
+                            Username = Employee.Surname,
+                            Password = Employee.Password,
+                            PhoneNumber = Employee.Contact,
+                            ConfirmPassword = Employee.ConfirmPassword,
+                        };
+                        await _userAuthService.Register(loginRequest);
+                    }
                 }
 
                 if (result.IsSuccessStatus)

@@ -222,7 +222,7 @@ else
                                                 TextProperty="Name" ValueProperty="Id"
                                                 Placeholder="Select type..."
                                                 Style="width:100%; font-size:0.75rem;" AllowFiltering="true"
-                                                Disabled="@IsProcessing"
+                                                Disabled="@(IsProcessing || !IsSystemGroupUser)"
                                                 Change="@(args => OnTransferTypeChanged((int?)args))" />
                             </RadzenColumn>
                         </RadzenRow>

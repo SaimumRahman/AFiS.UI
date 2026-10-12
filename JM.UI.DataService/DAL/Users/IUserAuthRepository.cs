@@ -16,5 +16,6 @@ namespace JM.UI.DataService.DAL.Users
         Task<LoggedInfo> GetCompanyIdByUserId(int Userid);
         Task<List<User>> GetAllUsers();
         Task<bool> UpdateActiveInactiveUser(string userName, bool isActive);
+        Task<string> ResetUserPassword(string userName, string newPassword);
     }
 }
