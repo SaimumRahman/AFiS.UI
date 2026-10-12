@@ -79,6 +79,7 @@ namespace JM.UI.Service.UnitOfWork
         public IBanksService BanksService { get; }
         public IFinancialAccountsService FinancialAccountsService { get; }
         public IChartOfAccountService ChartOfAccountService { get; }
+        public IOpeningBalanceService OpeningBalanceService { get; }
         public IGroupRoleService GroupRoleService { get; }
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
@@ -134,6 +135,7 @@ namespace JM.UI.Service.UnitOfWork
             BanksService = new BanksService(_repoUow);
             FinancialAccountsService = new FinancialAccountsService(_repoUow);
             ChartOfAccountService = new ChartOfAccountService(_repoUow);
+            OpeningBalanceService = new OpeningBalanceService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
             CostCenterService = new CostCenterService(_repoUow);

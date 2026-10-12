@@ -212,30 +212,18 @@ namespace JM.UI.Client.Services
                                 Title       = "Items",
                                 Description = "Manage inventory items",
                                 Tags        = new[] { "item", "inventory", "product" }
+                            },
+                            new Example
+                            {
+                                Name        = "Sizes",
+                                Path        = "/SizesList",
+                                Icon        = "\ue8d2",
+                                Title       = "Sizes",
+                                Description = "Manage product size variants",
+                                Tags        = new[] { "size", "variant", "inventory" }
                             }
                         }
                     },
- 
-                    // ── Variants & Codes ──
-                    new Example
-                    {
-                        Name        = "Sizes",
-                        Path        = "/SizesList",
-                        Icon        = "\ue8d2",
-                        Title       = "Sizes",
-                        Description = "Manage product size variants",
-                        Tags        = new[] { "size", "variant", "inventory" }
-                    },
-                   
-                    new Example
-                    {
-                        Name        = "Barcodes",
-                        Path        = "/BarcodeList",
-                        Icon        = "\ue6b8",
-                        Title       = "Barcodes",
-                        Description = "Manage barcode assignments",
-                        Tags        = new[] { "barcode", "sku", "inventory" }
-                    }
                 }
             },
  
@@ -268,36 +256,8 @@ namespace JM.UI.Client.Services
                         Description = "Manage draft purchase entries before posting",
                         Tags        = new[] { "draft", "purchase" }
                     },
-                    
-                    new Example
-                    {
-                        Name        = "Purchase Returns",
-                        Path        = "/PurchaseReturnsList",
-                        Icon        = "\ue40a",
-                        Title       = "Purchase Returns",
-                        Description = "Manage purchase returns to suppliers",
-                        Tags        = new[] { "purchase", "return", "finance" },
-                    },
- 
-                    // ── Stock Management ──
-                    new Example
-                    {
-                        Name        = "Stock Opening",
-                        Path        = "/StockOpeningList",
-                        Icon        = "\ue14f",
-                        Title       = "Stock Opening",
-                        Description = "Add new opening stock entries",
-                        Tags        = new[] { "stock", "opening", "inventory" }
-                    },
-                    new Example
-                    {
-                        Name        = "Stock Ledger",
-                        Path        = "/StockLedger",
-                        Icon        = "\ue8f9",
-                        Title       = "Stock Ledger",
-                        Description = "View opening stock, receipts, issues and closing stock by store",
-                        Tags        = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
-                    },
+                   
+                   
 
                     // ── Other ──
                     new Example
@@ -491,6 +451,15 @@ namespace JM.UI.Client.Services
                         Title       = "Post Ledger",
                         Description = "Review and post the day's daily expenses to the general ledger",
                         Tags        = new[] { "ledger", "post", "expense", "finance", "gl", "voucher" }
+                    },
+                    new Example
+                    {
+                        Name        = "Opening Balance",
+                        Path        = "/OpeningBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Opening Balance",
+                        Description = "Post one balanced opening-balance voucher per branch and fiscal year",
+                        Tags        = new[] { "opening", "balance", "ledger", "finance", "accounting", "voucher" }
                     }
                 }
             },
@@ -521,14 +490,14 @@ namespace JM.UI.Client.Services
                 Icon = "\ue8f9",
                 Children = new[]
                 {
-                    new Example
+                     new Example
                     {
-                        Name        = "Current Stock",
-                        Path        = "/CurrentStockReport",
+                        Name        = "Stock Ledger",
+                        Path        = "/StockLedger",
                         Icon        = "\ue8f9",
-                        Title       = "Current Stock Report",
-                        Description = "View current stock levels across all stores",
-                        Tags        = new[] { "stock", "report", "inventory", "current" }
+                        Title       = "Stock Ledger",
+                        Description = "View opening stock, receipts, issues and closing stock by store",
+                        Tags        = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
                     },
                     new Example
                     {
