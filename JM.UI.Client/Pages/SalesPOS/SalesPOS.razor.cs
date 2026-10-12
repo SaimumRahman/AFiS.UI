@@ -955,6 +955,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             CustomerSearchText = "";
         }
 
+        protected async Task OpenAddCustomerFromSidebar()
+        {
+            var text = CustomerSearchText?.Trim();
+            await OpenAddCustomerModal(string.IsNullOrWhiteSpace(text) ? null : text);
+        }
+
         protected async Task OpenAddCustomerModal(string? preFilledPhone = null)
         {
             var userId = await GetLocalStorageInt("UserId");

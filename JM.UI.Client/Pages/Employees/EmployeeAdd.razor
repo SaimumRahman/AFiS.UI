@@ -52,6 +52,16 @@
             <RadzenTemplateForm TItem="EmployeeModelDTO" Data="@Employee" Submit="@Save">
                 <RadzenStack Gap="1.5rem">
                     
+                    @if (IsEditMode)
+                    {
+                        <RadzenAlert AllowClose="false" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                     AlertStyle="@(Employee.IsUserCreated ? AlertStyle.Success : AlertStyle.Warning)">
+                            @(Employee.IsUserCreated
+                                ? $"A login user is created for this employee (username: {Employee.Surname})."
+                                : "No login user has been created for this employee yet.")
+                        </RadzenAlert>
+                    }
+
                     <!-- Basic Information Section -->
                     <RadzenFieldset Text="Basic Information" Icon="person">
                         <RadzenStack Gap="1rem">

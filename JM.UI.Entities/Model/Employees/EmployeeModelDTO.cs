@@ -59,6 +59,9 @@ namespace JM.UI.Entities.Model.Employees
 
         public bool IsUserCreate { get; set; }
 
+        // Read-only: a login user exists for this employee (core_users.UserName = Surname).
+        public bool IsUserCreated { get; set; }
+
         public bool IsActive { get; set; } = true;
     }
 }
