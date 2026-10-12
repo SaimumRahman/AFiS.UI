@@ -18,11 +18,21 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 
     protected List<GroupRoleDTO> GroupRoles { get; set; } = new();
     protected List<RouteModelDTO> Routes { get; set; } = new();
-    protected IEnumerable<RouteModelDTO> FilteredRoutes => Routes.Where(r =>
-        string.IsNullOrEmpty(SearchText) ||
-        r.RouteName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-        (r.RoutePath?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
-    );
+
+    private List<RouteModelDTO> _filteredRoutes = new();
+
+    // Materialized once and reused so the grid's Data reference stays stable across
+    // re-renders; otherwise simply checking a row would reload the grid and reset paging to page 1.
+    protected List<RouteModelDTO> FilteredRoutes => _filteredRoutes;
+
+    private void ApplyFilter()
+    {
+        _filteredRoutes = Routes.Where(r =>
+            string.IsNullOrEmpty(SearchText) ||
+            r.RouteName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+            (r.RoutePath?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
+        ).ToList();
+    }
 
     protected int? SelectedGroupId { get; set; }
     protected List<int> SelectedRouteIds { get; set; } = new();
@@ -52,6 +62,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
             // Load routes
             Routes = (await _serviceUnitOfWork.RouteService.GetRoutes()).ToList();
 
+            ApplyFilter();
 
             // If GroupId parameter is provided, pre-select the group
             if (GroupId.HasValue && GroupId.Value > 0)
@@ -163,6 +174,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
     protected void OnSearchChanged(string searchValue)
     {
         SearchText = searchValue ?? string.Empty;
+        ApplyFilter();
         StateHasChanged();
     }
 
@@ -275,6 +287,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
     protected async Task Reset()
     {
         SearchText = string.Empty;
+        ApplyFilter();
         SelectedGroupId = null;
         SelectedRouteIds.Clear();
         ExistingRouteIds.Clear();
