@@ -99,6 +99,23 @@
                             </RadzenRow>
 
                             <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Exchange Day (days) *" Component="ExchangeDay" />
+                                        <RadzenNumeric @bind-Value="Store.ExchangeDay"
+                                                       Name="ExchangeDay"
+                                                       Min="1"
+                                                       Placeholder="e.g. 15"
+                                                       Style="width: 100%;" />
+                                        <RadzenRequiredValidator Component="ExchangeDay" Text="Exchange day is required" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                                            Maximum age (in days) of an invoice that may be exchanged at this store.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12">
                                     <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Address" Component="Address" />

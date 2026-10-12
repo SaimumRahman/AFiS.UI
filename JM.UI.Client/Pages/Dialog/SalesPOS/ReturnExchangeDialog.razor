@@ -24,7 +24,7 @@
     {
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:#555">
             <span>
-                Invoice <strong>@OriginalSale.InvoiceNo</strong> | @OriginalSale.SalesDate.ToString("dd/MM/yyyy")
+                Invoice <strong>@OriginalSale.InvoiceNo</strong> | @OriginalSale.CreatedDate.ToString("dd/MM/yyyy")
                 | Customer: <strong>@OriginalSale.CustomerName</strong>
             </span>
             @if (OriginalSale.CustomerId == null)
@@ -32,6 +32,14 @@
                 <RadzenButton Text="+ New Customer" ButtonStyle="ButtonStyle.Secondary" ButtonSize="Small" Click="@OpenAddCustomer" />
             }
         </div>
+
+        @if (IsExchangeBlocked)
+        {
+            <div style="background:#fff3cd;border:1px solid #ffe69c;border-radius:6px;padding:8px 10px;font-size:0.78rem;color:#856404">
+                <RadzenIcon Icon="block" Style="vertical-align:middle;margin-right:0.25rem;" />
+                <strong>Exchange unavailable:</strong> @ExchangeBlockReason
+            </div>
+        }
 
         @* ── Return lines ── *@
         <div>
@@ -69,7 +77,8 @@
             <span style="font-size:0.78rem;color:#666">Type:</span>
             <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" />
             <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                          Disabled="@(BillingTotal <= 0)" Title="@(BillingTotal <= 0 ? "Add products to the cart to use exchange" : "")"
+                          Disabled="@(BillingTotal <= 0 || IsExchangeBlocked)"
+                          Title="@(IsExchangeBlocked ? ExchangeBlockReason : (BillingTotal <= 0 ? "Add products to the cart to use exchange" : ""))"
                           Click="@(() => { Mode = "Exchange"; StateHasChanged(); })" />
             @if (BillingTotal <= 0)
             {
@@ -126,7 +135,7 @@
             <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
             @if (Mode == "Exchange")
             {
-                <RadzenButton Text="Apply Exchange to Cart" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange" Disabled="@(TotalCredit <= 0 || TotalCredit > BillingTotal)" />
+                <RadzenButton Text="Apply Exchange to Cart" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange" Disabled="@(TotalCredit <= 0 || TotalCredit > BillingTotal || IsExchangeBlocked)" />
             }
             else
             {
@@ -151,6 +160,8 @@
     protected SaleMasterDTO? OriginalSale { get; set; }
     protected List<ReturnEditLine> ReturnLines { get; set; } = new();
     protected string Mode { get; set; } = "Return";
+    protected string? ExchangeBlockReason { get; set; }
+    protected bool IsExchangeBlocked => !string.IsNullOrEmpty(ExchangeBlockReason);
 
     protected List<MethodOption> MethodOptions { get; set; } = new() { new MethodOption { Id = 0, Name = "Cash" } };
     protected int MethodId { get; set; }
@@ -225,6 +236,7 @@
 
         if (OriginalSale == null)
         {
+            ExchangeBlockReason = null;
             NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Invoice not found", 3000);
             return;
         }
@@ -242,6 +254,38 @@
                 ReturnedQty = d.ReturnedQty ?? 0
             })
             .ToList();
+
+        await CheckExchangeWindow();
+    }
+
+    protected async Task CheckExchangeWindow()
+    {
+        ExchangeBlockReason = null;
+        try
+        {
+            if (OriginalSale?.StoreId is not int storeId || storeId <= 0)
+                return;
+
+            var store = await ServiceUnitOfWork.StoreService.GetStoreById(storeId);
+            var days = store?.ExchangeDay ?? 0;
+            if (days <= 0)
+            {
+                ExchangeBlockReason = "The exchange window is not configured for this store. Please contact an administrator.";
+            }
+            else
+            {
+                var ageDays = (DateTime.Now.Date - OriginalSale.CreatedDate.Date).TotalDays;
+                if (ageDays > days)
+                    ExchangeBlockReason = $"This invoice is {ageDays:0} day(s) old. Exchange is allowed only within {days} day(s) of the invoice date ({store!.Name}).";
+            }
+
+            if (IsExchangeBlocked)
+                Mode = "Return";
+        }
+        catch
+        {
+            // best-effort only; the server enforces the rule authoritatively
+        }
     }
 
     protected void ApplyExchange()

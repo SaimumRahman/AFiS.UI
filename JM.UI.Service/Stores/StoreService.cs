@@ -99,6 +99,9 @@ namespace JM.UI.Service.Stores
             if (!store.CostCenterId.HasValue || store.CostCenterId.Value <= 0)
                 return Task.FromResult((false, "A cost center must be selected."));
 
+            if (!store.ExchangeDay.HasValue || store.ExchangeDay.Value <= 0)
+                return Task.FromResult((false, "Exchange day is required and must be greater than zero."));
+
             if (store.Name.Length > 250)
                 return Task.FromResult((false, "Store name cannot exceed 250 characters."));
 
