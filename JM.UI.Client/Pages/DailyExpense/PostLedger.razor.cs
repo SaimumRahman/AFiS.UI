@@ -1,9 +1,11 @@
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.DailyExpense;
 using JM.UI.Entities.Model.Stores;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 using System;
@@ -19,6 +21,8 @@ namespace JM.UI.Client.Pages.DailyExpense
         private const int BusinessDayCutOffHour = 6;
 
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public IJSRuntime JS { get; set; } = default!;
+        [Inject] public DailyExpensePostReportService DailyExpensePostReportService { get; set; } = default!;
 
         protected RadzenDataGrid<DailyExpenseDTO> ExpensesGrid = default!;
         protected List<StoreDTO> Stores { get; set; } = new();
@@ -151,9 +155,11 @@ namespace JM.UI.Client.Pages.DailyExpense
             IsPosting = true;
             try
             {
+                var postedIds = SelectedIds.ToList();
+
                 var result = await _serviceUnitOfWork.DailyExpenseService.PostDailyExpenses(new PostDailyExpensesDTO
                 {
-                    Ids = SelectedIds.ToList(),
+                    Ids = postedIds,
                     PostedBy = UserId
                 });
 
@@ -167,6 +173,9 @@ namespace JM.UI.Client.Pages.DailyExpense
                 {
                     SelectedIds.Clear();
                     await LoadExpenses();
+
+                    // Download a PDF voucher of the expenses that were just posted.
+                    await DownloadPostReport(postedIds);
                 }
             }
             catch (Exception ex)
@@ -177,6 +186,46 @@ namespace JM.UI.Client.Pages.DailyExpense
             {
                 IsPosting = false;
                 StateHasChanged();
+            }
+        }
+
+        /// <summary>
+        /// Builds and downloads a PDF voucher for the expenses that were just
+        /// posted. Uses the reloaded "Posted Today" rows so voucher numbers and
+        /// posted-by names are included.
+        /// </summary>
+        protected async Task DownloadPostReport(List<int> postedIds)
+        {
+            try
+            {
+                var expenses = PostedToday
+                    .Where(x => postedIds.Contains(x.DailyExpenseId))
+                    .OrderBy(x => x.StoreName)
+                    .ThenBy(x => x.DailyExpenseId)
+                    .ToList();
+
+                if (expenses.Count == 0)
+                    return;
+
+                StoreDTO? store = SelectedStoreId.HasValue
+                    ? Stores.FirstOrDefault(s => s.Id == SelectedStoreId.Value)
+                    : null;
+
+                var pdfBytes = DailyExpensePostReportService.GenerateDailyExpensePostReport(
+                    expenses,
+                    businessDay: BusinessDay,
+                    businessWindowStart: BusinessWindowStart,
+                    businessWindowEnd: BusinessWindowEnd,
+                    storeName: string.IsNullOrWhiteSpace(store?.Name) ? "ASIA FASHION" : store!.Name,
+                    storeAddress: store?.Address,
+                    postedByName: expenses.FirstOrDefault()?.PostedByName);
+
+                var fileName = $"DailyExpensePosting_{BusinessDay:yyyyMMdd}.pdf";
+                await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Report Failed", ex.Message, 5000);
             }
         }
 
