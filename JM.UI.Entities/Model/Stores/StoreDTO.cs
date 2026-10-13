@@ -21,6 +21,7 @@ namespace JM.UI.Entities.Model.Stores
         public string? CostCenterName { get; set; }
         public int? ExchangeDay { get; set; }
         public string? TermsOfService { get; set; }
+        public decimal? DailyExpenseLimit { get; set; }
         public DateTime CreatedOn { get; set; }
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedOn { get; set; }

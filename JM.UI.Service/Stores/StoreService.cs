@@ -34,6 +34,7 @@ namespace JM.UI.Service.Stores
                 CostCenterName = s.CostCenterName,
                 ExchangeDay = s.ExchangeDay,
                 TermsOfService = s.TermsOfService,
+                DailyExpenseLimit = s.DailyExpenseLimit,
                 CreatedOn = s.CreatedOn,
                 CreatedBy = s.CreatedBy,
                 ModifiedOn = s.ModifiedOn,
@@ -103,6 +104,9 @@ namespace JM.UI.Service.Stores
 
             if (!store.ExchangeDay.HasValue || store.ExchangeDay.Value <= 0)
                 return Task.FromResult((false, "Exchange day is required and must be greater than zero."));
+
+            if (store.DailyExpenseLimit.HasValue && store.DailyExpenseLimit.Value < 0)
+                return Task.FromResult((false, "Daily expense limit cannot be negative."));
 
             if (store.Name.Length > 250)
                 return Task.FromResult((false, "Store name cannot exceed 250 characters."));
