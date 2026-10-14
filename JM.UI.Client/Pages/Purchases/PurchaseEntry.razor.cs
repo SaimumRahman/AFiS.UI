@@ -55,7 +55,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         // â”€â”€â”€ Preview Grid Items (editable, loaded from barcode/color/size search) â”€â”€â”€
         protected List<PreviewItemRow> PreviewItems { get; set; } = new();
-        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = new();
+        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = default!;
 
         // â”€â”€â”€ Shared price fields for preview grid (applied to all rows) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
@@ -1130,7 +1130,7 @@ protected bool IsProcessing { get; set; } = false;
                 }
 
                 PreviewItems.Clear();
-                await PreviewGrid.Reload();
+                if (PreviewGrid != null) await PreviewGrid.Reload();
                 await ItemsGrid.Reload();
                 CalculateTotals();
                 ResetSharedPricing();
@@ -2593,7 +2593,12 @@ Quantity = 0,
             if (IsInitialized)
             {
                 if (ItemsGrid != null) await ItemsGrid.Reload();
-                if (PreviewGrid != null) await PreviewGrid.Reload();
+
+                // The preview grid only exists in the render tree while it has
+                // rows (see @if (PreviewItems.Any()) in the razor). Reloading a
+                // grid that was never rendered throws "The render handle is not
+                // yet assigned", so only reload it when it is actually visible.
+                if (PreviewItems.Any() && PreviewGrid != null) await PreviewGrid.Reload();
             }
             // Removed StateHasChanged() - grid reload handles its own state
             ResetSharedPricing();
