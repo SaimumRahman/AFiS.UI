@@ -304,31 +304,10 @@
             return;
         }
 
-        // Mirror the server rule: a store may cap the total expense entered per day.
-        try
-        {
-            var store = await ServiceUnitOfWork.StoreService.GetStoreById(Expense.StoreId);
-            var limit = store?.DailyExpenseLimit ?? 0m;
-            if (limit > 0)
-            {
-                var dayExpenses = await ServiceUnitOfWork.DailyExpenseService.GetDailyExpenses(Expense.ExpenseDate, Expense.ExpenseDate, Expense.StoreId);
-                var alreadyEntered = dayExpenses
-                    .Where(x => x.DailyExpenseId != Expense.DailyExpenseId)
-                    .Sum(x => x.Amount);
-                if (alreadyEntered + Expense.Amount > limit)
-                {
-                    NotificationService.Notify(NotificationSeverity.Warning, "Daily Limit Exceeded",
-                        $"This store allows a total of {limit:N2} in expenses per day. Already entered: {alreadyEntered:N2}; this expense: {Expense.Amount:N2}.", 6000);
-                    return;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message, 5000);
-            return;
-        }
-
+        // The server owns the routing decision: an expense within the store's
+        // auto-post threshold is posted to the ledger immediately, otherwise it
+        // is saved unposted for the Post Ledger page. There is no daily cap to
+        // enforce here.
         Expense.CreatedBy = UserId;
         Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
         if (IsCash) Expense.FinancialAccountId = null;
