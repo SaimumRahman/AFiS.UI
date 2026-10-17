@@ -6,5 +6,6 @@ namespace JM.UI.DataService.DAL.Stock;
 public interface IStockRepository
 {
     Task<IEnumerable<StockLedgerDTO>> GetStockLedger(
-        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId);
+        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId,
+        int? groupId, int? subGroupId, int? designId, int? brandId);
 }
