@@ -106,6 +106,14 @@
                         @LockReason
                     </RadzenAlert>
                 }
+                else if (Existing?.HasActivity == true)
+                {
+                    <RadzenAlert class="mt-3" AllowClose="false" Variant="Variant.Flat"
+                                 Severity="AlertSeverity.Info" Shade="Shade.Lighter">
+                        <RadzenIcon Icon="warning" Style="vertical-align:middle; margin-right:0.35rem;" />
+                        @Existing.WarningMessage
+                    </RadzenAlert>
+                }
 
                 <div class="mt-3" style="overflow-x:auto;">
                     <table class="ob-grid">

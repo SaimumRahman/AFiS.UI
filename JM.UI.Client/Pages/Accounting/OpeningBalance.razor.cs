@@ -186,13 +186,13 @@ public partial class OpeningBalanceComponent : PosComponentBase
                 if (Rows.Count == 0)
                     Rows.Add(new ObRow());
 
-                EntryDate = Existing.EntryDate;
+                EntryDate = AsDateOnly(Existing.EntryDate);
                 Narration = Existing.Narration;
             }
             else
             {
                 Rows = new List<ObRow> { new ObRow() };
-                EntryDate = SelectedFiscalYear?.StartDate ?? DateTime.Today;
+                EntryDate = AsDateOnly(SelectedFiscalYear?.StartDate ?? DateTime.Today);
                 Narration = $"Opening Balance - {SelectedBranchCode} - {SelectedFiscalYear?.Code}";
             }
         }
@@ -326,12 +326,24 @@ public partial class OpeningBalanceComponent : PosComponentBase
             return;
         }
 
+        // Posted activity no longer blocks editing; confirm the retroactive change.
+        if (Existing?.HasActivity == true)
+        {
+            var confirmed = await dialogService.Confirm(
+                Existing.WarningMessage ?? "This fiscal year already has posted activity. Saving will change posted balances retroactively.",
+                "Confirm Opening Balance Change",
+                new ConfirmOptions { OkButtonText = "Save anyway", CancelButtonText = "Cancel" });
+
+            if (confirmed != true)
+                return;
+        }
+
         var request = new OpeningBalanceRequestDTO
         {
             CompanyCode = CompanyCode,
             BranchCode = SelectedBranchCode!,
             FiscalYearId = SelectedFiscalYearId,
-            EntryDate = EntryDate,
+            EntryDate = AsDateOnly(EntryDate),
             Narration = Narration,
             CreatedBy = CurrentUserId,
             Lines = Rows
@@ -370,6 +382,13 @@ public partial class OpeningBalanceComponent : PosComponentBase
             StateHasChanged();
         }
     }
+
+    /// <summary>Strips any time/time-zone component so the entry date serialises as a
+    /// plain calendar date (no offset). The API stores it via CAST(@EntryDate AS DATE)
+    /// and resolves the fiscal period from that date, so a shifted value could land in
+    /// the wrong (or a closed) period.</summary>
+    private static DateTime AsDateOnly(DateTime value)
+        => DateTime.SpecifyKind(value.Date, DateTimeKind.Unspecified);
 
     private async Task<int> GetLocalStorageInt(string key)
     {

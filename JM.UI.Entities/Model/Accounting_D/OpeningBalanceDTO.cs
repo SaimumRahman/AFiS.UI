@@ -38,6 +38,10 @@ namespace JM.UI.Entities.Model.Accounting_D
         public decimal TotalCredit { get; set; }
         public bool IsLocked { get; set; }
         public string? LockReason { get; set; }
+        /// <summary>True when the branch/year already has non-OB posted activity.
+        /// The page stays editable; this only drives a retroactive-change warning.</summary>
+        public bool HasActivity { get; set; }
+        public string? WarningMessage { get; set; }
         public List<OpeningBalanceLineDTO> Lines { get; set; } = new();
     }
 
