@@ -99,6 +99,27 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Sale.InvoiceDiscount ?? 0;
             }
         }
+        // ── Invoice discount limit (from the signed-in user's Group Role) ──
+        // GroupsRole.MaxDiscount caps the invoice discount % this user may give.
+        // NULL = no limit (user in no group, or the group sets no limit).
+        protected int CurrentUserId { get; set; }
+        protected decimal? MaxInvoiceDiscountPercent { get; set; }
+
+        // Effective invoice discount of the current cart as a percentage of SubTotal,
+        // whichever mode the Percentage/Flat dropdown is in.
+        protected decimal InvoiceDiscountPercent
+        {
+            get
+            {
+                if (Sale.InvoiceDiscountType == "Percentage")
+                    return Sale.InvoiceDiscount ?? 0;
+                return SubTotal > 0 ? (Sale.InvoiceDiscount ?? 0) / SubTotal * 100m : 0;
+            }
+        }
+
+        protected bool IsInvoiceDiscountOverLimit =>
+            MaxInvoiceDiscountPercent.HasValue && InvoiceDiscountPercent > MaxInvoiceDiscountPercent.Value;
+
         // SubTotal of cart lines that do NOT carry a campaign discount.
         // Customer/membership discount is only allowed on these lines.
         protected decimal NonCampaignSubTotal => CartItems.Where(i => !i.HasDiscount).Sum(c => c.TotalAmount);
@@ -153,9 +174,28 @@ namespace JM.UI.Client.Pages.SalesPOS
             await LoadLookupData();
             int localStoreId = await GetLocalStorageInt("StoreId");
             Sale.StoreId = localStoreId > 0 ? localStoreId : Stores.FirstOrDefault()?.Id;
-            Sale.CreatedBy = await GetLocalStorageInt("UserId");
+            CurrentUserId = await GetLocalStorageInt("UserId");
+            Sale.CreatedBy = CurrentUserId;
+            await LoadInvoiceDiscountLimit();
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
             await LoadEmployeesByStore();
+        }
+
+        // Reads the Sales POS invoice discount cap from the group of the signed-in
+        // user (Group Roles -> Maximum Discount). Failures are non-fatal: an
+        // unavailable limit must never block the till, it just means "no cap".
+        private async Task LoadInvoiceDiscountLimit()
+        {
+            try
+            {
+                MaxInvoiceDiscountPercent = await _serviceUnitOfWork.UserGroupService
+                    .GetMaxDiscountByUserId(CurrentUserId);
+            }
+            catch (Exception ex)
+            {
+                MaxInvoiceDiscountPercent = null;
+                Console.WriteLine($"[DEBUG] LoadInvoiceDiscountLimit failed: {ex.Message}");
+            }
         }
         private async Task<int> GetLocalStorageInt(string key)
         {
@@ -1034,6 +1074,18 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
+            // The invoice discount may not exceed the cap configured on the group of
+            // the signed-in user (Group Roles -> Maximum Discount). The server repeats
+            // this check on save; this is the user-facing guard.
+            if (IsInvoiceDiscountOverLimit)
+            {
+                await dialogService.Alert(
+                    $"Invoice discount of {InvoiceDiscountPercent:N2}% exceeds the maximum allowed discount of {MaxInvoiceDiscountPercent!.Value:N2}% for your group. Please reduce it before finalising.",
+                    "Discount Limit Exceeded",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
             // Can only finalize a sale when every line in the cart belongs to
             // the same store.
             if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)

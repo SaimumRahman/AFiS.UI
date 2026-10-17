@@ -637,6 +637,23 @@
                     </span>
                 </div>
                 @{
+                    var maxInvoiceDisc = MaxInvoiceDiscountPercent;
+                }
+                @if (maxInvoiceDisc.HasValue)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:@(IsInvoiceDiscountOverLimit ? "#c62828" : "#666")">
+                        <span class="label">Discount Limit</span>
+                        <span class="value">@maxInvoiceDisc.Value.ToString("N2")%</span>
+                    </div>
+                }
+                @if (IsInvoiceDiscountOverLimit)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:#c62828">
+                        <span class="label">Discount exceeds your group limit</span>
+                        <span class="value">max @maxInvoiceDisc!.Value.ToString("N2")%</span>
+                    </div>
+                }
+                @{
                     var posTotalDiscount = InvoiceDiscountAmount + PaisaDiscount;
                 }
                 @if (posTotalDiscount > 0)

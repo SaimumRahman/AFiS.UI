@@ -91,6 +91,26 @@
                                     </RadzenStack>
                                 </RadzenColumn>
                             </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Maximum Discount (%)" Component="MaxDiscount" />
+                                        <RadzenNumeric @bind-Value="GroupRole.MaxDiscount"
+                                                       Name="MaxDiscount"
+                                                       TValue="decimal?"
+                                                       Min="0"
+                                                       Max="100"
+                                                       Step="0.01"
+                                                       Placeholder="No limit"
+                                                       Style="width: 100%;" />
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-info-darker">
+                                            Highest invoice discount users of this group may give in Sales POS.
+                                            Leave blank for no limit.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
                         </RadzenStack>
                     </RadzenFieldset>
 

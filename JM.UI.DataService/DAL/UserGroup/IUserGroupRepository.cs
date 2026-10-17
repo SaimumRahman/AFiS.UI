@@ -16,5 +16,12 @@ namespace JM.UI.DataService.DAL.UserGroup
         Task<ResponseResult> UpdateGroupUsers(int groupId, List<int> userIds);
         Task<int> GetAdminGroupCountByUserId(int userId);
         Task<int> GetSystemGroupCountByUserId(int userId);
+
+        /// <summary>
+        /// Effective Sales POS invoice discount limit (%) for a user: the strictest
+        /// (lowest) MaxDiscount across the groups the user belongs to.
+        /// NULL when the user is in no group or none of their groups set a limit.
+        /// </summary>
+        Task<decimal?> GetMaxDiscountByUserId(int userId);
     }
 }
