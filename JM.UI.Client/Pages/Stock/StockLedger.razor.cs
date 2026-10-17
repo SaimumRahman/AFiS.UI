@@ -21,14 +21,41 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
     protected DateTime? ToDate { get; set; }
     protected int? SelectedStoreId { get; set; }
     protected int CurrentUserId { get; set; } = 0;
-    protected bool IsStoreDropdownDisabled => CurrentUserId != 1;
+
+    // Any user whose group is flagged IsSystem (GroupsRole.IsSystem = 1) - plus the
+    // built-in super admin - may pick any store here. Everyone else is pinned to the
+    // store they are signed in to.
+    protected bool CanSelectAnyStore { get; set; }
+    protected bool IsStoreDropdownDisabled => !CanSelectAnyStore;
 
     protected override async Task OnInitializedAsync()
     {
         await TokenService.InitializeTokenAsync();
         CurrentUserId = await GetLocalStorageInt("UserId");
+
+        // Must be resolved before LoadStores(), which branches on it.
+        await ResolveStoreSelectionPermission();
+
         await LoadStores();
         await LoadStockLedger();
+    }
+
+    private async Task ResolveStoreSelectionPermission()
+    {
+        CanSelectAnyStore = CurrentUserId == 1;
+        if (CanSelectAnyStore) return;
+
+        try
+        {
+            CanSelectAnyStore = await _serviceUnitOfWork.UserGroupService
+                                    .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+        }
+        catch (Exception ex)
+        {
+            // Fail closed: a failed lookup must not hand out cross-store visibility.
+            CanSelectAnyStore = false;
+            Console.WriteLine($"[DEBUG] ResolveStoreSelectionPermission failed: {ex.Message}");
+        }
     }
 
     private async Task LoadStores()
@@ -37,7 +64,7 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
         {
             var stores = await _serviceUnitOfWork.StoreService.GetStores();
 
-            if (CurrentUserId == 1)
+            if (CanSelectAnyStore)
             {
                 StoreList = stores;
             }

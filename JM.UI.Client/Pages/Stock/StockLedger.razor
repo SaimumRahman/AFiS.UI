@@ -24,7 +24,7 @@
                                     TextProperty="Name"
                                     ValueProperty="Id"
                                     Placeholder="All Stores"
-                                    AllowClear="@(CurrentUserId == 1)"
+                                    AllowClear="@CanSelectAnyStore"
                                     Disabled="@IsStoreDropdownDisabled"
                                     Style="width:150px;" />
                     <RadzenButton Icon="search"
