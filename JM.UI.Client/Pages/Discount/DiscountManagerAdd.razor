@@ -119,7 +119,8 @@
                                                 TextProperty="Name"
                                                 Placeholder="All Groups"
                                                 Change="@(args => OnGroupCascadeChanged(args as int?))"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true"/>
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
@@ -131,7 +132,8 @@
                                                 TextProperty="Name"
                                                 Placeholder="All Sub Groups"
                                                 Change="@(args => OnSubGroupCascadeChanged(args as int?))"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
@@ -142,7 +144,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Designs"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
@@ -155,7 +158,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Colors"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3">
@@ -166,7 +170,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Sizes"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3">
@@ -177,7 +182,8 @@
                                                 ValueProperty="CatalogueId"
                                                 TextProperty="CatalogueName"
                                                 Placeholder="All Catalogs"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3" style="display:flex;align-items:flex-end;">
@@ -185,7 +191,7 @@
                                           Icon="search"
                                           ButtonStyle="ButtonStyle.Primary"
                                           Click="@LoadFilteredItems"
-                                          Style="width:100%;" />
+                                          Style="width:100%;"/>
                         </RadzenColumn>
                     </RadzenRow>
                 </RadzenStack>
