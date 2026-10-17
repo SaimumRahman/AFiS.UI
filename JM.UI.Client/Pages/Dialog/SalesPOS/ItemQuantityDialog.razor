@@ -58,7 +58,7 @@
 
         <div>
             <RadzenLabel Text="Quantity" Component="Qty" />
-            <RadzenNumeric @bind-Value="Qty" Min="1" Max="@RemainingQty" Name="Qty" Style="width:100%" ShowButtons="true" />
+            <RadzenNumeric @ref="QtyInput" @bind-Value="Qty" Min="1" Max="@RemainingQty" Name="Qty" Style="width:100%" ShowButtons="true" />
         </div>
 
         <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -82,10 +82,33 @@
     decimal UnitPrice { get; set; }
     decimal RemainingQty => Math.Max(0, (Product?.StockQuantity ?? 0) - ExistingQty);
 
+    // Quantity input, focused as soon as the dialog opens.
+    RadzenNumeric<decimal> QtyInput = default!;
+    bool _focusApplied;
+
     protected override void OnInitialized()
     {
         Qty = 1;
         UnitPrice = Product?.UnitPrice ?? 0;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_focusApplied)
+        {
+            _focusApplied = true;
+            try
+            {
+                // The dialog's own post-render JS runs right after the first render;
+                // yield briefly so the Quantity focus is the last one applied.
+                await Task.Delay(50);
+                await QtyInput.FocusAsync();
+            }
+            catch (Exception)
+            {
+                // Dialog may already be closing; focus is best-effort.
+            }
+        }
     }
 
     // The sale price may be raised, but never reduced below the loaded price.

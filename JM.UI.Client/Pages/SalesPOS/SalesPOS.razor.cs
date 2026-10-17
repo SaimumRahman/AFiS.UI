@@ -546,7 +546,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                     { "Product", product },
                     { "ExistingQty", ExistingCartQty(product) }
                 },
-                new DialogOptions { Width = "420px" });
+                new DialogOptions { Width = "420px", AutoFocusFirstElement = false });
 
             if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
             {
