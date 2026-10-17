@@ -114,12 +114,11 @@ namespace JM.UI.Client.Pages.Transfer
                 }
             }
 
-            // Search only within selected transfer
-
+            // Search only within selected transfer: try ReturnRefNo first, then Barcode.
             var matchedDetail = SelectedTransfer.Details
-                .FirstOrDefault(d => barcode.All(char.IsDigit)
-                    ? string.Equals(d.ReturnRefNo, barcode, StringComparison.OrdinalIgnoreCase)
-                    : string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(d => string.Equals(d.ReturnRefNo, barcode, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedTransfer.Details
+                .FirstOrDefault(d => string.Equals(d.Barcode, barcode, StringComparison.OrdinalIgnoreCase));
 
             if (matchedDetail == null)
             {
