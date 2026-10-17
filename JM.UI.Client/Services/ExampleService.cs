@@ -179,7 +179,7 @@ namespace JM.UI.Client.Services
                             },
                             new Example
                             {
-                                Name        = "SubGroups",
+                                Name        = "Products",
                                 Path        = "/SubGroupsList",
                                 Icon        = "\ue5db",
                                 Title       = "SubGroups",
@@ -188,7 +188,7 @@ namespace JM.UI.Client.Services
                             },
                             new Example
                             {
-                                Name        = "Designs",
+                                Name        = "Sub Products",
                                 Path        = "/DesignsList",
                                 Icon        = "\ue41f",
                                 Title       = "Designs",
