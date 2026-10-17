@@ -88,19 +88,32 @@
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
-                    @if (IsEditMode)
-                    {
-                        <RadzenRow>
-                            <RadzenColumn Size="12">
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Store *" Component="StoreSelector" />
+                                <RadzenDropDown Data="@Stores"
+                                                @bind-Value="@SelectedStoreId"
+                                                Name="StoreSelector"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="Select store..."
+                                                Style="width:100%;" />
+                                <RadzenRequiredValidator Component="StoreSelector" Text="Store is required" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        @if (IsEditMode)
+                        {
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center" Style="height:100%;">
                                     <RadzenLabel Text="Active" Component="IsActive" />
                                     <RadzenSwitch @bind-Value="Campaign.IsActive" Name="IsActive" />
                                     <RadzenBadge BadgeStyle="@(Campaign.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
                                                  Text="@(Campaign.IsActive ? "Active" : "Inactive")" />
                                 </RadzenStack>
                             </RadzenColumn>
-                        </RadzenRow>
-                    }
+                        }
+                    </RadzenRow>
                 </RadzenStack>
             </RadzenFieldset>
         </RadzenCard>
