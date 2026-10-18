@@ -1,3 +1,4 @@
+@using JM.UI.Entities.Model.MesurementUnits
 @using JM.UI.Entities.Model.SalesPOS
 @using JM.UI.Entities.Model.CustomerDetails
 @using JM.UI.Entities.Model.FinancialAccounts
@@ -55,12 +56,13 @@
                         <RadzenDataGridColumn TItem="ReturnEditLine" Property="ProductName" Title="Item" Width="200" />
                         <RadzenDataGridColumn TItem="ReturnEditLine" Property="Barcode" Title="Barcode" Width="110" />
                         <RadzenDataGridColumn TItem="ReturnEditLine" Title="Available" Width="70">
-                            <Template Context="e"><span>@e.Available.ToString("0.##")</span></Template>
+                            <Template Context="e"><span>@e.Available.ToString(UomRules.FormatFor(e.UomName))</span></Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ReturnEditLine" Title="Return Qty" Width="100">
                             <Template Context="e">
-                                <RadzenNumeric TValue="decimal" @bind-Value="e.ReturnQty" Min="0" Max="@e.Available" Step="1" ShowButtons="true"
-                                               Change="@((decimal v) => StateHasChanged())" Style="width:80px" />
+                                <RadzenNumeric TValue="decimal" @bind-Value="e.ReturnQty" Min="0" Max="@e.Available"
+                                               Step="@(UomRules.StepFor(e.UomName))" Format="@(UomRules.FormatFor(e.UomName))" ShowButtons="true"
+                                               Change="@((decimal v) => OnReturnQtyChanged(e, v))" Style="width:80px" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ReturnEditLine" Property="UnitPrice" Title="Price" Width="80" />
@@ -182,9 +184,16 @@
     {
         try
         {
-            var accounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
-            foreach (var a in accounts)
-                MethodOptions.Add(new MethodOption { Id = a.Id, Name = a.AccountName });
+            var accounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown(StoreId > 0 ? StoreId : null)).ToList();
+
+            // A refund / collection is posted to the ledger attached to the financial account,
+            // so only accounts carrying a ledger are offered.
+            foreach (var a in accounts.Where(a => !string.IsNullOrWhiteSpace(a.LedgerCode)))
+                MethodOptions.Add(new MethodOption
+                {
+                    Id = a.Id,
+                    Name = string.IsNullOrWhiteSpace(a.AccountNo) ? a.AccountName : $"{a.AccountName} · {a.AccountNo}"
+                });
         }
         catch
         {
@@ -248,6 +257,7 @@
                 SalesDetailsId = d.SalesDetailsId,
                 ProductName = d.ProductName,
                 Barcode = d.Barcode,
+                UomName = d.UomName,
                 UnitPrice = d.UnitPrice,
                 Discount = d.Discount ?? 0,
                 TotalQty = d.Qty,
@@ -256,6 +266,26 @@
             .ToList();
 
         await CheckExchangeWindow();
+    }
+
+    // Whole-unit lines (everything except Yards / Meter) are returned in whole units only.
+    void OnReturnQtyChanged(ReturnEditLine line, decimal value)
+    {
+        var qty = value;
+        UomRules.Normalize(line.UomName, ref qty);
+        line.ReturnQty = qty;
+        StateHasChanged();
+    }
+
+    // Re-applies the unit rule to every line just before it is submitted.
+    void NormalizeReturnQuantities()
+    {
+        foreach (var line in ReturnLines)
+        {
+            var qty = line.ReturnQty;
+            if (UomRules.Normalize(line.UomName, ref qty))
+                line.ReturnQty = qty;
+        }
     }
 
     protected async Task CheckExchangeWindow()
@@ -303,6 +333,7 @@
             return;
         }
 
+        NormalizeReturnQuantities();
         var selected = ReturnLines.Where(r => r.ReturnQty > 0).ToList();
 
         var result = new ExchangeApplyResult
@@ -320,6 +351,7 @@
 
     protected async Task Process()
     {
+        NormalizeReturnQuantities();
         var selected = ReturnLines.Where(r => r.ReturnQty > 0).ToList();
         if (selected.Count == 0)
         {
@@ -381,6 +413,7 @@
         public int SalesDetailsId { get; set; }
         public string? ProductName { get; set; }
         public string? Barcode { get; set; }
+        public string? UomName { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal Discount { get; set; }
         public decimal TotalQty { get; set; }

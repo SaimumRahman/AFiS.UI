@@ -26,6 +26,9 @@ namespace JM.UI.Service.Accounting
         public async Task<IEnumerable<ChartOfAccountDTO>> GetExpenseAccounts()
             => await _repositoryUnitOfWork.ChartOfAccountRepository.GetExpenseAccounts();
 
+        public async Task<IEnumerable<ChartOfAccountDTO>> GetLedgerAccounts()
+            => await _repositoryUnitOfWork.ChartOfAccountRepository.GetLedgerAccounts();
+
         public async Task<IEnumerable<string>> GetPartyTypes()
             => await _repositoryUnitOfWork.ChartOfAccountRepository.GetPartyTypes();
 

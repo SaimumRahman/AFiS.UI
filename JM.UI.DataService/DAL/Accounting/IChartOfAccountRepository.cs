@@ -11,6 +11,9 @@ namespace JM.UI.DataService.DAL.Accounting
         Task<ChartOfAccountDTO?> GetChartOfAccountById(int accountId);
         Task<IEnumerable<ChartOfAccountDTO>> GetGroupAccounts();
         Task<IEnumerable<ChartOfAccountDTO>> GetExpenseAccounts();
+
+        /// <summary>Active ledger accounts a financial account (cash / MFS / bank / POS) can post to.</summary>
+        Task<IEnumerable<ChartOfAccountDTO>> GetLedgerAccounts();
         Task<IEnumerable<string>> GetPartyTypes();
 
         /// <summary>Preview of the account number a new head under the given parent would get.</summary>

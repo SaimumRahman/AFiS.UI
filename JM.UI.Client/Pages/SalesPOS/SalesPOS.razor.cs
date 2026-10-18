@@ -6,6 +6,7 @@ using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.Employees;
 using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MembershipType;
+using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.SalesPOS;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
@@ -618,6 +619,16 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected void AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
         {
+            // Whole-unit items (everything except Yards / Meter) cannot take a fractional
+            // quantity: snap it to a whole number before the cart ever sees it.
+            if (UomRules.Normalize(product.UomName, ref qty))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{product.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {qty:N0}.", 3000);
+            }
+            if (qty <= 0)
+                return;
+
             var existing = CartItems.FirstOrDefault(c =>
                 c.ItemId == product.ItemId && c.StoreId == product.StoreId);
 
@@ -691,6 +702,13 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Cart Operations ──
         protected void UpdateCartItemQuantity(SaleDetailDTO item, decimal newQty)
         {
+            // Yards / Meter keep their decimals; every other unit is rounded to a whole number.
+            if (UomRules.Normalize(item.UomName, ref newQty) && newQty > 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{item.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {newQty:N0}.", 3000);
+            }
+
             if (newQty <= 0)
             {
                 CartItems.Remove(item);
@@ -1122,7 +1140,11 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
-                new Dictionary<string, object> { { "NetPayable", NetPayable } });
+                new Dictionary<string, object>
+                {
+                    { "NetPayable", NetPayable },
+                    { "StoreId", Sale.StoreId }
+                });
             if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
                 return;
 
@@ -1219,6 +1241,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
+                        { "StoreId", Sale.StoreId },
                         { "AllowBookingOption", false },
                         { "ShowDeliveredOption", true }
                     });

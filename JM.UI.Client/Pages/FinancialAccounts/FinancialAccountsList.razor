@@ -46,7 +46,24 @@
                         Style="border-radius: 12px;">
             <Columns>
                 <RadzenDataGridColumn TItem="FinancialAccountDTO" Visible="false" Property="Id" Title="ID" Width="90px" />
-                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="FinancialAccountTypeName" Title="Account Type" Width="200px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="FinancialAccountTypeName" Title="Account Type" Width="160px" />
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="StoreName" Title="Store" Width="180px">
+                    <Template Context="data">
+                        @(string.IsNullOrEmpty(data.StoreName) ? "-" : data.StoreName)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="LedgerCode" Title="Ledger Code" Width="150px">
+                    <Template Context="data">
+                        @if (string.IsNullOrEmpty(data.LedgerCode))
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span><b>@data.LedgerCode</b> — @data.LedgerName</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="MFSTypeName" Title="MFS Type" Width="160px" />
                 <RadzenDataGridColumn TItem="FinancialAccountDTO" Property="BankName" Title="Bank" Width="220px">
                     <Template Context="data">
