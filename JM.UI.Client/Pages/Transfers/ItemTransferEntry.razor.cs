@@ -43,6 +43,16 @@ namespace JM.UI.Client.Pages.Transfers
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
+
+        // ── UoM quantity rules ──────────────────────────────────────────────
+        // Yards / Meter (and their spellings) accept decimals; every other unit is
+        // whole units only. The shared qty box keeps decimals only while every
+        // preview row allows them.
+        protected bool SharedQtyAllowsDecimal =>
+            !PreviewItems.Any() || PreviewItems.All(r => UomRules.AllowsDecimalQuantity(r.UnitName));
+
+        protected string SharedQtyStep => UomRules.StepFor(SharedQtyAllowsDecimal);
+        protected string SharedQtyFormat => UomRules.FormatFor(SharedQtyAllowsDecimal);
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
@@ -284,6 +294,10 @@ namespace JM.UI.Client.Pages.Transfers
                     });
                 }
 
+                // Whole-unit UoMs only take whole quantities (requisition qty may be fractional).
+                foreach (var requisitionRow in PreviewItems)
+                    NormalizePreviewQuantity(requisitionRow);
+
                 // Auto-select Internal Transfer type and disable switching
                 var internalTransfer = TransferTypes.FirstOrDefault(t =>
                     t.Name.Equals("Internal Transfer", StringComparison.OrdinalIgnoreCase));
@@ -426,19 +440,49 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected void OnSharedFieldChanged()
         {
+            bool roundedAny = false;
+
+            // Whole-unit UoMs: a fractional shared qty is rounded to a whole number.
+            if (SharedIssueQty.HasValue)
+            {
+                var shared = SharedIssueQty.Value;
+                if (UomRules.Normalize(SharedQtyAllowsDecimal, ref shared))
+                {
+                    SharedIssueQty = shared;
+                    roundedAny = true;
+                }
+            }
+
             foreach (var row in PreviewItems)
             {
                 if (SharedIssueQty.HasValue)
                     row.IssueQty = SharedIssueQty.Value;
+
+                if (NormalizePreviewQuantity(row))
+                    roundedAny = true;
+
                 row.SerialNo = SharedSerialNo;
                 row.CreatedRemarks = SharedCreatedRemarks;
             }
+
+            if (roundedAny)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                    "Whole units only for this item's UoM — the quantity was rounded to the nearest whole number.", 4500);
+            }
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
 
         protected void OnPreviewRowChanged(TransferPreviewRow row)
         {
+            if (row != null && NormalizePreviewQuantity(row))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                    $"'{row.ItemName}' is measured in {UnitNameOf(row.UnitName, row.UnitId)} — whole units only, quantity rounded to {row.IssueQty:0}.", 4500);
+            }
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
@@ -627,6 +671,46 @@ namespace JM.UI.Client.Pages.Transfers
         private TransferPreviewRow? FindPreviewRow(string barcode)
             => PreviewItems.FirstOrDefault(r => r.Barcode == barcode);
 
+        // ── UoM quantity normalisation ──────────────────────────────────────
+        // A unit that is not measured by length (PCS, KG, ...) only accepts whole
+        // units, so any fractional quantity is rounded to the nearest whole number.
+
+        /// <summary>Unit name of a line, falling back to the unit lookup when it is missing.</summary>
+        private string UnitNameOf(string? unitName, int? unitId)
+            => !string.IsNullOrWhiteSpace(unitName)
+                ? unitName
+                : Units.FirstOrDefault(u => u.Id == unitId)?.Name ?? string.Empty;
+
+        /// <summary>
+        /// Rounds a preview row's quantity to a whole number when its unit does not
+        /// allow decimals. Returns true when the value was changed.
+        /// </summary>
+        private bool NormalizePreviewQuantity(TransferPreviewRow? row)
+        {
+            if (row == null) return false;
+
+            var qty = row.IssueQty;
+            if (!UomRules.Normalize(UnitNameOf(row.UnitName, row.UnitId), ref qty)) return false;
+
+            row.IssueQty = qty;
+            return true;
+        }
+
+        /// <summary>
+        /// Rounds a confirmed detail line's quantity to a whole number when its unit
+        /// does not allow decimals. Returns true when the value was changed.
+        /// </summary>
+        private bool NormalizeDetailQuantity(TransferDetailDTO? detail)
+        {
+            if (detail == null) return false;
+
+            var qty = detail.IssueQty;
+            if (!UomRules.Normalize(UnitNameOf(detail.UnitName, detail.UnitID), ref qty)) return false;
+
+            detail.IssueQty = qty;
+            return true;
+        }
+
         protected async Task ProcessScannedBarcode()
         {
             var barcode = ScanBarcodeText?.Trim();
@@ -684,11 +768,22 @@ namespace JM.UI.Client.Pages.Transfers
                 var itemBarcode = item.Barcode ?? barcode;
                 var issueQty = SharedIssueQty ?? 1;
 
+                // Whole-unit UoMs (anything that is not Yards / Meter) may only take
+                // whole quantities, so a fractional entry is rounded once, up front.
+                var uomName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty;
+                if (UomRules.Normalize(uomName, ref issueQty))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                        $"'{item.Name}' is measured in {uomName} — whole units only, quantity rounded to {issueQty:0}.", 4500);
+                }
+
                 // ✅ Already confirmed in the transfer list?
                 var existingConfirmed = TransferDetails.FirstOrDefault(d => d.Barcode == itemBarcode);
                 if (existingConfirmed != null)
                 {
                     var totalQty = existingConfirmed.IssueQty + issueQty;
+                    UomRules.Normalize(UnitNameOf(existingConfirmed.UnitName, existingConfirmed.UnitID), ref totalQty);
+
                     if (totalQty > item.CurrentStock)
                     {
                         notificationService.Notify(
@@ -723,6 +818,8 @@ namespace JM.UI.Client.Pages.Transfers
                 if (existingPreview != null)
                 {
                     var newTotal = existingPreview.IssueQty + issueQty;
+                    UomRules.Normalize(UnitNameOf(existingPreview.UnitName, existingPreview.UnitId), ref newTotal);
+
                     if (newTotal > item.CurrentStock)
                     {
                         notificationService.Notify(
@@ -800,6 +897,11 @@ namespace JM.UI.Client.Pages.Transfers
                 return;
             }
 
+            // Whole-unit UoMs only take whole quantities — apply the rule before the
+            // zero-quantity filter so a row rounded down to 0 is skipped.
+            foreach (var previewRow in PreviewItems)
+                NormalizePreviewQuantity(previewRow);
+
             var validRows = PreviewItems.Where(r => r.IssueQty > 0).ToList();
             if (!validRows.Any())
             {
@@ -846,6 +948,7 @@ namespace JM.UI.Client.Pages.Transfers
                     if (!confirmed) continue;   // user said No â€” skip silently
 
                     var totalQty = existingLine.IssueQty + row.IssueQty;
+                    UomRules.Normalize(UnitNameOf(existingLine.UnitName, existingLine.UnitID), ref totalQty);
 
                     // Stock check against combined qty
                     if (totalQty > row.StockQuantity)
@@ -1015,6 +1118,9 @@ namespace JM.UI.Client.Pages.Transfers
                 return;
             }
 
+            // Whole-unit UoMs only take whole quantities.
+            NormalizePreviewQuantity(row);
+
             if (row.IssueQty <= 0)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Validation",
@@ -1108,6 +1214,11 @@ namespace JM.UI.Client.Pages.Transfers
         protected async Task SaveTransfer()
         {
             if (!ValidateTransfer()) return;
+
+            // Final guard: no detail line may keep a fractional quantity on a UoM
+            // that only accepts whole units.
+            foreach (var detail in TransferDetails)
+                NormalizeDetailQuantity(detail);
 
             Transfer.Details = TransferDetails;
 

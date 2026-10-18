@@ -2,6 +2,7 @@
 @page "/ItemTransferEntry/Edit/{Id:int}"
 @page "/ItemTransferEntry/FromRequisition/{RequisitionId:int}"
 
+@using JM.UI.Entities.Model.MesurementUnits
 @using JM.UI.Entities.Model.Transfer
 @inherits ItemTransferEntryComponent
 
@@ -371,7 +372,8 @@ else
                                 <RadzenColumn Size="6" SizeMD="4">
                                     <RadzenLabel Text="Issue QTY" Style="font-weight:600; font-size:0.68rem;" />
                                     <RadzenNumeric @bind-Value="SharedIssueQty"
-                                                   Style="width:100%; font-size:0.68rem;" Min="0" Step="0.01" TValue="decimal?"
+                                                   Style="width:100%; font-size:0.68rem;" Min="0"
+                                                   Step="@SharedQtyStep" Format="@SharedQtyFormat" TValue="decimal?"
                                                    Change="@OnSharedFieldChanged" Disabled="@IsProcessing" />
                                 </RadzenColumn>
                                 <RadzenColumn Size="6" SizeMD="4">
@@ -400,7 +402,7 @@ else
                                 <div style="background:#1565c0; color:#fff; padding:4px 10px; font-size:0.72rem;
                                     font-weight:700; display:flex; justify-content:space-between; align-items:center;">
                                     <span>🔍 Preview Items (@PreviewItems.Count row(s)) — Enter quantities to add</span>
-                                    <span style="font-size:0.65rem; opacity:0.85;">Rows with Qty = 0 will be skipped</span>
+                                    <span style="font-size:0.65rem; opacity:0.85;">Rows with Qty = 0 will be skipped · decimals only for Yards / Meter</span>
                                 </div>
 
                                 <RadzenDataGrid @ref="PreviewGrid"
@@ -465,7 +467,7 @@ else
                                         <RadzenDataGridColumn TItem="TransferPreviewRow" Title="Stock QTY" Width="75px">
                                             <Template Context="row">
                                                 <span style="font-size:0.65rem; color:#1565c0; font-weight:600;">
-                                                    @row.StockQuantity.ToString("N2")
+                                                    @row.StockQuantity.ToString(UomRules.FormatFor(row.UnitName))
                                                 </span>
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -474,14 +476,16 @@ else
                                         <RadzenDataGridColumn TItem="TransferPreviewRow" Title="Issue Qty *" Width="75px">
                                             <Template Context="row">
                                                 <RadzenNumeric @bind-Value="row.IssueQty"
-                                                               TValue="decimal" Min="0" Step="0.01"
+                                                               TValue="decimal" Min="0"
+                                                               Step="@UomRules.StepFor(row.UnitName)"
+                                                               Format="@UomRules.FormatFor(row.UnitName)"
                                                                Style="width:100%; font-size:0.65rem; height:22px;"
                                                                Change="@(() => OnPreviewRowChanged(row))"
                                                                Disabled="@IsProcessing" />
                                             </Template>
                                             <FooterTemplate>
                                                 <span style="font-size:0.65rem; font-weight:700; color:#1565c0;">
-                                                    @PreviewItems.Sum(r => r.IssueQty).ToString("N2")
+                                                    @PreviewItems.Sum(r => r.IssueQty).ToString("0.##")
                                                 </span>
                                             </FooterTemplate>
                                         </RadzenDataGridColumn>
@@ -526,7 +530,7 @@ else
                                     background:#e8f5e9; padding:4px 10px; font-size:0.7rem; font-weight:700;
                                     border-top:1px solid #a5d6a7;">
                                     <span>Rows: @PreviewItems.Count</span>
-                                    <span>Total Qty: @PreviewItems.Sum(r => r.IssueQty).ToString("N2")</span>
+                                    <span>Total Qty: @PreviewItems.Sum(r => r.IssueQty).ToString("0.##")</span>
                                     <span>Total Sale: @PreviewItems.Sum(r => r.SalePrice).ToString("N2")</span>
                                 </div>
                             </div>
@@ -590,10 +594,10 @@ else
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="IssueQty" Title="Issue Qty" Width="75px">
                         <Template Context="item">
-                            <span style="font-weight:600;">@item.IssueQty.ToString("N2")</span>
+                            <span style="font-weight:600;">@item.IssueQty.ToString(UomRules.FormatFor(item.UnitName))</span>
                         </Template>
                         <FooterTemplate>
-                            <span style="font-weight:600;">@TransferDetails.Sum(i => i.IssueQty).ToString("N2")</span>
+                            <span style="font-weight:600;">@TransferDetails.Sum(i => i.IssueQty).ToString("0.##")</span>
                         </FooterTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="TransferDetailDTO" Property="SerialNo" Title="Serial No" Width="100px" />
