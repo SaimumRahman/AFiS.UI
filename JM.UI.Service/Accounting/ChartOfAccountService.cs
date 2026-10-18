@@ -29,6 +29,9 @@ namespace JM.UI.Service.Accounting
         public async Task<IEnumerable<string>> GetPartyTypes()
             => await _repositoryUnitOfWork.ChartOfAccountRepository.GetPartyTypes();
 
+        public async Task<NextAccountNoDTO?> GetNextAccountNo(int parentId, bool isGroup)
+            => await _repositoryUnitOfWork.ChartOfAccountRepository.GetNextAccountNo(parentId, isGroup);
+
         public async Task<ResponseResult> SaveUpdateChartOfAccount(ChartOfAccountDTO account)
         {
             var v = await ValidateChartOfAccount(account);
@@ -43,11 +46,17 @@ namespace JM.UI.Service.Accounting
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateChartOfAccount(ChartOfAccountDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return Task.FromResult((false, "Account code is required"));
-
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return Task.FromResult((false, "Account name is required"));
+
+            // The account number is generated from the parent while creating; it is only
+            // mandatory when an existing account is edited.
+            if (dto.AccountId > 0 && string.IsNullOrWhiteSpace(dto.Code))
+                return Task.FromResult((false, "Account code is required"));
+
+            // Every new head sits under a group (the top level heads 1-5 are fixed).
+            if (dto.AccountId <= 0 && (!dto.ParentId.HasValue || dto.ParentId.Value <= 0))
+                return Task.FromResult((false, "Parent account is required (the top level heads 1-5 are fixed)"));
 
             if (string.IsNullOrWhiteSpace(dto.Nature))
                 return Task.FromResult((false, "Account nature is required"));

@@ -39,9 +39,11 @@ public class TransferMasterDTO
     public bool IsDispatched { get; set; }
     public int? DispatchedBy { get; set; }
     public DateTime? DispatchedDate { get; set; }
+    public string? DispatchedByName { get; set; }
     public bool IsReceived { get; set; }
     public int? ReceivedBy { get; set; }
     public DateTime? ReceivedDate { get; set; }
+    public string? ReceivedByName { get; set; }
     public bool IsCancelled { get; set; }
     public int? CancelledBy { get; set; }
     public DateTime? CancelledDate { get; set; }

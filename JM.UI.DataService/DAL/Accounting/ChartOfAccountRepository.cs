@@ -113,6 +113,26 @@ namespace JM.UI.DataService.DAL.Accounting
             }
         }
 
+        public async Task<NextAccountNoDTO?> GetNextAccountNo(int parentId, bool isGroup)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(
+                    $"api/ChartOfAccount/GetNextAccountNo?parentId={parentId}&isGroup={isGroup.ToString().ToLowerInvariant()}");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                return await response.Content.ReadFromJsonAsync<NextAccountNoDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching the next account number under parent {ParentId}", parentId);
+                return null;
+            }
+        }
+
         public async Task<ResponseResult> SaveUpdateChartOfAccount(ChartOfAccountDTO account)
         {
             try

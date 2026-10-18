@@ -37,9 +37,18 @@
                 <RadzenFieldset Text="Account Information" Icon="account_balance">
                     <RadzenRow Gap="0.75rem">
                         <RadzenColumn Size="6">
-                            <RadzenLabel Text="Code *" Component="Code" />
-                            <RadzenTextBox @bind-Value="Account.Code" Name="Code" Placeholder="e.g. 410010" MaxLength="50" Style="width:100%;" />
-                            <RadzenRequiredValidator Component="Code" Text="Code is required" />
+                            <RadzenLabel Text="@(IsEditMode ? "Code" : "Code (auto)")" Component="Code" />
+                            <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
+                                <RadzenTextBox @bind-Value="Account.Code" Name="Code" Placeholder="Auto-generated from the parent"
+                                               MaxLength="50" Disabled="@IsEditMode" Style="width:100%;" />
+                                @if (IsCreateMode)
+                                {
+                                    <RadzenButton Icon="refresh" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => LoadNextAccountNoAsync())" Disabled="@(!HasParent)"
+                                                  Title="Refresh the next free number" />
+                                }
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="display:block;">@CodeHint</RadzenText>
                         </RadzenColumn>
                         <RadzenColumn Size="6">
                             <RadzenLabel Text="Name *" Component="Name" />
@@ -50,12 +59,15 @@
 
                     <RadzenRow Gap="0.75rem" class="mt-2">
                         <RadzenColumn Size="6">
-                            <RadzenLabel Text="Nature *" Component="Nature" />
-                            <RadzenDropDown @bind-Value="Account.Nature" Name="Nature" Data="@NatureOptions" TValue="string" Style="width:100%;" />
-                            <RadzenRequiredValidator Component="Nature" Text="Nature is required" />
+                            <RadzenLabel Text="Nature" Component="Nature" />
+                            <RadzenDropDown @bind-Value="Account.Nature" Name="Nature" Data="@NatureOptions" TValue="string"
+                                            Disabled="@IsCreateMode" Style="width:100%;" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="display:block;">
+                                @(IsCreateMode ? "Inherited from the parent account." : "Same nature as the parent account.")
+                            </RadzenText>
                         </RadzenColumn>
                         <RadzenColumn Size="6">
-                            <RadzenLabel Text="Parent Account" Component="ParentId" />
+                            <RadzenLabel Text="@(IsCreateMode ? "Parent Account *" : "Parent Account")" Component="ParentId" />
                             <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
                                 <div @ref="trigger" @onclick="Toggle" style="position:relative; flex:1; cursor:pointer;">
                                     <RadzenTextBox ReadOnly="true" Name="ParentId" Value="@SelectedParentText"
@@ -68,13 +80,18 @@
                                                   Click="ClearParent" Title="Clear parent" />
                                 }
                             </div>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="display:block;">
+                                @(IsCreateMode
+                                    ? "The account number and nature are taken from this group."
+                                    : "Changing the parent does not renumber this account.")
+                            </RadzenText>
                         </RadzenColumn>
                     </RadzenRow>
 
                     <RadzenRow Gap="0.75rem" class="mt-2">
                         <RadzenColumn Size="4">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem" Style="height:100%;">
-                                <RadzenSwitch @bind-Value="Account.IsGroup" Name="IsGroup" />
+                                <RadzenSwitch @bind-Value="Account.IsGroup" Name="IsGroup" Change="@OnIsGroupChanged" />
                                 <RadzenLabel Text="Group (header)" Component="IsGroup" />
                             </RadzenStack>
                         </RadzenColumn>

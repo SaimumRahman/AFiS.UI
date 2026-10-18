@@ -12,6 +12,10 @@ namespace JM.UI.DataService.DAL.Accounting
         Task<IEnumerable<ChartOfAccountDTO>> GetGroupAccounts();
         Task<IEnumerable<ChartOfAccountDTO>> GetExpenseAccounts();
         Task<IEnumerable<string>> GetPartyTypes();
+
+        /// <summary>Preview of the account number a new head under the given parent would get.</summary>
+        Task<NextAccountNoDTO?> GetNextAccountNo(int parentId, bool isGroup);
+
         Task<ResponseResult> SaveUpdateChartOfAccount(ChartOfAccountDTO account);
         Task<ResponseResult> DeleteChartOfAccount(int accountId);
     }
