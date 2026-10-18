@@ -41,6 +41,24 @@
                             Style="width:200px" />
         </div>
         <RadzenButton Text="Load" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="@LoadExpenses" />
+        <RadzenButton Text="Download All"
+                      Icon="download"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(IsLoading || !HasAnyListed)"
+                      Click="@DownloadAll"
+                      Title="One PDF voucher covering every expense currently listed" />
+        <RadzenButton Text="@($"Download Selected ({DownloadSelectedCount})")"
+                      Icon="download_for_offline"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(DownloadSelectedCount == 0)"
+                      Click="@DownloadSelected"
+                      Title="One PDF voucher covering the rows ticked in the Download column" />
+        <RadzenButton Text="Clear Downloads"
+                      Icon="clear"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(DownloadSelectedCount == 0)"
+                      Click="@ClearDownloadSelection"
+                      Title="Clear the download selection" />
         <div style="font-size:0.75rem;color:var(--rz-text-secondary-color);padding-bottom:8px">
             Covers @BusinessWindowStart.ToString("dd MMM yyyy hh:mm tt") to @BusinessWindowEnd.AddTicks(-1).ToString("dd MMM yyyy hh:mm tt")
         </div>
@@ -84,6 +102,23 @@
                                         Change="@((bool v) => ToggleRow(data.DailyExpenseId, v))" />
                     </Template>
                 </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Filterable="false" Sortable="false" Width="104px">
+                    <HeaderTemplate>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="4px">
+                            <RadzenCheckBox TValue="bool"
+                                            Value="@AllDownloadSelected(PostableExpenses)"
+                                            Change="@((bool v) => ToggleDownloadAll(PostableExpenses, v))"
+                                            Title="Tick / untick every row for download" />
+                            <span>Download</span>
+                        </RadzenStack>
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@IsDownloadSelected(data.DailyExpenseId)"
+                                        Change="@((bool v) => ToggleDownloadRow(data.DailyExpenseId, v))"
+                                        Title="Tick to include this row in Download Selected" />
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
                     <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
                 </RadzenDataGridColumn>
@@ -108,6 +143,15 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Amount" Title="Amount" Width="120px">
                     <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Filterable="false" Sortable="false" Width="70px">
+                    <Template Context="data">
+                        <RadzenButton Icon="download"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Title="Download this row as a PDF voucher"
+                                      Click="@(() => DownloadRow(data))" />
+                    </Template>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
@@ -159,6 +203,23 @@
         <RadzenDataGrid Data="@PostedToday" TItem="DailyExpenseDTO" AllowPaging="true" PageSize="5"
                         AllowAlternatingRows="true" Style="border-radius:12px">
             <Columns>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Filterable="false" Sortable="false" Width="104px">
+                    <HeaderTemplate>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="4px">
+                            <RadzenCheckBox TValue="bool"
+                                            Value="@AllDownloadSelected(PostedToday)"
+                                            Change="@((bool v) => ToggleDownloadAll(PostedToday, v))"
+                                            Title="Tick / untick every row for download" />
+                            <span>Download</span>
+                        </RadzenStack>
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@IsDownloadSelected(data.DailyExpenseId)"
+                                        Change="@((bool v) => ToggleDownloadRow(data.DailyExpenseId, v))"
+                                        Title="Tick to include this row in Download Selected" />
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
                     <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
                 </RadzenDataGridColumn>
@@ -172,6 +233,15 @@
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="PostedByName" Title="Posted By" Width="120px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Filterable="false" Sortable="false" Width="70px">
+                    <Template Context="data">
+                        <RadzenButton Icon="download"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Title="Download this row as a PDF voucher"
+                                      Click="@(() => DownloadRow(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Width="110px">
                     <Template Context="data">
                         <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
