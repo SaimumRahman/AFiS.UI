@@ -567,7 +567,13 @@
             <div class="pos-right">
             @* Customer Profile Card *@
             <div class="pos-card sidebar-section">
-                <div class="pos-card-title">Customer</div>
+                <div class="pos-card-title" style="@(IsCustomerRequiredForDiscount ? "color:#c62828" : null)">Customer</div>
+                @if (IsCustomerRequiredForDiscount)
+                {
+                    <div style="font-size:0.68rem;color:#c62828;margin-bottom:4px">
+                        Required — a discount is applied to this bill
+                    </div>
+                }
                 @if (SelectedCustomer != null)
                 {
                     <div class="customer-profile">
@@ -661,6 +667,13 @@
                     <div class="billing-row" style="color:#28a745">
                         <span class="label">Discount Amount</span>
                         <span class="value">-@posTotalDiscount.ToString("N2")</span>
+                    </div>
+                }
+                @if (IsCustomerRequiredForDiscount)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:#c62828">
+                        <span class="label">Customer required</span>
+                        <span class="value">discount applied</span>
                     </div>
                 }
                 <div class="billing-row">

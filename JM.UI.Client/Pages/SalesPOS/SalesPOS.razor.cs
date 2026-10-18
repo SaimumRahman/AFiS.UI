@@ -136,6 +136,18 @@ namespace JM.UI.Client.Pages.SalesPOS
                 ? (i.Discount ?? 0) * i.Qty
                 : i.UnitPrice * i.Qty * (i.Discount ?? 0) / 100m);
 
+        // ── Discount → Customer rule ──
+        // A bill that carries any discount (manual invoice discount, campaign /
+        // product discount, or membership discount) must be tied to a customer so
+        // the discount can be traced. The automatic paisa-to-discount rounding is
+        // deliberately excluded: it happens on most bills and is not a discount
+        // anybody grants.
+        protected bool HasDiscountOnBill =>
+            InvoiceDiscountAmount > 0 || CampaignDiscountAmount > 0 || MembershipDiscountAmount > 0;
+
+        // True while a discount is on the bill and no customer has been picked.
+        protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
+
         // Exact payable of the current cart BEFORE the exchange credit is applied.
         // This is the Billing Summary "Net Payable" ceiling an exchange credit is
         // allowed to reach, so it must never include Sale.ExchangeAmount.
@@ -1082,6 +1094,18 @@ namespace JM.UI.Client.Pages.SalesPOS
                 await dialogService.Alert(
                     $"Invoice discount of {InvoiceDiscountPercent:N2}% exceeds the maximum allowed discount of {MaxInvoiceDiscountPercent!.Value:N2}% for your group. Please reduce it before finalising.",
                     "Discount Limit Exceeded",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // A bill carrying a discount must be tied to a customer. This guard runs
+            // before the payment dialog so the cashier is never asked to take payment
+            // and then rejected. The server repeats this check on save.
+            if (IsCustomerRequiredForDiscount)
+            {
+                await dialogService.Alert(
+                    "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "Customer Required",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
             }
