@@ -39,13 +39,61 @@
                                     TextProperty="Name"
                                     ValueProperty="Id"
                                     Placeholder="Select Store"
-                                    Style="width:100%" />
+                                    Style="width:100%"
+                                    Disabled="@(!CanChooseStore)" />
+                    @if (!CanChooseStore)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                            You can only enter expenses for your own store. Contact an administrator to change this.
+                        </RadzenText>
+                    }
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Amount *" Component="ExpenseAmount" />
                     <RadzenNumeric @bind-Value="Expense.Amount" Min="0" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Auto-Post Threshold" />
+                    @if (SelectedStore == null)
+                    {
+                        <div style="padding:9px 12px;border:1px dashed var(--rz-border);border-radius:4px;color:var(--rz-text-secondary)">
+                            Select a store to see its auto-post threshold.
+                        </div>
+                    }
+                    else if (!HasLimit)
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;background:var(--rz-base-200);color:#15803d">
+                            @SelectedStore.Name: no threshold set — every expense posts to the ledger immediately.
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;background:var(--rz-base-200)">
+                            <div>
+                                @SelectedStore.Name — limit <b>@AutoPostLimit!.Value.ToString("N2")</b>
+                            </div>
+                            @if (Expense.Amount <= 0)
+                            {
+                                <div style="color:var(--rz-text-secondary);font-size:0.78rem">
+                                    Amounts up to this post to the ledger; above it goes to Post Ledger.
+                                </div>
+                            }
+                            else if (WillAutoPost)
+                            {
+                                <div style="color:#15803d;font-size:0.78rem">
+                                    This expense (@Expense.Amount.ToString("N2")) will post to the ledger automatically.
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="color:#b26a00;font-size:0.78rem">
+                                    This expense (@Expense.Amount.ToString("N2")) exceeds the limit and will be sent to Post Ledger.
+                                </div>
+                            }
+                        </div>
+                    }
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow Gap="1rem">
@@ -74,10 +122,10 @@
                                       ButtonSize="ButtonSize.Small"
                                       ButtonStyle="@(IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
                                       Click="@(() => SetPaidFrom(true))" />
-                        <RadzenButton Text="Bank / MFS"
+                        @* <RadzenButton Text="Bank / MFS"
                                       ButtonSize="ButtonSize.Small"
                                       ButtonStyle="@(!IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                                      Click="@(() => SetPaidFrom(false))" />
+                                      Click="@(() => SetPaidFrom(false))" /> *@
                     </div>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
@@ -163,6 +211,21 @@
 
     protected bool IsEditMode => EditId > 0;
 
+    // Users in a system group (GroupsRole.IsSystem = 1) - plus the built-in super
+    // admin - may enter an expense against any store. Everyone else is pinned to
+    // the store they are signed in to.
+    protected bool CanChooseStore { get; set; }
+
+    protected StoreDTO? SelectedStore => Stores.FirstOrDefault(s => s.Id == Expense.StoreId);
+
+    protected decimal? AutoPostLimit => SelectedStore?.DailyExpenseLimit;
+
+    protected bool HasLimit => AutoPostLimit is > 0;
+
+    // Mirrors the server rule (InsertUpdateDailyExpenseHandler): a NULL or 0 threshold
+    // means "no threshold configured", so every expense auto-posts.
+    protected bool WillAutoPost => Expense.Amount <= 0 || !HasLimit || Expense.Amount <= AutoPostLimit!.Value;
+
     protected class AccountNode
     {
         public int AccountId { get; set; }
@@ -177,6 +240,16 @@
     {
         try
         {
+            try
+            {
+                CanChooseStore = UserId == 1
+                    || await ServiceUnitOfWork.UserGroupService.GetSystemGroupCountByUserId(UserId) > 0;
+            }
+            catch
+            {
+                CanChooseStore = false;
+            }
+
             Stores = (await ServiceUnitOfWork.StoreService.GetStores()).ToList();
             FinancialAccounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
 
@@ -207,6 +280,14 @@
                 Expense.ExpenseDate = DateTime.Today;
                 Expense.StoreId = StoreId > 0 ? StoreId : Expense.StoreId;
             }
+
+            // A user who may not choose a store is pinned to the one they are signed in to.
+            if (!CanChooseStore && StoreId > 0)
+                Expense.StoreId = StoreId;
+
+            // Never leave the disabled dropdown empty.
+            if (!CanChooseStore && Expense.StoreId <= 0 && Stores.Count > 0)
+                Expense.StoreId = Stores[0].Id;
         }
         catch (Exception ex)
         {
