@@ -72,6 +72,10 @@ namespace JM.UI.Client.Pages.Transfers
         // â”€â”€ Scan textbox (direct-to-grid, qty = 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected string ScanBarcodeText { get; set; } = string.Empty;
         protected RadzenTextBox _barcodeInputRef = default!;
+
+        // ── Purchase (SystemInvoiceNo) → preview grid ───────────────────────
+        protected string PurchaseInvoiceNo { get; set; } = string.Empty;
+        protected bool IsLoadingPurchase { get; set; } = false;
         private bool _shouldFocusBarcodeInput;
         private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -333,6 +337,164 @@ namespace JM.UI.Client.Pages.Transfers
                 IsLoading = false;
             }
         }
+        // ── Purchase (SystemInvoiceNo) → preview grid ───────────────────────
+
+        protected async Task OnPurchaseInvoiceKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+        {
+            if (e.Key != "Enter") return;
+            await LoadFromPurchaseAsync();
+        }
+
+        /// <summary>
+        /// Loads every active line of a purchase (found by its SystemInvoiceNo) into the
+        /// editable preview grid, applying the same rules as the barcode paths:
+        /// lines already in the preview are skipped, lines with no stock in the From
+        /// Store are skipped, and whole-unit UoMs are rounded. Each row keeps the
+        /// purchased quantity, capped at what is actually in stock, and stays editable.
+        /// </summary>
+        protected async Task LoadFromPurchaseAsync()
+        {
+            var invoiceNo = PurchaseInvoiceNo?.Trim();
+            if (string.IsNullOrWhiteSpace(invoiceNo)) return;
+
+            if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Warning,
+                    "Store Not Selected",
+                    "Please select a 'From Store' before loading a purchase.",
+                    duration: 5000);
+                return;
+            }
+
+            try
+            {
+                IsLoadingPurchase = true;
+                StateHasChanged();
+
+                var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
+                                ?? $"Store #{Transfer.StoreId}";
+
+                var purchase = await _serviceUnitOfWork.PurchaseService
+                    .GetPurchaseItemsForTransfer(invoiceNo, Transfer.StoreId.Value);
+
+                if (purchase == null)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Purchase Not Found",
+                        $"No purchase was found with SystemInvoiceNo '{invoiceNo}'.",
+                        duration: 6000);
+                    return;
+                }
+
+                // Stock is checked against the From Store, so call out a mismatch.
+                if (purchase.StoreId.HasValue && purchase.StoreId.Value != Transfer.StoreId.Value)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Different Store",
+                        $"Purchase '{invoiceNo}' was booked into '{purchase.StoreName ?? "#" + purchase.StoreId}', " +
+                        $"but this transfer is from '{storeName}'. Only lines with stock there are loaded.",
+                        duration: 8000);
+                }
+
+                int added = 0, duplicate = 0, noStock = 0, rounded = 0;
+
+                foreach (var line in purchase.Items)
+                {
+                    var barcode = (line.Barcode ?? string.Empty).Trim();
+
+                    // Already in the preview? Same rule as the barcode dropdown.
+                    if (!string.IsNullOrEmpty(barcode) && PreviewItems.Any(r => r.Barcode == barcode))
+                    {
+                        duplicate++;
+                        continue;
+                    }
+
+                    // No stock in the From Store? Same rule as the barcode dropdown.
+                    if (line.CurrentStock <= 0)
+                    {
+                        noStock++;
+                        continue;
+                    }
+
+                    // Default to the purchased quantity, capped at available stock.
+                    var issueQty = Math.Min(line.PurchaseQuantity, line.CurrentStock);
+                    if (issueQty <= 0) issueQty = line.CurrentStock;
+
+                    var row = new TransferPreviewRow
+                    {
+                        ItemId = line.ItemId,
+                        Barcode = barcode,
+                        ItemName = line.ItemName ?? string.Empty,
+                        ColorId = line.ColorId,
+                        ColorName = !string.IsNullOrWhiteSpace(line.ColorName)
+                                        ? line.ColorName
+                                        : Colors.FirstOrDefault(c => c.Id == line.ColorId)?.Name ?? string.Empty,
+                        SizeId = line.SizeId,
+                        SizeName = !string.IsNullOrWhiteSpace(line.SizeName)
+                                        ? line.SizeName
+                                        : Sizes.FirstOrDefault(s => s.Id == line.SizeId)?.Name ?? string.Empty,
+                        GroupId = line.GroupId,
+                        SubGroupId = line.SubGroupId,
+                        DesignId = line.DesignId,
+                        UnitId = line.UnitId,
+                        UnitName = line.UnitName ?? string.Empty,
+                        IsNewItem = line.IsNewItem,
+                        IssueQty = issueQty,
+                        SerialNo = SharedSerialNo,
+                        CreatedRemarks = SharedCreatedRemarks,
+                        StockQuantity = line.CurrentStock,
+                        SalePrice = line.SalePrice
+                    };
+
+                    // Whole-unit UoMs (anything that is not Yards / Meter) take whole numbers only.
+                    if (NormalizePreviewQuantity(row)) rounded++;
+
+                    PreviewItems.Add(row);
+                    added++;
+                }
+
+                PreviewGrid?.Reload();
+                StateHasChanged();
+
+                if (added == 0)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Nothing Loaded",
+                        noStock > 0
+                            ? $"No lines from purchase '{invoiceNo}' have stock in '{storeName}'."
+                            : $"No new lines to load from purchase '{invoiceNo}'.",
+                        duration: 7000);
+                    return;
+                }
+
+                var parts = new List<string> { $"{added} item(s) loaded from purchase '{invoiceNo}'" };
+                if (duplicate > 0) parts.Add($"{duplicate} already in preview");
+                if (noStock > 0) parts.Add($"{noStock} skipped (no stock in '{storeName}')");
+
+                notificationService.Notify(
+                    NotificationSeverity.Success,
+                    "Purchase Loaded",
+                    string.Join(", ", parts) + (rounded > 0 ? $" · {rounded} qty rounded to whole units" : "") + ".");
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Load Failed",
+                    $"An unexpected error occurred while loading the purchase: {ex.Message}",
+                    duration: 7000);
+            }
+            finally
+            {
+                IsLoadingPurchase = false;
+                StateHasChanged();
+            }
+        }
+
         protected async Task LoadTransfer()
         {
             try
@@ -1370,7 +1532,8 @@ namespace JM.UI.Client.Pages.Transfers
                 || !string.IsNullOrWhiteSpace(SharedCreatedRemarks)
                 || SharedIssueQty.HasValue
                 || !string.IsNullOrWhiteSpace(BarcodeSearchText)
-                || !string.IsNullOrWhiteSpace(ScanBarcodeText);
+                || !string.IsNullOrWhiteSpace(ScanBarcodeText)
+                || !string.IsNullOrWhiteSpace(PurchaseInvoiceNo);
         }
         protected async Task TryResetLeftPanel()
         {

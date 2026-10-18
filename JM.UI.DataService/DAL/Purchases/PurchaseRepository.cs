@@ -146,6 +146,37 @@ namespace JM.UI.DataService.DAL.Purchases
                 throw;
             }
         }
+
+        /// <summary>
+        /// Finds a purchase by its SystemInvoiceNo with its lines resolved against the
+        /// given store (stock + sale rate), for Item Transfer entry.
+        /// </summary>
+        public async Task<PurchaseItemsForTransferDTO?> GetPurchaseItemsForTransfer(string systemInvoiceNo, int storeId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(systemInvoiceNo))
+                    return null;
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(
+                    $"api/Purchase/get-purchase-items-for-transfer/{Uri.EscapeDataString(systemInvoiceNo.Trim())}?storeId={storeId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Failed to fetch purchase items for transfer for SystemInvoiceNo: {SystemInvoiceNo}. Status: {StatusCode}",
+                        systemInvoiceNo, response.StatusCode);
+                    return null;
+                }
+
+                return await response.Content.ReadFromJsonAsync<PurchaseItemsForTransferDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetPurchaseItemsForTransfer service for SystemInvoiceNo: {SystemInvoiceNo}", systemInvoiceNo);
+                throw;
+            }
+        }
         // =============================================
         // Save/Update Purchase
         // =============================================

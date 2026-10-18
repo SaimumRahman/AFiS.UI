@@ -287,6 +287,29 @@ else
                                                Style="width:100%; font-size:0.75rem;" />
                             </RadzenColumn>
                         </RadzenRow>
+
+                        <!-- Purchase (SystemInvoiceNo) → loads its items into the preview grid -->
+                        <RadzenRow AlignItems="AlignItems.Center" Gap="0.15rem">
+                            <RadzenColumn Size="4">
+                                <RadzenLabel Text="Purchase Inv." Style="font-weight:600; font-size:0.75rem;" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="8">
+                                <div style="display:flex; gap:4px; align-items:center;">
+                                    <RadzenTextBox @bind-Value="PurchaseInvoiceNo"
+                                                   Placeholder="SystemInvoiceNo"
+                                                   Style="flex:1; font-size:0.75rem;"
+                                                   @onkeydown="OnPurchaseInvoiceKeyUp"
+                                                   Disabled="@(IsProcessing || IsLoadingPurchase)" />
+                                    <RadzenButton Icon="download"
+                                                  Text="Load"
+                                                  ButtonStyle="ButtonStyle.Primary"
+                                                  Size="ButtonSize.Small"
+                                                  Click="@LoadFromPurchaseAsync"
+                                                  Disabled="@(IsProcessing || IsLoadingPurchase || string.IsNullOrWhiteSpace(PurchaseInvoiceNo))"
+                                                  Style="height:26px; font-size:0.72rem; white-space:nowrap;" />
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
                     </RadzenStack>
                 </RadzenColumn>
 

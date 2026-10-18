@@ -82,6 +82,16 @@ namespace JM.UI.Service.Purchases
                 throw;
             }
         }
+
+        /// <summary>
+        /// Finds a purchase by its SystemInvoiceNo with its lines resolved against the
+        /// given store (stock + sale rate), for Item Transfer entry.
+        /// </summary>
+        public async Task<PurchaseItemsForTransferDTO?> GetPurchaseItemsForTransfer(string systemInvoiceNo, int storeId)
+        {
+            return await _repositoryUnitOfWork.PurchaseRepository
+                .GetPurchaseItemsForTransfer(systemInvoiceNo, storeId);
+        }
         // =============================================
         // Delete Purchase
         // =============================================
