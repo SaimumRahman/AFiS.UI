@@ -85,6 +85,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IFinancialAccountsRepository FinancialAccountsRepository { get; }
         IChartOfAccountRepository ChartOfAccountRepository { get; }
         IOpeningBalanceRepository OpeningBalanceRepository { get; }
+        IManualJournalRepository ManualJournalRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
         ICostCenterRepository CostCenterRepository { get; }

@@ -87,6 +87,7 @@ namespace JM.UI.Service.UnitOfWork
         IFinancialAccountsService FinancialAccountsService { get; }
         IChartOfAccountService ChartOfAccountService { get; }
         IOpeningBalanceService OpeningBalanceService { get; }
+        IManualJournalService ManualJournalService { get; }
         IGroupRoleService GroupRoleService { get; }
         IUserGroupService UserGroupService { get; }
         IShiftService ShiftService { get; }

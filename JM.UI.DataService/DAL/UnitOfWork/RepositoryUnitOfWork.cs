@@ -92,6 +92,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IFinancialAccountsRepository FinancialAccountsRepository { get; }
         public IChartOfAccountRepository ChartOfAccountRepository { get; }
         public IOpeningBalanceRepository OpeningBalanceRepository { get; }
+        public IManualJournalRepository ManualJournalRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
         public ICostCenterRepository CostCenterRepository { get; }
@@ -157,6 +158,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             FinancialAccountsRepository = new FinancialAccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<FinancialAccountsRepository>());
             ChartOfAccountRepository = new ChartOfAccountRepository(factory, tokenProvider, loggerFactory.CreateLogger<ChartOfAccountRepository>());
             OpeningBalanceRepository = new OpeningBalanceRepository(factory, tokenProvider, loggerFactory.CreateLogger<OpeningBalanceRepository>());
+            ManualJournalRepository = new ManualJournalRepository(factory, tokenProvider, loggerFactory.CreateLogger<ManualJournalRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
             CostCenterRepository = new CostCenterRepository(factory, tokenProvider, loggerFactory.CreateLogger<CostCenterRepository>());

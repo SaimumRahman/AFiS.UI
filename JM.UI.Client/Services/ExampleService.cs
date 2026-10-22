@@ -460,6 +460,15 @@ namespace JM.UI.Client.Services
                         Title       = "Opening Balance",
                         Description = "Post one balanced opening-balance voucher per branch and fiscal year",
                         Tags        = new[] { "opening", "balance", "ledger", "finance", "accounting", "voucher" }
+                    },
+                    new Example
+                    {
+                        Name        = "Manual Journal",
+                        Path        = "/ManualJournalList",
+                        Icon        = "\ue8b0",
+                        Title       = "Manual Journal",
+                        Description = "Enter, post and reverse balanced double-entry journals (JRN) by hand",
+                        Tags        = new[] { "journal", "voucher", "ledger", "finance", "accounting", "manual", "jrn" }
                     }
                 }
             },
