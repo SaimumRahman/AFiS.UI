@@ -15,23 +15,30 @@
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack>
                         <RadzenFormField Text="Payment Date" Variant="Variant.Outlined">
-                            <RadzenDatePicker @bind-Value="@PaymentModel.PaymentDate" Name="PaymentDate" DateFormat="d"/>
+                            <RadzenDatePicker @bind-Value="@PaymentModel.PaymentDate" Name="PaymentDate" DateFormat="d" />
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="PaymentDate" Text="Payment date is required" />
 
                         <RadzenFormField Text="Supplier" Variant="Variant.Outlined">
-                            <RadzenDropDown Data="@SuppliersList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.SupplierId" Name="SupplierId" 
+                            <RadzenDropDown Data="@SuppliersList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.SupplierId" Name="SupplierId"
                                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true" />
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="SupplierId" Text="Supplier is required" DefaultValue="0" />
 
                         <RadzenFormField Text="Store" Variant="Variant.Outlined">
-                            <RadzenDropDown Data="@StoresList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.StoreId" Name="StoreId" />
+                            <RadzenDropDown Data="@StoresList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.StoreId" Name="StoreId"
+                                            Disabled="@(!CanSelectAnyStore)" Change="@OnStoreChanged" />
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="StoreId" Text="Store is required" DefaultValue="0" />
+                        @if (!CanSelectAnyStore)
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color:#777">
+                                Payments are limited to your assigned store.
+                            </RadzenText>
+                        }
 
                         <RadzenFormField Text="Amount" Variant="Variant.Outlined">
-                            <RadzenNumeric @bind-Value="@PaymentModel.PaymentAmount" Name="PaymentAmount" />
+                            <RadzenNumeric @bind-Value="@PaymentModel.PaymentAmount" Name="PaymentAmount" Min="0" />
                         </RadzenFormField>
                         <RadzenRequiredValidator Component="PaymentAmount" Text="Amount is required" DefaultValue="0" />
                         <RadzenCompareValidator Component="PaymentAmount" Value="@(0m)" Operator="CompareOperator.GreaterThan" Text="Amount must be greater than 0" />
@@ -40,23 +47,73 @@
 
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack>
-                        <RadzenFormField Text="Payment Method" Variant="Variant.Outlined">
-                            <RadzenDropDown Data="@PaymentMethods" @bind-Value="@PaymentModel.PaymentMethod" Name="PaymentMethod" Change="@OnPaymentMethodChange" />
+                        <RadzenFormField Text="Payment Mode" Variant="Variant.Outlined">
+                            <RadzenDropDown Data="@PaymentModes" TextProperty="Label" ValueProperty="Value" @bind-Value="@PaymentMode" Name="PaymentMode" Change="@OnModeChanged" />
                         </RadzenFormField>
-                        <RadzenRequiredValidator Component="PaymentMethod" Text="Payment method is required" />
 
-                        <RadzenFormField Text="Bank" Variant="Variant.Outlined" Visible="@(IsBankVisible)">
-                            <RadzenDropDown Data="@BanksList" TextProperty="Name" ValueProperty="Id" @bind-Value="@PaymentModel.BankId" Name="BankId" />
-                        </RadzenFormField>
-                        <RadzenRequiredValidator Component="BankId" Text="Bank is required" Visible="@(IsBankVisible)" DefaultValue="0" />
+                        @if (PaymentMode == "Cash")
+                        {
+                            <RadzenFormField Text="Cash Ledger" Variant="Variant.Outlined">
+                                <RadzenDropDown Data="@CashLedgers" TextProperty="CashDisplay" ValueProperty="LedgerCode"
+                                                @bind-Value="@SelectedCashLedgerCode" Name="CashLedger" Change="@OnCashLedgerChanged" />
+                            </RadzenFormField>
+                            @if (!IsLoadingSources && CashLedgers.Count == 0)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
+                                    No active cash ledger was found for this branch.
+                                </RadzenText>
+                            }
+                        }
+                        else
+                        {
+                            <RadzenFormField Text="@(PaymentMode == "Cheque" ? "Bank Account" : "Financial Account")" Variant="Variant.Outlined">
+                                <RadzenDropDownDataGrid TValue="int?" @bind-Value="SelectedFinancialAccountId"
+                                                        Data="@FinancialAccounts"
+                                                        TextProperty="DisplayName"
+                                                        ValueProperty="FinancialAccountId"
+                                                        Change="@OnFinancialAccountChanged"
+                                                        Placeholder="Select financial account"
+                                                        AllowFiltering="true" AllowFilteringByAllStringColumns="true"
+                                                        FilterOperator="StringFilterOperator.Contains"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowClear="true" Style="width:100%"
+                                                        EmptyText="No financial account with a ledger is set up for this store.">
+                                    <Columns>
+                                        <RadzenDropDownDataGridColumn Property="DisplayName" Title="MFS / Bank" Width="160px" />
+                                        <RadzenDropDownDataGridColumn Property="AccountNo" Title="Account No" Width="150px" />
+                                        <RadzenDropDownDataGridColumn Property="StoreName" Title="Store" Width="140px" />
+                                        <RadzenDropDownDataGridColumn Property="BalanceDisplay" Title="Balance" Width="110px" />
+                                    </Columns>
+                                </RadzenDropDownDataGrid>
+                            </RadzenFormField>
 
-                        <RadzenFormField Text="Cheque No" Variant="Variant.Outlined" Visible="@(IsChequeVisible)">
-                            <RadzenTextBox @bind-Value="@PaymentModel.ChequeNo" Name="ChequeNo" />
-                        </RadzenFormField>
-                        
-                        <RadzenFormField Text="Cheque Date" Variant="Variant.Outlined" Visible="@(IsChequeVisible)">
-                             <RadzenDatePicker @bind-Value="@PaymentModel.ChequeDate" Name="ChequeDate" DateFormat="d" />
-                        </RadzenFormField>
+                            @if (!IsLoadingSources && FinancialAccounts.Count == 0)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
+                                    No financial account with a ledger is set up
+                                    @(IsSystemGroupUser ? "yet." : "for this store.") Cash is available until one is configured.
+                                </RadzenText>
+                            }
+
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">
+                                Posts to ledger: <strong>@SelectedLedgerText</strong>
+                            </RadzenText>
+
+                            <RadzenFormField Text="Transaction No" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@PaymentModel.TransactionNo" Name="TransactionNo" />
+                            </RadzenFormField>
+                        }
+
+                        @if (PaymentMode == "Cheque")
+                        {
+                            <RadzenFormField Text="Cheque No" Variant="Variant.Outlined">
+                                <RadzenTextBox @bind-Value="@PaymentModel.ChequeNo" Name="ChequeNo" />
+                            </RadzenFormField>
+
+                            <RadzenFormField Text="Cheque Date" Variant="Variant.Outlined">
+                                <RadzenDatePicker @bind-Value="@PaymentModel.ChequeDate" Name="ChequeDate" DateFormat="d" />
+                            </RadzenFormField>
+                        }
 
                         <RadzenFormField Text="Reference No" Variant="Variant.Outlined">
                             <RadzenTextBox @bind-Value="@PaymentModel.ReferenceNo" Name="ReferenceNo" />
@@ -69,8 +126,37 @@
                 </RadzenColumn>
             </RadzenRow>
 
+            @if (IsLoadingSources)
+            {
+                <div class="mt-3" style="color:#555">Loading cash / bank balances…</div>
+            }
+            else if (SelectedSource != null)
+            {
+                <div class="mt-3"
+                     style="border-radius:6px;padding:10px 12px;background:@(IsInsufficient ? "#fdecea" : "#e8f5e9");color:@(IsInsufficient ? "#b71c1c" : "#1b5e20");">
+                    <div>
+                        Available in <strong>@SelectedSource.LedgerName (@SelectedSource.LedgerCode)</strong>
+                        for branch <strong>@(PaymentSources?.BranchCode ?? "-")</strong>:
+                        <strong>@AvailableBalance.ToString("N2")</strong>
+                    </div>
+                    @if (IsInsufficient)
+                    {
+                        <div style="margin-top:4px">
+                            This payment (@PaymentModel.PaymentAmount.ToString("N2")) exceeds the available balance.
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (IsPostDatedCheque)
+            {
+                <div class="mt-2" style="border-radius:6px;padding:10px 12px;background:#fff8e1;color:#8d6e00;">
+                    Post-dated cheque: the balance check is skipped because the cheque date is after today.
+                </div>
+            }
+
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
-                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" Disabled="@(!CanSave)" />
                 <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
             </RadzenStack>
         </RadzenTemplateForm>
