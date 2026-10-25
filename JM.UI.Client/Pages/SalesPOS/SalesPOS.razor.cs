@@ -146,6 +146,12 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected bool HasDiscountOnBill =>
             InvoiceDiscountAmount > 0 || CampaignDiscountAmount > 0 || MembershipDiscountAmount > 0;
 
+        // When true (default), the manual invoice discount is divided equally across
+        // cart items that don't already have a product-level discount.
+        // When false, the discount stays at the bill level only (not pushed to lines)
+        // and the Discount column becomes editable for manual per-item entry.
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
 
@@ -657,8 +663,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
                 {
                     detail.UnitPrice = unitPrice.Value;
-                    detail.TotalAmount = detail.Qty * detail.UnitPrice;
                 }
+                detail.TotalAmount = detail.Qty * detail.UnitPrice;
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -718,6 +724,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 item.Qty = newQty;
                 item.TotalAmount = item.Qty * item.UnitPrice;
             }
+            SyncInvoiceDiscountFromLines();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -745,9 +752,63 @@ namespace JM.UI.Client.Pages.SalesPOS
             StateHasChanged();
         }
 
+        // Called when the user manually edits a line's discount (only when equal
+        // distribution is OFF). Line.Discount is an allocation of the bill-level
+        // invoice discount, so TotalAmount stays gross — the invoice discount is
+        // subtracted once in the billing summary.
+        protected void UpdateCartItemDiscount(SaleDetailDTO item, decimal? newDiscount)
+        {
+            // Manual entry is only available when equal distribution is off and
+            // the line is not already carrying a campaign/product discount.
+            if (DistributeInvoiceDiscountEqually || item.HasDiscount) return;
+
+            var lineGross = Math.Max(item.Qty * item.UnitPrice, 0);
+            var discount = Math.Clamp(newDiscount ?? 0, 0, lineGross);
+
+            item.Discount = Math.Round(discount, 2);
+
+            // The manual per-item entries are the source of truth in this mode:
+            // keep the bill-level invoice discount in sync with their total so the
+            // payable always matches what the cashier typed on the lines.
+            SyncInvoiceDiscountFromLines();
+
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // Recomputes the bill-level invoice discount as the sum of the manually
+        // entered per-item discounts (flat amount) while equal distribution is off.
+        protected void SyncInvoiceDiscountFromLines()
+        {
+            if (DistributeInvoiceDiscountEqually) return;
+
+            Sale.InvoiceDiscountType = "Flat";
+            Sale.InvoiceDiscount = CartItems
+                .Where(i => !i.HasDiscount)
+                .Sum(i => i.Discount ?? 0);
+        }
+
+        // Checkbox handler: switching ON re-runs the equal distribution; switching
+        // OFF makes the existing per-item values authoritative for the bill total.
+        protected void OnDistributeInvoiceDiscountModeChanged()
+        {
+            if (DistributeInvoiceDiscountEqually)
+            {
+                DistributeInvoiceDiscount();
+                return;
+            }
+
+            SyncInvoiceDiscountFromLines();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
         protected void RemoveCartItem(SaleDetailDTO item)
         {
             CartItems.Remove(item);
+            SyncInvoiceDiscountFromLines();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -778,6 +839,17 @@ namespace JM.UI.Client.Pages.SalesPOS
             // Only distribute across items that don't already have a product-level discount.
             var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
+
+            // When distribution is OFF, don't auto-distribute — leave the manually
+            // entered per-item discounts alone (including when the invoice discount
+            // amount is zero).
+            if (!DistributeInvoiceDiscountEqually)
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
 
             decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
                 ? SubTotal * (Sale.InvoiceDiscount.Value / 100m)
@@ -894,14 +966,19 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.DiscountRate = null;
             Sale.MembershipDiscount = null;
 
-            // Remove the customer-discount shares from cart items.
-            foreach (var item in CartItems.Where(i => !i.HasDiscount))
+            // Remove the customer-discount shares from cart items, then restore the
+            // invoice-discount allocation. In manual mode the per-item entries are
+            // left untouched.
+            if (DistributeInvoiceDiscountEqually)
             {
-                item.Discount = 0;
+                DistributeInvoiceDiscount();
             }
-            if (CartGrid != null)
-                CartGrid.Reload();
-            StateHasChanged();
+            else
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+            }
         }
 
         // ── Customer / Membership Discount Distribution ──
@@ -932,6 +1009,13 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             var discountRate = GetCustomerDiscountRate(SelectedCustomer);
             if (discountRate <= 0)
+            {
+                return;
+            }
+
+            // Manual per-item discount entry is active. Membership shares and manual
+            // allocations use the same line Discount field, so don't overwrite them.
+            if (!DistributeInvoiceDiscountEqually)
             {
                 return;
             }

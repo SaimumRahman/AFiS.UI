@@ -410,7 +410,23 @@
                                             <RadzenNumeric @bind-Value="item.UnitPrice" Min="@item.BaseUnitPrice" Max="999999" Step="0.01" Style="width:70px" Change="@((decimal v) => UpdateCartItemPrice(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Discount" Title="Disc" Width="70" />
+@*                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Disc" Width="70">
+                                        <Template Context="item">
+                                            @if (DistributeInvoiceDiscountEqually || item.HasDiscount)
+                                            {
+                                                <span style="padding-left:6px; display:inline-block; color:#666; font-size:0.75rem">
+                                                    @((item.Discount ?? 0).ToString("N2"))
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <RadzenNumeric @bind-Value="item.Discount"
+                                                               Min="0" Max="@(item.Qty * item.UnitPrice)" Step="0.01"
+                                                               Style="width:60px"
+                                                               Change="@((decimal? v) => UpdateCartItemDiscount(item, v))" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn> *@
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70" />
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
                                         <Template Context="item">
@@ -637,10 +653,14 @@
                     </div>
                 }
                 <div class="billing-row">
-                    <span class="label">Invoice Discount</span>
+                    <span class="label">Invoice Discount @(DistributeInvoiceDiscountEqually ? "" : "(from items)")</span>
                     <span class="value">
-                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
-                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Change="@((object args) => DistributeInvoiceDiscount())" />
+                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
+                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((object args) => DistributeInvoiceDiscount())" />
+                        <RadzenCheckBox @bind-Value="DistributeInvoiceDiscountEqually"
+                                        Style="margin-left:8px; vertical-align:middle"
+                                        Change="@((bool v) => OnDistributeInvoiceDiscountModeChanged())"
+                                        Text="Distribute equally" />
                     </span>
                 </div>
                 @{
