@@ -10,6 +10,7 @@ using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
@@ -129,5 +130,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ISaleRepository SaleRepository { get; }
         IReportingRepository ReportingRepository { get; }
         IDailyExpenseRepository DailyExpenseRepository { get; }
+        ICounterClosingRepository CounterClosingRepository { get; }
     }
 }

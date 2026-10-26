@@ -13,6 +13,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.DailyExpense;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
@@ -105,6 +106,7 @@ namespace JM.UI.DataService
             services.AddScoped<ICouponRepository, CouponRepository>();
             services.AddScoped<ISaleRepository, SaleRepository>();
             services.AddScoped<IDailyExpenseRepository, DailyExpenseRepository>();
+            services.AddScoped<ICounterClosingRepository, CounterClosingRepository>();
             #endregion
         }
 

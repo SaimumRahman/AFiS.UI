@@ -10,6 +10,7 @@ using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
@@ -137,6 +138,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ISaleRepository SaleRepository { get; }
         public IReportingRepository ReportingRepository { get; }
         public IDailyExpenseRepository DailyExpenseRepository { get; }
+        public ICounterClosingRepository CounterClosingRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -202,6 +204,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
             ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
             DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
+            CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
         }
 
         public void Dispose()

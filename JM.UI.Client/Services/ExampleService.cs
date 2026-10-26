@@ -346,6 +346,15 @@ namespace JM.UI.Client.Services
                         Title       = "POS",
                         Description = "Manage vendor and supplier records",
                         Tags        = new[] { "supplier", "vendor" }
+                    },
+                    new Example
+                    {
+                        Name        = "Counter Closing",
+                        Path        = "/CounterClosing",
+                        Icon        = "\ue558",
+                        Title       = "POS",
+                        Description = "Manage vendor and supplier records",
+                        Tags        = new[] { "supplier", "vendor" }
                     }
                 }
             },

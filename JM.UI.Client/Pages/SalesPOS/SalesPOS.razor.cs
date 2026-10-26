@@ -150,7 +150,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // cart items that don't already have a product-level discount.
         // When false, the discount stays at the bill level only (not pushed to lines)
         // and the Discount column becomes editable for manual per-item entry.
-        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = false;
 
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
