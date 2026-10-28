@@ -1933,6 +1933,36 @@ protected bool IsProcessing { get; set; } = false;
         private bool IsBarcodeInPreview(string barcode) =>
             PreviewItems.Any(p => BarcodesEqual(p.Barcode, barcode));
 
+        /// <summary>
+        /// Appends only barcodes that are not already present in the editable preview grid.
+        /// Duplicates (against the grid or within the incoming batch) are ignored and the
+        /// remaining rows are still added. Returns the number of rows actually appended.
+        /// </summary>
+        private int AppendPreviewRows(IEnumerable<PreviewItemRow> newRows)
+        {
+            var existing = new HashSet<string>(
+                PreviewItems
+                    .Select(p => p.Barcode?.Trim() ?? string.Empty)
+                    .Where(b => b.Length > 0),
+                StringComparer.OrdinalIgnoreCase);
+
+            var added = 0;
+
+            foreach (var row in newRows)
+            {
+                if (row == null) continue;
+
+                var key = row.Barcode?.Trim() ?? string.Empty;
+                if (key.Length == 0) continue;          // nothing to match on
+                if (!existing.Add(key)) continue;       // already in grid / duplicate in batch
+
+                PreviewItems.Add(row);
+                added++;
+            }
+
+            return added;
+        }
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
@@ -2287,15 +2317,24 @@ Quantity = 0,
                         await PopulateFromExistingItem(selectedItem!, result.itemWiseFeatures);
                         DisableItemFields = false;
                         Purchase.SupplierId = selectedItem!.SupplierId;
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Success, "Success",
-                            $"Item loaded! {PreviewItems.Count} variant(s) in preview.");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Success, "Success",
+                                skipped > 0
+                                    ? $"Added {added} variant(s). {skipped} duplicate barcode(s) skipped."
+                                    : $"Item loaded! {added} variant(s) added to preview.");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                         var itemData = AvailableItems.Where(x => x.Barcode == barcode).FirstOrDefault();
                         CurrentItem.ColorId = itemData.ColorId;
                         CurrentItem.SizeId = itemData.SizeId;
@@ -2305,14 +2344,24 @@ Quantity = 0,
                         PopulateFromPurchaseItem(result.Item);
                         DisableItemFields = false;
 
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Info, "Info", "Item found in purchase history");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Info, "Info",
+                                skipped > 0
+                                    ? $"Item found in purchase history. Added {added} variant(s), {skipped} duplicate barcode(s) skipped."
+                                    : $"Item found in purchase history. Added {added} variant(s).");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                     }
                 }
                 else
@@ -2320,15 +2369,22 @@ Quantity = 0,
                     CurrentItem.Barcode = barcode;
                     DisableItemFields = false;
 
-                    PreviewItems.Clear();
                     ResetSharedPricing();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                    foreach (var row in newRows)
-                        PreviewItems.Add(row);
+                    var added = AppendPreviewRows(newRows);
+                    var skipped = Math.Max(0, newRows.Count - added);
 
-                    await PreviewGrid?.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Create New",
-                        "No item found. You can create a new item.");
+                    PreviewGrid?.Reload();
+                    if (added > 0)
+                    {
+                        notificationService.Notify(NotificationSeverity.Info, "Create New",
+                            "No item found. You can create a new item.");
+                    }
+                    else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                            $"Barcode '{barcode}' is already in the preview table.");
+                    }
                 }
             }
             catch (Exception ex)
