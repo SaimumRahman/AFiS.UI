@@ -154,6 +154,14 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term);
         }
 
+        public async Task<decimal?> GetItemVat(int itemId)
+        {
+            if (itemId <= 0)
+                return null;
+
+            return await _repositoryUnitOfWork.SaleRepository.GetItemVat(itemId);
+        }
+
         public Task<(bool IsValid, string ErrorMessage)> ValidateSale(SaleMasterDTO sale)
         {
             if (sale.SaleDetails == null || sale.SaleDetails.Count == 0)

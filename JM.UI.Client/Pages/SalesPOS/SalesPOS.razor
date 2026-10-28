@@ -412,22 +412,28 @@
                                     </RadzenDataGridColumn>
                                      <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Disc" Width="70">
                                         <Template Context="item">
-                                           @*   @if (DistributeInvoiceDiscountEqually || item.HasDiscount)
-                                            {  *@
+                                              @if (DistributeInvoiceDiscountEqually || item.HasDiscount)
+                                            {  
                                                 <span style="padding-left:6px; display:inline-block; color:#666; font-size:0.75rem">
                                                     @((item.Discount ?? 0).ToString("N2"))
                                                 </span>
-                                            @*  }
+                                             }
                                             else
                                             { 
                                                 <RadzenNumeric @bind-Value="item.Discount"
                                                                Min="0" Max="@(item.Qty * item.UnitPrice)" Step="0.01"
                                                                Style="width:60px"
                                                                Change="@((decimal? v) => UpdateCartItemDiscount(item, v))" />
-                                            } *@
+                                            } 
                                         </Template>
                                     </RadzenDataGridColumn> 
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70" />
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70">
+                                        <Template Context="item">
+                                            <span style="padding-left:6px; display:inline-block;">
+                                                @((item.Vat ?? 0).ToString("N2"))
+                                            </span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
                                         <Template Context="item">
                                             <span style="font-weight:600">@item.TotalAmount.ToString("N2")</span>
@@ -698,7 +704,7 @@
                     </div>
                 }
                 <div class="billing-row">
-                    <span class="label">VAT (@(Sale.VatPercentage)%)</span>
+                    <span class="label">VAT (incl.)</span>
                     <span class="value">@CalculatedVat.ToString("N2")</span>
                 </div>
                 @if (Sale.RoundingAmount.HasValue && Sale.RoundingAmount != 0)

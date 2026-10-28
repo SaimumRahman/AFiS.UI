@@ -88,7 +88,9 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         // ── Computed Values ──
         protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
-        protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 0) / 100m);
+        // VAT is per item (from its group) and is already folded into each line's
+        // TotalAmount, so this is only the informational VAT breakdown of SubTotal.
+        protected decimal CalculatedVat => CartItems.Sum(c => CalculateLineVat(c.Qty, c.UnitPrice, c.Vat));
         protected decimal InvoiceDiscountAmount
         {
             get
@@ -148,7 +150,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // cart items that don't already have a product-level discount.
         // When false, the discount stays at the bill level only (not pushed to lines)
         // and the Discount column becomes editable for manual per-item entry.
-        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = false;
 
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
@@ -167,7 +169,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     net -= Sale.InvoiceDiscount ?? 0;
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
-                net += CalculatedVat;
+                // VAT is already included in each line's TotalAmount (and therefore
+                // in SubTotal), so it must not be added again here.
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
             }
@@ -607,7 +610,7 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
             {
-                AddProductToCart(product, selected.Qty, selected.UnitPrice);
+                await AddProductToCart(product, selected.Qty, selected.UnitPrice);
                 if (CartGrid != null)
                     await CartGrid.Reload();
                 StateHasChanged();
@@ -621,7 +624,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 .Sum(c => c.Qty);
         }
 
-        protected void AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
+        protected async Task AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
         {
             // Whole-unit items (everything except Yards / Meter) cannot take a fractional
             // quantity: snap it to a whole number before the cart ever sees it.
@@ -648,21 +651,28 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
+            // VAT comes from the item's group (Items.GroupId -> Groups.VAT).
+            // The API returns null when the item has no group or no VAT is set,
+            // in which case the cart shows 0.
+            var vat = await _serviceUnitOfWork.SaleService.GetItemVat(product.ItemId) ?? 0m;
+
             if (existing != null)
             {
                 existing.Qty += qty;
+                existing.Vat = vat;
                 if (unitPrice.HasValue && unitPrice.Value > existing.BaseUnitPrice)
                     existing.UnitPrice = unitPrice.Value;
-                existing.TotalAmount = existing.Qty * existing.UnitPrice;
+                existing.TotalAmount = CalculateLineTotal(existing);
             }
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                detail.Vat = vat;
                 if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
                 {
                     detail.UnitPrice = unitPrice.Value;
                 }
-                detail.TotalAmount = detail.Qty * detail.UnitPrice;
+                detail.TotalAmount = CalculateLineTotal(detail);
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -672,6 +682,25 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             DistributeCustomerDiscount();
+        }
+
+        // Line total = qty x unit price, plus that line's group VAT (%) when it has one.
+        // VAT is per item (Groups.VAT), so a null/zero VAT leaves the total as qty x price.
+        // SubTotal is the sum of these totals, so VAT flows into discounts and net payable.
+        protected static decimal CalculateLineTotal(SaleDetailDTO item)
+            => CalculateLineTotal(item.Qty, item.UnitPrice, item.Vat);
+
+        protected static decimal CalculateLineTotal(decimal qty, decimal unitPrice, decimal? vat)
+            => Math.Round(qty * unitPrice + CalculateLineVat(qty, unitPrice, vat), 2);
+
+        // The VAT portion of a line, using the same base (qty x price) and rounding as
+        // CalculateLineTotal so the summary always matches the folded-in total.
+        protected static decimal CalculateLineVat(decimal qty, decimal unitPrice, decimal? vat)
+        {
+            if (!vat.HasValue || vat.Value <= 0)
+                return 0m;
+
+            return Math.Round(qty * unitPrice * vat.Value / 100m, 2);
         }
 
         protected string GetStoreName(int? storeId)
@@ -720,7 +749,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 item.Qty = newQty;
-                item.TotalAmount = item.Qty * item.UnitPrice;
+                item.TotalAmount = CalculateLineTotal(item);
             }
             SyncInvoiceDiscountFromLines();
             DistributeCustomerDiscount();
@@ -743,7 +772,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 item.UnitPrice = newPrice;
             }
-            item.TotalAmount = item.Qty * item.UnitPrice;
+            item.TotalAmount = CalculateLineTotal(item);
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
