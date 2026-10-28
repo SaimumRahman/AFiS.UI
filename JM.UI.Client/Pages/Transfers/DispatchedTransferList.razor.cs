@@ -330,8 +330,14 @@ namespace JM.UI.Client.Pages.Transfer
 
                 if (fullyReceivedMasterIds.Any())
                 {
+                    // Stamp the receipt with the signed-in user, not a hardcoded id.
+                    var receivedByUserId = CurrentUserId > 0
+                        ? CurrentUserId
+                        : await GetLocalStorageInt("UserId");
+
                     // --- Call your API here when ready ---
-                    await _serviceUnitOfWork.TransferService.UpdateReceivedStatus(receivedDetailIds, fullyReceivedMasterIds, DateTime.Now, 1);
+                    await _serviceUnitOfWork.TransferService.UpdateReceivedStatus(
+                        receivedDetailIds, fullyReceivedMasterIds, DateTime.Now, receivedByUserId);
 
                     await OnInitializedAsync();
                 }
