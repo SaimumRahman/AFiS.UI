@@ -176,7 +176,7 @@ namespace JM.UI.Service.SalesPOS
                 CreatedDate = DateTime.Now,
                 SalesType = "Sale",
                 PaymentStatus = "Due",
-                VatPercentage = 5m,
+                VatPercentage = 0m,
                 InvoiceDiscountType = "Percentage",
                 IsActive = true
             };

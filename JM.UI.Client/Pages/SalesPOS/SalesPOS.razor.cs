@@ -4,14 +4,12 @@ using JM.UI.Client.Pages.Dialog.SalesPOS;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.Employees;
-using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.SalesPOS;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Shift;
-using JM.UI.Entities.Model.Bank;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -90,7 +88,7 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         // ── Computed Values ──
         protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
-        protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 5) / 100m);
+        protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 0) / 100m);
         protected decimal InvoiceDiscountAmount
         {
             get
@@ -825,7 +823,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             SelectedEmployeeName = null;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
-            Sale.VatPercentage = 5;
+            Sale.VatPercentage = 0;
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();

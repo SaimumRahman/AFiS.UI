@@ -18,7 +18,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal? InvoiceDiscount { get; set; }
         public string? InvoiceDiscountType { get; set; } = "Percentage";
         public decimal? VatAmount { get; set; }
-        public decimal? VatPercentage { get; set; } = 5m;
+        public decimal? VatPercentage { get; set; } = 0m;
         public decimal? ExchangeAmount { get; set; }
         public decimal? RoundingAmount { get; set; }
         public decimal NetAmount { get; set; }
