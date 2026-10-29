@@ -98,6 +98,7 @@ namespace JM.UI.Entities.Model.CounterClosing
         public int PendingCount { get; set; }
 
         public List<CounterPaymentSummaryDTO> PaymentSummary { get; set; } = new();
+        public List<CounterPaymentSummaryDTO> CashOutSummary { get; set; } = new();
         public List<CounterTransactionDTO> Transactions { get; set; } = new();
         public List<CounterCashMovementDTO> CashMovements { get; set; } = new();
     }

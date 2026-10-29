@@ -163,6 +163,49 @@
             </RadzenRow>
         </RadzenCard>
 
+        <!-- ══════════════════════ CASH IN / CASH OUT SUMMARY ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-2">Cash In (by account)</RadzenText>
+                    <RadzenDataGrid Data="@Preview.PaymentSummary" TItem="CounterPaymentSummaryDTO"
+                                    AllowPaging="false" AllowSorting="false" GridLines="DataGridGridLines.Both"
+                                    Density="Density.Compact">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="PaymentMethod" Title="Financial Account" />
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="Amount" Title="Amount"
+                                                  TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                        </Columns>
+                        <FooterTemplate>
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Total Cash In: @Preview.PaymentSummary.Sum(x => x.Amount).ToString("N2")</strong></RadzenText>
+                        </FooterTemplate>
+                    </RadzenDataGrid>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-2">Cash Out (by account)</RadzenText>
+                    <RadzenDataGrid Data="@Preview.CashOutSummary" TItem="CounterPaymentSummaryDTO"
+                                    AllowPaging="false" AllowSorting="false" GridLines="DataGridGridLines.Both"
+                                    Density="Density.Compact">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="PaymentMethod" Title="Financial Account" />
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="Amount" Title="Amount"
+                                                  TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                        </Columns>
+                        <FooterTemplate>
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Total Cash Out: @Preview.CashOutSummary.Sum(x => x.Amount).ToString("N2")</strong></RadzenText>
+                        </FooterTemplate>
+                    </RadzenDataGrid>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow class="mt-2">
+                <RadzenColumn Size="12" TextAlign="TextAlign.Right">
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Net Cash: @((Preview.PaymentSummary.Sum(x => x.Amount) - Preview.CashOutSummary.Sum(x => x.Amount)).ToString("N2"))</strong>
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
         <!-- ══════════════════════ TRANSACTIONS ══════════════════════ -->
         <RadzenCard class="mb-4">
             <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
@@ -242,7 +285,16 @@
                             </tr>
                             <tr style="border-bottom:1px solid var(--rz-base-300);">
                                 <td style="padding:8px 0;">Cash out</td>
-                                <td style="padding:8px 0; text-align:right;">(@TotalCashOut.ToString("N2"))</td>
+                                <td style="padding:8px 0; text-align:right;">
+                                    @if (Preview.CashOutSummary != null && Preview.CashOutSummary.Any())
+                                    {
+                                        @string.Join(", ", Preview.CashOutSummary.Select(x => $"{x.PaymentMethod}={x.Amount:N2}"))
+                                    }
+                                    else
+                                    {
+                                        @Preview.CashOut.ToString("N2")
+                                    }
+                                </td>
                             </tr>
                             <tr style="border-top:2px solid var(--rz-base-500);">
                                 <td style="padding:10px 0;"><strong>Expected in drawer</strong></td>
