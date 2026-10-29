@@ -30,7 +30,13 @@
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Expense Date *" Component="ExpenseDate" />
-                    <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
+                    <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" Disabled="@(!CanChooseStore)" />
+@if (!CanChooseStore)
+{
+    <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+        You can only enter expenses for today. Contact an administrator to change the date.
+    </RadzenText>
+}
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Store *" Component="StoreId" />

@@ -37,7 +37,6 @@ namespace JM.UI.Client.Pages.Purchases
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
-        // â”€â”€ Add to lookup fields (alongside Brand/Origin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
 
         // Catalogue auto-complete state
