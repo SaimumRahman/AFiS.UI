@@ -1,6 +1,6 @@
 namespace JM.UI.Entities.Model.PurchaseItems;
 
-public class PurchaseItemDTO
+public class PurchaseItemDTO : AuditModelDTO
 {
     public int Id { get; set; }
     public int PurchaseId { get; set; }
@@ -56,4 +56,5 @@ public class PurchaseItemDTO
     public List<int> FeatureIds { get; set; }
     public string FeaturesDisplay { get; set; }
     public string ReturnRefNo { get; set; }
+    public int ItemCode { get; set; }
 }

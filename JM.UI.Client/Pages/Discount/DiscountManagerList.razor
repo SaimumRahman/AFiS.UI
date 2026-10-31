@@ -67,6 +67,23 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <!-- Store -->
+                <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="StoreName" Title="Store" Width="170px">
+                    <Template Context="item">
+                        @if (!string.IsNullOrWhiteSpace(item.StoreName))
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.4rem">
+                                <RadzenIcon Icon="storefront" Style="color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Body2">@item.StoreName</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">—</RadzenText>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <!-- Start Date -->
                 <RadzenDataGridColumn TItem="DiscountManagerDTO" Property="StartDate" Title="Start Date" Width="140px" TextAlign="TextAlign.Center">
                     <Template Context="item">
@@ -154,7 +171,7 @@
                                         GridLines="DataGridGridLines.Horizontal"
                                         Density="Density.Compact">
                             <Columns>
-                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="Barcode" Title="Store" Width="120px" />
+                                <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="StoreName" Title="Store" Width="120px" />
                                 <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="ItemName" Title="Product" Width="180px" />
                                 <RadzenDataGridColumn TItem="DiscountManagerDetailsDTO" Property="CurrentSalePrice" Title="Sale Price" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="d">

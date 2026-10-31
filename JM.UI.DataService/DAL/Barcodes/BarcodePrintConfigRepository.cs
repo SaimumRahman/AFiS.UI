@@ -1,5 +1,6 @@
 ﻿using JM.Infrastructure.Models; 
 using JM.UI.Entities.Model.Barcodes;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
@@ -29,6 +30,31 @@ namespace JM.UI.DataService.DAL.Barcode
                 var configs = await response.Content.ReadFromJsonAsync<List<BarcodePrintConfigDTO>>();
 
                 return configs ?? new List<BarcodePrintConfigDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get all barcode print configs");
+                throw new Exception("Failed to fetch barcode print configs: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get all barcode print configs");
+                throw new Exception("Unexpected error fetching barcode print configs: " + ex.Message, ex);
+            }
+        }
+        public async Task<IEnumerable<BarcodeItemDTO>> GetAllItemsForBarcodePrint()
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch all barcode print configs");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("BarcodePrintConfig/GetAllItemsForBarcodePrint");
+                response.EnsureSuccessStatusCode();
+
+                var configs = await response.Content.ReadFromJsonAsync<List<BarcodeItemDTO>>();
+
+                return configs ?? new List<BarcodeItemDTO>();
             }
             catch (HttpRequestException ex)
             {

@@ -4,7 +4,9 @@ using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.SupplierPayments
@@ -71,8 +73,8 @@ namespace JM.UI.DataService.DAL.SupplierPayments
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    return new ResponseResult { IsSuccessStatus = false, Message = $"Server Error: {response.StatusCode} - {errorContent}" };
+                    var message = await ReadErrorMessageAsync(response);
+                    return new ResponseResult { IsSuccessStatus = false, Message = message };
                 }
             }
             catch (Exception ex)
@@ -131,6 +133,64 @@ namespace JM.UI.DataService.DAL.SupplierPayments
                 _logger.LogError(ex, "Error fetching supplier outstanding balances");
                 throw;
             }
+        }
+
+        public async Task<SupplierPaymentSourcesDTO?> GetPaymentSources(int storeId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"SupplierPayments/payment-sources?storeId={storeId}");
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<SupplierPaymentSourcesDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching supplier payment sources for store {StoreId}", storeId);
+                throw;
+            }
+        }
+
+        private static async Task<string> ReadErrorMessageAsync(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(content))
+                return $"Server error ({(int)response.StatusCode}).";
+
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+
+                if (doc.RootElement.TryGetProperty("message", out var message)
+                    && message.ValueKind == JsonValueKind.String)
+                {
+                    return message.GetString() ?? content;
+                }
+
+                if (doc.RootElement.TryGetProperty("errors", out var errors)
+                    && errors.ValueKind == JsonValueKind.Array)
+                {
+                    var messages = new List<string>();
+                    foreach (var error in errors.EnumerateArray())
+                    {
+                        if (error.TryGetProperty("errorMessage", out var em)
+                            && em.ValueKind == JsonValueKind.String)
+                        {
+                            messages.Add(em.GetString()!);
+                        }
+                    }
+
+                    if (messages.Count > 0)
+                        return string.Join(" ", messages);
+                }
+            }
+            catch (JsonException)
+            {
+                // Not JSON - return the raw body below.
+            }
+
+            return content;
         }
     }
 }

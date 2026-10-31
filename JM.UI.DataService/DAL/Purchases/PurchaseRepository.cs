@@ -9,6 +9,7 @@ using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace JM.UI.DataService.DAL.Purchases
@@ -54,14 +55,25 @@ namespace JM.UI.DataService.DAL.Purchases
         // =============================================
         // Get All Purchases
         // =============================================
-        public async Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases()
+        public async Task<IEnumerable<PurchaseSummaryDTO>> GetPurchases(DateTime? fromDate, DateTime? toDate)
         {
             try
             {
                 _logger.LogInformation("Starting to fetch all purchases");
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/Purchase/getall");
+                var url = "api/Purchase/getall";
+
+                var queryParams = new List<string>();
+                if (fromDate.HasValue)
+                    queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+
+                if (queryParams.Count > 0)
+                    url += "?" + string.Join("&", queryParams);
+
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var purchases = await response.Content.ReadFromJsonAsync<List<PurchaseSummaryDTO>>();
@@ -111,36 +123,6 @@ namespace JM.UI.DataService.DAL.Purchases
                 throw new Exception($"Unexpected error fetching purchase: {ex.Message}", ex);
             }
         }
-        public async Task<SystemInVoiceDTO?> GetSystemInvoiceNew()
-        {
-            try
-            {
-                _logger.LogInformation("Requesting new System Invoice Number");
-
-                var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/Purchase/system-invoice-new");
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogWarning("Failed to retrieve new System Invoice Number");
-                    return null;
-                }
-
-                var invoice = await response.Content.ReadFromJsonAsync<SystemInVoiceDTO>();
-                return invoice;
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed while fetching new System Invoice Number");
-                throw new Exception($"Failed to fetch System Invoice Number: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error while fetching new System Invoice Number");
-                throw new Exception($"Unexpected error fetching System Invoice Number: {ex.Message}", ex);
-            }
-        }
-
         public async Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId)
         {
             try
@@ -161,6 +143,37 @@ namespace JM.UI.DataService.DAL.Purchases
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in GetPurchaseItems service for PurchaseId: {PurchaseId}", purchaseId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Finds a purchase by its SystemInvoiceNo with its lines resolved against the
+        /// given store (stock + sale rate), for Item Transfer entry.
+        /// </summary>
+        public async Task<PurchaseItemsForTransferDTO?> GetPurchaseItemsForTransfer(string systemInvoiceNo, int storeId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(systemInvoiceNo))
+                    return null;
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(
+                    $"api/Purchase/get-purchase-items-for-transfer/{Uri.EscapeDataString(systemInvoiceNo.Trim())}?storeId={storeId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Failed to fetch purchase items for transfer for SystemInvoiceNo: {SystemInvoiceNo}. Status: {StatusCode}",
+                        systemInvoiceNo, response.StatusCode);
+                    return null;
+                }
+
+                return await response.Content.ReadFromJsonAsync<PurchaseItemsForTransferDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetPurchaseItemsForTransfer service for SystemInvoiceNo: {SystemInvoiceNo}", systemInvoiceNo);
                 throw;
             }
         }
@@ -201,7 +214,7 @@ namespace JM.UI.DataService.DAL.Purchases
         // =============================================
         // Delete Purchase
         // =============================================
-        public async Task DeletePurchase(int id)
+        public async Task<ResponseResult> DeletePurchase(int id)
         {
             try
             {
@@ -211,7 +224,13 @@ namespace JM.UI.DataService.DAL.Purchases
                 var response = await httpClient.DeleteAsync($"api/Purchase/delete/{id}");
                 response.EnsureSuccessStatusCode();
 
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
                 _logger.LogInformation("Purchase deleted successfully: {Id}", id);
+                return result ?? new ResponseResult
+                {
+                    IsSuccessStatus = true,
+                    Message = "Purchase deleted successfully"
+                };
             }
             catch (HttpRequestException ex)
             {
@@ -237,7 +256,14 @@ namespace JM.UI.DataService.DAL.Purchases
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var content = JsonContent.Create(request);
                 var response = await httpClient.PostAsync("api/Purchase/generate-barcode", content);
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMessage = await ExtractApiErrorMessageAsync(response);
+                    throw new Exception(string.IsNullOrWhiteSpace(errorMessage)
+                        ? "Barcode generation failed. Please try again."
+                        : errorMessage);
+                }
 
                 var result = await response.Content.ReadFromJsonAsync<BarcodeResponse>();
                 return result?.Barcode ?? string.Empty;
@@ -245,8 +271,27 @@ namespace JM.UI.DataService.DAL.Purchases
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating barcode");
-                throw new Exception("Failed to generate barcode: " + ex.Message, ex);
+                throw new Exception(ex.Message, ex);
             }
+        }
+
+        private static async Task<string?> ExtractApiErrorMessageAsync(HttpResponseMessage response)
+        {
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(body)) return null;
+
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("message", out var message))
+                    return message.GetString();
+            }
+            catch
+            {
+                // Non-JSON / unparseable error body — fall back to generic message.
+            }
+
+            return null;
         }
 
         // =============================================

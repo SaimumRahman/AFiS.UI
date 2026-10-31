@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace JM.UI.DataService.DAL.SubGroups
 {
@@ -106,6 +107,24 @@ namespace JM.UI.DataService.DAL.SubGroups
             {
                 _logger.LogError(ex, "Error deleting sub-group: {Id}", id);
                 throw;
+            }
+        }
+
+        public async Task<bool> IsCodeExistsAsync(string code, int id = 0)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"SubGroups/IsCodeExists?code={Uri.EscapeDataString(code)}&id={id}");
+                response.EnsureSuccessStatusCode();
+                
+                var result = await response.Content.ReadFromJsonAsync<bool>();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if sub-group code exists: {Code}", code);
+                return false;
             }
         }
     }

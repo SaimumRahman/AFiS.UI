@@ -71,10 +71,12 @@ namespace JM.UI.Client.Pages.Users
 
                         // Save token using TokenService
                         await tokenService.SetTokenAsync(response.Token);
+                        await tokenService.SetRefreshTokenAsync(response.RefreshToken);
                         await sessionStorage.SetAsync("UserId", response.UserId.ToString());
                         await sessionStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
                         await _localStorage.SetAsync("UserId", response.UserId.ToString());
                         await _localStorage.SetAsync("UserInfo", JsonConvert.SerializeObject(response));
+                        await _localStorage.SetAsync("RefreshToken", response.RefreshToken);
 
                         // ✅ FIXED: Save StoreId safely with null/zero check
                         if (dataUser == null)

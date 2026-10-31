@@ -64,7 +64,12 @@ namespace JM.UI.Client.Pages.Transfer
             try
             {
                 IsLoading = true;
-                var result = await _serviceUnitOfWork.TransferService.UpdateDispatchStatus(SelectedTransferIds, 1);
+
+                // Stamp the dispatch with the signed-in user, not a hardcoded id.
+                var dispatchedByUserId = await GetUserInfoAsync();
+
+                var result = await _serviceUnitOfWork.TransferService.UpdateDispatchStatus(
+                    SelectedTransferIds, dispatchedByUserId);
 
                 if (result.IsSuccessStatus)
                 {

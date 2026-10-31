@@ -1,5 +1,6 @@
 ﻿using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.Barcodes;
+using JM.UI.Entities.Model.Items;
 
 namespace JM.UI.Service.Barcode
 {
@@ -32,6 +33,10 @@ namespace JM.UI.Service.Barcode
         public async Task<BarcodeTemplateDTO?> GetBarcodeTemplateById(int id)
         {
             return await _repositoryUnitOfWork.BarcodePrintConfigRepository.GetBarcodeTemplateById(id);
+        }
+        public async Task<IEnumerable<BarcodeItemDTO>> GetAllItemsForBarcodePrint()
+        {
+            return await _repositoryUnitOfWork.BarcodePrintConfigRepository.GetAllItemsForBarcodePrint();
         }
     }
 }

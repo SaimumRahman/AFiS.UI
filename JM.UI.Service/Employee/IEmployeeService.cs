@@ -9,6 +9,7 @@ namespace JM.UI.Service.Employee
     public interface IEmployeeService
     {
         Task<IEnumerable<EmployeeModelDTO>> GetEmployees();
+        Task<IEnumerable<EmployeeModelDTO>> GetEmployeesByStoreId(int storeId);
         Task<EmployeeModelDTO?> GetEmployeeById(int id);
         Task<EmployeeModelDTO?> GetEmployeeCode();
         Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee);

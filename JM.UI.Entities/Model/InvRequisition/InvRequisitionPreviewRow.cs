@@ -6,6 +6,7 @@ namespace JM.UI.Entities.Model.InvRequisition
         public string ItemName { get; set; } = string.Empty;
         public string Barcode { get; set; } = string.Empty;
         public decimal Qty { get; set; }
+        public decimal CurrentStock { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal Amount { get; set; }
         public string? Remarks { get; set; }

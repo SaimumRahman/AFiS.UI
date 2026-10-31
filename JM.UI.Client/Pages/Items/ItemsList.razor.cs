@@ -4,10 +4,6 @@ using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace JM.UI.Client.Pages.Items
 {
     public partial class ItemsListComponent : PosComponentBase, IDisposable
@@ -40,11 +36,6 @@ namespace JM.UI.Client.Pages.Items
                 IsLoading = false;
                 StateHasChanged();
             }
-        }
-
-        protected void AddItem()
-        {
-            NavigationManager.NavigateTo("/ItemsAdd");
         }
 
         protected void EditItem(ItemDTO item)

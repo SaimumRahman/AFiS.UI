@@ -35,7 +35,7 @@ public class ItemService : IItemService
         return await _unitOfWork.ItemRepository.GetItemById(id);
     }
    
-    public async Task<int> CreateItem(PreviewItemRow createItemRequest)
+    public async Task<ResponseResult> CreateItem(PreviewItemRow createItemRequest)
     {
         CreateItemRequestDTO createItemRequestDTO = new()
         {
@@ -65,12 +65,26 @@ public class ItemService : IItemService
             IsConsume = createItemRequest.IsConsume,
             CatalogueId = createItemRequest.CatalogueId,
             FeatureIds = createItemRequest.FeatureIds,
+            ImageBase64 = createItemRequest.ImageBase64,
+            IsNewItemMode = createItemRequest.IsNewItem,
             Features = createItemRequest.FeatureIds != null && createItemRequest.FeatureIds.Any()
     ? string.Join(",", createItemRequest.FeatureIds)
     : string.Empty
         };
         var res = await _unitOfWork.ItemRepository.CreateItem(createItemRequestDTO);
-        return Convert.ToInt32(res.Id);
+        return res;
+    }
+
+    public async Task<ResponseResult> UpdateItem(UpdateItemDTO item)
+    {
+        try
+        {
+            return await _unitOfWork.ItemRepository.UpdateItem(item);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+        }
     }
 
     public async Task<ResponseResult> DeleteItem(int id)
@@ -96,6 +110,11 @@ public class ItemService : IItemService
             {
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId)
+        {
+            return await _unitOfWork.ItemRepository.GetItemByGroupIdWithStock(groupId);
         }
 
         public async Task<IEnumerable<TransactionTypeDTO>> GetTransactionTypes()

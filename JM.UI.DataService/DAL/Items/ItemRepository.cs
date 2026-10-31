@@ -1,5 +1,6 @@
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.PurchaseItems;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
@@ -115,6 +116,42 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
+        public async Task<ResponseResult> UpdateItem(UpdateItemDTO item)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var request = new
+                {
+                    Item = new UpdateItemDTO
+                    {
+                        Id = item.Id,
+                        Name = item.Name,
+                        SalePrice = item.SalePrice,
+                        MesurementUnitId = item.MesurementUnitId,
+                        AlarmLevel = item.AlarmLevel,
+                        LastModifiedBy = item.LastModifiedBy,
+                        LastModifiedDate = item.LastModifiedDate,
+                        BrandId = item.BrandId,
+                        OriginId = item.OriginId,
+                        Origin = item.Origin,
+                        Features = item.Features,
+                        ItemWiseFeatureId = item.ItemWiseFeatureId
+                    }
+                };
+                var response = await httpClient.PutAsJsonAsync("Items/UpdateItem", request);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating item");
+                throw;
+            }
+        }
+
         public async Task<ResponseResult> DeleteItem(int id)
         {
             try
@@ -149,6 +186,24 @@ namespace JM.UI.DataService.DAL.Items
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching sub-group by ID: {Id}", subGroupId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<PurchaseItemDTO>> GetItemByGroupIdWithStock(int groupId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Items/GetItemByGroupIdWithStock?groupId={groupId}");
+                response.EnsureSuccessStatusCode();
+
+                var items = await response.Content.ReadFromJsonAsync<List<PurchaseItemDTO>>();
+                return items ?? new List<PurchaseItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching items by group ID with stock: {GroupId}", groupId);
                 throw;
             }
         }

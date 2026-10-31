@@ -1,4 +1,5 @@
 ﻿using JM.UI.Entities.Model.Barcodes;
+using JM.UI.Entities.Model.Items;
 
 namespace JM.UI.DataService.DAL.Barcode
 {
@@ -11,5 +12,6 @@ namespace JM.UI.DataService.DAL.Barcode
         // ── Barcode Template ─────────────────────────────────────────
         Task<IEnumerable<BarcodeTemplateDTO>> GetAllBarcodeTemplates();
         Task<BarcodeTemplateDTO?> GetBarcodeTemplateById(int id);
+        Task<IEnumerable<BarcodeItemDTO>> GetAllItemsForBarcodePrint();
     }
 }

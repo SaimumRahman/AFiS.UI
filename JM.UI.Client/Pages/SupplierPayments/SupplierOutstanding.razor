@@ -19,8 +19,16 @@
                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierName" Title="Supplier Name" Width="150px" />
                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierContactNo" Title="Contact No" Width="150px" />
                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="SupplierAddress" Title="Address" Width="150px" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPurchases" Title="Total Purchases"  TextAlign="TextAlign.Right" Width="150px" />
-                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPayments" Title="Total Payments"  TextAlign="TextAlign.Right" Width="150px" />
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPurchases" Title="Total Purchases"  TextAlign="TextAlign.Right" Width="150px">
+                    <FooterTemplate>
+                        <span style="font-weight:600">@OutstandingList.Sum(x => x.TotalPurchases).ToString("N2")</span>
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="TotalPayments" Title="Total Payments"  TextAlign="TextAlign.Right" Width="150px">
+                    <FooterTemplate>
+                        <span style="font-weight:600">@OutstandingList.Sum(x => x.TotalPayments).ToString("N2")</span>
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="SupplierOutstandingDTO" Property="OutstandingBalance" Title="Balance Due"  TextAlign="TextAlign.Right" Width="150px">
                     <Template Context="data">
                         <RadzenText TextStyle="TextStyle.Body1" class="@(data.OutstandingBalance > 0 ? "rz-color-danger" : "rz-color-success")">

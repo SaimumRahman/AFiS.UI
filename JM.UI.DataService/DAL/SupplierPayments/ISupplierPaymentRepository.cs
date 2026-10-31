@@ -13,5 +13,6 @@ namespace JM.UI.DataService.DAL.SupplierPayments
         Task DeleteSupplierPayment(int id);
         Task<IEnumerable<SupplierLedgerDTO>> GetSupplierLedger(int supplierId);
         Task<IEnumerable<SupplierOutstandingDTO>> GetSupplierOutstanding();
+        Task<SupplierPaymentSourcesDTO?> GetPaymentSources(int storeId);
     }
 }

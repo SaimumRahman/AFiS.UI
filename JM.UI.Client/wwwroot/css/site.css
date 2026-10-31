@@ -629,3 +629,20 @@ svg.illustration {
     width: 100%;
     height: 100%;
 }
+
+.rz-grid-filter-icon {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.rz-pager .rz-pager-pages,
+.rz-pager .rz-pager-pages > li,
+.rz-pager .rz-pager-item {
+    list-style: none !important;
+}
+
+.rz-pager .rz-pager-pages::marker,
+.rz-pager .rz-pager-item::marker {
+    content: none !important;
+}

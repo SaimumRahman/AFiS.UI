@@ -1,9 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
+﻿using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -15,10 +10,12 @@ using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
 using JM.UI.DataService.DAL.Employees;
+using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.GroupRole;
 using JM.UI.DataService.DAL.GroupRoutePermissions;
@@ -27,6 +24,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
+using JM.UI.DataService.DAL.DailyExpense;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -57,6 +55,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
@@ -65,14 +64,10 @@ using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Suppliers;
 using JM.UI.DataService.DAL.Transfer;
+using JM.UI.DataService.DAL.Reporting;
+using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -95,18 +90,19 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IDesignationRepository DesignationRepository { get; }
         public ICompanyRepository CompanyRepository { get; }
         public IBanksRepository BanksRepository { get; }
+        public IFinancialAccountsRepository FinancialAccountsRepository { get; }
+        public IChartOfAccountRepository ChartOfAccountRepository { get; }
+        public IOpeningBalanceRepository OpeningBalanceRepository { get; }
+        public IManualJournalRepository ManualJournalRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IStoreRepository StoreRepository { get; }
+        public ICostCenterRepository CostCenterRepository { get; }
         public IGroupRoleRepository GroupRoleRepository { get; }
         public IUserGroupRepository UserGroupRepository { get; }
         public IShiftRepository ShiftRepository { get; }
         public IColorsRepository ColorsRepository { get; }
         public ISizesRepository SizesRepository { get; }
         public IBarcodeRepository BarcodeRepository { get; }
-        public IVoucherDetailsRepository VoucherDetailsRepository { get; }
-        public IVoucherRepository VoucherRepository { get; }
-        public IAccountsGroupsRepository AccountsGroupsRepository { get; }
-        public IAccountsRepository AccountsRepository { get; }
         public ISupplierRepository SupplierRepository { get; }
         public IPurchaseOrderRepository PurchaseOrderRepository { get; }
         public IPurchaseRepository PurchaseRepository { get; }
@@ -139,6 +135,10 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICouponTypeRepository CouponTypeRepository { get; }
         public ICouponRepository CouponRepository { get; }
         public ITransferTypeRepository TransferTypeRepository { get; }
+        public ISaleRepository SaleRepository { get; }
+        public IReportingRepository ReportingRepository { get; }
+        public IDailyExpenseRepository DailyExpenseRepository { get; }
+        public ICounterClosingRepository CounterClosingRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -157,17 +157,18 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CompanyRepository = new CompanyRepository(factory, tokenProvider, loggerFactory.CreateLogger<CompanyRepository>());
             DesignationRepository = new DesignationRepository(factory, tokenProvider, loggerFactory.CreateLogger<DesignationRepository>());
             BanksRepository = new BanksRepository(factory, tokenProvider, loggerFactory.CreateLogger<BanksRepository>());
+            FinancialAccountsRepository = new FinancialAccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<FinancialAccountsRepository>());
+            ChartOfAccountRepository = new ChartOfAccountRepository(factory, tokenProvider, loggerFactory.CreateLogger<ChartOfAccountRepository>());
+            OpeningBalanceRepository = new OpeningBalanceRepository(factory, tokenProvider, loggerFactory.CreateLogger<OpeningBalanceRepository>());
+            ManualJournalRepository = new ManualJournalRepository(factory, tokenProvider, loggerFactory.CreateLogger<ManualJournalRepository>());
             EmployeeRepository = new EmployeeRepository(factory, tokenProvider, loggerFactory.CreateLogger<EmployeeRepository>());
             StoreRepository = new StoreRepository(factory, tokenProvider, loggerFactory.CreateLogger<StoreRepository>());
+            CostCenterRepository = new CostCenterRepository(factory, tokenProvider, loggerFactory.CreateLogger<CostCenterRepository>());
             GroupRoleRepository = new GroupRoleRepository(factory, tokenProvider, loggerFactory.CreateLogger<GroupRoleRepository>());
             UserGroupRepository = new UserGroupRepository(factory, tokenProvider, loggerFactory.CreateLogger<UserGroupRepository>());
             ShiftRepository = new ShiftRepository(factory, tokenProvider, loggerFactory.CreateLogger<ShiftRepository>());
             SizesRepository = new SizesRepository(factory, tokenProvider, loggerFactory.CreateLogger<SizesRepository>());
             BarcodeRepository = new BarcodeRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodeRepository>());
-            VoucherDetailsRepository = new VoucherDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<VoucherDetailsRepository>());
-            VoucherRepository = new VoucherRepository(factory, tokenProvider, loggerFactory.CreateLogger<VoucherRepository>());
-            AccountsGroupsRepository = new AccountsGroupsRepository(factory, tokenProvider, loggerFactory.CreateLogger<AccountsGroupsRepository>());
-            AccountsRepository = new AccountsRepository(factory, tokenProvider, loggerFactory.CreateLogger<AccountsRepository>());
             SupplierRepository = new SupplierRepository(factory, tokenProvider, loggerFactory.CreateLogger<SupplierRepository>());
             PurchaseOrderRepository = new PurchaseOrderRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseOrderRepository>());
             PurchaseRepository = new PurchaseRepository(factory, tokenProvider, loggerFactory.CreateLogger<PurchaseRepository>());
@@ -200,6 +201,10 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CouponTypeRepository = new CouponTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponTypeRepository>());
             CouponRepository = new CouponRepository(factory, tokenProvider, loggerFactory.CreateLogger<CouponRepository>());
             TransferTypeRepository = new TransferTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferTypeRepository>());
+            SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
+            ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
+            DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
+            CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
         }
 
         public void Dispose()

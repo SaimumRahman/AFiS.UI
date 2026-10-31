@@ -12,12 +12,14 @@ namespace JM.UI.Entities.Model.Purchases
         public string? SystemInvoiceNo { get; set; }
         public string? BillInvoiceNumber { get; set; }
         public string? BillInvoiceName { get; set; }
-        public DateTime PurchaseDate { get; set; }
+        public DateTime? PurchaseDate { get; set; }
+        public DateTime? BillDate { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal? DiscountAmount { get; set; } = 0m;
         public decimal? VatAmount { get; set; } = 0m;
 
         public bool IsVatIncluded { get; set; }
+        public bool IsOpenningStock { get; set; }
         public decimal? OtherCostTotal { get; set; }
         public decimal? CarryingCostTotal { get; set; }
         public decimal? OperationalCostTotal { get; set; }

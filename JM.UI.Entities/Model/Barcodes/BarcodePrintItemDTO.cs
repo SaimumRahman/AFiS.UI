@@ -14,7 +14,7 @@ namespace JM.UI.Entities.Model.Barcodes
         public string? UoM { get; set; }
         public string GroupId { get; set; } = string.Empty;
         public string GroupName { get; set; } = string.Empty;
-        public int PrintQty { get; set; } = 1;
+        public decimal PrintQty { get; set; } = 1;
         public decimal LabelWidthMm { get; set; }
         public decimal LabelHeightMm { get; set; }
         public int TemplateId { get; set; }

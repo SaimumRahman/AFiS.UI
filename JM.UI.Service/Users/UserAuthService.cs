@@ -38,5 +38,15 @@ namespace JM.UI.Service.Users
         {
             return await _UserauthRepo.UpdateActiveInactiveUser(surname, isActive);
         }
+
+        public async Task<string> ResetUserPassword(string userName, string newPassword)
+        {
+            return await _UserauthRepo.ResetUserPassword(userName, newPassword);
+        }
+
+        public async Task<string> ChangePassword(string userName, string oldPassword, string newPassword)
+        {
+            return await _UserauthRepo.ChangePassword(userName, oldPassword, newPassword);
+        }
     }
 }

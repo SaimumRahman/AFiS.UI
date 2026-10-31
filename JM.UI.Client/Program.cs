@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using Radzen;
 using RadzenBlazorDemos.Server.Data;
@@ -49,8 +50,19 @@ builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ExampleService>();
 builder.Services.AddScoped<PurchaseReportService>();
+builder.Services.AddScoped<BookingReportService>();
+builder.Services.AddScoped<CustomerWiseSalesDetailReportService>();
+builder.Services.AddScoped<ExchangeReportService>();
+builder.Services.AddScoped<GroupWiseSalesSummaryReportService>();
+builder.Services.AddScoped<GroupWiseSalesDetailsReportService>();
+builder.Services.AddScoped<InvoiceWiseSaleSummaryReportService>();
+builder.Services.AddScoped<PayTypeWiseSalesDetailsReportService>();
+builder.Services.AddScoped<PurchaseDetailReportService>();
+builder.Services.AddScoped<SalesmanWiseDetailedReportService>();
+builder.Services.AddScoped<SalesmanWiseSummaryReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();
+builder.Services.AddScoped<PosInvoicePdfService>();
 builder.Services.AddDbContextFactory<NorthwindContext>();
 builder.Services.AddScoped<INavigationGuardService, NavigationGuardService>();
 builder.Services.AddAIChatService(options =>
@@ -69,7 +81,9 @@ builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHa
 builder.Services.AddScoped<ITokenProvider, CircuitTokenProvider>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
-
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Staging\AFiS\keys"))
+    .SetApplicationName("JM-AFiS-ERP");
 
 builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
 {
@@ -79,13 +93,15 @@ builder.Services.AddHttpClient("MainApi", (serviceProvider, client) =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+builder.Services.AddScoped<AuthTokenHandler>();
 builder.Services.AddHttpClient("AuthApi", (serviceProvider, client) =>
-{
-    var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
-    client.BaseAddress = new Uri(apiSettings.BaseUrlAuth);
-    client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+    {
+        var apiSettings = serviceProvider.GetRequiredService<IOptions<AppSetting>>().Value;
+        client.BaseAddress = new Uri(apiSettings.BaseUrlAuth);
+        client.Timeout = TimeSpan.FromSeconds(apiSettings.Timeout);
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    })
+    .AddHttpMessageHandler<AuthTokenHandler>();
 
 builder.Services.AddSingleton<ILogger, Logger<ErrorDetails>>();
 builder.Services.AddDataService();

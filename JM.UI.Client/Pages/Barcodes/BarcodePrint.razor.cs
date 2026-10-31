@@ -46,9 +46,20 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected PurchaseInvoiceDTO? SelectedPurchase { get; set; }
 
     // ── Single-Barcode Dropdown ──────────────────────────────────
-    protected List<ItemDTO> AllBarcodes { get; set; } = new();
+    protected List<BarcodeItemDTO> AllBarcodes { get; set; } = new();
+    protected List<BarcodeSelectItem> BarcodeSelectItems { get; set; } = new();
     protected int? SelectedBarcodeId { get; set; }
-    protected int SinglePrintQty { get; set; } = 1;
+    protected decimal SinglePrintQty { get; set; } = 1;
+
+    public class BarcodeSelectItem
+    {
+        public int Id { get; set; }
+        public string ProductName { get; set; } = "";
+        public string BarcodeValue { get; set; } = "";
+        public string ReturnRefNo { get; set; } = "";
+        /// <summary>Combined search text so the built-in filter searches all fields.</summary>
+        public string SearchText => $"{ProductName} {BarcodeValue} {ReturnRefNo}";
+    }
 
     // ── Print Preview List ───────────────────────────────────────
     protected List<BarcodePrintItemDTO> PrintItems { get; set; } = new();
@@ -63,6 +74,9 @@ public partial class BarcodePrintComponent : PosComponentBase
     protected bool IsDownloadingPdf { get; set; } = false;
     protected bool IsLoadingConfig { get; set; } = false;
 
+    [Parameter] public int? Id { get; set; }
+
+
     // ────────────────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
@@ -74,6 +88,12 @@ public partial class BarcodePrintComponent : PosComponentBase
             LoadPurchaseList(),
             LoadAllBarcodes()
         );
+
+        if (Id.HasValue)
+        {
+            SelectedPurchaseId = Id;
+            await OnPurchaseSelected((object)Id.Value);
+        }
     }
 
     // ── Configuration ────────────────────────────────────────────
@@ -111,6 +131,9 @@ public partial class BarcodePrintComponent : PosComponentBase
             {
                 new() { Id = 1, TemplateName = "33*55", Descriptions = "ProductName, Brand, UOM, Price" }
             };
+
+            if (BarcodeTemplates.Any() && SelectedTemplateId == null)
+                OnTemplateSelected(BarcodeTemplates.First().Id);
         }
         catch (Exception ex)
         {
@@ -236,7 +259,14 @@ public partial class BarcodePrintComponent : PosComponentBase
         try
         {
             IsLoadingBarcodes = true;
-            AllBarcodes = (await _serviceUnitOfWork.ItemService.GetItems())?.ToList() ?? new();
+            AllBarcodes = (await _serviceUnitOfWork.BarcodePrintConfigService.GetAllItemsForBarcodePrint())?.ToList() ?? new();
+            BarcodeSelectItems = AllBarcodes.Select(b => new BarcodeSelectItem
+            {
+                Id = b.Id,
+                ProductName = b.ProductName,
+                BarcodeValue = b.BarcodeValue,
+                ReturnRefNo = b.ReturnRefNo
+            }).ToList();
         }
         catch (Exception ex)
         {
@@ -271,7 +301,7 @@ public partial class BarcodePrintComponent : PosComponentBase
 
             foreach (var barcode in barcodes)
             {
-                int qty = barcode.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true
+                decimal qty = barcode.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true
                     ? PrintConfig.FabricRepeatCount
                     : 1;
                 AddOrUpdatePrintItem(barcode, qty);
@@ -314,11 +344,11 @@ public partial class BarcodePrintComponent : PosComponentBase
 
         AddOrUpdatePrintItemFromItem(barcode, SinglePrintQty);
         notificationService.Notify(NotificationSeverity.Success, "Added",
-            $"Barcode {barcode.Barcode} added ({SinglePrintQty}×).");
+            $"Barcode {barcode.BarcodeValue} added ({SinglePrintQty}×).");
     }
 
     // ── Print Item Helpers ───────────────────────────────────────
-    private void AddOrUpdatePrintItem(BarcodeItemDTO barcode, int qty)
+    private void AddOrUpdatePrintItem(BarcodeItemDTO barcode, decimal qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
@@ -350,7 +380,7 @@ public partial class BarcodePrintComponent : PosComponentBase
         }
         StateHasChanged();
     }
-    private void AddOrUpdatePrintItemFromItem(ItemDTO barcode, int qty)
+    private void AddOrUpdatePrintItemFromItem(BarcodeItemDTO barcode, decimal qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);
         if (existing != null)
@@ -365,15 +395,18 @@ public partial class BarcodePrintComponent : PosComponentBase
             new BarcodePrintItemDTO
             {
                 BarcodeId = barcode.Id,
-                BarcodeValue = barcode.Barcode,
-                ProductName = barcode.Name,
+                BarcodeValue = barcode.BarcodeValue,
+                ProductName = barcode.ProductName,
+                Brand = barcode.BrandName,
+                Price = barcode.SalesPrice,
+                UoM = barcode.UnitName,
+                GroupId = barcode.GroupId,
                 GroupName = barcode.GroupName,
                 PrintQty = qty,
                 LabelWidthMm = PrintConfig.LabelWidthMm,
                 LabelHeightMm = PrintConfig.LabelHeightMm,
                 TemplateId = SelectedTemplateId ?? 0,
-                SalesPrice = barcode.SalePrice.ToString() ?? "0",
-                ReturnRefNo = barcode.ReturnRefNo ?? "N/A"
+                ReturnRefNo = barcode.ReturnRefNo,
             }
         };
         }
@@ -386,7 +419,7 @@ public partial class BarcodePrintComponent : PosComponentBase
     }
 
 
-    protected void UpdateQty(BarcodePrintItemDTO item, int qty)
+    protected void UpdateQty(BarcodePrintItemDTO item, decimal qty)
     {
         if (qty < 1) qty = 1;
         item.PrintQty = qty;
@@ -457,8 +490,8 @@ public partial class BarcodePrintComponent : PosComponentBase
             var pdfBytes = _barcodePrintPdfService.GeneratePdf(
                 PrintItems,
                 TemplateFields,
-                55,
-                33);
+                35,
+                55);
 
             if (pdfBytes.Length == 0)
             {

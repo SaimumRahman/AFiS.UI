@@ -6,5 +6,6 @@ namespace JM.UI.Service.Stock;
 public interface IStockService
 {
     Task<IEnumerable<StockLedgerDTO>> GetStockLedger(
-     DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId);
+     DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId,
+     int? groupId, int? subGroupId, int? designId, int? brandId);
 }

@@ -12,5 +12,6 @@ namespace JM.UI.DataService.DAL.SubGroups
         Task<IEnumerable<SubGroupModelDTO>> LoadSubGroupsByGroup(int groupId);
         Task<ResponseResult> SaveUpdateSubGroup(SubGroupModelDTO subGroup);
         Task DeleteSubGroup(int id);
+        Task<bool> IsCodeExistsAsync(string code, int id = 0);
     }
 }

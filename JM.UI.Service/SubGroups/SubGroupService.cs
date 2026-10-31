@@ -55,6 +55,7 @@ namespace JM.UI.Service.SubGroups
         {
             try
             {
+                // Code is auto-generated on the API (MSSQL sequence) for new sub-groups
                 return await _unitOfWork.SubGroupRepository.SaveUpdateSubGroup(subGroup);
             }
             catch (Exception ex)
@@ -74,6 +75,11 @@ namespace JM.UI.Service.SubGroups
             {
                 return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
+        }
+
+        public async Task<bool> IsCodeExists(string code, int id = 0)
+        {
+            return await _unitOfWork.SubGroupRepository.IsCodeExistsAsync(code, id);
         }
     }
 }

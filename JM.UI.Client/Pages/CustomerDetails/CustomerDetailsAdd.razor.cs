@@ -1,5 +1,4 @@
-﻿using JM.UI.Entities.Model.Accounts;
-using JM.UI.Entities.Model.CustomerDetails;
+﻿using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -87,6 +86,8 @@ public partial class CustomerDetailsAddComponent : AddEditPageBase
             return;
         }
 
+        Customer.IsForceAdd = false;
+
         try
         {
             IsProcessing = true;
@@ -101,7 +102,7 @@ public partial class CustomerDetailsAddComponent : AddEditPageBase
             else
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
-                if (result.StatusCode == StatusCodes.Status304NotModified)
+                if (!IsEditMode && result.StatusCode == StatusCodes.Status304NotModified)
                 {
                     var confirmed = await dialogService.Confirm(
                         "Do you want to create a new Customer?",
@@ -111,9 +112,18 @@ public partial class CustomerDetailsAddComponent : AddEditPageBase
 
                     if (confirmed == true)
                     {
-                        // Handle new customer creation
                         Customer.IsForceAdd = true;
-                        var results = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                        var retryResult = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                        if (retryResult.IsSuccessStatus)
+                        {
+                            notificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                            NavigationManager.NavigateTo("/CustomerDetailsList");
+                        }
+                        else
+                        {
+                            Customer.IsForceAdd = false;
+                            notificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
+                        }
                     }
                 }
             }
@@ -150,6 +160,8 @@ public partial class CustomerDetailsAddComponent : AddEditPageBase
             return;
         }
 
+        Customer.IsForceAdd = false;
+
         try
         {
             IsProcessing = true;
@@ -164,6 +176,31 @@ public partial class CustomerDetailsAddComponent : AddEditPageBase
             else
             {
                 notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                if (result.StatusCode == StatusCodes.Status304NotModified)
+                {
+                    var confirmed = await dialogService.Confirm(
+                        "Do you want to create a new Customer?",
+                        "Duplicate",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
+                    );
+
+                    if (confirmed == true)
+                    {
+                        Customer.IsForceAdd = true;
+                        var retryResult = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                        if (retryResult.IsSuccessStatus)
+                        {
+                            notificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
+                            InitializeCustomer();
+                            StateHasChanged();
+                        }
+                        else
+                        {
+                            Customer.IsForceAdd = false;
+                            notificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
+                        }
+                    }
+                }
             }
         }
         catch (Exception ex)

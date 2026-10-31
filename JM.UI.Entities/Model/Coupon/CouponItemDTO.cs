@@ -7,7 +7,7 @@ namespace JM.UI.Entities.Model.Coupon
         public int ItemId { get; set; }
         public string? ItemName { get; set; }
         public string? Barcode { get; set; }
-        public int? MinQty { get; set; }
+        public decimal? MinQty { get; set; }
         public decimal? ItemDiscountOverride { get; set; }
         public int? AssignedBy { get; set; }
         public DateTime AssignedDate { get; set; }

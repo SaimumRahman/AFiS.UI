@@ -52,6 +52,16 @@
             <RadzenTemplateForm TItem="EmployeeModelDTO" Data="@Employee" Submit="@Save">
                 <RadzenStack Gap="1.5rem">
                     
+                    @if (IsEditMode)
+                    {
+                        <RadzenAlert AllowClose="false" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                     AlertStyle="@(Employee.IsUserCreated ? AlertStyle.Success : AlertStyle.Warning)">
+                            @(Employee.IsUserCreated
+                                ? $"A login user is created for this employee (username: {Employee.Surname})."
+                                : "No login user has been created for this employee yet.")
+                        </RadzenAlert>
+                    }
+
                     <!-- Basic Information Section -->
                     <RadzenFieldset Text="Basic Information" Icon="person">
                         <RadzenStack Gap="1rem">
@@ -481,26 +491,6 @@
                                                         Style="width: 100%;"
                                                         AllowClear="true"
                                                         AllowFiltering="true" />
-                                    </RadzenStack>
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenStack Gap="0.25rem">
-                                        <RadzenLabel Component="AccountId">
-                                            Account <span style="color:red"></span>
-                                        </RadzenLabel>
-                                        <RadzenDropDown @bind-Value="Employee.AccountId"
-                                                        Data="@Accounts"
-                                                        TextProperty="Name"
-                                                        ValueProperty="Id"
-                                                        Name="AccountId"
-                                                        Placeholder="Select Account"
-                                                        Style="width: 100%;"
-                                                        AllowClear="true"
-                                                        AllowFiltering="true" />
-
-                    @*                     <RadzenRequiredValidator Component="AccountId"
-                                                                 Text="Account is required"
-                                                                 Popup="false" /> *@
                                     </RadzenStack>
                                 </RadzenColumn>
 

@@ -28,7 +28,7 @@ public partial class BarcodePrintPreview : ComponentBase
     protected void ResetZoom() { _zoom = 1.0; }
 
     // ── Computed ─────────────────────────────────────────────────
-    protected int TotalLabels => Items.Sum(x => x.PrintQty);
+    protected decimal TotalLabels => Items.Sum(x => x.PrintQty);
 
     // ── Field Visibility ─────────────────────────────────────────
     protected bool ShowField(string fieldName) =>

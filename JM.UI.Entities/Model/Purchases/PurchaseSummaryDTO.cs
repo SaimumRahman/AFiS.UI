@@ -11,8 +11,10 @@ public class PurchaseSummaryDTO
     public string? SystemInvoiceNo { get; set; }
     public string? BillInvoiceName { get; set; }
     public DateTime PurchaseDate { get; set; }
+    public DateTime? BillDate { get; set; }
     public string? SupplierName { get; set; }
     public string? StoreName { get; set; }
+    public string? Remarks { get; set; }
     public int TotalItems { get; set; }
     public decimal TotalQuantity { get; set; }
     public decimal NetAmount { get; set; }

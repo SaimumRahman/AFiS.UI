@@ -31,9 +31,12 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
     protected bool IsLoading;
     protected bool IsPrinting;
 
+    // Id of the row currently generating its individual report
+    protected int? IsPrintingId { get; set; }
+
     // ── Date filter state ─────────────────────────────────────────────────────
-    protected DateTime? FilterDateFrom;
-    protected DateTime? FilterDateTo;
+    protected DateTime? FilterDateFrom { get; set; } = DateTime.Now;
+    protected DateTime? FilterDateTo { get; set; } = DateTime.Now;
     protected string ReferenceNo;
     protected bool IsFiltered => FilterDateFrom.HasValue || FilterDateTo.HasValue;
 
@@ -51,7 +54,7 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         try
         {
             IsLoading = true;
-            Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases();
+            Purchases = await ServiceUnitOfWork.PurchaseService.GetAllPurchases(FilterDateFrom, FilterDateTo);
             ApplyFilter();  // respect any active filter after refresh
         }
         catch (Exception ex)
@@ -66,6 +69,11 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
 
     // ── Date filter ───────────────────────────────────────────────────────────
 
+    protected async Task OnDateFilterChanged()
+    {
+        await ApplyDateFilter();
+    }
+
     protected async Task ApplyDateFilter()
     {
         if (FilterDateFrom.HasValue && FilterDateTo.HasValue
@@ -74,6 +82,9 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             NotifyError("'From Date' cannot be later than 'To Date'.");
             return;
         }
+
+        // Query the server with the selected date range.
+        await LoadPurchases();
 
         // If searching by ReturnRefNo, we must pre-load ALL purchase items
         // so the in-memory filter can inspect them.
@@ -105,13 +116,14 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         StateHasChanged();
     }
 
-    protected void ClearDateFilter()
+    protected async Task ClearDateFilter()
     {
         FilterDateFrom = null;
         FilterDateTo = null;
         FilteredPurchases = Purchases;
         ReferenceNo = string.Empty;
         PurchaseItemsCache.Clear();
+        await LoadPurchases();
         StateHasChanged();
     }
 
@@ -121,10 +133,10 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         var query = Purchases.AsEnumerable();
 
         if (FilterDateFrom.HasValue)
-            query = query.Where(p => p.PurchaseDate.Date >= FilterDateFrom.Value.Date);
+            query = query.Where(p => p.PurchaseDate.ToLocalTime().Date >= FilterDateFrom.Value.Date);
 
         if (FilterDateTo.HasValue)
-            query = query.Where(p => p.PurchaseDate.Date <= FilterDateTo.Value.Date);
+            query = query.Where(p => p.PurchaseDate.ToLocalTime().Date <= FilterDateTo.Value.Date);
 
         // ReferenceNo filter — match against purchase items' ReturnRefNo
         if (!string.IsNullOrWhiteSpace(ReferenceNo))
@@ -239,6 +251,50 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         }
     }
 
+    protected async Task PrintSingleReport(PurchaseSummaryDTO purchase)
+    {
+        if (purchase == null) return;
+
+        try
+        {
+            IsPrintingId = purchase.Id;
+            StateHasChanged();
+
+            if (!PurchaseItemsCache.ContainsKey(purchase.Id))
+            {
+                var items = await ServiceUnitOfWork.PurchaseService.GetPurchaseItems(purchase.Id);
+                PurchaseItemsCache[purchase.Id] = items?.ToList() ?? new List<PurchaseItemDTO>();
+            }
+
+            var cache = new Dictionary<int, List<PurchaseItemDTO>>
+            {
+                [purchase.Id] = PurchaseItemsCache[purchase.Id] ?? new List<PurchaseItemDTO>()
+            };
+
+            var pdfBytes = PurchaseReportService.GeneratePurchaseDetailReport(
+                new[] { purchase },
+                cache,
+                dateFrom: purchase.PurchaseDate,
+                dateTo: purchase.PurchaseDate);
+
+            var fileName =
+                $"PurchaseReport_{purchase.SystemInvoiceNo ?? purchase.Id.ToString()}_{purchase.BillInvoiceNumber ?? "purchase"}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+
+            NotifySuccess($"Report generated for purchase '{purchase.SystemInvoiceNo}'.");
+        }
+        catch (Exception ex)
+        {
+            NotifyError($"Failed to generate purchase report: {ex.Message}");
+        }
+        finally
+        {
+            IsPrintingId = null;
+            StateHasChanged();
+        }
+    }
+
     // ── Navigation ────────────────────────────────────────────────────────────
 
     protected async Task OpenImagePreview(string imageBase64, string itemName)
@@ -270,10 +326,18 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
         {
             try
             {
-                await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
-                PurchaseItemsCache.Remove(purchase.Id);
-                await LoadPurchases();
-                NotifySuccess("Purchase deleted successfully.");
+                var result = await ServiceUnitOfWork.PurchaseService.DeletePurchase(purchase.Id);
+
+                if (result?.IsSuccessStatus == true)
+                {
+                    PurchaseItemsCache.Remove(purchase.Id);
+                    await LoadPurchases();
+                    NotifySuccess(result.Message ?? "Purchase deleted successfully.");
+                }
+                else
+                {
+                    NotifyError(result?.Message ?? "Failed to delete purchase.");
+                }
             }
             catch (Exception ex)
             {
@@ -301,6 +365,11 @@ public partial class PurchaseListComponent : PosComponentBase, IDisposable
             Detail = message,
             Duration = 3000
         });
+
+    protected void NavigateToBarcodePrint(int purchaseId)
+    {
+        NavigationManager.NavigateTo($"/BarcodePrint/{purchaseId}");
+    }
 
     // ── Dispose ───────────────────────────────────────────────────────────────
 

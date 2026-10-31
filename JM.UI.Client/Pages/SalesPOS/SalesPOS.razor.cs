@@ -1,0 +1,1543 @@
+using JM.Infrastructure.Models;
+using JM.UI.Client.Pages.Dialog;
+using JM.UI.Client.Pages.Dialog.SalesPOS;
+using JM.UI.Entities.Model.Colors;
+using JM.UI.Entities.Model.CustomerDetails;
+using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.MembershipType;
+using JM.UI.Entities.Model.MesurementUnits;
+using JM.UI.Entities.Model.SalesPOS;
+using JM.UI.Entities.Model.Sizes;
+using JM.UI.Entities.Model.Stores;
+using JM.UI.Entities.Model.Shift;
+using JM.UI.Service.UnitOfWork;
+using JM.UIWeb.CustomBase;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
+using Radzen;
+using Radzen.Blazor;
+using JM.UI.Service.Reports;
+
+namespace JM.UI.Client.Pages.SalesPOS
+{
+    public partial class SalesPOSComponent : PosComponentBase, IDisposable
+    {
+        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public PosInvoicePdfService PosInvoicePdfService { get; set; } = default!;
+
+        // ── Mode ──
+        protected string _currentMode = "Sale";
+        protected bool IsSaleMode => _currentMode == "Sale";
+        protected bool IsBookingMode => _currentMode == "Booking";
+        protected bool IsInvoicesMode => _currentMode == "Invoices";
+        protected bool IsDraftMode => _currentMode == "Draft";
+        protected string PageTitle => $"Sales POS - {_currentMode}";
+
+        // ── Lookup Data ──
+        protected List<StoreDTO> Stores { get; set; } = new();
+        protected List<ColorsDTO> Colors { get; set; } = new();
+        protected List<SizesDTO> Sizes { get; set; } = new();
+        protected List<CustomerDetailsDTO> Customers { get; set; } = new();
+        protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
+        protected List<ShiftDTO> Shifts { get; set; } = new();
+
+        // ── Sale State ──
+        protected SaleMasterDTO Sale { get; set; } = new();
+        protected List<SaleDetailDTO> CartItems { get; set; } = new();
+        protected RadzenDataGrid<SaleDetailDTO> CartGrid = default!;
+
+        // ── Barcode / Product Search ──
+        protected string BarcodeInput { get; set; } = "";
+        protected ProductSearchDTO? SearchedProduct { get; set; }
+
+        // ── Invoices / Bookings / Drafts ──
+        protected List<SaleSummaryDTO> Invoices { get; set; } = new();
+        protected bool IsInvoicesLoading { get; set; }
+        protected string InvoiceSearchText { get; set; } = string.Empty;
+        protected List<SaleSummaryDTO> Bookings { get; set; } = new();
+        protected bool IsBookingsLoading { get; set; }
+        protected List<SaleSummaryDTO> Drafts { get; set; } = new();
+        protected bool IsDraftsLoading { get; set; }
+        protected Dictionary<int, List<SaleDetailDTO>> ExpandedInvoiceDetails { get; set; } = new();
+        protected Dictionary<int, bool> ExpandedInvoiceLoading { get; set; } = new();
+
+        protected List<SaleSummaryDTO> CurrentSalesList =>
+            IsDraftMode ? Drafts : (IsBookingMode ? Bookings : Invoices);
+        protected bool IsCurrentSalesListLoading =>
+            IsDraftMode ? IsDraftsLoading : (IsBookingMode ? IsBookingsLoading : IsInvoicesLoading);
+
+        // ── Customer ──
+        protected List<CustomerDetailsDTO> AllCustomers { get; set; } = new();
+        protected int SelectedCustomerId { get; set; }
+        protected CustomerDetailsDTO? SelectedCustomer { get; set; }
+
+        // ── Customer Search ──
+        protected string CustomerSearchText { get; set; } = "";
+        protected List<CustomerDetailsDTO> FilteredCustomers =>
+            string.IsNullOrWhiteSpace(CustomerSearchText) ? new() :
+            AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase))
+            ).Take(10).ToList();
+
+        // ── Employee ──
+        protected List<EmployeeModelDTO> Employees { get; set; } = new();
+        protected int SelectedEmployeeId { get; set; }
+        protected string? SelectedEmployeeName { get; set; }
+
+        // ── Computed Values ──
+        protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
+        // VAT is per item (from its group) and is already folded into each line's
+        // TotalAmount, so this is only the informational VAT breakdown of SubTotal.
+        protected decimal CalculatedVat => CartItems.Sum(c => CalculateLineVat(c.Qty, c.UnitPrice, c.Vat));
+        protected decimal InvoiceDiscountAmount
+        {
+            get
+            {
+                if (Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue)
+                    return SubTotal * (Sale.InvoiceDiscount.Value / 100m);
+                return Sale.InvoiceDiscount ?? 0;
+            }
+        }
+        // ── Invoice discount limit (from the signed-in user's Group Role) ──
+        // GroupsRole.MaxDiscount caps the invoice discount % this user may give.
+        // NULL = no limit (user in no group, or the group sets no limit).
+        protected int CurrentUserId { get; set; }
+        protected decimal? MaxInvoiceDiscountPercent { get; set; }
+
+        // Effective invoice discount of the current cart as a percentage of SubTotal,
+        // whichever mode the Percentage/Flat dropdown is in.
+        protected decimal InvoiceDiscountPercent
+        {
+            get
+            {
+                if (Sale.InvoiceDiscountType == "Percentage")
+                    return Sale.InvoiceDiscount ?? 0;
+                return SubTotal > 0 ? (Sale.InvoiceDiscount ?? 0) / SubTotal * 100m : 0;
+            }
+        }
+
+        protected bool IsInvoiceDiscountOverLimit =>
+            MaxInvoiceDiscountPercent.HasValue && InvoiceDiscountPercent > MaxInvoiceDiscountPercent.Value;
+
+        // SubTotal of cart lines that do NOT carry a campaign discount.
+        // Customer/membership discount is only allowed on these lines.
+        protected decimal NonCampaignSubTotal => CartItems.Where(i => !i.HasDiscount).Sum(c => c.TotalAmount);
+        protected decimal MembershipDiscountAmount => SelectedCustomer != null
+            ? NonCampaignSubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
+            : 0;
+
+        // Campaign discount aggregated from the cart lines that carry one.
+        // Flat discounts (DiscountTypeId == 2) are a per-unit amount;
+        // percentage discounts are applied against the line's sale price.
+        protected decimal CampaignDiscountAmount => CartItems
+            .Where(i => i.HasDiscount && (i.Discount ?? 0) > 0)
+            .Sum(i => i.DiscountTypeId == 2
+                ? (i.Discount ?? 0) * i.Qty
+                : i.UnitPrice * i.Qty * (i.Discount ?? 0) / 100m);
+
+        // ── Discount → Customer rule ──
+        // A bill that carries any discount (manual invoice discount, campaign /
+        // product discount, or membership discount) must be tied to a customer so
+        // the discount can be traced. The automatic paisa-to-discount rounding is
+        // deliberately excluded: it happens on most bills and is not a discount
+        // anybody grants.
+        protected bool HasDiscountOnBill =>
+            InvoiceDiscountAmount > 0 || CampaignDiscountAmount > 0 || MembershipDiscountAmount > 0;
+
+        // When true (default), the manual invoice discount is divided equally across
+        // cart items that don't already have a product-level discount.
+        // When false, the discount stays at the bill level only (not pushed to lines)
+        // and the Discount column becomes editable for manual per-item entry.
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+
+        // True while a discount is on the bill and no customer has been picked.
+        protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
+
+        // Exact payable of the current cart BEFORE the exchange credit is applied.
+        // This is the Billing Summary "Net Payable" ceiling an exchange credit is
+        // allowed to reach, so it must never include Sale.ExchangeAmount.
+        protected decimal BillingTotalBeforeExchange
+        {
+            get
+            {
+                var net = SubTotal;
+                if (Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue)
+                    net -= net * (Sale.InvoiceDiscount.Value / 100m);
+                else
+                    net -= Sale.InvoiceDiscount ?? 0;
+                net -= CampaignDiscountAmount;
+                net -= MembershipDiscountAmount;
+                // VAT is already included in each line's TotalAmount (and therefore
+                // in SubTotal), so it must not be added again here.
+                net += Sale.RoundingAmount ?? 0;
+                return Math.Max(net, 0);
+            }
+        }
+
+        // Exact payable before the paisa-to-discount rounding.
+        protected decimal RawNetPayable
+            => Math.Max(BillingTotalBeforeExchange - (Sale.ExchangeAmount ?? 0), 0);
+
+        // Fractional paisa part of the payable is moved into the discount field
+        // so the payable amount is always a whole taka (no paisa).
+        protected decimal PaisaDiscount => Math.Round(RawNetPayable - Math.Floor(RawNetPayable), 2);
+
+        protected decimal NetPayable => Math.Floor(RawNetPayable);
+
+        protected override async Task OnInitializedAsync()
+        {
+            NavigationGuard.IsGuardActive = true;
+            await TokenService.InitializeTokenAsync();
+            Sale = _serviceUnitOfWork.SaleService.CreateNew();
+            await LoadLookupData();
+            int localStoreId = await GetLocalStorageInt("StoreId");
+            Sale.StoreId = localStoreId > 0 ? localStoreId : Stores.FirstOrDefault()?.Id;
+            CurrentUserId = await GetLocalStorageInt("UserId");
+            Sale.CreatedBy = CurrentUserId;
+            await LoadInvoiceDiscountLimit();
+            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            await LoadEmployeesByStore();
+        }
+
+        // Reads the Sales POS invoice discount cap from the group of the signed-in
+        // user (Group Roles -> Maximum Discount). Failures are non-fatal: an
+        // unavailable limit must never block the till, it just means "no cap".
+        private async Task LoadInvoiceDiscountLimit()
+        {
+            try
+            {
+                MaxInvoiceDiscountPercent = await _serviceUnitOfWork.UserGroupService
+                    .GetMaxDiscountByUserId(CurrentUserId);
+            }
+            catch (Exception ex)
+            {
+                MaxInvoiceDiscountPercent = null;
+                Console.WriteLine($"[DEBUG] LoadInvoiceDiscountLimit failed: {ex.Message}");
+            }
+        }
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && !string.IsNullOrEmpty(result.Value))
+                {
+                    if (int.TryParse(result.Value, out int parsed) && parsed > 0)
+                        return parsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
+        }
+        protected List<string> PaymentTypeOptions { get; set; } = new() { "Cash", "MFS", "Card" };
+        protected List<string> DiscountTypeOptions { get; set; } = new() { "Percentage", "Flat" };
+
+        protected async Task LoadLookupData()
+        {
+            try
+            {
+                var storeTask = _serviceUnitOfWork.StoreService.GetStores();
+                var colorTask = _serviceUnitOfWork.ColorsService.GetColorss();
+                var sizeTask = _serviceUnitOfWork.SizesService.GetSizess();
+                var shiftTask = _serviceUnitOfWork.ShiftService.GetShift();
+                var allCustomers = _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                var membershipTask = _serviceUnitOfWork.MembershipTypeService.GetAll();
+                await Task.WhenAll(storeTask, colorTask, sizeTask, shiftTask, allCustomers, membershipTask);
+
+                Stores = (storeTask.Result ?? new List<StoreDTO>()).ToList();
+                Colors = (colorTask.Result ?? new List<ColorsDTO>()).ToList();
+                Sizes = (sizeTask.Result ?? new List<SizesDTO>()).ToList();
+                Shifts = (shiftTask.Result ?? new List<ShiftDTO>()).ToList();
+                AllCustomers = (allCustomers.Result ?? new List<CustomerDetailsDTO>()).ToList();
+                MembershipTypes = (membershipTask.Result ?? new List<MembershipTypeDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Failed to load lookup data: {ex.Message}", 4000);
+            }
+        }
+
+        // Tab classes
+        protected string SaleTabClass => $"mode-tab{(IsSaleMode ? " active" : "")}";
+        protected string BookingTabClass => $"mode-tab{(IsBookingMode ? " active" : "")}";
+        protected string InvoicesTabClass => $"mode-tab{(IsInvoicesMode ? " active" : "")}";
+        protected string DraftTabClass => $"mode-tab{(IsDraftMode ? " active" : "")}";
+        protected string CartTabClass => $"tab-btn{(IsSaleMode ? " active" : "")}";
+        protected string BookingListTabClass => $"tab-btn{(IsBookingMode ? " active" : "")}";
+        protected string InvoiceListTabClass => $"tab-btn{(IsInvoicesMode ? " active" : "")}";
+        protected string DraftListTabClass => $"tab-btn{(IsDraftMode ? " active" : "")}";
+
+        protected async Task SwitchMode(string mode)
+        {
+            _currentMode = mode;
+            switch (mode)
+            {
+                case "Invoices":
+                    await LoadInvoices();
+                    break;
+                case "Booking":
+                    await LoadBookings();
+                    break;
+                case "Draft":
+                    await LoadDrafts();
+                    break;
+            }
+        }
+
+        protected Task SwitchToSale() => SwitchMode("Sale");
+        protected Task SwitchToBooking() => SwitchMode("Booking");
+        protected Task SwitchToInvoices() => SwitchMode("Invoices");
+        protected Task SwitchToDraft() => SwitchMode("Draft");
+        protected void SetSaleMode() { _currentMode = "Sale"; }
+        protected async Task SetBookingMode()
+        {
+            if (_currentMode != "Booking")
+            {
+                _currentMode = "Booking";
+                await LoadBookings();
+            }
+            else
+            {
+                _currentMode = "Booking";
+            }
+        }
+        protected async Task SetInvoicesMode()
+        {
+            if (_currentMode != "Invoices")
+            {
+                _currentMode = "Invoices";
+                await LoadInvoices();
+            }
+            else
+            {
+                _currentMode = "Invoices";
+            }
+        }
+        protected async Task SetDraftMode()
+        {
+            if (_currentMode != "Draft")
+            {
+                _currentMode = "Draft";
+                await LoadDrafts();
+            }
+            else
+            {
+                _currentMode = "Draft";
+            }
+        }
+
+        protected async Task LoadInvoices()
+        {
+            try
+            {
+                IsInvoicesLoading = true;
+                var userId = await GetLocalStorageInt("UserId");
+                // User id 1 (admin) sees current-day invoices across all stores;
+                // every other user only sees their own store's current-day invoices.
+                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                var today = DateTime.Today;
+
+                var all = await _serviceUnitOfWork.SaleService.GetInvoices(today, storeId);
+                Invoices = (all ?? new List<SaleSummaryDTO>()).OrderByDescending(i => i.CreatedDate).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoices: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsInvoicesLoading = false;
+            }
+        }
+
+        protected async Task SearchInvoices()
+        {
+            if (string.IsNullOrWhiteSpace(InvoiceSearchText))
+            {
+                await LoadInvoices();
+                return;
+            }
+
+            try
+            {
+                IsInvoicesLoading = true;
+                var userId = await GetLocalStorageInt("UserId");
+                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+
+                var results = await _serviceUnitOfWork.SaleService.SearchInvoices(InvoiceSearchText.Trim(), storeId);
+                Invoices = (results ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Search Failed",
+                    $"Error searching invoices: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsInvoicesLoading = false;
+            }
+        }
+
+        protected async Task LoadBookings()
+        {
+            try
+            {
+                IsBookingsLoading = true;
+                var all = await _serviceUnitOfWork.SaleService.GetBookingSales();
+                Bookings = (all ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading bookings: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsBookingsLoading = false;
+            }
+        }
+
+        protected async Task LoadDrafts()
+        {
+            try
+            {
+                IsDraftsLoading = true;
+                var all = await _serviceUnitOfWork.SaleService.GetDraftSales();
+                Drafts = (all ?? new List<SaleSummaryDTO>()).ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading drafts: {ex.Message}", 4000);
+            }
+            finally
+            {
+                IsDraftsLoading = false;
+            }
+        }
+
+        protected async Task OnInvoiceRowExpand(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            if (ExpandedInvoiceDetails.ContainsKey(invoice.SaleMasterId)) return;
+
+            ExpandedInvoiceLoading[invoice.SaleMasterId] = true;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                ExpandedInvoiceDetails[invoice.SaleMasterId] = sale?.SaleDetails ?? new List<SaleDetailDTO>();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoice details: {ex.Message}", 4000);
+            }
+            finally
+            {
+                ExpandedInvoiceLoading[invoice.SaleMasterId] = false;
+            }
+        }
+
+        protected async Task DownloadInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                if (sale == null || sale.SaleDetails == null || sale.SaleDetails.Count == 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                        $"Invoice {invoice.InvoiceNo} not found.", 4000);
+                    return;
+                }
+                await DownloadPosInvoice(sale);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Download Failed",
+                    $"Error downloading invoice: {ex.Message}", 4000);
+            }
+        }
+
+        protected async Task EditInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+            try
+            {
+                bool editingFromDraft = IsDraftMode;
+
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
+                if (sale == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Not Found",
+                        $"Invoice {invoice.InvoiceNo} not found", 3000);
+                    return;
+                }
+
+                _currentMode = "Sale";
+                CartItems.Clear();
+                if (sale.SaleDetails != null)
+                {
+                    foreach (var d in sale.SaleDetails)
+                    {
+                        // The price already on the invoice is the floor the user may edit up from.
+                        if (d.BaseUnitPrice == 0)
+                            d.BaseUnitPrice = d.UnitPrice;
+                    }
+                    CartItems.AddRange(sale.SaleDetails);
+                }
+
+                Sale = sale;
+                SelectedCustomer = null;
+                SelectedCustomerId = 0;
+
+                var customer = AllCustomers.FirstOrDefault(c => c.Id == sale.CustomerId);
+                if (customer != null) SelectCustomer(customer);
+
+                // When editing from the Draft list, the draft is now converted to a sale.
+                if (editingFromDraft)
+                {
+                    var unmarkResult = await _serviceUnitOfWork.SaleService.UnmarkDraftSale(sale.SaleMasterId);
+                    if (unmarkResult.IsSuccessStatus)
+                    {
+                        sale.IsDraft = false;
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Draft Status",
+                            $"Could not unmark draft: {unmarkResult.Message}", 4000);
+                    }
+                }
+
+                notificationService.Notify(NotificationSeverity.Info, "Editing",
+                    $"Invoice {sale.InvoiceNo} loaded for editing", 3000);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading invoice: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Barcode Scanning ──
+        protected async Task OnBarcodeKeyPress(KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(BarcodeInput))
+            {
+                await AddItemByBarcode(BarcodeInput.Trim());
+            }
+        }
+
+        protected async Task AddItemByBarcode(string barcode)
+        {
+            if (string.IsNullOrWhiteSpace(barcode))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Scan Barcode",
+                    "Please scan or type a barcode first.", 3000);
+                return;
+            }
+
+            if (SelectedEmployeeId <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Salesman Required",
+                    "Please select a salesman before adding items.", 3000);
+                return;
+            }
+
+            try
+            {
+                if (Sale.StoreId == null || Sale.StoreId <= 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Store Required",
+                        "No store is assigned to your profile. Please contact an administrator.", 4000);
+                    return;
+                }
+
+                var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode, Sale.StoreId);
+                if (product == null || product.ItemId == 0 || product.StockQuantity == 0)
+                {
+                    var storeName = Stores.FirstOrDefault(s => s.Id == Sale.StoreId)?.Name ?? "current store";
+                    var confirmed = await dialogService.Confirm(
+                        $"Barcode '{barcode}' not found in {storeName}. Do you want to search in other stores?",
+                        "Not Found",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+
+                    if (confirmed == true)
+                    {
+                        await OpenProductSearchWithTerm(barcode);
+                    }
+                    return;
+                }
+
+                // The barcode lookup is always scoped to the current sale's branch,
+                // so a product without an explicit store belongs to that branch.
+                product.StoreId ??= Sale.StoreId;
+
+                SearchedProduct = product;
+                await PromptQuantityAndAdd(product);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Scan Failed",
+                    $"Error scanning barcode: {ex.Message}", 4000);
+            }
+            finally
+            {
+                BarcodeInput = "";
+                StateHasChanged();
+            }
+        }
+
+        // Opens a popup showing the item name, stock quantity and a quantity input
+        // (defaults to 1), then adds the chosen quantity to the cart.
+        protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
+        {
+            var result = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
+                new Dictionary<string, object>
+                {
+                    { "Product", product },
+                    { "ExistingQty", ExistingCartQty(product) }
+                },
+                new DialogOptions { Width = "420px", AutoFocusFirstElement = false });
+
+            if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
+            {
+                await AddProductToCart(product, selected.Qty, selected.UnitPrice);
+                if (CartGrid != null)
+                    await CartGrid.Reload();
+                StateHasChanged();
+            }
+        }
+
+        private decimal ExistingCartQty(ProductSearchDTO product)
+        {
+            return CartItems
+                .Where(c => c.ItemId == product.ItemId && c.StoreId == product.StoreId)
+                .Sum(c => c.Qty);
+        }
+
+        protected async Task AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
+        {
+            // Whole-unit items (everything except Yards / Meter) cannot take a fractional
+            // quantity: snap it to a whole number before the cart ever sees it.
+            if (UomRules.Normalize(product.UomName, ref qty))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{product.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {qty:N0}.", 3000);
+            }
+            if (qty <= 0)
+                return;
+
+            var existing = CartItems.FirstOrDefault(c =>
+                c.ItemId == product.ItemId && c.StoreId == product.StoreId);
+
+            var inCartQty = existing?.Qty ?? 0;
+            if (inCartQty + qty > product.StockQuantity)
+            {
+                var remaining = product.StockQuantity - inCartQty;
+                notificationService.Notify(NotificationSeverity.Error, "Insufficient Stock",
+                    remaining > 0
+                        ? $"Only {remaining:N2} more available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart."
+                        : $"No more stock available in {GetStoreName(product.StoreId)}. You already have {inCartQty:N2} in the cart.",
+                    5000);
+                return;
+            }
+
+            // VAT comes from the item's group (Items.GroupId -> Groups.VAT).
+            // The API returns null when the item has no group or no VAT is set,
+            // in which case the cart shows 0.
+            var vat = await _serviceUnitOfWork.SaleService.GetItemVat(product.ItemId) ?? 0m;
+
+            if (existing != null)
+            {
+                existing.Qty += qty;
+                existing.Vat = vat;
+                if (unitPrice.HasValue && unitPrice.Value > existing.BaseUnitPrice)
+                    existing.UnitPrice = unitPrice.Value;
+                existing.TotalAmount = CalculateLineTotal(existing);
+            }
+            else
+            {
+                var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                detail.Vat = vat;
+                if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
+                {
+                    detail.UnitPrice = unitPrice.Value;
+                }
+                detail.TotalAmount = CalculateLineTotal(detail);
+                if (SelectedEmployeeId > 0)
+                {
+                    detail.SalesPersonId = SelectedEmployeeId;
+                    detail.SalesPersonName = SelectedEmployeeName;
+                }
+                CartItems.Add(detail);
+            }
+
+            DistributeCustomerDiscount();
+        }
+
+        // Line total = qty x unit price, plus that line's group VAT (%) when it has one.
+        // VAT is per item (Groups.VAT), so a null/zero VAT leaves the total as qty x price.
+        // SubTotal is the sum of these totals, so VAT flows into discounts and net payable.
+        protected static decimal CalculateLineTotal(SaleDetailDTO item)
+            => CalculateLineTotal(item.Qty, item.UnitPrice, item.Vat);
+
+        protected static decimal CalculateLineTotal(decimal qty, decimal unitPrice, decimal? vat)
+            => Math.Round(qty * unitPrice + CalculateLineVat(qty, unitPrice, vat), 2);
+
+        // The VAT portion of a line, using the same base (qty x price) and rounding as
+        // CalculateLineTotal so the summary always matches the folded-in total.
+        protected static decimal CalculateLineVat(decimal qty, decimal unitPrice, decimal? vat)
+        {
+            if (!vat.HasValue || vat.Value <= 0)
+                return 0m;
+
+            return Math.Round(qty * unitPrice * vat.Value / 100m, 2);
+        }
+
+        protected string GetStoreName(int? storeId)
+        {
+            if (storeId == null) return "N/A";
+            return Stores.FirstOrDefault(s => s.Id == storeId)?.Name ?? storeId.ToString();
+        }
+
+        // ── Search Product Modal ──
+        protected async Task OpenProductSearch()
+        {
+            var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
+                new Dictionary<string, object>(),
+                new DialogOptions { Width = "1000px", Height = "700px" });
+            if (product is ProductSearchDTO selected && selected.ItemId > 0)
+            {
+                await PromptQuantityAndAdd(selected);
+            }
+        }
+
+        protected async Task OpenProductSearchWithTerm(string term)
+        {
+            var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
+                new Dictionary<string, object> { { "Barcode", term } },
+                new DialogOptions { Width = "700px", Height = "550px" });
+            if (product is ProductSearchDTO selected && selected.ItemId > 0)
+            {
+                await PromptQuantityAndAdd(selected);
+            }
+        }
+
+        // ── Cart Operations ──
+        protected void UpdateCartItemQuantity(SaleDetailDTO item, decimal newQty)
+        {
+            // Yards / Meter keep their decimals; every other unit is rounded to a whole number.
+            if (UomRules.Normalize(item.UomName, ref newQty) && newQty > 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{item.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {newQty:N0}.", 3000);
+            }
+
+            if (newQty <= 0)
+            {
+                CartItems.Remove(item);
+            }
+            else
+            {
+                item.Qty = newQty;
+                item.TotalAmount = CalculateLineTotal(item);
+            }
+            SyncInvoiceDiscountFromLines();
+            DistributeCustomerDiscount();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // The sale price may be raised in the cart, but never reduced below the
+        // originally loaded price (BaseUnitPrice).
+        protected void UpdateCartItemPrice(SaleDetailDTO item, decimal newPrice)
+        {
+            if (newPrice < item.BaseUnitPrice)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Price Restriction",
+                    $"Sale price cannot be set below the loaded price ({item.BaseUnitPrice:N2}).", 3000);
+                item.UnitPrice = item.BaseUnitPrice;
+            }
+            else
+            {
+                item.UnitPrice = newPrice;
+            }
+            item.TotalAmount = CalculateLineTotal(item);
+            DistributeCustomerDiscount();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // Called when the user manually edits a line's discount (only when equal
+        // distribution is OFF). Line.Discount is an allocation of the bill-level
+        // invoice discount, so TotalAmount stays gross — the invoice discount is
+        // subtracted once in the billing summary.
+        protected void UpdateCartItemDiscount(SaleDetailDTO item, decimal? newDiscount)
+        {
+            // Manual entry is only available when equal distribution is off and
+            // the line is not already carrying a campaign/product discount.
+            if (DistributeInvoiceDiscountEqually || item.HasDiscount) return;
+
+            var lineGross = Math.Max(item.Qty * item.UnitPrice, 0);
+            var discount = Math.Clamp(newDiscount ?? 0, 0, lineGross);
+
+            item.Discount = Math.Round(discount, 2);
+
+            // The manual per-item entries are the source of truth in this mode:
+            // keep the bill-level invoice discount in sync with their total so the
+            // payable always matches what the cashier typed on the lines.
+            SyncInvoiceDiscountFromLines();
+
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // Recomputes the bill-level invoice discount as the sum of the manually
+        // entered per-item discounts (flat amount) while equal distribution is off.
+        protected void SyncInvoiceDiscountFromLines()
+        {
+            if (DistributeInvoiceDiscountEqually) return;
+
+            Sale.InvoiceDiscountType = "Flat";
+            Sale.InvoiceDiscount = CartItems
+                .Where(i => !i.HasDiscount)
+                .Sum(i => i.Discount ?? 0);
+        }
+
+        // Checkbox handler: switching ON re-runs the equal distribution; switching
+        // OFF makes the existing per-item values authoritative for the bill total.
+        protected void OnDistributeInvoiceDiscountModeChanged()
+        {
+            if (DistributeInvoiceDiscountEqually)
+            {
+                DistributeInvoiceDiscount();
+                return;
+            }
+
+            SyncInvoiceDiscountFromLines();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        protected void RemoveCartItem(SaleDetailDTO item)
+        {
+            CartItems.Remove(item);
+            SyncInvoiceDiscountFromLines();
+            DistributeCustomerDiscount();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        protected void ClearCart()
+        {
+            CartItems.Clear();
+            SearchedProduct = null;
+            SelectedCustomer = null;
+            SelectedCustomerId = 0;
+            SelectedEmployeeId = 0;
+            SelectedEmployeeName = null;
+            Sale.InvoiceDiscount = null;
+            Sale.CampaignDiscount = null;
+            Sale.VatPercentage = 0;
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // ── Discount Distribution ──
+        protected void DistributeInvoiceDiscount()
+        {
+            if (!CartItems.Any()) return;
+
+            // Only distribute across items that don't already have a product-level discount.
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
+            if (!eligible.Any()) return;
+
+            // When distribution is OFF, don't auto-distribute — leave the manually
+            // entered per-item discounts alone (including when the invoice discount
+            // amount is zero).
+            if (!DistributeInvoiceDiscountEqually)
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
+
+            decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
+                ? SubTotal * (Sale.InvoiceDiscount.Value / 100m)
+                : Sale.InvoiceDiscount ?? 0;
+
+            if (totalDiscountAmount <= 0)
+            {
+                foreach (var item in eligible) item.Discount = 0;
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
+
+            // Divide the discount equally across eligible items.
+            var share = Math.Floor(totalDiscountAmount / eligible.Count * 100m) / 100m;
+            var remaining = totalDiscountAmount;
+
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                var item = eligible[i];
+                if (i == eligible.Count - 1)
+                {
+                    item.Discount = Math.Round(remaining, 2);
+                }
+                else
+                {
+                    item.Discount = share;
+                    remaining -= share;
+                }
+            }
+
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        protected async Task LoadCustomers()
+        {
+            try
+            {
+                var all = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                AllCustomers = all.ToList();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading customers: {ex.Message}", 4000);
+            }
+        }
+
+        protected async Task LoadEmployeesByStore()
+        {
+            try
+            {
+                var storeId = Sale.StoreId ?? 0;
+                if (storeId > 0)
+                {
+                    var employees = await _serviceUnitOfWork.EmployeeService.GetEmployeesByStoreId(storeId);
+                    Employees = employees.ToList();
+                }
+                else
+                {
+                    var employees = await _serviceUnitOfWork.EmployeeService.GetEmployees();
+                    Employees = employees.ToList();
+                }
+                SelectedEmployeeId = 0;
+                SelectedEmployeeName = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Load Failed",
+                    $"Error loading employees: {ex.Message}", 4000);
+            }
+        }
+
+        protected void SelectCustomerById(int customerId)
+        {
+            if (customerId <= 0)
+            {
+                ClearCustomer();
+                return;
+            }
+            var customer = AllCustomers.FirstOrDefault(c => c.Id == customerId);
+            if (customer != null) SelectCustomer(customer);
+        }
+
+        protected void SelectCustomer(CustomerDetailsDTO customer)
+        {
+            SelectedCustomer = customer;
+            SelectedCustomerId = customer.Id;
+            Sale.CustomerId = customer.Id;
+            Sale.CustomerName = customer.Name;
+            Sale.CustomerPhone = customer.Phone;
+            Sale.CustomerAddress = customer.Address;
+            Sale.MembershipTypeId = customer.MemberTypeId;
+            var discountRate = GetCustomerDiscountRate(customer);
+            Sale.DiscountRate = (int)discountRate;
+            Sale.MembershipDiscount = NonCampaignSubTotal * (discountRate / 100m);
+            DistributeCustomerDiscount();
+            StateHasChanged();
+        }
+
+        protected void ClearCustomer()
+        {
+            SelectedCustomer = null;
+            SelectedCustomerId = 0;
+            Sale.CustomerId = null;
+            Sale.CustomerName = null;
+            Sale.CustomerPhone = null;
+            Sale.CustomerAddress = null;
+            Sale.MembershipTypeId = null;
+            Sale.DiscountRate = null;
+            Sale.MembershipDiscount = null;
+
+            // Remove the customer-discount shares from cart items, then restore the
+            // invoice-discount allocation. In manual mode the per-item entries are
+            // left untouched.
+            if (DistributeInvoiceDiscountEqually)
+            {
+                DistributeInvoiceDiscount();
+            }
+            else
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+            }
+        }
+
+        // ── Customer / Membership Discount Distribution ──
+        // The customer's discount is equally divided across cart items that do not
+        // already have their own (product-level) discount.
+        // Resolves the discount rate from the customer's DTO, falling back to the
+        // MembershipType table (looked up by MemberTypeId) when the DTO value is missing.
+        protected decimal GetCustomerDiscountRate(CustomerDetailsDTO customer)
+        {
+            if (customer?.DiscountRate.HasValue == true && customer.DiscountRate.Value > 0)
+                return customer.DiscountRate.Value;
+
+            if (customer?.MemberTypeId.HasValue == true)
+            {
+                var membership = MembershipTypes.FirstOrDefault(m => m.Id == customer.MemberTypeId.Value);
+                if (membership?.DiscountRate.HasValue == true && membership.DiscountRate.Value > 0)
+                    return membership.DiscountRate.Value;
+            }
+            return 0;
+        }
+
+        protected void DistributeCustomerDiscount()
+        {
+            if (!CartItems.Any() || SelectedCustomer == null)
+            {
+                return;
+            }
+
+            var discountRate = GetCustomerDiscountRate(SelectedCustomer);
+            if (discountRate <= 0)
+            {
+                return;
+            }
+
+            // Manual per-item discount entry is active. Membership shares and manual
+            // allocations use the same line Discount field, so don't overwrite them.
+            if (!DistributeInvoiceDiscountEqually)
+            {
+                return;
+            }
+
+            // Only distribute across items that don't already have a product-level discount.
+            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
+            if (!eligible.Any()) return;
+
+            decimal totalDiscountAmount = NonCampaignSubTotal * (discountRate / 100m);
+            if (totalDiscountAmount <= 0)
+            {
+                foreach (var item in eligible) item.Discount = 0;
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
+
+            // Divide the discount equally across eligible items.
+            var share = Math.Floor(totalDiscountAmount / eligible.Count * 100m) / 100m;
+            var remaining = totalDiscountAmount;
+
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                var item = eligible[i];
+                if (i == eligible.Count - 1)
+                {
+                    item.Discount = Math.Round(remaining, 2);
+                }
+                else
+                {
+                    item.Discount = share;
+                    remaining -= share;
+                }
+            }
+
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // ── Employee Selection ──
+        protected void OnEmployeeChanged(int employeeId)
+        {
+            SelectedEmployeeId = employeeId;
+            var emp = Employees.FirstOrDefault(e => e.Id == employeeId);
+            SelectedEmployeeName = emp?.Name;
+
+            foreach (var item in CartItems)
+            {
+                item.SalesPersonId = employeeId > 0 ? employeeId : null;
+                item.SalesPersonName = SelectedEmployeeName;
+            }
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // ── Customer Search ──
+        protected void OnCustomerSearchInput(ChangeEventArgs args)
+        {
+            CustomerSearchText = args.Value?.ToString() ?? "";
+        }
+
+        protected async Task OnCustomerSearchKeyDown(KeyboardEventArgs e)
+        {
+            if (e.Key != "Enter") return;
+
+            var searchText = CustomerSearchText?.Trim() ?? "";
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            var matches = AllCustomers.Where(c =>
+                (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(c.Phone) && c.Phone.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            if (matches.Count == 1)
+            {
+                SelectSearchedCustomer(matches[0]);
+            }
+            else if (matches.Count == 0)
+            {
+                await OpenAddCustomerModal(searchText);
+            }
+        }
+
+        protected void SelectSearchedCustomer(CustomerDetailsDTO customer)
+        {
+            SelectedCustomerId = customer.Id;
+            SelectCustomer(customer);
+            CustomerSearchText = "";
+        }
+
+        protected async Task OpenAddCustomerFromSidebar()
+        {
+            var text = CustomerSearchText?.Trim();
+            await OpenAddCustomerModal(string.IsNullOrWhiteSpace(text) ? null : text);
+        }
+
+        protected async Task OpenAddCustomerModal(string? preFilledPhone = null)
+        {
+            var userId = await GetLocalStorageInt("UserId");
+            var parameters = new Dictionary<string, object> { { "CurrentUserId", userId } };
+            if (!string.IsNullOrEmpty(preFilledPhone))
+                parameters.Add("PreFilledPhone", preFilledPhone);
+
+            var customer = await dialogService.OpenAsync<AddCustomerDialog>("New Customer", parameters);
+            if (customer is CustomerDetailsDTO saved && saved.Id > 0)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Customer Saved",
+                    "Customer created successfully", 3000);
+                if (AllCustomers.All(c => c.Id != saved.Id))
+                    AllCustomers.Add(saved);
+                SelectCustomer(saved);
+            }
+        }
+
+        // ── Return / Exchange Modal ──
+        protected async Task OpenReturnExchangeModal()
+        {
+            int storeId = Sale.StoreId ?? 0;
+            int userId = await GetLocalStorageInt("UserId");
+
+            var result = await dialogService.OpenAsync<ReturnExchangeDialog>("Return / Exchange",
+                new Dictionary<string, object>
+                {
+                    { "StoreId", storeId },
+                    { "UserId", userId },
+                    { "BillingTotal", BillingTotalBeforeExchange }
+                },
+                new DialogOptions { Width = "760px" });
+
+            if (result is ExchangeApplyResult exchange)
+            {
+                // Apply the exchange credit to the current cart; the amount is
+                // deducted from the payable when this invoice is created.
+                Sale.ExchangeAmount = exchange.ExchangeAmount;
+                Sale.ReturnInvoiceNo = exchange.ReturnInvoiceNo;
+                Sale.ReturnedItems = exchange.ReturnedItems;
+                Sale.IsReturnExchange = true;
+                notificationService.Notify(NotificationSeverity.Success, "Exchange Applied",
+                    $"Credit {exchange.ExchangeAmount:N2} from invoice {exchange.ReturnInvoiceNo} applied to this sale", 5000);
+                StateHasChanged();
+            }
+            else if (result is ResponseResult res)
+            {
+                if (res.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Completed", res.Message, 5000);
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Failed", res.Message, 5000);
+                }
+
+                // Refresh the invoice list so the new return/exchange document is visible.
+                await LoadInvoices();
+            }
+        }
+
+        protected void RemoveAppliedExchange()
+        {
+            Sale.ExchangeAmount = null;
+            Sale.ReturnInvoiceNo = null;
+            Sale.ReturnedItems = new();
+            Sale.IsReturnExchange = false;
+            StateHasChanged();
+        }
+
+        // ── Payment Modal ──
+        protected async Task OpenPaymentModal()
+        {
+            // The invoice discount may not exceed the cap configured on the group of
+            // the signed-in user (Group Roles -> Maximum Discount). The server repeats
+            // this check on save; this is the user-facing guard.
+            if (IsInvoiceDiscountOverLimit)
+            {
+                await dialogService.Alert(
+                    $"Invoice discount of {InvoiceDiscountPercent:N2}% exceeds the maximum allowed discount of {MaxInvoiceDiscountPercent!.Value:N2}% for your group. Please reduce it before finalising.",
+                    "Discount Limit Exceeded",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // A bill carrying a discount must be tied to a customer. This guard runs
+            // before the payment dialog so the cashier is never asked to take payment
+            // and then rejected. The server repeats this check on save.
+            if (IsCustomerRequiredForDiscount)
+            {
+                await dialogService.Alert(
+                    "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "Customer Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // Can only finalize a sale when every line in the cart belongs to
+            // the same store.
+            if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)
+            {
+                await dialogService.Alert(
+                    "You cannot save the sale because all items are not from the same store.",
+                    "Same Store Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
+                new Dictionary<string, object>
+                {
+                    { "NetPayable", NetPayable },
+                    { "StoreId", Sale.StoreId }
+                });
+            if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
+                return;
+
+            Sale.SubTotal = SubTotal;
+            Sale.VatAmount = CalculatedVat;
+            Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+            Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+            Sale.NetAmount = NetPayable;
+            Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
+            Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
+            Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
+                (Sale.PaidAmount > 0 ? "Partial" : "Due");
+
+            // ── Validation: a due requires a customer ──
+            if (Sale.DueAmount > 0 && SelectedCustomer == null)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                    "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
+                return;
+            }
+
+            Sale.SaleDetails = CartItems.ToList();
+            Sale.PaymentTransactions = paymentResult.Payments.ToList();
+
+            var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
+
+            if (saveResult.IsSuccessStatus)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
+                    $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                await DownloadPosInvoice(Sale);
+
+                // Clear the cart after the invoice has been downloaded and refresh the UI.
+                CartItems.Clear();
+                StateHasChanged();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
+                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                    "Invoice downloaded successfully. Cart cleared.", 3500);
+
+                await ResetForNewSale();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
+            }
+        }
+
+        // ── POS Invoice PDF ──
+        protected async Task DownloadPosInvoice(SaleMasterDTO sale)
+        {
+            try
+            {
+                if (sale == null || sale.SaleDetails == null || sale.SaleDetails.Count == 0) return;
+
+                var store = Stores.FirstOrDefault(s => s.Id == sale.StoreId);
+
+                var pdfBytes = PosInvoicePdfService.GeneratePosInvoice(
+                    sale,
+                    companyName: store?.Name ?? "ASIA FASHION",
+                    companyAddress: store?.Address ?? "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
+                    companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
+                    companyVat: store?.VAT ?? "",
+                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
+                    terms: store?.TermsOfService ?? "");
+
+                var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Invoice Failed",
+                    $"Failed to generate invoice: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Booking Due Payment Modal ──
+        protected async Task OpenBookingPayment(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            try
+            {
+                var sale = await _serviceUnitOfWork.SaleService.GetSaleById(booking.SaleMasterId);
+                decimal due = sale?.TotalDue ?? booking.TotalDue;
+                if (due <= 0)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "No Due",
+                        $"Invoice {booking.InvoiceNo} has no pending due", 3000);
+                    return;
+                }
+
+                var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
+                    new Dictionary<string, object>
+                    {
+                        { "NetPayable", due },
+                        { "StoreId", Sale.StoreId },
+                        { "AllowBookingOption", false },
+                        { "ShowDeliveredOption", true }
+                    });
+
+                if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
+                {
+                    int storeId = Sale.StoreId ?? 0;
+                    int userId = await GetLocalStorageInt("UserId");
+
+                    var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
+                        booking.SaleMasterId, storeId, paymentResult.Payments.ToList(), userId, paymentResult.IsDelivered);
+
+                    if (saveResult.IsSuccessStatus)
+                    {
+                        notificationService.Notify(NotificationSeverity.Success, "Payment Saved",
+                            saveResult.Message, 4000);
+                        if (sale != null)
+                        {
+                            var existingPaid = sale.PaymentTransactions?.Sum(p => p.PaidAmount ?? 0) ?? 0;
+                            sale.PaidAmount = existingPaid + paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
+                            sale.DueAmount = Math.Max(0, sale.NetAmount - (sale.PaidAmount ?? 0));
+                            await DownloadPosInvoice(sale);
+                        }
+                        ExpandedInvoiceDetails.Remove(booking.SaleMasterId);
+                        await LoadBookings();
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Error",
+                            saveResult.Message, 4000);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Payment Failed",
+                    $"Error processing payment: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Cancel Booking ──
+        protected async Task CancelBooking(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Cancel booking {booking.InvoiceNo}? This will revert all stock, payments and requisitions created for this booking.",
+                "Cancel Booking",
+                new ConfirmOptions { OkButtonText = "Yes, Cancel", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int storeId = Sale.StoreId ?? 0;
+                int userId = await GetLocalStorageInt("UserId");
+
+                var result = await _serviceUnitOfWork.SaleService.CancelBooking(
+                    booking.SaleMasterId, storeId, userId);
+
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Booking Cancelled",
+                        result.Message, 4000);
+                    ExpandedInvoiceDetails.Remove(booking.SaleMasterId);
+                    await LoadBookings();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Cancel Failed",
+                    $"Error cancelling booking: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Void Invoice ──
+        protected async Task VoidInvoice(SaleSummaryDTO invoice)
+        {
+            if (invoice == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Void invoice {invoice.InvoiceNo}? This will revert stock, payments and requisitions created for this invoice.",
+                "Void Invoice",
+                new ConfirmOptions { OkButtonText = "Yes, Void", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int userId = await GetLocalStorageInt("UserId");
+
+                var result = await _serviceUnitOfWork.SaleService.VoidSale(invoice.SaleMasterId, userId > 0 ? userId : null);
+
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Invoice Voided",
+                        result.Message, 4000);
+                    ExpandedInvoiceDetails.Remove(invoice.SaleMasterId);
+                    ExpandedInvoiceLoading.Remove(invoice.SaleMasterId);
+                    await LoadInvoices();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error",
+                        result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Void Failed",
+                    $"Error voiding invoice: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Hold Draft ──
+        protected async Task HoldAsDraft()
+        {
+            try
+            {
+                Sale.SubTotal = SubTotal;
+                Sale.VatAmount = CalculatedVat;
+                Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+                Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+                Sale.NetAmount = NetPayable;
+                Sale.SaleDetails = CartItems.ToList();
+                Sale.IsDraft = true;
+
+                var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
+                        $"Draft saved as Invoice: {Sale.InvoiceNo}", 4000);
+                    await ResetForNewSale();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Draft Failed",
+                    $"Error saving draft: {ex.Message}", 4000);
+            }
+        }
+
+        protected async Task ResetForNewSale()
+        {
+            try
+            {
+                int? lastStoreId = Sale.StoreId;
+                int? lastShiftId = Sale.ShiftId;
+
+                CartItems.Clear();
+                SelectedCustomer = null;
+                SelectedCustomerId = 0;
+                SelectedEmployeeId = 0;
+                SelectedEmployeeName = null;
+                SearchedProduct = null;
+                Sale = _serviceUnitOfWork.SaleService.CreateNew();
+                Sale.StoreId = lastStoreId > 0 ? lastStoreId : Stores.FirstOrDefault()?.Id;
+                Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
+                Sale.CreatedBy = await GetLocalStorageInt("UserId");
+                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+                if (CartGrid != null)
+                    await CartGrid.Reload();
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Reset Failed",
+                    $"Error resetting sale: {ex.Message}", 4000);
+            }
+            StateHasChanged();
+        }
+
+        public void Dispose()
+        {
+            CartGrid?.Dispose();
+            NavigationGuard.IsGuardActive = false;
+        }
+    }
+}

@@ -10,6 +10,7 @@ namespace JM.UI.DataService.DAL.CustomerDetails
     {
         Task<IEnumerable<CustomerDetailsDTO>> GetAllCustomers();
         Task<CustomerDetailsDTO?> GetCustomerById(int id);
+        Task<CustomerDetailsDTO?> GetCustomerByPhone(string phone);
         Task<ResponseResult> InsertUpdateCustomer(CustomerDetailsDTO customer);
         Task<ResponseResult> DeleteCustomer(int id);
     }

@@ -27,6 +27,8 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string MesurementUnitName { get; set; } = string.Empty;
         public int? CatalogueId { get; set; }
         public string CatalogueName { get; set; } = string.Empty;
+        public int? SupplierId { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
         public string? MaterialType { get; set; }
         public string ProductType { get; set; } = "Sell Product";
         public string ImageBase64 { get; set; } 
@@ -47,5 +49,6 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public decimal? VatPercentage { get; set; }
         public decimal TotalAmount { get; set; } = 0;
         public string ShadeNo { get; set; }
+
     }
 }

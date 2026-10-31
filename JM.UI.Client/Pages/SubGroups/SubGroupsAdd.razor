@@ -26,26 +26,40 @@
         else
         {
             <RadzenCard>
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Parent Group" Component="GroupId" />
-                            <RadzenDropDown TValue="int" @bind-Value="@SubGroup.GroupId" 
-                                            Data="@Groups" TextProperty="Name" ValueProperty="Id"
-                                            Placeholder="Select Parent Group..." class="w-100" Name="GroupId"
-                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
-                            <RadzenRequiredValidator Component="GroupId" Text="Parent Group is required" DefaultValue="0" />
-                        </RadzenStack>
-                    </RadzenColumn>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenLabel Text="Parent Group" Component="GroupId" />
+                        <RadzenDropDown TValue="int" @bind-Value="@SubGroup.GroupId" 
+                                        Data="@Groups" TextProperty="Name" ValueProperty="Id"
+                                        Placeholder="Select Parent Group..." class="w-100" Name="GroupId"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" />
+                        <RadzenRequiredValidator Component="GroupId" Text="Parent Group is required" DefaultValue="0" />
+                    </RadzenStack>
+                </RadzenColumn>
 
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Gap="0.5rem">
-                            <RadzenLabel Text="Name" Component="Name" />
-                            <RadzenTextBox Name="Name" @bind-Value="@SubGroup.Name" class="w-100" />
-                            <RadzenRequiredValidator Component="Name" Text="Name is required" />
-                        </RadzenStack>
-                    </RadzenColumn>
-                </RadzenRow>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenLabel Text="Name" Component="Name" />
+                        <RadzenTextBox Name="Name" @bind-Value="@SubGroup.Name" class="w-100" />
+                        <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                    </RadzenStack>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenLabel Text="Code" />
+                        @if (IsEditMode)
+                        {
+                            <RadzenTextBox Name="Code" @bind-Value="@SubGroup.Code" class="w-100" Disabled="true" />
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Body1" Style="opacity:0.7;">Auto-generated (2 digits) on save</RadzenText>
+                        }
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
 
                 <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
                     <RadzenButton Text="Cancel" 

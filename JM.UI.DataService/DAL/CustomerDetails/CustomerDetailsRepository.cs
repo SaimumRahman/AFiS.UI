@@ -75,6 +75,36 @@ namespace JM.UI.DataService.DAL.CustomerDetails
             }
         }
 
+        public async Task<CustomerDetailsDTO?> GetCustomerByPhone(string phone)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch customer by phone: {Phone}", phone);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Customers/GetCustomerByPhone/{phone}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Customer not found by phone: {Phone}", phone);
+                    return null;
+                }
+
+                var customer = await response.Content.ReadFromJsonAsync<CustomerDetailsDTO>();
+                return customer;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get customer by phone: {Phone}", phone);
+                throw new Exception($"Failed to fetch customer by phone: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get customer by phone: {Phone}", phone);
+                throw new Exception($"Unexpected error fetching customer by phone: {ex.Message}", ex);
+            }
+        }
+
         public async Task<ResponseResult> InsertUpdateCustomer(CustomerDetailsDTO customer)
         {
             try

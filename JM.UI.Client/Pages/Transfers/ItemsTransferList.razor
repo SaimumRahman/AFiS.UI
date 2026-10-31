@@ -91,16 +91,33 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <!-- Receive Status -->
-                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsReceived" Title="Received" Width="120px" TextAlign="TextAlign.Center">
+                <!-- Receive Status + Received By / Received Date -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsReceived" Title="Received" Width="200px" TextAlign="TextAlign.Center">
                     <Template Context="transfer">
-                        <RadzenBadge Text="@(transfer.IsReceived ? "Yes" : "No")" />
+                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+                            <RadzenBadge Text="@(transfer.IsReceived ? "Yes" : "No")" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(transfer.ReceivedByName) ? "—" : transfer.ReceivedByName)
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                @(transfer.ReceivedDate.HasValue ? transfer.ReceivedDate.Value.ToString("dd MMM yyyy HH:mm") : "—")
+                            </RadzenText>
+                        </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsDispatched" Title="Dispatched" Width="120px" TextAlign="TextAlign.Center">
+                <!-- Dispatch Status + Dispatched By / Dispatched Date -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Property="IsDispatched" Title="Dispatched" Width="200px" TextAlign="TextAlign.Center">
                     <Template Context="transfer">
-                        <RadzenBadge Text="@(transfer.IsDispatched ? "Yes" : "No")" />
+                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.1rem">
+                            <RadzenBadge Text="@(transfer.IsDispatched ? "Yes" : "No")" />
+                            <RadzenText TextStyle="TextStyle.Caption" Style="font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(transfer.DispatchedByName) ? "—" : transfer.DispatchedByName)
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                @(transfer.DispatchedDate.HasValue ? transfer.DispatchedDate.Value.ToString("dd MMM yyyy HH:mm") : "—")
+                            </RadzenText>
+                        </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>
 

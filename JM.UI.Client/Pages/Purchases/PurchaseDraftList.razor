@@ -65,6 +65,12 @@
                         </Template>
                     </RadzenDataGridColumn>
 
+                    <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="BillDate" Title="Bill Date" Width="150px">
+                        <Template Context="draft">
+                            @(draft.BillDate?.ToString("dd/MM/yyyy") ?? "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
                     <RadzenDataGridColumn TItem="PurchaseDraftDTO" Property="BillInvoiceNumber" Title="Bill Number" Width="150px">
                         <Template Context="draft">
                             @(draft.BillInvoiceNumber ?? "-")

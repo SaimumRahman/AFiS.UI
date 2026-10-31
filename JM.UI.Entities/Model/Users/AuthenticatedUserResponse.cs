@@ -10,6 +10,7 @@ namespace JM.UI.Entities.Model.Users
     public class AuthenticatedUserResponse
     {
         public string Token { get; set; }
+        public string RefreshToken { get; set; }
         public int UserId { get; set; }
         public string Id { get; set; }
         public string Username { get; set; }

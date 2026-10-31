@@ -1,0 +1,153 @@
+@page "/BookingReport"
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Entities.Model.Stores
+@attribute [Authorize]
+@inherits BookingReportComponent
+
+<PageTitle>Booking Report</PageTitle>
+
+<style>
+    .booking-report-wrap { overflow-x: auto; }
+    .booking-report-table {
+        width: 100%;
+        min-width: 1150px;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        border: 1px solid #444;
+    }
+    .booking-report-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .booking-report-table tbody td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #e0e0e0;
+        white-space: nowrap;
+    }
+    .booking-report-table th.num, .booking-report-table td.num { text-align: right; }
+    .booking-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .booking-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .booking-doc-header .subtitle { font-size: 0.9rem; }
+    .booking-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .booking-doc-header .doc-range { font-size: 0.9rem; }
+    .booking-note { font-size: 0.78rem; color: #616161; margin-top: 10px; text-align: left; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="event_available" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Booking Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenDropDown @bind-Value="SelectedStoreId"
+                                    Data="@Stores"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Stores"
+                                    Style="width: 200px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="booking-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">BOOKING REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            @if (Bookings.Any())
+            {
+                <div class="booking-report-wrap">
+                    <table class="booking-report-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Booking Date</th>
+                                <th>Mobile</th>
+                                <th>Name</th>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th class="num">Rate</th>
+                                <th class="num">Quantity</th>
+                                <th class="num">Gross Amount</th>
+                                <th class="num">Discount Amount</th>
+                                <th class="num">Paid Amount</th>
+                                <th class="num">Due Balance</th>
+                                <th>Created By (UserID)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Bookings)
+                            {
+                                <tr>
+                                    <td>@row.BookingId</td>
+                                    <td>@row.BookingDate.ToString("dd-MMM-yy")</td>
+                                    <td>@row.Mobile</td>
+                                    <td>@row.Name</td>
+                                    <td>@row.ItemCode</td>
+                                    <td>@row.ItemName</td>
+                                    <td class="num">@row.Rate.ToString("N2")</td>
+                                    <td class="num">@row.Quantity.ToString("N2")</td>
+                                    <td class="num">@row.GrossAmount.ToString("N2")</td>
+                                    <td class="num">@row.DiscountAmount.ToString("N2")</td>
+                                    <td class="num">@row.PaidAmount.ToString("N2")</td>
+                                    <td class="num">@row.DueBalance.ToString("N2")</td>
+                                    <td>@row.CreatedBy</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="booking-note">
+                    NOTE: ONLY CURRENTLY BOOKED INVOICES ARE SHOWN HERE. ONCE THE BOOKED ITEMS ARE DELIVERED, IT WILL BE REMOVED FROM THIS LIST.
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-4" style="color: #616161;">
+                    No currently booked invoices found for the selected filters.
+                </div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>

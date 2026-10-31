@@ -1,0 +1,185 @@
+@page "/SalesmanWiseSummaryReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits SalesmanWiseSummaryReportComponent
+
+<PageTitle>Salesman-wise Summary Report</PageTitle>
+
+<style>
+    :root {
+        --ss-primary: #9333ea;
+        --ss-primary-soft: #f3e8ff;
+        --ss-primary-strong: #6b21a8;
+        --ss-border: #e2e8f0;
+        --ss-text: #1e293b;
+        --ss-muted: #64748b;
+        --ss-subtotal: #f1f5f9;
+        --ss-day: #faf5ff;
+        --ss-radius: 10px;
+        --ss-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .ss-paper { background: #fff; border: 1px solid var(--ss-border); border-radius: var(--ss-radius); box-shadow: var(--ss-shadow); padding: 1.75rem 1.5rem; }
+
+    .ss-doc-header { text-align: center; margin-bottom: 1.25rem; }
+    .ss-doc-header .company { font-size: 1.45rem; font-weight: 700; color: var(--ss-text); letter-spacing: 0.02em; }
+    .ss-doc-header .address { font-size: 0.85rem; color: var(--ss-muted); margin-top: 2px; }
+    .ss-doc-header .title { display: inline-block; margin-top: 0.5rem; font-weight: 700; font-size: 1rem; color: var(--ss-primary-strong); letter-spacing: 0.04em; padding: 2px 14px; border-radius: 999px; background: var(--ss-primary-soft); }
+    .ss-doc-header .range { font-size: 0.85rem; color: var(--ss-muted); margin-top: 6px; font-weight: 600; }
+
+    .ss-salesman { margin-top: 1.25rem; border: 1px solid var(--ss-border); border-radius: var(--ss-radius); overflow: hidden; }
+    .ss-salesman-head { background: linear-gradient(135deg, var(--ss-primary) 0%, var(--ss-primary-strong) 100%); color: #fff; padding: 0.6rem 1rem; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em; }
+
+    .ss-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .ss-table thead th { text-align: left; font-weight: 700; color: var(--ss-muted); text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.05em; padding: 0.45rem 0.5rem; background: #f8fafc; border-bottom: 1px solid var(--ss-border); white-space: nowrap; }
+    .ss-table thead th.num, .ss-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ss-table tbody td { padding: 0.45rem 0.5rem; border-bottom: 1px solid #f1f5f9; color: var(--ss-text); }
+    .ss-table .date { color: var(--ss-primary-strong); font-weight: 600; white-space: nowrap; }
+    .ss-table .no-sale { color: var(--ss-muted); font-style: italic; text-align: center; }
+
+    .ss-daysum td { background: var(--ss-day); font-weight: 700; border-top: 1px solid var(--ss-border); }
+    .ss-subtotal td { background: var(--ss-subtotal); font-weight: 700; border-top: 1px solid var(--ss-border); }
+    .ss-grand td { background: var(--ss-primary-soft); font-weight: 700; border-top: 1px solid var(--ss-border); }
+    .ss-label { text-align: right; color: var(--ss-primary-strong); font-weight: 700; }
+
+    .ss-empty { text-align: center; color: var(--ss-muted); padding: 2rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="summarize" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Salesman-wise Summary Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate" AllowClear="true" Placeholder="From Date" Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate" AllowClear="true" Placeholder="To Date" Style="width: 150px" />
+                    <RadzenButton Icon="refresh" Text="Load" ButtonStyle="ButtonStyle.Primary" Click="LoadReport" />
+                    <RadzenButton Icon="print" Text="Print / PDF" ButtonStyle="ButtonStyle.Secondary" Click="PrintReport" IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenCard><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></RadzenCard>
+    }
+    else
+    {
+        <div class="ss-paper">
+            <div class="ss-doc-header">
+                <div class="company">ASIA FASHION</div>
+                <div class="address">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div><span class="title">SALESMAN-WISE SUMMARY REPORT</span></div>
+                <div class="range">@DateRangeText</div>
+            </div>
+
+            @if (!Salesmen.Any())
+            {
+                <div class="ss-empty">No sales records found for the selected period.</div>
+            }
+            else
+            {
+                @foreach (var salesman in Salesmen)
+                {
+                    <div class="ss-salesman">
+                        <div class="ss-salesman-head">@Dash(salesman.Name)</div>
+                        <div style="overflow-x:auto;">
+                            <table class="ss-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Product Sold</th>
+                                        <th class="num">Qty</th>
+                                        <th class="num">Gross</th>
+                                        <th class="num">Disc(%)</th>
+                                        <th class="num">DiscAmt</th>
+                                        <th class="num">TotalAmt</th>
+                                        <th class="num">Exchange</th>
+                                        <th class="num">Net Paid</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var date in salesman.Dates)
+                                    {
+                                        @if (date.IsNoSale)
+                                        {
+                                            <tr>
+                                                <td class="date">@date.Date.ToString("dd-MMM-yy")</td>
+                                                <td colspan="8" class="no-sale">NO SALE</td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @for (var i = 0; i < date.Rows.Count; i++)
+                                            {
+                                                var row = date.Rows[i];
+                                                <tr>
+                                                    <td class="date">@(i == 0 ? date.Date.ToString("dd-MMM-yy") : "")</td>
+                                                    <td>@Dash(row.ProductSold)</td>
+                                                    <td class="num">@FmtQty(row.Quantity)</td>
+                                                    <td class="num">@Fmt(row.GrossAmount)</td>
+                                                    <td class="num">@Pct(row.DiscAmt, row.GrossAmount)</td>
+                                                    <td class="num">@Fmt(row.DiscAmt)</td>
+                                                    <td class="num">@Fmt(row.TotalAmt)</td>
+                                                    <td class="num">@Fmt(row.ExchangeAmt)</td>
+                                                    <td class="num">@Fmt(row.NetPaid)</td>
+                                                </tr>
+                                            }
+
+                                            <tr class="ss-daysum">
+                                                <td colspan="2" class="ss-label">DaySum</td>
+                                                <td class="num">@FmtQty(date.Rows.Sum(r => r.Quantity))</td>
+                                                <td class="num">@Fmt(date.Rows.Sum(r => r.GrossAmount))</td>
+                                                <td class="num">@Pct(date.Rows.Sum(r => r.DiscAmt), date.Rows.Sum(r => r.GrossAmount))</td>
+                                                <td class="num">@Fmt(date.Rows.Sum(r => r.DiscAmt))</td>
+                                                <td class="num">@Fmt(date.Rows.Sum(r => r.TotalAmt))</td>
+                                                <td class="num">@Fmt(date.Rows.Sum(r => r.ExchangeAmt))</td>
+                                                <td class="num">@Fmt(date.Rows.Sum(r => r.NetPaid))</td>
+                                            </tr>
+                                        }
+                                    }
+
+                                    <tr class="ss-subtotal">
+                                        <td colspan="2" class="ss-label">SubTotal</td>
+                                        <td class="num">@FmtQty(salesman.AllRows.Sum(r => r.Quantity))</td>
+                                        <td class="num">@Fmt(salesman.AllRows.Sum(r => r.GrossAmount))</td>
+                                        <td class="num">@Pct(salesman.AllRows.Sum(r => r.DiscAmt), salesman.AllRows.Sum(r => r.GrossAmount))</td>
+                                        <td class="num">@Fmt(salesman.AllRows.Sum(r => r.DiscAmt))</td>
+                                        <td class="num">@Fmt(salesman.AllRows.Sum(r => r.TotalAmt))</td>
+                                        <td class="num">@Fmt(salesman.AllRows.Sum(r => r.ExchangeAmt))</td>
+                                        <td class="num">@Fmt(salesman.AllRows.Sum(r => r.NetPaid))</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+
+                <div class="ss-salesman">
+                    <div style="overflow-x:auto;">
+                        <table class="ss-table">
+                            <tbody>
+                                <tr class="ss-grand">
+                                    <td colspan="2" class="ss-label">GRAND TOTAL</td>
+                                    <td class="num">@FmtQty(Salesmen.Sum(s => s.AllRows.Sum(r => r.Quantity)))</td>
+                                    <td class="num">@Fmt(Salesmen.Sum(s => s.AllRows.Sum(r => r.GrossAmount)))</td>
+                                    <td class="num">@Pct(Salesmen.Sum(s => s.AllRows.Sum(r => r.DiscAmt)), Salesmen.Sum(s => s.AllRows.Sum(r => r.GrossAmount)))</td>
+                                    <td class="num">@Fmt(Salesmen.Sum(s => s.AllRows.Sum(r => r.DiscAmt)))</td>
+                                    <td class="num">@Fmt(Salesmen.Sum(s => s.AllRows.Sum(r => r.TotalAmt)))</td>
+                                    <td class="num">@Fmt(Salesmen.Sum(s => s.AllRows.Sum(r => r.ExchangeAmt)))</td>
+                                    <td class="num">@Fmt(Salesmen.Sum(s => s.AllRows.Sum(r => r.NetPaid)))</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</RadzenContent>

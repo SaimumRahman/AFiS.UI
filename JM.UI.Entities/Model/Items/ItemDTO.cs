@@ -11,6 +11,8 @@ namespace JM.UI.Entities.Model.Items
         public int? ItemWiseFeatureId { get; set; }
         public List<int> FeatureIds { get; set; }
         public string? GroupName { get; set; }
+        public string? MesurementUnitName { get; set; }
+        public string? ReturnRefNo { get; set; }
         public int? SubGroupId { get; set; }
         public int? DesignId { get; set; }
         public string? DesignName { get; set; }
@@ -19,9 +21,10 @@ namespace JM.UI.Entities.Model.Items
         public int? UnitId { get; set; }
         public int? ColorId { get; set; }
         public int? SizeId { get; set; }
-        public int CurrentStock { get; set; }
+        public decimal CurrentStock { get; set; }
         public string? UnitName { get; set; }
         public string? ShadeNo { get; set; }
+        public string? ImageBase64 { get; set; }
         public string? MaterialType { get; set; }
         public string? Origin { get; set; }
         public string? Features { get; set; }
@@ -35,7 +38,6 @@ namespace JM.UI.Entities.Model.Items
         public int? SupplierId { get; set; }
         public int? CatalogueId { get; set; }
         public string? SupplierName { get; set; }
-        public byte[]? Image { get; set; }
         public bool? RawMaterial { get; set; }
         public bool? FinishedGood { get; set; }
         public int? CreatedBy { get; set; }
@@ -49,6 +51,11 @@ namespace JM.UI.Entities.Model.Items
         public bool CountStockBySize { get; set; }
         public string? ProductType { get; set; }
         public string? Catalogue { get; set; }
-        public string? ReturnRefNo { get; set; }
+        public int ItemCode { get; set; }
+
+        // Display fields (populated via joins in the API)
+        public string? BrandName { get; set; }
+        public string? OriginName { get; set; }
+        public string? FeaturesDisplay { get; set; }
     }
 }

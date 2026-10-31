@@ -1,4 +1,6 @@
 ﻿using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.ItemBrand;
+using JM.UI.Entities.Model.ItemOrigin;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.Suppliers;
@@ -19,6 +21,8 @@ namespace JM.UI.Client.Pages.Items
         protected IEnumerable<SubGroupModelDTO> SubGroupsList = new List<SubGroupModelDTO>();
         protected IEnumerable<MesurementUnitModelDTO> MeasurementUnitsList = new List<MesurementUnitModelDTO>();
         protected IEnumerable<SupplierModelDTO> SuppliersList = new List<SupplierModelDTO>();
+        protected IEnumerable<ItemBrandDTO> Brands { get; set; } = new List<ItemBrandDTO>();
+        protected IEnumerable<ItemOriginDTO> Origins { get; set; } = new List<ItemOriginDTO>();
 
         protected bool IsProcessing { get; set; } = false;
         protected bool IsLoadingByComponent { get; set; } = false;
@@ -28,20 +32,34 @@ namespace JM.UI.Client.Pages.Items
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
-            await LoadLookups();
-            if (IsEditMode)
+
+            // Creating new items is no longer supported from this page.
+            if (!IsEditMode)
             {
-                await LoadItem();
+                NavigationManager.NavigateTo("/ItemsList");
+                return;
             }
+
+            await LoadLookups();
+            await LoadItem();
         }
 
         private async Task LoadLookups()
         {
             try
             {
-                SubGroupsList = await _serviceUnitOfWork.SubGroupService.GetSubGroups();
-                MeasurementUnitsList = await _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits();
-                SuppliersList = await _serviceUnitOfWork.SupplierService.GetSuppliers();
+                var subGroupsTask = _serviceUnitOfWork.SubGroupService.GetSubGroups();
+                var unitsTask = _serviceUnitOfWork.MesurementUnitService.GetMesurementUnits();
+                var suppliersTask = _serviceUnitOfWork.SupplierService.GetSuppliers();
+                var brandsTask = _serviceUnitOfWork.ItemBrandService.GetItemBrands();
+                var originsTask = _serviceUnitOfWork.ItemOriginService.GetItemOrigins();
+                await Task.WhenAll(subGroupsTask, unitsTask, suppliersTask, brandsTask, originsTask);
+
+                SubGroupsList = subGroupsTask.Result ?? new List<SubGroupModelDTO>();
+                MeasurementUnitsList = unitsTask.Result ?? new List<MesurementUnitModelDTO>();
+                SuppliersList = suppliersTask.Result ?? new List<SupplierModelDTO>();
+                Brands = brandsTask.Result ?? new List<ItemBrandDTO>();
+                Origins = originsTask.Result ?? new List<ItemOriginDTO>();
             }
             catch (Exception ex)
             {
@@ -76,22 +94,58 @@ namespace JM.UI.Client.Pages.Items
             }
         }
 
+        private async Task<int> GetLocalStorageInt(string key)
+        {
+            try
+            {
+                var result = await _localStorage.GetAsync<string>(key);
+                if (result.Success && int.TryParse(result.Value, out int value))
+                    return value;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetLocalStorageInt('{key}') failed: {ex.Message}");
+            }
+
+            return 0;
+        }
+
         protected async Task Save()
         {
             try
             {
                 IsProcessing = true;
-                var result = true;
+                var currentUserId = await GetLocalStorageInt("UserId");
 
-                if (result)
+                var updateItem = new UpdateItemDTO
+                {
+                    Id = Item.Id,
+                    Name = Item.Name,
+                    SalePrice = Item.SalePrice,
+                    MesurementUnitId = Item.MesurementUnitId,
+                    AlarmLevel = Item.AlarmLevel,
+                    LastModifiedBy = currentUserId,
+                    LastModifiedDate = DateTime.UtcNow,
+
+                    // Brand / Origin / Features
+                    BrandId = Item.BrandId,
+                    OriginId = Item.OriginId,
+                    Origin = Item.Origin,
+                    Features = Item.Features,
+                    ItemWiseFeatureId = Item.ItemWiseFeatureId
+                };
+
+                var result = await _serviceUnitOfWork.ItemService.UpdateItem(updateItem);
+
+                if (result.IsSuccessStatus)
                 {
                     notificationService.Notify(NotificationSeverity.Success, "Success",
-                        IsEditMode ? "Item updated successfully!" : "Item created successfully!");
+                        "Item updated successfully!");
                     NavigationManager.NavigateTo("/ItemsList");
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Error");
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
                 }
             }
             catch (Exception ex)

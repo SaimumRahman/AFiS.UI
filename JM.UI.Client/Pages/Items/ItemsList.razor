@@ -16,11 +16,6 @@
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Item"
-                                  Click="@AddItem"
-                                  ButtonStyle="ButtonStyle.Primary"
-                                  Size="ButtonSize.Medium" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -57,6 +52,9 @@
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SubGroupName" Title="SubGroup" Width="150px" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="MesurementUnitName" Title="Unit" Width="100px" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SupplierName" Title="Supplier" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="BrandName" Title="Brand" Width="130px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="OriginName" Title="Origin" Width="130px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="FeaturesDisplay" Title="Features" Width="220px" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />

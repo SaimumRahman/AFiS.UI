@@ -1,6 +1,5 @@
 @page "/DispatchedTransferList"
 @using JM.UI.Client.Pages.Transfer
-@using JM.UI.Client.Pages.Dialog
 @using JM.UI.Entities.Model.Transfer
 @inherits DispatchedTransferListComponent
 @attribute [Authorize]
@@ -25,33 +24,48 @@
                                     Placeholder="Select store..."
                                     Style="width:200px; font-size:0.75rem;" AllowFiltering="true"
                                     Change="@(args => OnStoreChanged((int)args))"
-                                    Disabled="@IsLoading" />
+                                    Disabled="@(IsLoading || IsStoreDropdownDisabled)" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
     </RadzenCard>
 
-    <!-- Barcode Scan Card -->
+    <!-- Barcode Scan Card (scoped to selected transfer) -->
     <RadzenCard class="mb-4">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
             <RadzenIcon Icon="qr_code_scanner" Style="font-size: 1.5rem; color: var(--rz-info);" />
             <RadzenText TextStyle="TextStyle.Body1" Style="font-weight:600; white-space:nowrap;">Scan Barcode:</RadzenText>
-            <RadzenTextBox @bind-Value="BarcodeInput"
-                           Placeholder="Scan or type barcode and press Enter..."
-                           Style="width: 320px;"
-                           @onkeydown="@OnBarcodeKeyDown" />
-            <RadzenButton Text="Search"
-                          Icon="search"
-                          ButtonStyle="ButtonStyle.Info"
-                          Click="@OnBarcodeSearch"
-                          Disabled="@(string.IsNullOrWhiteSpace(BarcodeInput))" />
-            @if (!string.IsNullOrWhiteSpace(BarcodeInput))
+
+            @if (HasSelectedTransfer)
             {
-                <RadzenButton Text="Clear"
-                              Icon="clear"
-                              ButtonStyle="ButtonStyle.Light"
-                              Click="@ClearBarcodeSearch" />
+                <RadzenBadge BadgeStyle="BadgeStyle.Primary" Style="font-size:0.85rem; padding:0.25rem 0.75rem;">
+                    <RadzenIcon Icon="receipt" Style="margin-right:4px; vertical-align:middle;" />
+                    @SelectedTransfer!.TransferNo
+                </RadzenBadge>
+                <RadzenTextBox @bind-Value="BarcodeInput"
+                               Placeholder="Scan or type barcode and press Enter..."
+                               Style="width: 320px;"
+                               @onkeydown="@OnBarcodeKeyDown" />
+                <RadzenButton Text="Search"
+                              Icon="search"
+                              ButtonStyle="ButtonStyle.Info"
+                              Click="@OnBarcodeSearch"
+                              Disabled="@(string.IsNullOrWhiteSpace(BarcodeInput))" />
+                if (!string.IsNullOrWhiteSpace(BarcodeInput))
+                {
+                    <RadzenButton Text="Clear"
+                                  Icon="clear"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@ClearBarcodeSearch" />
+                }
             }
+            else
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color); font-style: italic;">
+                    Select a transfer from the list to enable barcode scanning.
+                </RadzenText>
+            }
+
             @if (BarcodeMatchMessage != null)
             {
                 <RadzenBadge BadgeStyle="@BarcodeMatchBadgeStyle" Text="@BarcodeMatchMessage" />
@@ -99,6 +113,18 @@
                         ExpandMode="DataGridExpandMode.Single">
 
             <Columns>
+
+                <!-- Selection (radio button — single transfer) -->
+                <RadzenDataGridColumn TItem="TransferMasterDTO" Width="60px"
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+                    <Template Context="transfer">
+                        <RadzenButton Size="ButtonSize.ExtraSmall"
+                                      ButtonStyle="@(SelectedTransfer?.TransferId == transfer.TransferId ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                      Variant="Variant.Flat"
+                                      Icon="@(SelectedTransfer?.TransferId == transfer.TransferId ? "radio_button_checked" : "radio_button_unchecked")"
+                                      Click="@(() => SelectTransfer(transfer))" />
+                    </Template>
+                </RadzenDataGridColumn>
 
                 <!-- Transfer No -->
                 <RadzenDataGridColumn TItem="TransferMasterDTO" Property="TransferNo" Title="Transfer No" Width="140px" Frozen="true">
@@ -162,7 +188,7 @@
                                           ButtonStyle="ButtonStyle.Success"
                                           Size="ButtonSize.Small"
                                           Click="@(() => MarkMasterReceived(transfer))"
-                                          Disabled="@IsLoading" />
+                                          Disabled="@(IsLoading || !CanMarkReceived(transfer))" />
                         }
                         else
                         {
@@ -241,6 +267,20 @@
                                 <RadzenDataGridColumn TItem="TransferDetailDTO" Property="Barcode" Title="Barcode" Width="130px" TextAlign="TextAlign.Center">
                                     <Template Context="detail">
                                         <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@(detail.Barcode ?? "N/A")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Scanned Qty (barcode scan progress) -->
+                                <RadzenDataGridColumn TItem="TransferDetailDTO" Title="Scanned" Width="100px" TextAlign="TextAlign.Center"
+                                                      Filterable="false" Sortable="false">
+                                    <Template Context="detail">
+                                        @{
+                                            var scanned = BarcodeScanCounts.GetValueOrDefault(detail.TransferDetailID, 0);
+                                            var qty = detail.IssueQty;
+                                            var isComplete = scanned >= qty;
+                                            <RadzenBadge BadgeStyle="@(isComplete ? BadgeStyle.Success : (scanned > 0 ? BadgeStyle.Info : BadgeStyle.Light))"
+                                                         Text="@($"{scanned}/{qty}")" />
+                                        }
                                     </Template>
                                 </RadzenDataGridColumn>
 

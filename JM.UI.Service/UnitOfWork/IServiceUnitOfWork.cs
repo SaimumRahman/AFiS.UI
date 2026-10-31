@@ -1,10 +1,5 @@
 ﻿using JM.UI.DataService.DAL.StockOpenings;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.Accounts;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
-using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -20,6 +15,7 @@ using JM.UI.Service.Company;
 using JM.UI.Service.Designations;
 using JM.UI.Service.Designs;
 using JM.UI.Service.Employee;
+using JM.UI.Service.FinancialAccounts;
 using JM.UI.Service.GroupActionPermission;
 using JM.UI.Service.GroupRole;
 using JM.UI.Service.GroupRoutePermission;
@@ -28,6 +24,8 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Coupon;
+using JM.UI.Service.DailyExpense;
+using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -56,6 +54,7 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
+using JM.UI.Service.CostCenters;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
@@ -64,14 +63,10 @@ using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Suppliers;
 using JM.UI.Service.Transfer;
+using JM.UI.Service.Reporting;
+using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.Vouchers;
-using JM.UI.Service.Vouchers;
-using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -88,17 +83,18 @@ namespace JM.UI.Service.UnitOfWork
         ICompanyService CompanyService { get; }
         IEmployeeService EmployeeService { get; }
         IStoreService StoreService { get; }
+        ICostCenterService CostCenterService { get; }
         IBanksService BanksService { get; }
+        IFinancialAccountsService FinancialAccountsService { get; }
+        IChartOfAccountService ChartOfAccountService { get; }
+        IOpeningBalanceService OpeningBalanceService { get; }
+        IManualJournalService ManualJournalService { get; }
         IGroupRoleService GroupRoleService { get; }
         IUserGroupService UserGroupService { get; }
         IShiftService ShiftService { get; }
 
         ISizesService SizesService { get; }
         IBarcodeService BarcodeService { get; }
-        IVoucherDetailsService VoucherDetailsService { get; }
-        IVoucherService VoucherService { get; }
-        IAccountsGroupsService AccountsGroupsService { get; }
-        IAccountsService AccountsService { get; }
         ISupplierService SupplierService { get; }
         IPurchaseOrderService PurchaseOrderService { get; }
         IPurchaseService PurchaseService { get; }
@@ -133,5 +129,9 @@ namespace JM.UI.Service.UnitOfWork
         ICouponTypeService CouponTypeService { get; }
         ICouponService CouponService { get; }
         ITransferTypeService TransferTypeService { get; }
+        ISaleService SaleService { get; }
+        IReportingService ReportingService { get; }
+        IDailyExpenseService DailyExpenseService { get; }
+        ICounterClosingService CounterClosingService { get; }
     }
 }

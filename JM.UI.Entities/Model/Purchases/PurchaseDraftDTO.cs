@@ -13,6 +13,7 @@ namespace JM.UI.Entities.Model.Purchases
         public int? StoreId { get; set; }
         public string? StoreName { get; set; }
         public DateTime? PurchaseDate { get; set; }
+        public DateTime? BillDate { get; set; }
         public string? BillInvoiceNumber { get; set; }
         public string? BillInvoiceName { get; set; }
         public bool IsVatIncluded { get; set; }

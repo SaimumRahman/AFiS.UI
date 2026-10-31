@@ -45,6 +45,36 @@ namespace JM.UI.DataService.DAL.Employees
             }
         }
 
+        public async Task<IEnumerable<EmployeeModelDTO>> GetEmployeesByStoreId(int storeId)
+        {
+            try
+            {
+                _logger.LogInformation("Starting to fetch employees by store: {StoreId}", storeId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Employees/get-by-store/{storeId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("No employees found for store: {StoreId}", storeId);
+                    return new List<EmployeeModelDTO>();
+                }
+
+                var employees = await response.Content.ReadFromJsonAsync<List<EmployeeModelDTO>>();
+                return employees ?? new List<EmployeeModelDTO>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get employees by store: {StoreId}", storeId);
+                throw new Exception($"Failed to fetch employees by store: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get employees by store: {StoreId}", storeId);
+                throw new Exception($"Unexpected error fetching employees by store: {ex.Message}", ex);
+            }
+        }
+
         public async Task<EmployeeModelDTO?> GetEmployeeById(int id)
         {
             try
