@@ -91,6 +91,9 @@ namespace JM.UI.Service.Discount
 
             foreach (var detail in discountManager.DiscountDetails)
             {
+                if (!detail.StoreId.HasValue || detail.StoreId.Value <= 0)
+                    return Task.FromResult((false, "Store is required. Please select the store for which this campaign is valid."));
+
                 if (detail.DiscountValue <= 0)
                     return Task.FromResult((false, $"Discount value must be greater than 0 for item '{detail.ItemName}'."));
 

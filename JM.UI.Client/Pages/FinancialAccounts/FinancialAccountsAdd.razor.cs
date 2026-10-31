@@ -1,5 +1,7 @@
+using JM.UI.Entities.Model.Accounting_D;
 using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.FinancialAccounts;
+using JM.UI.Entities.Model.Stores;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -16,6 +18,8 @@ public partial class FinancialAccountsAddComponent : AddEditPageBase
     protected List<FinancialAccountTypeDTO> AccountTypes { get; set; } = new();
     protected List<MFSTypeDTO> MFSTypes { get; set; } = new();
     protected List<BanksDTO> Banks { get; set; } = new();
+    protected List<StoreDTO> Stores { get; set; } = new();
+    protected List<ChartOfAccountDTO> Ledgers { get; set; } = new();
     protected bool IsProcessing { get; set; } = false;
     protected bool IsLoading { get; set; } = false;
 
@@ -52,6 +56,10 @@ public partial class FinancialAccountsAddComponent : AddEditPageBase
             AccountTypes = (await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountTypes()).ToList();
             MFSTypes = (await _serviceUnitOfWork.FinancialAccountsService.GetMFSTypes()).ToList();
             Banks = (await _serviceUnitOfWork.FinancialAccountsService.GetBanks()).ToList();
+
+            // Store and GL ledger code are mandatory on a financial account.
+            Stores = (await _serviceUnitOfWork.StoreService.GetStores())?.ToList() ?? new List<StoreDTO>();
+            Ledgers = (await _serviceUnitOfWork.ChartOfAccountService.GetLedgerAccounts())?.ToList() ?? new List<ChartOfAccountDTO>();
         }
         catch (Exception ex)
         {

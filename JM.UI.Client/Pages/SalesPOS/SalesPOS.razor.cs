@@ -4,13 +4,12 @@ using JM.UI.Client.Pages.Dialog.SalesPOS;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.Employees;
-using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.MembershipType;
+using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.SalesPOS;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Shift;
-using JM.UI.Entities.Model.Bank;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -89,7 +88,9 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         // ── Computed Values ──
         protected decimal SubTotal => CartItems.Sum(c => c.TotalAmount);
-        protected decimal CalculatedVat => SubTotal * ((Sale.VatPercentage ?? 5) / 100m);
+        // VAT is per item (from its group) and is already folded into each line's
+        // TotalAmount, so this is only the informational VAT breakdown of SubTotal.
+        protected decimal CalculatedVat => CartItems.Sum(c => CalculateLineVat(c.Qty, c.UnitPrice, c.Vat));
         protected decimal InvoiceDiscountAmount
         {
             get
@@ -99,13 +100,65 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return Sale.InvoiceDiscount ?? 0;
             }
         }
-        protected decimal MembershipDiscountAmount => SelectedCustomer != null
-            ? SubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
-            : 0;
-        protected decimal CampaignDiscountAmount => Sale.CampaignDiscount ?? 0;
+        // ── Invoice discount limit (from the signed-in user's Group Role) ──
+        // GroupsRole.MaxDiscount caps the invoice discount % this user may give.
+        // NULL = no limit (user in no group, or the group sets no limit).
+        protected int CurrentUserId { get; set; }
+        protected decimal? MaxInvoiceDiscountPercent { get; set; }
 
-        // Exact payable before the paisa-to-discount rounding.
-        protected decimal RawNetPayable
+        // Effective invoice discount of the current cart as a percentage of SubTotal,
+        // whichever mode the Percentage/Flat dropdown is in.
+        protected decimal InvoiceDiscountPercent
+        {
+            get
+            {
+                if (Sale.InvoiceDiscountType == "Percentage")
+                    return Sale.InvoiceDiscount ?? 0;
+                return SubTotal > 0 ? (Sale.InvoiceDiscount ?? 0) / SubTotal * 100m : 0;
+            }
+        }
+
+        protected bool IsInvoiceDiscountOverLimit =>
+            MaxInvoiceDiscountPercent.HasValue && InvoiceDiscountPercent > MaxInvoiceDiscountPercent.Value;
+
+        // SubTotal of cart lines that do NOT carry a campaign discount.
+        // Customer/membership discount is only allowed on these lines.
+        protected decimal NonCampaignSubTotal => CartItems.Where(i => !i.HasDiscount).Sum(c => c.TotalAmount);
+        protected decimal MembershipDiscountAmount => SelectedCustomer != null
+            ? NonCampaignSubTotal * (GetCustomerDiscountRate(SelectedCustomer) / 100m)
+            : 0;
+
+        // Campaign discount aggregated from the cart lines that carry one.
+        // Flat discounts (DiscountTypeId == 2) are a per-unit amount;
+        // percentage discounts are applied against the line's sale price.
+        protected decimal CampaignDiscountAmount => CartItems
+            .Where(i => i.HasDiscount && (i.Discount ?? 0) > 0)
+            .Sum(i => i.DiscountTypeId == 2
+                ? (i.Discount ?? 0) * i.Qty
+                : i.UnitPrice * i.Qty * (i.Discount ?? 0) / 100m);
+
+        // ── Discount → Customer rule ──
+        // A bill that carries any discount (manual invoice discount, campaign /
+        // product discount, or membership discount) must be tied to a customer so
+        // the discount can be traced. The automatic paisa-to-discount rounding is
+        // deliberately excluded: it happens on most bills and is not a discount
+        // anybody grants.
+        protected bool HasDiscountOnBill =>
+            InvoiceDiscountAmount > 0 || CampaignDiscountAmount > 0 || MembershipDiscountAmount > 0;
+
+        // When true (default), the manual invoice discount is divided equally across
+        // cart items that don't already have a product-level discount.
+        // When false, the discount stays at the bill level only (not pushed to lines)
+        // and the Discount column becomes editable for manual per-item entry.
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+
+        // True while a discount is on the bill and no customer has been picked.
+        protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
+
+        // Exact payable of the current cart BEFORE the exchange credit is applied.
+        // This is the Billing Summary "Net Payable" ceiling an exchange credit is
+        // allowed to reach, so it must never include Sale.ExchangeAmount.
+        protected decimal BillingTotalBeforeExchange
         {
             get
             {
@@ -116,11 +169,16 @@ namespace JM.UI.Client.Pages.SalesPOS
                     net -= Sale.InvoiceDiscount ?? 0;
                 net -= CampaignDiscountAmount;
                 net -= MembershipDiscountAmount;
-                net += CalculatedVat;
+                // VAT is already included in each line's TotalAmount (and therefore
+                // in SubTotal), so it must not be added again here.
                 net += Sale.RoundingAmount ?? 0;
                 return Math.Max(net, 0);
             }
         }
+
+        // Exact payable before the paisa-to-discount rounding.
+        protected decimal RawNetPayable
+            => Math.Max(BillingTotalBeforeExchange - (Sale.ExchangeAmount ?? 0), 0);
 
         // Fractional paisa part of the payable is moved into the discount field
         // so the payable amount is always a whole taka (no paisa).
@@ -136,9 +194,28 @@ namespace JM.UI.Client.Pages.SalesPOS
             await LoadLookupData();
             int localStoreId = await GetLocalStorageInt("StoreId");
             Sale.StoreId = localStoreId > 0 ? localStoreId : Stores.FirstOrDefault()?.Id;
-            Sale.CreatedBy = await GetLocalStorageInt("UserId");
+            CurrentUserId = await GetLocalStorageInt("UserId");
+            Sale.CreatedBy = CurrentUserId;
+            await LoadInvoiceDiscountLimit();
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
             await LoadEmployeesByStore();
+        }
+
+        // Reads the Sales POS invoice discount cap from the group of the signed-in
+        // user (Group Roles -> Maximum Discount). Failures are non-fatal: an
+        // unavailable limit must never block the till, it just means "no cap".
+        private async Task LoadInvoiceDiscountLimit()
+        {
+            try
+            {
+                MaxInvoiceDiscountPercent = await _serviceUnitOfWork.UserGroupService
+                    .GetMaxDiscountByUserId(CurrentUserId);
+            }
+            catch (Exception ex)
+            {
+                MaxInvoiceDiscountPercent = null;
+                Console.WriteLine($"[DEBUG] LoadInvoiceDiscountLimit failed: {ex.Message}");
+            }
         }
         private async Task<int> GetLocalStorageInt(string key)
         {
@@ -485,7 +562,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 }
 
                 var product = await _serviceUnitOfWork.SaleService.SearchByBarcode(barcode, Sale.StoreId);
-                if (product == null || product.ItemId == 0)
+                if (product == null || product.ItemId == 0 || product.StockQuantity == 0)
                 {
                     var storeName = Stores.FirstOrDefault(s => s.Id == Sale.StoreId)?.Name ?? "current store";
                     var confirmed = await dialogService.Confirm(
@@ -529,11 +606,11 @@ namespace JM.UI.Client.Pages.SalesPOS
                     { "Product", product },
                     { "ExistingQty", ExistingCartQty(product) }
                 },
-                new DialogOptions { Width = "420px" });
+                new DialogOptions { Width = "420px", AutoFocusFirstElement = false });
 
             if (result is ItemQuantityDialog.ItemQuantityDialogResult selected && selected.Qty > 0)
             {
-                AddProductToCart(product, selected.Qty, selected.UnitPrice);
+                await AddProductToCart(product, selected.Qty, selected.UnitPrice);
                 if (CartGrid != null)
                     await CartGrid.Reload();
                 StateHasChanged();
@@ -547,8 +624,18 @@ namespace JM.UI.Client.Pages.SalesPOS
                 .Sum(c => c.Qty);
         }
 
-        protected void AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
+        protected async Task AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
         {
+            // Whole-unit items (everything except Yards / Meter) cannot take a fractional
+            // quantity: snap it to a whole number before the cart ever sees it.
+            if (UomRules.Normalize(product.UomName, ref qty))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{product.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {qty:N0}.", 3000);
+            }
+            if (qty <= 0)
+                return;
+
             var existing = CartItems.FirstOrDefault(c =>
                 c.ItemId == product.ItemId && c.StoreId == product.StoreId);
 
@@ -564,21 +651,28 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
+            // VAT comes from the item's group (Items.GroupId -> Groups.VAT).
+            // The API returns null when the item has no group or no VAT is set,
+            // in which case the cart shows 0.
+            var vat = await _serviceUnitOfWork.SaleService.GetItemVat(product.ItemId) ?? 0m;
+
             if (existing != null)
             {
                 existing.Qty += qty;
+                existing.Vat = vat;
                 if (unitPrice.HasValue && unitPrice.Value > existing.BaseUnitPrice)
                     existing.UnitPrice = unitPrice.Value;
-                existing.TotalAmount = existing.Qty * existing.UnitPrice;
+                existing.TotalAmount = CalculateLineTotal(existing);
             }
             else
             {
                 var detail = SaleDetailDTO.FromProductSearch(product, qty);
+                detail.Vat = vat;
                 if (unitPrice.HasValue && unitPrice.Value > detail.BaseUnitPrice)
                 {
                     detail.UnitPrice = unitPrice.Value;
-                    detail.TotalAmount = detail.Qty * detail.UnitPrice;
                 }
+                detail.TotalAmount = CalculateLineTotal(detail);
                 if (SelectedEmployeeId > 0)
                 {
                     detail.SalesPersonId = SelectedEmployeeId;
@@ -588,6 +682,25 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             DistributeCustomerDiscount();
+        }
+
+        // Line total = qty x unit price, plus that line's group VAT (%) when it has one.
+        // VAT is per item (Groups.VAT), so a null/zero VAT leaves the total as qty x price.
+        // SubTotal is the sum of these totals, so VAT flows into discounts and net payable.
+        protected static decimal CalculateLineTotal(SaleDetailDTO item)
+            => CalculateLineTotal(item.Qty, item.UnitPrice, item.Vat);
+
+        protected static decimal CalculateLineTotal(decimal qty, decimal unitPrice, decimal? vat)
+            => Math.Round(qty * unitPrice + CalculateLineVat(qty, unitPrice, vat), 2);
+
+        // The VAT portion of a line, using the same base (qty x price) and rounding as
+        // CalculateLineTotal so the summary always matches the folded-in total.
+        protected static decimal CalculateLineVat(decimal qty, decimal unitPrice, decimal? vat)
+        {
+            if (!vat.HasValue || vat.Value <= 0)
+                return 0m;
+
+            return Math.Round(qty * unitPrice * vat.Value / 100m, 2);
         }
 
         protected string GetStoreName(int? storeId)
@@ -622,6 +735,13 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Cart Operations ──
         protected void UpdateCartItemQuantity(SaleDetailDTO item, decimal newQty)
         {
+            // Yards / Meter keep their decimals; every other unit is rounded to a whole number.
+            if (UomRules.Normalize(item.UomName, ref newQty) && newQty > 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                    $"{item.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {newQty:N0}.", 3000);
+            }
+
             if (newQty <= 0)
             {
                 CartItems.Remove(item);
@@ -629,8 +749,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             else
             {
                 item.Qty = newQty;
-                item.TotalAmount = item.Qty * item.UnitPrice;
+                item.TotalAmount = CalculateLineTotal(item);
             }
+            SyncInvoiceDiscountFromLines();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -651,8 +772,61 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 item.UnitPrice = newPrice;
             }
-            item.TotalAmount = item.Qty * item.UnitPrice;
+            item.TotalAmount = CalculateLineTotal(item);
             DistributeCustomerDiscount();
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // Called when the user manually edits a line's discount (only when equal
+        // distribution is OFF). Line.Discount is an allocation of the bill-level
+        // invoice discount, so TotalAmount stays gross — the invoice discount is
+        // subtracted once in the billing summary.
+        protected void UpdateCartItemDiscount(SaleDetailDTO item, decimal? newDiscount)
+        {
+            // Manual entry is only available when equal distribution is off and
+            // the line is not already carrying a campaign/product discount.
+            if (DistributeInvoiceDiscountEqually || item.HasDiscount) return;
+
+            var lineGross = Math.Max(item.Qty * item.UnitPrice, 0);
+            var discount = Math.Clamp(newDiscount ?? 0, 0, lineGross);
+
+            item.Discount = Math.Round(discount, 2);
+
+            // The manual per-item entries are the source of truth in this mode:
+            // keep the bill-level invoice discount in sync with their total so the
+            // payable always matches what the cashier typed on the lines.
+            SyncInvoiceDiscountFromLines();
+
+            if (CartGrid != null)
+                CartGrid.Reload();
+            StateHasChanged();
+        }
+
+        // Recomputes the bill-level invoice discount as the sum of the manually
+        // entered per-item discounts (flat amount) while equal distribution is off.
+        protected void SyncInvoiceDiscountFromLines()
+        {
+            if (DistributeInvoiceDiscountEqually) return;
+
+            Sale.InvoiceDiscountType = "Flat";
+            Sale.InvoiceDiscount = CartItems
+                .Where(i => !i.HasDiscount)
+                .Sum(i => i.Discount ?? 0);
+        }
+
+        // Checkbox handler: switching ON re-runs the equal distribution; switching
+        // OFF makes the existing per-item values authoritative for the bill total.
+        protected void OnDistributeInvoiceDiscountModeChanged()
+        {
+            if (DistributeInvoiceDiscountEqually)
+            {
+                DistributeInvoiceDiscount();
+                return;
+            }
+
+            SyncInvoiceDiscountFromLines();
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -661,6 +835,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected void RemoveCartItem(SaleDetailDTO item)
         {
             CartItems.Remove(item);
+            SyncInvoiceDiscountFromLines();
             DistributeCustomerDiscount();
             if (CartGrid != null)
                 CartGrid.Reload();
@@ -677,7 +852,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             SelectedEmployeeName = null;
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
-            Sale.VatPercentage = 5;
+            Sale.VatPercentage = 0;
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -691,6 +866,17 @@ namespace JM.UI.Client.Pages.SalesPOS
             // Only distribute across items that don't already have a product-level discount.
             var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
+
+            // When distribution is OFF, don't auto-distribute — leave the manually
+            // entered per-item discounts alone (including when the invoice discount
+            // amount is zero).
+            if (!DistributeInvoiceDiscountEqually)
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+                return;
+            }
 
             decimal totalDiscountAmount = Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue
                 ? SubTotal * (Sale.InvoiceDiscount.Value / 100m)
@@ -790,7 +976,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.MembershipTypeId = customer.MemberTypeId;
             var discountRate = GetCustomerDiscountRate(customer);
             Sale.DiscountRate = (int)discountRate;
-            Sale.MembershipDiscount = SubTotal * (discountRate / 100m);
+            Sale.MembershipDiscount = NonCampaignSubTotal * (discountRate / 100m);
             DistributeCustomerDiscount();
             StateHasChanged();
         }
@@ -807,14 +993,19 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.DiscountRate = null;
             Sale.MembershipDiscount = null;
 
-            // Remove the customer-discount shares from cart items.
-            foreach (var item in CartItems.Where(i => !i.HasDiscount))
+            // Remove the customer-discount shares from cart items, then restore the
+            // invoice-discount allocation. In manual mode the per-item entries are
+            // left untouched.
+            if (DistributeInvoiceDiscountEqually)
             {
-                item.Discount = 0;
+                DistributeInvoiceDiscount();
             }
-            if (CartGrid != null)
-                CartGrid.Reload();
-            StateHasChanged();
+            else
+            {
+                if (CartGrid != null)
+                    CartGrid.Reload();
+                StateHasChanged();
+            }
         }
 
         // ── Customer / Membership Discount Distribution ──
@@ -849,11 +1040,18 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
+            // Manual per-item discount entry is active. Membership shares and manual
+            // allocations use the same line Discount field, so don't overwrite them.
+            if (!DistributeInvoiceDiscountEqually)
+            {
+                return;
+            }
+
             // Only distribute across items that don't already have a product-level discount.
             var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
             if (!eligible.Any()) return;
 
-            decimal totalDiscountAmount = SubTotal * (discountRate / 100m);
+            decimal totalDiscountAmount = NonCampaignSubTotal * (discountRate / 100m);
             if (totalDiscountAmount <= 0)
             {
                 foreach (var item in eligible) item.Discount = 0;
@@ -938,6 +1136,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             CustomerSearchText = "";
         }
 
+        protected async Task OpenAddCustomerFromSidebar()
+        {
+            var text = CustomerSearchText?.Trim();
+            await OpenAddCustomerModal(string.IsNullOrWhiteSpace(text) ? null : text);
+        }
+
         protected async Task OpenAddCustomerModal(string? preFilledPhone = null)
         {
             var userId = await GetLocalStorageInt("UserId");
@@ -966,11 +1170,24 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new Dictionary<string, object>
                 {
                     { "StoreId", storeId },
-                    { "UserId", userId }
+                    { "UserId", userId },
+                    { "BillingTotal", BillingTotalBeforeExchange }
                 },
                 new DialogOptions { Width = "760px" });
 
-            if (result is ResponseResult res)
+            if (result is ExchangeApplyResult exchange)
+            {
+                // Apply the exchange credit to the current cart; the amount is
+                // deducted from the payable when this invoice is created.
+                Sale.ExchangeAmount = exchange.ExchangeAmount;
+                Sale.ReturnInvoiceNo = exchange.ReturnInvoiceNo;
+                Sale.ReturnedItems = exchange.ReturnedItems;
+                Sale.IsReturnExchange = true;
+                notificationService.Notify(NotificationSeverity.Success, "Exchange Applied",
+                    $"Credit {exchange.ExchangeAmount:N2} from invoice {exchange.ReturnInvoiceNo} applied to this sale", 5000);
+                StateHasChanged();
+            }
+            else if (result is ResponseResult res)
             {
                 if (res.IsSuccessStatus)
                 {
@@ -986,9 +1203,42 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        protected void RemoveAppliedExchange()
+        {
+            Sale.ExchangeAmount = null;
+            Sale.ReturnInvoiceNo = null;
+            Sale.ReturnedItems = new();
+            Sale.IsReturnExchange = false;
+            StateHasChanged();
+        }
+
         // ── Payment Modal ──
         protected async Task OpenPaymentModal()
         {
+            // The invoice discount may not exceed the cap configured on the group of
+            // the signed-in user (Group Roles -> Maximum Discount). The server repeats
+            // this check on save; this is the user-facing guard.
+            if (IsInvoiceDiscountOverLimit)
+            {
+                await dialogService.Alert(
+                    $"Invoice discount of {InvoiceDiscountPercent:N2}% exceeds the maximum allowed discount of {MaxInvoiceDiscountPercent!.Value:N2}% for your group. Please reduce it before finalising.",
+                    "Discount Limit Exceeded",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // A bill carrying a discount must be tied to a customer. This guard runs
+            // before the payment dialog so the cashier is never asked to take payment
+            // and then rejected. The server repeats this check on save.
+            if (IsCustomerRequiredForDiscount)
+            {
+                await dialogService.Alert(
+                    "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "Customer Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
             // Can only finalize a sale when every line in the cart belongs to
             // the same store.
             if (CartItems.Select(c => c.StoreId).Distinct().Count() > 1)
@@ -1001,7 +1251,11 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
-                new Dictionary<string, object> { { "NetPayable", NetPayable } });
+                new Dictionary<string, object>
+                {
+                    { "NetPayable", NetPayable },
+                    { "StoreId", Sale.StoreId }
+                });
             if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
                 return;
 
@@ -1065,7 +1319,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     companyAddress: store?.Address ?? "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
                     companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
                     companyVat: store?.VAT ?? "",
-                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}");
+                    servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
+                    terms: store?.TermsOfService ?? "");
 
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
@@ -1097,6 +1352,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
+                        { "StoreId", Sale.StoreId },
                         { "AllowBookingOption", false },
                         { "ShowDeliveredOption", true }
                     });
@@ -1224,6 +1480,8 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 Sale.SubTotal = SubTotal;
                 Sale.VatAmount = CalculatedVat;
+                Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
+                Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
                 Sale.NetAmount = NetPayable;
                 Sale.SaleDetails = CartItems.ToList();
                 Sale.IsDraft = true;

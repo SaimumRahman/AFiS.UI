@@ -11,6 +11,11 @@ namespace JM.UI.Entities.Model.Discount
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
+
+        /// <summary>Store the campaign is valid for (mirrors DiscountManagerDetails.StoreId).</summary>
+        public int? StoreId { get; set; }
+        public string? StoreName { get; set; }
+
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public string? ModifiedBy { get; set; }

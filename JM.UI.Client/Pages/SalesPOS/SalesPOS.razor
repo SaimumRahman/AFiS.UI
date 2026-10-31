@@ -1,4 +1,5 @@
 @page "/SalesPOS"
+@using JM.UI.Entities.Model.MesurementUnits
 @using JM.UI.Entities.Model.SalesPOS
 @inherits SalesPOSComponent
 @attribute [Authorize]
@@ -11,6 +12,7 @@
         height: 100vh;
         overflow: hidden;
         background: #f0f2f5;
+        zoom: 0.9;
     }
 
     .pos-header {
@@ -24,7 +26,7 @@
     }
 
         .pos-header .brand {
-            font-size: 1.1rem;
+            font-size: 0.98rem;
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -41,7 +43,7 @@
             padding: 6px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             border: none;
             background: transparent;
             color: #8899aa;
@@ -81,8 +83,8 @@
     }
 
     .pos-right {
-        width: 400px;
-        min-width: 400px;
+        width: 300px;
+        min-width: 300px;
         display: flex;
         flex-direction: column;
         padding: 8px 8px 8px 0;
@@ -98,7 +100,7 @@
     }
 
     .pos-card-title {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         font-weight: 600;
         color: #333;
         margin-bottom: 8px;
@@ -131,13 +133,13 @@
 
             .product-preview .info .name {
                 font-weight: 600;
-                font-size: 0.9rem;
+                font-size: 0.82rem;
             }
 
             .product-preview .info .price {
                 color: #28a745;
                 font-weight: 700;
-                font-size: 1rem;
+                font-size: 0.88rem;
             }
 
     .cart-grid {
@@ -147,7 +149,7 @@
     }
 
         .cart-grid .rz-datatable {
-            font-size: 0.75rem;
+            font-size: 0.68rem;
         }
 
             .cart-grid .rz-datatable td {
@@ -190,7 +192,7 @@
         .customer-search .suggestion-item {
             padding: 6px 10px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.72rem;
         }
 
             .customer-search .suggestion-item:hover {
@@ -205,11 +207,11 @@
 
         .customer-profile .name {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
         }
 
         .customer-profile .phone {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             color: #666;
         }
 
@@ -217,12 +219,12 @@
         display: flex;
         justify-content: space-between;
         padding: 3px 0;
-        font-size: 0.8rem;
+        font-size: 0.72rem;
     }
 
         .billing-row.total {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.88rem;
             border-top: 2px solid #333;
             padding-top: 6px;
             margin-top: 4px;
@@ -254,7 +256,7 @@
         padding: 4px 16px;
         background: #1a1a2e;
         color: #8899aa;
-        font-size: 0.75rem;
+        font-size: 0.68rem;
         flex-shrink: 0;
     }
 
@@ -263,7 +265,7 @@
             padding: 2px 6px;
             border-radius: 3px;
             color: #fff;
-            font-size: 0.7rem;
+            font-size: 0.63rem;
         }
 
     .tab-content {
@@ -279,7 +281,7 @@
         .tab-header .tab-btn {
             padding: 4px 16px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.68rem;
             border: 1px solid #556;
             background: transparent;
             color: #8899aa;
@@ -303,7 +305,7 @@
         color: #2e7d32;
         padding: 2px 8px;
         border-radius: 4px;
-        font-size: 0.7rem;
+        font-size: 0.63rem;
         white-space: nowrap;
     }
 </style>
@@ -354,7 +356,7 @@
                         <div class="info">
                             <div class="name">@SearchedProduct.ProductName</div>
                             <div class="price">@SearchedProduct.UnitPrice.ToString("N2")</div>
-                            <div style="font-size:0.75rem;color:#888">
+                            <div style="font-size:0.68rem;color:#888">
                                 @SearchedProduct.Barcode
                                 @if (!string.IsNullOrEmpty(SearchedProduct.StoreName))
                                 {
@@ -400,7 +402,7 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Qty" Width="80">
                                         <Template Context="item">
-                                            <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="1" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
+                                            <RadzenNumeric @bind-Value="item.Qty" Min="0" Max="9999" Step="@(UomRules.StepFor(item.UomName))" Format="@(UomRules.FormatFor(item.UomName))" Style="width:60px" Change="@((decimal v) => UpdateCartItemQuantity(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Price" Width="80">
@@ -408,8 +410,30 @@
                                             <RadzenNumeric @bind-Value="item.UnitPrice" Min="@item.BaseUnitPrice" Max="999999" Step="0.01" Style="width:70px" Change="@((decimal v) => UpdateCartItemPrice(item, v))" />
                                         </Template>
                                     </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Discount" Title="Disc" Width="70" />
-                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70" />
+                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Disc" Width="70">
+                                        <Template Context="item">
+                                             @*  @if (DistributeInvoiceDiscountEqually || item.HasDiscount)
+                                            {   *@
+                                                <span style="padding-left:6px; display:inline-block; color:#666; font-size:0.75rem">
+                                                    @((item.Discount ?? 0).ToString("N2"))
+                                                </span>
+                                              @* }
+                                            else
+                                            {   
+                                                <RadzenNumeric @bind-Value="item.Discount"
+                                                               Min="0" Max="@(item.Qty * item.UnitPrice)" Step="0.01"
+                                                               Style="width:60px"
+                                                               Change="@((decimal? v) => UpdateCartItemDiscount(item, v))" />
+                                             }  *@
+                                        </Template>
+                                    </RadzenDataGridColumn> 
+                                    <RadzenDataGridColumn TItem="SaleDetailDTO" Property="Vat" Title="VAT" Width="70">
+                                        <Template Context="item">
+                                            <span style="padding-left:6px; display:inline-block;">
+                                                @((item.Vat ?? 0).ToString("N2"))
+                                            </span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="SaleDetailDTO" Title="Total" Width="90">
                                         <Template Context="item">
                                             <span style="font-weight:600">@item.TotalAmount.ToString("N2")</span>
@@ -566,7 +590,13 @@
             <div class="pos-right">
             @* Customer Profile Card *@
             <div class="pos-card sidebar-section">
-                <div class="pos-card-title">Customer</div>
+                <div class="pos-card-title" style="@(IsCustomerRequiredForDiscount ? "color:#c62828" : null)">Customer</div>
+                @if (IsCustomerRequiredForDiscount)
+                {
+                    <div style="font-size:0.68rem;color:#c62828;margin-bottom:4px">
+                        Required — a discount is applied to this bill
+                    </div>
+                }
                 @if (SelectedCustomer != null)
                 {
                     <div class="customer-profile">
@@ -574,7 +604,7 @@
                         <div class="phone">@SelectedCustomer.Phone</div>
                         @if (GetCustomerDiscountRate(SelectedCustomer) > 0)
                         {
-                            <div style="font-size:0.75rem;color:#28a745">
+                            <div style="font-size:0.68rem;color:#28a745">
                                 @SelectedCustomer.MembershipType
                                 <span> (@(GetCustomerDiscountRate(SelectedCustomer))%)</span>
                             </div>
@@ -595,7 +625,7 @@
                             <div style="border:1px solid #ddd;border-radius:4px;max-height:150px;overflow-y:auto;background:#fff;margin-top:2px;">
                                 @foreach (var c in FilteredCustomers)
                                 {
-                                    <div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.85rem;"
+                                    <div style="padding:4px 8px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:0.78rem;"
                                          @onclick="() => SelectSearchedCustomer(c)">
                                         @c.Name (@c.Phone)
                                     </div>
@@ -603,7 +633,7 @@
                             </div>
                         }
                     </div>
-                    <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="width:100%" Click="@((args) => OpenAddCustomerModal())" Text="+ New Customer" />
+                    <RadzenButton Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Style="width:100%" Click="@OpenAddCustomerFromSidebar" Text="+ New Customer" />
                 }
             </div>
 
@@ -614,6 +644,13 @@
                     <span class="label">Sub Total</span>
                     <span class="value">@SubTotal.ToString("N2")</span>
                 </div>
+                @if (CampaignDiscountAmount > 0)
+                {
+                    <div class="billing-row" style="color:#c62828">
+                        <span class="label">Campaign Discount</span>
+                        <span class="value">-@CampaignDiscountAmount.ToString("N2")</span>
+                    </div>
+                }
                 @if (SelectedCustomer != null && GetCustomerDiscountRate(SelectedCustomer) > 0)
                 {
                     <div class="billing-row" style="color:#28a745">
@@ -622,12 +659,33 @@
                     </div>
                 }
                 <div class="billing-row">
-                    <span class="label">Invoice Discount</span>
+                    <span class="label">Invoice Discount @(DistributeInvoiceDiscountEqually ? "" : "(from items)")</span>
                     <span class="value">
-                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
-                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Change="@((object args) => DistributeInvoiceDiscount())" />
+                        <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
+                        <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((object args) => DistributeInvoiceDiscount())" />
+                       @*  <RadzenCheckBox @bind-Value="DistributeInvoiceDiscountEqually"
+                                        Style="margin-left:8px; vertical-align:middle"
+                                        Change="@((bool v) => OnDistributeInvoiceDiscountModeChanged())"
+                                        Text="Distribute equally" /> *@
                     </span>
                 </div>
+                @{
+                    var maxInvoiceDisc = MaxInvoiceDiscountPercent;
+                }
+                @if (maxInvoiceDisc.HasValue)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:@(IsInvoiceDiscountOverLimit ? "#c62828" : "#666")">
+                        <span class="label">Discount Limit</span>
+                        <span class="value">@maxInvoiceDisc.Value.ToString("N2")%</span>
+                    </div>
+                }
+                @if (IsInvoiceDiscountOverLimit)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:#c62828">
+                        <span class="label">Discount exceeds your group limit</span>
+                        <span class="value">max @maxInvoiceDisc!.Value.ToString("N2")%</span>
+                    </div>
+                }
                 @{
                     var posTotalDiscount = InvoiceDiscountAmount + PaisaDiscount;
                 }
@@ -638,8 +696,15 @@
                         <span class="value">-@posTotalDiscount.ToString("N2")</span>
                     </div>
                 }
+                @if (IsCustomerRequiredForDiscount)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:#c62828">
+                        <span class="label">Customer required</span>
+                        <span class="value">discount applied</span>
+                    </div>
+                }
                 <div class="billing-row">
-                    <span class="label">VAT (@(Sale.VatPercentage)%)</span>
+                    <span class="label">VAT (incl.)</span>
                     <span class="value">@CalculatedVat.ToString("N2")</span>
                 </div>
                 @if (Sale.RoundingAmount.HasValue && Sale.RoundingAmount != 0)
@@ -649,12 +714,22 @@
                         <span class="value">@(Sale.RoundingAmount > 0 ? "+" : "")@Sale.RoundingAmount?.ToString("N2")</span>
                     </div>
                 }
+                @if (Sale.IsReturnExchange && (Sale.ExchangeAmount ?? 0) > 0)
+                {
+                    <div class="billing-row" style="color:#dc3545">
+                        <span class="label">Exchange Credit @(!string.IsNullOrWhiteSpace(Sale.ReturnInvoiceNo) ? "(" + Sale.ReturnInvoiceNo + ")" : "")</span>
+                        <span class="value">
+                            -@Sale.ExchangeAmount?.ToString("N2")
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Variant="Variant.Outlined" Style="margin-left:4px" Click="@RemoveAppliedExchange" Title="Remove exchange credit">X</RadzenButton>
+                        </span>
+                    </div>
+                }
                 <div class="billing-row total">
                     <span class="label">Net Payable</span>
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Text="Return / Exchange" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Disabled="@(CartItems.Count == 0)" Text="Return / Exchange" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>

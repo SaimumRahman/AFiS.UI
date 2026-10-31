@@ -21,7 +21,8 @@ public class StockRepository : BaseRepository, IStockRepository
     }
 
     public async Task<IEnumerable<StockLedgerDTO>> GetStockLedger(
-        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId)
+        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId,
+        int? groupId, int? subGroupId, int? designId, int? brandId)
     {
         try
         {
@@ -32,6 +33,10 @@ public class StockRepository : BaseRepository, IStockRepository
             if (toDate.HasValue) queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
             if (itemId.HasValue) queryParams.Add($"itemId={itemId.Value}");
             if (storeId.HasValue) queryParams.Add($"storeId={storeId.Value}");
+            if (groupId.HasValue) queryParams.Add($"groupId={groupId.Value}");
+            if (subGroupId.HasValue) queryParams.Add($"subGroupId={subGroupId.Value}");
+            if (designId.HasValue) queryParams.Add($"designId={designId.Value}");
+            if (brandId.HasValue) queryParams.Add($"brandId={brandId.Value}");
 
             var url = "Stock/ledger";
             if (queryParams.Any())

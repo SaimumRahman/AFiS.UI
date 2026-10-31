@@ -1,0 +1,157 @@
+@page "/InvoiceWiseSaleSummaryReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits InvoiceWiseSaleSummaryReportComponent
+
+<PageTitle>Invoice-wise Sale Summary Report</PageTitle>
+
+<style>
+    .iws-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        border: 1px solid #444;
+    }
+    .iws-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .iws-table td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; }
+    .iws-table .num { text-align: right; white-space: nowrap; }
+    .iws-table .user td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .iws-table .sub td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .iws-table .gtd td { background: #f5f5f5; font-weight: bold; border-top: 1px solid #444; }
+    .iws-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .iws-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .iws-doc-header .subtitle { font-size: 0.9rem; }
+    .iws-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .iws-doc-header .doc-range { font-size: 0.9rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Invoice-wise Sale Summary Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="iws-doc-header mb-3">
+                <div class="title">ASIA FASHION TAILOR &amp; FABRICS</div>
+                <div class="subtitle">Hossain Plaza (1st Floor) bandartila, Chattogram.</div>
+                <div class="doc-name">INVOICE WISE SALE SUMMARY REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            <table class="iws-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Invoice</th>
+                        <th class="num">Gross Amount</th>
+                        <th class="num">Disc. Amount</th>
+                        <th class="num">Vat Amount</th>
+                        <th class="num">Net Amount</th>
+                        <th class="num">Cash Amount</th>
+                        <th class="num">CARD Amount</th>
+                        <th class="num">DUE Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Groups.Any())
+                    {
+                        <tr>
+                            <td colspan="9" style="text-align:center; color:#616161; padding: 14px;">
+                                No sales records found for the selected period.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var group in Groups)
+                        {
+                            <tr class="user">
+                                <td colspan="9">@Dash(group.UserName)</td>
+                            </tr>
+
+                            @foreach (var row in group.Rows)
+                            {
+                                <tr>
+                                    <td>@row.SaleDate.ToString("dd-MMM-yy")</td>
+                                    <td>@Dash(row.InvoiceNo)</td>
+                                    <td class="num">@Fmt(row.GrossAmount)</td>
+                                    <td class="num">@Fmt(row.DiscAmount)</td>
+                                    <td class="num">@Fmt(row.VatAmount)</td>
+                                    <td class="num">@Fmt(row.NetAmount)</td>
+                                    <td class="num">@Fmt(row.CashAmount)</td>
+                                    <td class="num">@Fmt(row.CardAmount)</td>
+                                    <td class="num"><strong>@Fmt(row.DueAmount)</strong></td>
+                                </tr>
+                            }
+
+                            <tr class="sub">
+                                <td colspan="2">Sub Total</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.GrossAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.DiscAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.VatAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.NetAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.CashAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.CardAmount))</td>
+                                <td class="num">@Fmt(group.Rows.Sum(r => r.DueAmount))</td>
+                            </tr>
+                        }
+
+                        <tr class="gtd">
+                            <td colspan="2">Grand Total</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.GrossAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.DiscAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.VatAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.NetAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.CashAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.CardAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.DueAmount))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </RadzenCard>
+</RadzenContent>

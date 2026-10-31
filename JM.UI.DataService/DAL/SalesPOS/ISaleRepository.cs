@@ -28,5 +28,8 @@ namespace JM.UI.DataService.DAL.SalesPOS
         Task<string> GetNewExchangeInvoiceNo();
         Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int storeId);
         Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term);
+
+        /// <summary>VAT (%) configured on the item's group; null when no group/VAT is set.</summary>
+        Task<decimal?> GetItemVat(int itemId);
     }
 }

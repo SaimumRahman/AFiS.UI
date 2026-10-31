@@ -30,9 +30,26 @@
             <RadzenCheckBox TValue="bool" @bind-Value="IsCash" Change="@OnCashChanged" />
             <span>Cash</span>
         </label>
-        <RadzenDropDown @bind-Value="SelectedFinancialAccountId" Data="@FinancialAccounts"
-                        TextProperty="AccountName" ValueProperty="Id" Change="@OnFinancialAccountChanged"
-                        Placeholder="Select Financial Account" Filterable="true" AllowClear="true" Style="width:200px" />
+        <RadzenDropDownDataGrid TValue="int?" @bind-Value="SelectedFinancialAccountId" Data="@FinancialAccounts"
+                                TextProperty="AccountName" ValueProperty="Id" Change="@OnFinancialAccountChanged"
+                                Placeholder="Select Financial Account"
+                                AllowFiltering="true" AllowFilteringByAllStringColumns="true"
+                                FilterOperator="StringFilterOperator.Contains"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                AllowClear="true" Style="width:320px"
+                                EmptyText="No financial account for this store">
+            <Columns>
+                <RadzenDropDownDataGridColumn Property="AccountName" Title="MFS / Bank" Width="150px" />
+                <RadzenDropDownDataGridColumn Property="AccountNo" Title="Account No" Width="170px" />
+                <RadzenDropDownDataGridColumn Property="StoreName" Title="Store" Width="150px" />
+            </Columns>
+        </RadzenDropDownDataGrid>
+        @if (!FinancialAccounts.Any())
+        {
+            <span style="color:#b26a00;font-size:0.75rem;max-width:220px">
+                No financial account with a ledger is set up for this store. Cash only until one is configured.
+            </span>
+        }
         <RadzenNumeric @bind-Value="PaymentAmount" Min="0" Style="width:120px" />
         @if (!IsCash)
         {
@@ -45,7 +62,7 @@
     {
         <RadzenDataGrid Data="@TempPayments" TItem="PaymentTransactionDTO" ShowPaging="false">
             <Columns>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="160">
+                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="220">
                     <Template Context="p">
                         @GetPaymentTypeName(p.TransactionTypeId)
                     </Template>
@@ -87,6 +104,9 @@
     [Parameter] public bool AllowBookingOption { get; set; } = true;
     [Parameter] public bool ShowDeliveredOption { get; set; }
 
+    /// <summary>Store of the invoice being paid: financial accounts are scoped to it.</summary>
+    [Parameter] public int? StoreId { get; set; }
+
     decimal PaymentAmount { get; set; }
     bool IsCash { get; set; } = true;
     int? SelectedFinancialAccountId { get; set; }
@@ -108,7 +128,14 @@
     {
         try
         {
-            FinancialAccounts = (await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+            var accounts = await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown(StoreId);
+
+            // Only accounts with a ledger attached can be posted to: the server posts MFS / bank
+            // payments to that ledger and rejects the account when it is not set, so an unusable
+            // account is not offered here at all.
+            FinancialAccounts = accounts
+                .Where(a => !string.IsNullOrWhiteSpace(a.LedgerCode))
+                .ToList();
         }
         catch
         {
@@ -145,7 +172,13 @@
     string GetPaymentTypeName(int transactionTypeId)
     {
         if (transactionTypeId == 0) return "Cash";
-        return FinancialAccounts.FirstOrDefault(f => f.Id == transactionTypeId)?.AccountName ?? "Account";
+
+        var account = FinancialAccounts.FirstOrDefault(f => f.Id == transactionTypeId);
+        if (account == null) return "Account";
+
+        return string.IsNullOrWhiteSpace(account.AccountNo)
+            ? account.AccountName
+            : $"{account.AccountName} · {account.AccountNo}";
     }
 
     void RemoveTempPayment(PaymentTransactionDTO payment)

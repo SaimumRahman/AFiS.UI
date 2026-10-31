@@ -71,7 +71,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="ColorsDTO" Property="ColorCode" Title="Color Code" />
 
-                    <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                   @*  <RadzenDataGridColumn TItem="ColorsDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="color">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
                                 <RadzenButton Icon="edit" 
@@ -88,7 +88,7 @@
                                               MouseEnter="@(args => TooltipService.Open(args, "Delete Color"))" />
                             </RadzenStack>
                         </Template>
-                    </RadzenDataGridColumn>
+                    </RadzenDataGridColumn> *@
                 </Columns>
             </RadzenDataGrid>
         </RadzenCard>

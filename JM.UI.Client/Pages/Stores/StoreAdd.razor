@@ -82,6 +82,72 @@
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12">
                                     <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Cost Center *" Component="CostCenterId" />
+                                        <RadzenDropDown @bind-Value="Store.CostCenterId"
+                                                        Name="CostCenterId"
+                                                        Data="@CostCenters"
+                                                        ValueProperty="BranchId"
+                                                        TextProperty="Name"
+                                                        Placeholder="Select a cost center..."
+                                                        AllowClear="false"
+                                                        Style="width: 100%;">
+                                            <RadzenDropDownOption Value="null" Text="-- Select a cost center --" />
+                                        </RadzenDropDown>
+                                        <RadzenRequiredValidator Component="CostCenterId" Text="Cost center is required" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Exchange Day (days) *" Component="ExchangeDay" />
+                                        <RadzenNumeric @bind-Value="Store.ExchangeDay"
+                                                       Name="ExchangeDay"
+                                                       Min="1"
+                                                       Placeholder="e.g. 15"
+                                                       Style="width: 100%;" />
+                                        <RadzenRequiredValidator Component="ExchangeDay" Text="Exchange day is required" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                                            Maximum age (in days) of an invoice that may be exchanged at this store.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Auto-Post Threshold" Component="DailyExpenseLimit" />
+                                        <RadzenNumeric @bind-Value="Store.DailyExpenseLimit"
+                                                       Name="DailyExpenseLimit"
+                                                       Min="0"
+                                                       Placeholder="e.g. 5000"
+                                                       Style="width: 100%;" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                                            Daily Expenses up to this amount post to the ledger immediately. Anything above it is saved for the Post Ledger page. Empty or 0 = always post immediately.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Invoice Terms & Conditions" Component="TermsOfService" />
+                                        <RadzenTextArea @bind-Value="Store.TermsOfService"
+                                                        Name="TermsOfService"
+                                                        Rows="4"
+                                                        Placeholder="Enter terms & conditions printed on sales invoices"
+                                                        Style="width: 100%;"
+                                                        MaxLength="2000" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                                            Optional. Printed at the bottom of the POS sales invoice.
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.25rem">
                                         <RadzenLabel Text="Address" Component="Address" />
                                         <RadzenTextArea @bind-Value="Store.Address"
                                                         Name="Address"

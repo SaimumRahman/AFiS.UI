@@ -1,0 +1,128 @@
+@page "/AccountingPartyBalance"
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UIWeb.CustomBase
+@attribute [Authorize]
+@inherits AccountingPartyBalanceComponent
+
+<PageTitle>Party Balance</PageTitle>
+
+<style>
+    .acc-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .acc-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .acc-doc-header .subtitle { font-size: 0.9rem; }
+    .acc-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .acc-report-wrap { overflow-x: auto; }
+    .acc-report-table {
+        width: 100%;
+        min-width: 900px;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        border: 1px solid #444;
+    }
+    .acc-report-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .acc-report-table tbody td { padding: 6px 8px; border-bottom: 1px solid #e0e0e0; white-space: nowrap; }
+    .acc-report-table th.num, .acc-report-table td.num { text-align: right; }
+    .acc-report-table tfoot td { font-weight: 600; border-top: 2px solid #444; background: #f9f9f9; padding: 6px 8px; white-space: nowrap; }
+    .acc-note { font-size: 0.78rem; color: #616161; margin-top: 10px; text-align: left; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Party Balance</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" Style="flex-wrap: wrap;">
+                    <RadzenDropDown @bind-Value="SelectedPartyType"
+                                    Data="@AccountingReportOptions.PartyTypes"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Party Types"
+                                    Style="width: 200px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="acc-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">PARTY BALANCE (RECEIVABLES / PAYABLES / ADVANCES)</div>
+                <div class="doc-range">@TypeRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            @if (Rows.Any())
+            {
+                <div class="acc-report-wrap">
+                    <table class="acc-report-table">
+                        <thead>
+                            <tr>
+                                <th>Party Type</th>
+                                <th>Party Code</th>
+                                <th>Party Name</th>
+                                <th>Account Code</th>
+                                <th>Account Name</th>
+                                <th class="num">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Rows)
+                            {
+                                <tr>
+                                    <td>@row.PartyType</td>
+                                    <td>@row.PartyCode</td>
+                                    <td>@row.PartyName</td>
+                                    <td>@row.AccountCode</td>
+                                    <td>@row.AccountName</td>
+                                    <td class="num" style="font-weight:600; color: @(row.Balance < 0 ? "var(--rz-danger)" : "var(--rz-success)")">
+                                        @row.Balance.ToString("N2")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="num">TOTAL</td>
+                                <td class="num">@Rows.Sum(r => r.Balance).ToString("N2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="acc-note">
+                    NOTE: POSITIVE BALANCE = RECEIVABLE (DEBIT). NEGATIVE BALANCE = PAYABLE / ADVANCE (CREDIT).
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-4" style="color: #616161;">
+                    No balances found for the selected filters.
+                </div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>

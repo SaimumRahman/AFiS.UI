@@ -18,12 +18,14 @@ public class StockService : IStockService
     }
 
     public async Task<IEnumerable<StockLedgerDTO>> GetStockLedger(
-        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId)
+        DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId,
+        int? groupId, int? subGroupId, int? designId, int? brandId)
     {
         try
         {
             return await _unitOfWork.StockRepository
-                .GetStockLedger(fromDate, toDate, itemId, storeId);
+                .GetStockLedger(fromDate, toDate, itemId, storeId,
+                                groupId, subGroupId, designId, brandId);
         }
         catch (Exception)
         {

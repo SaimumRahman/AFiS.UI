@@ -88,19 +88,32 @@
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
-                    @if (IsEditMode)
-                    {
-                        <RadzenRow>
-                            <RadzenColumn Size="12">
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Store *" Component="StoreSelector" />
+                                <RadzenDropDown Data="@Stores"
+                                                @bind-Value="@SelectedStoreId"
+                                                Name="StoreSelector"
+                                                ValueProperty="Id"
+                                                TextProperty="Name"
+                                                Placeholder="Select store..."
+                                                Style="width:100%;" />
+                                <RadzenRequiredValidator Component="StoreSelector" Text="Store is required" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                        @if (IsEditMode)
+                        {
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center" Style="height:100%;">
                                     <RadzenLabel Text="Active" Component="IsActive" />
                                     <RadzenSwitch @bind-Value="Campaign.IsActive" Name="IsActive" />
                                     <RadzenBadge BadgeStyle="@(Campaign.IsActive ? BadgeStyle.Success : BadgeStyle.Danger)"
                                                  Text="@(Campaign.IsActive ? "Active" : "Inactive")" />
                                 </RadzenStack>
                             </RadzenColumn>
-                        </RadzenRow>
-                    }
+                        }
+                    </RadzenRow>
                 </RadzenStack>
             </RadzenFieldset>
         </RadzenCard>
@@ -119,7 +132,8 @@
                                                 TextProperty="Name"
                                                 Placeholder="All Groups"
                                                 Change="@(args => OnGroupCascadeChanged(args as int?))"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true"/>
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
@@ -131,7 +145,8 @@
                                                 TextProperty="Name"
                                                 Placeholder="All Sub Groups"
                                                 Change="@(args => OnSubGroupCascadeChanged(args as int?))"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
@@ -142,7 +157,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Designs"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
@@ -155,7 +171,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Colors"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3">
@@ -166,7 +183,8 @@
                                                 ValueProperty="Id"
                                                 TextProperty="Name"
                                                 Placeholder="All Sizes"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3">
@@ -177,7 +195,8 @@
                                                 ValueProperty="CatalogueId"
                                                 TextProperty="CatalogueName"
                                                 Placeholder="All Catalogs"
-                                                Style="width:100%;" />
+                                                Style="width:100%;" 
+                                                AllowClear="true" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3" style="display:flex;align-items:flex-end;">
@@ -185,7 +204,7 @@
                                           Icon="search"
                                           ButtonStyle="ButtonStyle.Primary"
                                           Click="@LoadFilteredItems"
-                                          Style="width:100%;" />
+                                          Style="width:100%;"/>
                         </RadzenColumn>
                     </RadzenRow>
                 </RadzenStack>

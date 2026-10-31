@@ -24,7 +24,7 @@
                                     TextProperty="Name"
                                     ValueProperty="Id"
                                     Placeholder="All Stores"
-                                    AllowClear="@(CurrentUserId == 1)"
+                                    AllowClear="@CanSelectAnyStore"
                                     Disabled="@IsStoreDropdownDisabled"
                                     Style="width:150px;" />
                     <RadzenButton Icon="search"
@@ -32,6 +32,70 @@
                                   Click="@LoadStockLedger"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Size="ButtonSize.Medium" />
+                    <RadzenButton Icon="clear"
+                                  Text="Clear"
+                                  Click="@ClearFilters"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Item attribute filters. Leave a dropdown blank to include everything. *@
+        <RadzenRow Gap="1rem" Style="margin-top:1rem;">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Group" Component="GroupFilter" />
+                    <RadzenDropDown Data="@Groups"
+                                    @bind-Value="SelectedGroupId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Groups"
+                                    AllowClear="true"
+                                    Change="@(args => OnGroupChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Sub Group" Component="SubGroupFilter" />
+                    <RadzenDropDown Data="@FilteredSubGroups"
+                                    @bind-Value="SelectedSubGroupId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Sub Groups"
+                                    AllowClear="true"
+                                    Change="@(args => OnSubGroupChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Design" Component="DesignFilter" />
+                    <RadzenDropDown Data="@FilteredDesigns"
+                                    @bind-Value="SelectedDesignId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Designs"
+                                    AllowClear="true"
+                                    Change="@(args => OnDesignChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Brand" Component="BrandFilter" />
+                    <RadzenDropDown Data="@Brands"
+                                    @bind-Value="SelectedBrandId"
+                                    TextProperty="BrandName"
+                                    ValueProperty="BrandId"
+                                    Placeholder="All Brands"
+                                    AllowClear="true"
+                                    Change="@(args => OnBrandChanged(args as int?))"
+                                    Style="width:100%;" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -54,10 +118,14 @@
                         GridLines="DataGridGridLines.Both"
                         Density="Density.Compact">
             <Columns>
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="LastTransactionDate" Title="Date" />
+               @*  <RadzenDataGridColumn TItem="StockLedgerDTO" Property="LastTransactionDate" Title="Date" /> *@
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="StoreName" Title="Store" />
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ItemCode" Title="Item Code"  />
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ItemName" Width="450px" Title="Item Name" />
+                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="GroupName" Title="Group" Width="140px" />
+                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="SubGroupName" Title="Sub Group" Width="140px" />
+                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="DesignName" Title="Design" Width="140px" />
+                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="BrandName" Title="Brand" Width="140px" />
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="OpeningStock" Title="Opening Stock" FormatString="{0:N2}" />
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ReceiveQty" Title="Receive Qty" FormatString="{0:N2}" />
                 <RadzenDataGridColumn TItem="StockLedgerDTO" Property="IssueQty" Title="Issue Qty" FormatString="{0:N2}" />
