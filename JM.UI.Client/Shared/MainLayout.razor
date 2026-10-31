@@ -1,8 +1,11 @@
 ﻿@using JM.UI.Client.Services
+@using JM.UI.Client.Pages.Dialog.Common
 @using JM.UI.Entities.Models
 @using JM.UI.Entities.Model.Stores
+@using JM.UI.Entities.Model.Users
 @using JM.UI.Service.UnitOfWork
 @using Microsoft.AspNetCore.Components
+@using Newtonsoft.Json
 
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Radzen.Blazor
@@ -19,6 +22,7 @@
 @inject ProtectedLocalStorage _localStorage
 @inject IServiceUnitOfWork ServiceUnitOfWork
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NotificationService NotificationService
 <Canonical />
 
 <RadzenComponents />
@@ -31,7 +35,11 @@
             <RadzenColumn Size="5">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
                     <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
-                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Asia Fashion</span>
+                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">Asia Fashion</span>
+                        @if (!string.IsNullOrEmpty(StoreName))
+                        {
+                            <span style="margin-left: 0.5rem; padding: 2px 10px; border-radius: 999px; background: var(--rz-primary); color: #fff; font-size: 0.72rem; font-weight: 600; white-space: nowrap;">@StoreName</span>
+                        }
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="7">
@@ -53,6 +61,7 @@
                     }
                     <RadzenAppearanceToggle class="rz-mx-2" />
                     <RadzenSidebarToggle Icon="settings" Click="@(() => configSidebarExpanded = !configSidebarExpanded)" class="rz-m-0" />
+                        <RadzenSidebarToggle Icon="lock_reset" Click="@(() => OpenChangePassword())" class="rz-m-0" />
                         <RadzenSidebarToggle Icon="logout" Click="@(() => Logout())" class="rz-m-0" />
                 </RadzenStack>
             </RadzenColumn>
@@ -134,6 +143,7 @@
     protected List<StoreDTO> Stores = new();
     protected int? SelectedStoreId;
     protected bool ShowStoreDropdown;
+    protected string? StoreName;
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,20 +167,22 @@
             if (string.IsNullOrEmpty(userIdResult.Value) || !int.TryParse(userIdResult.Value, out var userId) || userId <= 0)
                 return;
 
-            // Only admins (system 'Admin' group) see the store switcher
-            var adminCount = await ServiceUnitOfWork.UserGroupService.GetAdminGroupCountByUserId(userId);
-            if (adminCount <= 0) return;
-
             var stores = await ServiceUnitOfWork.StoreService.GetStores();
             Stores = stores?.ToList() ?? new List<StoreDTO>();
 
+            // The logged-in user's store is persisted at login (Employees.StoreId).
             var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
+            int storeId = 0;
             if (!string.IsNullOrEmpty(storeIdResult.Value) && int.TryParse(storeIdResult.Value, out var storedStoreId))
-                SelectedStoreId = storedStoreId;
-            else
-                SelectedStoreId = Stores.FirstOrDefault()?.Id;
+                storeId = storedStoreId;
 
-            ShowStoreDropdown = Stores.Count > 0;
+            var currentStore = Stores.FirstOrDefault(s => s.Id == storeId) ?? Stores.FirstOrDefault();
+            SelectedStoreId = currentStore?.Id;
+            StoreName = currentStore?.Name;
+
+            // Only admins (system 'Admin' group) see the store switcher
+            var adminCount = await ServiceUnitOfWork.UserGroupService.GetAdminGroupCountByUserId(userId);
+            ShowStoreDropdown = adminCount > 0 && Stores.Count > 0;
         }
         catch (Exception ex)
         {
@@ -190,6 +202,8 @@
 
         SelectedStoreId = storeId;
         await _localStorage.SetAsync("StoreId", storeId.ToString());
+
+        StoreName = Stores.FirstOrDefault(s => s.Id == storeId)?.Name;
 
         Console.WriteLine($"✅ Store switched to {storeId}");
     }
@@ -263,6 +277,65 @@
                   Resizable = true
               });
     }
+private async Task OpenChangePassword()
+{
+    try
+    {
+        var userInfoResult = await _localStorage.GetAsync<string>("UserInfo");
+        string userName = null;
+
+        if (userInfoResult.Success && !string.IsNullOrEmpty(userInfoResult.Value))
+        {
+            try
+            {
+                userName = JsonConvert.DeserializeObject<AuthenticatedUserResponse>(userInfoResult.Value)?.Username;
+            }
+            catch
+            {
+                // Ignore malformed user info; handled below.
+            }
+        }
+
+        if (string.IsNullOrEmpty(userName))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Reset Password",
+                Detail = "Unable to determine the logged-in user.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<ChangePasswordDialog>(
+            "Reset Password",
+            new Dictionary<string, object> { { "UserName", userName } },
+            new DialogOptions { Width = "420px", Resizable = true, Draggable = true });
+
+        if (result is bool changed && changed)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Reset Password",
+                Detail = "Your password has been updated successfully.",
+                Duration = 4000
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Reset Password",
+            Detail = ex.Message,
+            Duration = 5000
+        });
+    }
+}
+
 private async Task Logout()
 {
     await PerformLogout();

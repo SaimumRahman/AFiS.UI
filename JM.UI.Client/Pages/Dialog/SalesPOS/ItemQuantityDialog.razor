@@ -1,3 +1,4 @@
+@using JM.UI.Entities.Model.MesurementUnits
 @using JM.UI.Entities.Model.SalesPOS
 @using Radzen
 @using Radzen.Blazor
@@ -46,7 +47,7 @@
         {
             <div>
                 <div style="font-size:0.75rem;color:#666;margin-bottom:2px">Remaining Available</div>
-                <div style="font-weight:600;color:#ff9800">@RemainingQty.ToString("N2")</div>
+                <div style="font-weight:600;color:#ff9800">@RemainingQty.ToString(QuantityFormat)</div>
             </div>
         }
         else
@@ -58,7 +59,12 @@
 
         <div>
             <RadzenLabel Text="Quantity" Component="Qty" />
-            <RadzenNumeric @bind-Value="Qty" Min="1" Max="@RemainingQty" Name="Qty" Style="width:100%" ShowButtons="true" />
+            <RadzenNumeric @ref="QtyInput" @bind-Value="Qty" Min="1" Max="@MaxQty" Step="@QuantityStep" Format="@QuantityFormat"
+                           Name="Qty" Style="width:100%" ShowButtons="true" Change="@((decimal _) => OnQtyChanged())" />
+            @if (!AllowsDecimal)
+            {
+                <div style="font-size:0.75rem;color:#666;margin-top:2px">@(Product?.UomName ?? "This unit") allows whole numbers only.</div>
+            }
         </div>
 
         <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -82,10 +88,39 @@
     decimal UnitPrice { get; set; }
     decimal RemainingQty => Math.Max(0, (Product?.StockQuantity ?? 0) - ExistingQty);
 
+    // Yards / Meter accept decimals; every other unit is whole numbers only.
+    bool AllowsDecimal => UomRules.AllowsDecimalQuantity(Product?.UomName);
+    decimal MaxQty => AllowsDecimal ? RemainingQty : Math.Floor(RemainingQty);
+    string QuantityStep => UomRules.StepFor(AllowsDecimal);
+    string QuantityFormat => UomRules.FormatFor(AllowsDecimal);
+
+    // Quantity input, focused as soon as the dialog opens.
+    RadzenNumeric<decimal> QtyInput = default!;
+    bool _focusApplied;
+
     protected override void OnInitialized()
     {
         Qty = 1;
         UnitPrice = Product?.UnitPrice ?? 0;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_focusApplied)
+        {
+            _focusApplied = true;
+            try
+            {
+                // The dialog's own post-render JS runs right after the first render;
+                // yield briefly so the Quantity focus is the last one applied.
+                await Task.Delay(50);
+                await QtyInput.FocusAsync();
+            }
+            catch (Exception)
+            {
+                // Dialog may already be closing; focus is best-effort.
+            }
+        }
     }
 
     // The sale price may be raised, but never reduced below the loaded price.
@@ -100,8 +135,29 @@
         }
     }
 
+    // Whole-unit items: snap anything fractional back to a whole number.
+    void OnQtyChanged()
+    {
+        var qty = Qty;
+        if (UomRules.Normalize(AllowsDecimal, ref qty) && qty > 0)
+        {
+            Qty = qty;
+            NotificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                $"{Product?.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {Qty:N0}.", 3000);
+        }
+    }
+
     void Confirm()
     {
+        // Re-apply the unit rule so a value typed straight into the box cannot slip through.
+        var qty = Qty;
+        if (UomRules.Normalize(AllowsDecimal, ref qty))
+        {
+            Qty = qty;
+            NotificationService.Notify(NotificationSeverity.Warning, "Whole Units Only",
+                $"{Product?.UomName ?? "This unit"} does not allow decimals. Quantity rounded to {Qty:N0}.", 3000);
+        }
+
         if (Qty <= 0)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Invalid Quantity",
@@ -110,12 +166,12 @@
         }
 
         // Never allow more than the stock remaining for this item.
-        if (Qty > RemainingQty)
+        if (Qty > MaxQty)
         {
-            Qty = Math.Max(0, RemainingQty);
+            Qty = Math.Max(0, MaxQty);
             NotificationService.Notify(NotificationSeverity.Warning, "Stock Limit",
-                RemainingQty > 0
-                    ? $"Maximum available is {RemainingQty:N2}. Quantity has been set to {RemainingQty:N2}."
+                MaxQty > 0
+                    ? $"Maximum available is {MaxQty.ToString(QuantityFormat)}. Quantity has been set to {MaxQty.ToString(QuantityFormat)}."
                     : "No stock is available for this item.",
                 4000);
             StateHasChanged();

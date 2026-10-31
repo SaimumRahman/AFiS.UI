@@ -23,7 +23,8 @@ namespace JM.UI.Service.GroupRole
                 GroupName = g.GroupName,
                 Description = g.Description,
                 IsSystem = g.IsSystem,
-                CreatedAt = g.CreatedAt
+                CreatedAt = g.CreatedAt,
+                MaxDiscount = g.MaxDiscount
             }).ToList();
         }
 
@@ -83,6 +84,9 @@ namespace JM.UI.Service.GroupRole
 
             if (!string.IsNullOrWhiteSpace(groupRole.Description) && groupRole.Description.Length > 250)
                 return Task.FromResult((false, "Description cannot exceed 250 characters."));
+
+            if (groupRole.MaxDiscount.HasValue && (groupRole.MaxDiscount.Value < 0 || groupRole.MaxDiscount.Value > 100))
+                return Task.FromResult((false, "Maximum discount must be between 0 and 100 (%)."));
 
             return Task.FromResult((true, string.Empty));
         }

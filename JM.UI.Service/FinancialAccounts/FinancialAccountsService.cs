@@ -42,8 +42,8 @@ namespace JM.UI.Service.FinancialAccounts
         public async Task<IEnumerable<BanksDTO>> GetBanks()
             => await _repositoryUnitOfWork.FinancialAccountsRepository.GetBanks();
 
-        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown()
-            => await _repositoryUnitOfWork.FinancialAccountsRepository.GetFinancialAccountsForDropdown();
+        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown(int? storeId = null)
+            => await _repositoryUnitOfWork.FinancialAccountsRepository.GetFinancialAccountsForDropdown(storeId);
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateFinancialAccount(FinancialAccountDTO dto)
         {
@@ -52,6 +52,13 @@ namespace JM.UI.Service.FinancialAccounts
 
             if (string.IsNullOrWhiteSpace(dto.AccountNo))
                 return Task.FromResult((false, "Account Number is required"));
+
+            // Store and the GL ledger code are both mandatory on a financial account.
+            if (!dto.StoreId.HasValue || dto.StoreId.Value <= 0)
+                return Task.FromResult((false, "Store is required"));
+
+            if (string.IsNullOrWhiteSpace(dto.LedgerCode))
+                return Task.FromResult((false, "Ledger Code is required"));
 
             return Task.FromResult((true, string.Empty));
         }

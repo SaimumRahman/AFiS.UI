@@ -20,9 +20,6 @@ namespace JM.UI.Service.DailyExpense
         public async Task<DailyExpenseDTO?> GetDailyExpenseById(int id)
             => await _repositoryUnitOfWork.DailyExpenseRepository.GetDailyExpenseById(id);
 
-        public async Task<IEnumerable<BillTypeDTO>> GetBillTypesForDropdown()
-            => await _repositoryUnitOfWork.DailyExpenseRepository.GetBillTypesForDropdown();
-
         public async Task<ResponseResult> SaveUpdateDailyExpense(DailyExpenseDTO dailyExpense)
         {
             var v = await ValidateDailyExpense(dailyExpense);
@@ -40,8 +37,8 @@ namespace JM.UI.Service.DailyExpense
             if (dto.ExpenseDate == default)
                 return Task.FromResult((false, "Expense date is required"));
 
-            if (dto.BillTypeId <= 0)
-                return Task.FromResult((false, "Bill type is required"));
+            if (!dto.LedgerAccountId.HasValue || dto.LedgerAccountId.Value <= 0)
+                return Task.FromResult((false, "Expense account (ledger) is required"));
 
             if (dto.StoreId <= 0)
                 return Task.FromResult((false, "Store is required"));
@@ -53,6 +50,25 @@ namespace JM.UI.Service.DailyExpense
                 return Task.FromResult((false, "Description is required"));
 
             return Task.FromResult((true, string.Empty));
+        }
+
+        public async Task<IEnumerable<DailyExpenseDTO>> GetDailyExpensesForPosting(DateTime businessDay, int? storeId)
+            => await _repositoryUnitOfWork.DailyExpenseRepository.GetDailyExpensesForPosting(businessDay, storeId);
+
+        public async Task<ResponseResult> PostDailyExpenses(PostDailyExpensesDTO request)
+        {
+            if (request == null || request.Ids == null || request.Ids.Count == 0)
+                return new() { IsSuccessStatus = false, Message = "Select at least one expense to post" };
+
+            return await _repositoryUnitOfWork.DailyExpenseRepository.PostDailyExpenses(request);
+        }
+
+        public async Task<ResponseResult> UnpostDailyExpense(UnpostDailyExpenseDTO request)
+        {
+            if (request == null || request.Id <= 0)
+                return new() { IsSuccessStatus = false, Message = "Invalid expense" };
+
+            return await _repositoryUnitOfWork.DailyExpenseRepository.UnpostDailyExpense(request);
         }
     }
 }

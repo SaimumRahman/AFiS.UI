@@ -18,11 +18,21 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 
     protected List<GroupRoleDTO> GroupRoles { get; set; } = new();
     protected List<RouteModelDTO> Routes { get; set; } = new();
-    protected IEnumerable<RouteModelDTO> FilteredRoutes => Routes.Where(r =>
-        string.IsNullOrEmpty(SearchText) ||
-        r.RouteName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-        (r.RoutePath?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
-    );
+
+    private List<RouteModelDTO> _filteredRoutes = new();
+
+    // Materialized once and reused so the grid's Data reference stays stable across
+    // re-renders; otherwise simply checking a row would reload the grid and reset paging to page 1.
+    protected List<RouteModelDTO> FilteredRoutes => _filteredRoutes;
+
+    private void ApplyFilter()
+    {
+        _filteredRoutes = Routes.Where(r =>
+            string.IsNullOrEmpty(SearchText) ||
+            r.RouteName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+            (r.RoutePath?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
+        ).ToList();
+    }
 
     protected int? SelectedGroupId { get; set; }
     protected List<int> SelectedRouteIds { get; set; } = new();
@@ -52,6 +62,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
             // Load routes
             Routes = (await _serviceUnitOfWork.RouteService.GetRoutes()).ToList();
 
+            ApplyFilter();
 
             // If GroupId parameter is provided, pre-select the group
             if (GroupId.HasValue && GroupId.Value > 0)
@@ -80,6 +91,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 
             // Reset route selections
             SelectedRouteIds.Clear();
+            ExistingRouteIds.Clear();
             foreach (var route in Routes)
             {
                 route.IsSelected = false;
@@ -93,8 +105,14 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 
             // Extract permitted RouteIds
             var permittedRouteIds = existingPermissions
-                .Select(p => p.RouteId)
+                .Where(p => p is not null)
+                .Select(p => p!.RouteId)
                 .ToHashSet();
+
+            // Remember what is already granted so Save() can work out what to add and,
+            // more importantly, what to REMOVE. Without this the diff is always empty
+            // and unchecking a route never persists.
+            ExistingRouteIds = permittedRouteIds.ToList();
 
             // Pre-select existing routes
             foreach (var route in Routes.Where(r => permittedRouteIds.Contains(r.RouteId)))
@@ -118,20 +136,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
     protected async Task OnRouteSelectionChanged(RouteModelDTO route, bool isChecked)
     {
         route.IsSelected = isChecked;
-
-        if (isChecked)
-        {
-            if (!SelectedRouteIds.Contains(route.RouteId))
-            {
-                SelectedRouteIds.Add(route.RouteId);
-            }
-        }
-        else
-        {
-            SelectedRouteIds.Remove(route.RouteId);
-        }
-
-        SelectedRouteIds = SelectedRouteIds.Distinct().OrderBy(x => x).ToList();
+        SyncSelectedRouteIds();
         await InvokeAsync(StateHasChanged);  
     }
 
@@ -139,14 +144,26 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
 
 
 
+    // Single source of truth for the selection: the checkboxes themselves. The search
+    // box only hides rows, so it must never drop a hidden row's selection — otherwise
+    // Save() would revoke permissions the user cannot even see.
+    private void SyncSelectedRouteIds()
+    {
+        SelectedRouteIds = Routes
+            .Where(r => r.IsSelected)
+            .Select(r => r.RouteId)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+    }
+
     protected void SelectAllRoutes()
     {
-        SelectedRouteIds.Clear();
         foreach (var route in FilteredRoutes)
         {
             route.IsSelected = true;
-            SelectedRouteIds.Add(route.RouteId);
         }
+        SyncSelectedRouteIds();
         StateHasChanged();
     }
 
@@ -156,13 +173,14 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
         {
             route.IsSelected = false;
         }
-        SelectedRouteIds.Clear();
+        SyncSelectedRouteIds();
         StateHasChanged();
     }
 
     protected void OnSearchChanged(string searchValue)
     {
         SearchText = searchValue ?? string.Empty;
+        ApplyFilter();
         StateHasChanged();
     }
 
@@ -171,12 +189,6 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
         if (SelectedGroupId == null || SelectedGroupId == 0)
         {
             notificationService.Notify(NotificationSeverity.Warning, "Validation", "Please select a group.");
-            return;
-        }
-
-        if (SelectedRouteIds.Count == 0)
-        {
-            notificationService.Notify(NotificationSeverity.Warning, "Validation", "Please select at least one route.");
             return;
         }
 
@@ -192,12 +204,19 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
             int removedCount = 0;
             var errors = new List<string>();
 
-            // Remove unselected permissions
+            // Remove unselected permissions. Only this group's rows are read (instead of
+            // the whole table) and EVERY row for a revoked route is deleted, so any
+            // duplicate rows left over from the old bug are cleaned up too.
             if (routesToRemove.Any())
             {
-                var allPermissions = await _serviceUnitOfWork.GroupRoutePermissionService.GetGroupRoutePermissions();
-                var permissionsToDelete = allPermissions
-                    .Where(p => p.GroupId == SelectedGroupId && routesToRemove.Contains(p.RouteId))
+                var groupPermissions = await _serviceUnitOfWork
+                    .GroupRoutePermissionService
+                    .GetGroupRoutePermissionByGroupId(SelectedGroupId.Value)
+                    ?? new List<GroupRoutePermissionModelDTO?>();
+
+                var permissionsToDelete = groupPermissions
+                    .Where(p => p is not null && routesToRemove.Contains(p!.RouteId))
+                    .Select(p => p!)
                     .ToList();
 
                 foreach (var permission in permissionsToDelete)
@@ -275,6 +294,7 @@ public partial class GroupRoutePermissionAddComponent : AddEditPageBase
     protected async Task Reset()
     {
         SearchText = string.Empty;
+        ApplyFilter();
         SelectedGroupId = null;
         SelectedRouteIds.Clear();
         ExistingRouteIds.Clear();

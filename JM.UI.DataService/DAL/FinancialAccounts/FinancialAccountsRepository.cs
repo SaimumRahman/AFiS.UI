@@ -151,12 +151,15 @@ namespace JM.UI.DataService.DAL.FinancialAccounts
             }
         }
 
-        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown()
+        public async Task<IEnumerable<FinancialAccountDropdownDTO>> GetFinancialAccountsForDropdown(int? storeId = null)
         {
             try
             {
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("FinancialAccounts/GetFinancialAccountsForDropdown");
+                var url = storeId.HasValue && storeId.Value > 0
+                    ? $"FinancialAccounts/GetFinancialAccountsForDropdown?storeId={storeId.Value}"
+                    : "FinancialAccounts/GetFinancialAccountsForDropdown";
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<List<FinancialAccountDropdownDTO>>();

@@ -99,6 +99,20 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <!-- Maximum Discount -->
+                <RadzenDataGridColumn TItem="GroupRoleDTO" Property="MaxDiscount" Title="Max Disc %" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="groupRole">
+                        @if (groupRole.MaxDiscount.HasValue)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"{groupRole.MaxDiscount.Value:N2}%")" />
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption">No limit</RadzenText>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <!-- Actions -->
                 <RadzenDataGridColumn TItem="GroupRoleDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="groupRole">

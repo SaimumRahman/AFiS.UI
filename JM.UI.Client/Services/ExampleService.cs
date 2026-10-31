@@ -41,6 +41,15 @@ namespace JM.UI.Client.Services
                         Title       = "Branches",
                         Description = "Manage branches, stores or locations",
                         Tags        = new[] { "branch", "store", "location" }
+                    },
+                    new Example
+                    {
+                        Name        = "Cost Centers",
+                        Path        = "/CostCenterList",
+                        Icon        = "\uea3b",
+                        Title       = "Cost Centers",
+                        Description = "Manage accounting cost centers (ACC_Branch)",
+                        Tags        = new[] { "cost", "center", "branch", "accounting" }
                     }
                 }
             },
@@ -170,7 +179,7 @@ namespace JM.UI.Client.Services
                             },
                             new Example
                             {
-                                Name        = "SubGroups",
+                                Name        = "Products",
                                 Path        = "/SubGroupsList",
                                 Icon        = "\ue5db",
                                 Title       = "SubGroups",
@@ -179,7 +188,7 @@ namespace JM.UI.Client.Services
                             },
                             new Example
                             {
-                                Name        = "Designs",
+                                Name        = "Sub Products",
                                 Path        = "/DesignsList",
                                 Icon        = "\ue41f",
                                 Title       = "Designs",
@@ -203,30 +212,18 @@ namespace JM.UI.Client.Services
                                 Title       = "Items",
                                 Description = "Manage inventory items",
                                 Tags        = new[] { "item", "inventory", "product" }
+                            },
+                            new Example
+                            {
+                                Name        = "Sizes",
+                                Path        = "/SizesList",
+                                Icon        = "\ue8d2",
+                                Title       = "Sizes",
+                                Description = "Manage product size variants",
+                                Tags        = new[] { "size", "variant", "inventory" }
                             }
                         }
                     },
- 
-                    // ── Variants & Codes ──
-                    new Example
-                    {
-                        Name        = "Sizes",
-                        Path        = "/SizesList",
-                        Icon        = "\ue8d2",
-                        Title       = "Sizes",
-                        Description = "Manage product size variants",
-                        Tags        = new[] { "size", "variant", "inventory" }
-                    },
-                   
-                    new Example
-                    {
-                        Name        = "Barcodes",
-                        Path        = "/BarcodeList",
-                        Icon        = "\ue6b8",
-                        Title       = "Barcodes",
-                        Description = "Manage barcode assignments",
-                        Tags        = new[] { "barcode", "sku", "inventory" }
-                    }
                 }
             },
  
@@ -259,36 +256,8 @@ namespace JM.UI.Client.Services
                         Description = "Manage draft purchase entries before posting",
                         Tags        = new[] { "draft", "purchase" }
                     },
-                    
-                    new Example
-                    {
-                        Name        = "Purchase Returns",
-                        Path        = "/PurchaseReturnsList",
-                        Icon        = "\ue40a",
-                        Title       = "Purchase Returns",
-                        Description = "Manage purchase returns to suppliers",
-                        Tags        = new[] { "purchase", "return", "finance" },
-                    },
- 
-                    // ── Stock Management ──
-                    new Example
-                    {
-                        Name        = "Stock Opening",
-                        Path        = "/StockOpeningList",
-                        Icon        = "\ue14f",
-                        Title       = "Stock Opening",
-                        Description = "Add new opening stock entries",
-                        Tags        = new[] { "stock", "opening", "inventory" }
-                    },
-                    new Example
-                    {
-                        Name        = "Stock Ledger",
-                        Path        = "/StockLedger",
-                        Icon        = "\ue8f9",
-                        Title       = "Stock Ledger",
-                        Description = "View opening stock, receipts, issues and closing stock by store",
-                        Tags        = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
-                    },
+                   
+                   
 
                     // ── Other ──
                     new Example
@@ -377,6 +346,15 @@ namespace JM.UI.Client.Services
                         Title       = "POS",
                         Description = "Manage vendor and supplier records",
                         Tags        = new[] { "supplier", "vendor" }
+                    },
+                    new Example
+                    {
+                        Name        = "Counter Closing",
+                        Path        = "/CounterClosing",
+                        Icon        = "\ue558",
+                        Title       = "POS",
+                        Description = "Manage vendor and supplier records",
+                        Tags        = new[] { "supplier", "vendor" }
                     }
                 }
             },
@@ -449,6 +427,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Chart of Accounts",
+                        Path        = "/ChartOfAccountsList",
+                        Icon        = "\ue8b0",
+                        Title       = "Chart of Accounts",
+                        Description = "Manage the general ledger chart of accounts (groups and posting accounts) with nature and party types",
+                        Tags        = new[] { "account", "chart", "ledger", "coa", "accounting" }
+                    },
+                    new Example
+                    {
                         Name        = "Banks",
                         Path        = "/BanksList",
                         Icon        = "\ue8b0",
@@ -458,30 +445,39 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
-                        Name        = "Account Groups",
-                        Path        = "/AccountsGroupsList",
-                        Icon        = "\ue8b0",
-                        Title       = "Account Groups",
-                        Description = "Organize accounts into categories and groups",
-                        Tags        = new[] { "account", "group", "finance", "coa" }
-                    },
-                    new Example
-                    {
-                        Name        = "Accounts (COA)",
-                        Path        = "/AccountsList",
-                        Icon        = "\ue85d",
-                        Title       = "Chart of Accounts",
-                        Description = "Manage ledger accounts and structure",
-                        Tags        = new[] { "account", "ledger", "chart", "finance" }
-                    },
-                    new Example
-                    {
                         Name        = "Daily Expense Entry",
                         Path        = "/DailyExpenses",
                         Icon        = "\ue8b0",
                         Title       = "Daily Expenses",
                         Description = "Record and track daily business expenses",
                         Tags        = new[] { "expense", "daily", "billing", "finance" }
+                    },
+                    new Example
+                    {
+                        Name        = "Post Ledger",
+                        Path        = "/PostLedger",
+                        Icon        = "\ue8b0",
+                        Title       = "Post Ledger",
+                        Description = "Review and post the day's daily expenses to the general ledger",
+                        Tags        = new[] { "ledger", "post", "expense", "finance", "gl", "voucher" }
+                    },
+                    new Example
+                    {
+                        Name        = "Opening Balance",
+                        Path        = "/OpeningBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Opening Balance",
+                        Description = "Post one balanced opening-balance voucher per branch and fiscal year",
+                        Tags        = new[] { "opening", "balance", "ledger", "finance", "accounting", "voucher" }
+                    },
+                    new Example
+                    {
+                        Name        = "Manual Journal",
+                        Path        = "/ManualJournalList",
+                        Icon        = "\ue8b0",
+                        Title       = "Manual Journal",
+                        Description = "Enter, post and reverse balanced double-entry journals (JRN) by hand",
+                        Tags        = new[] { "journal", "voucher", "ledger", "finance", "accounting", "manual", "jrn" }
                     }
                 }
             },
@@ -504,36 +500,6 @@ namespace JM.UI.Client.Services
             },
  
             // ─────────────────────────────────────────
-            // 8. Vouchers
-            // ─────────────────────────────────────────
-            new Example
-            {
-                Name = "Vouchers",
-                Icon = "\ue873",
-                Children = new[]
-                {
-                    new Example
-                    {
-                        Name        = "Voucher List",
-                        Path        = "/VoucherList",
-                        Icon        = "\ue873",
-                        Title       = "Vouchers",
-                        Description = "Create and manage accounting vouchers",
-                        Tags        = new[] { "voucher", "journal", "entry" }
-                    },
-                    new Example
-                    {
-                        Name        = "Voucher Details",
-                        Path        = "/VoucherDetailsList",
-                        Icon        = "\ue85d",
-                        Title       = "Voucher Lines",
-                        Description = "View and edit individual voucher transactions",
-                        Tags        = new[] { "voucher", "detail", "line", "debit", "credit" }
-                    }
-                }
-            },
- 
-            // ─────────────────────────────────────────
             // 9. Stock Reports
             // ─────────────────────────────────────────
             new Example
@@ -542,14 +508,14 @@ namespace JM.UI.Client.Services
                 Icon = "\ue8f9",
                 Children = new[]
                 {
-                    new Example
+                     new Example
                     {
-                        Name        = "Current Stock",
-                        Path        = "/CurrentStockReport",
+                        Name        = "Stock Ledger",
+                        Path        = "/StockLedger",
                         Icon        = "\ue8f9",
-                        Title       = "Current Stock Report",
-                        Description = "View current stock levels across all stores",
-                        Tags        = new[] { "stock", "report", "inventory", "current" }
+                        Title       = "Stock Ledger",
+                        Description = "View opening stock, receipts, issues and closing stock by store",
+                        Tags        = new[] { "stock", "ledger", "inventory", "opening", "closing", "receive", "issue" }
                     },
                     new Example
                     {
@@ -559,10 +525,148 @@ namespace JM.UI.Client.Services
                         Title       = "Profit / Loss Report",
                         Description = "Per-item profit & loss: total in, total out, average purchase price and total sale",
                         Tags        = new[] { "profit", "loss", "report", "item" }
+                    },
+                    new Example
+                    {
+                        Name        = "Booking Report",
+                        Path        = "/BookingReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Booking Report",
+                        Description = "Currently booked (not yet delivered) invoices with rate, quantity, gross, discount, paid and due",
+                        Tags        = new[] { "booking", "report", "invoice", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Customer-wise Sales Detail",
+                        Path        = "/CustomerWiseSalesDetailReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Customer-wise Sales - Detail Report",
+                        Description = "Item level sales grouped by customer and invoice, with per-customer subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "customer", "detail", "invoice" }
+                    },
+                    new Example
+                    {
+                        Name        = "Exchange Report",
+                        Path        = "/ExchangeReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Exchange Report",
+                        Description = "Item exchanges showing old and new invoice, returned and replacement items, adjustment and amount paid",
+                        Tags        = new[] { "exchange", "report", "return", "adjustment", "sales" }
+                    },
+                    new Example
+                    {
+                        Name        = "Group-wise Sales Summary",
+                        Path        = "/GroupWiseSalesSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Group-wise Sales Summary Report",
+                        Description = "Net sales (after discount) per product group split across the HLS, GEC and BTB branches, with a computed grand total",
+                        Tags        = new[] { "sales", "report", "group", "summary", "branch", "discount" }
+                    },
+                    new Example
+                    {
+                        Name        = "Group-wise Sales Details",
+                        Path        = "/GroupWiseSalesDetailsReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Group-wise Sales - Details Report",
+                        Description = "SubProduct level net sales (after discount) per product group split across the HLS, GEC and BTB branches, with per-block subtotals and a computed grand total",
+                        Tags        = new[] { "sales", "report", "group", "details", "subproduct", "branch" }
+                    },
+                    new Example
+                    {
+                        Name        = "Invoice-wise Sale Summary",
+                        Path        = "/InvoiceWiseSaleSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Invoice-wise Sale Summary Report",
+                        Description = "Per-invoice gross, discount, vat, net, cash, card and due amounts grouped by the user who made the sale, with per-user subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "invoice", "summary", "cash", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Pay Type-wise Sales Details",
+                        Path        = "/PayTypeWiseSalesDetailsReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Pay Type-wise Sales - Details Report",
+                        Description = "Per-invoice net, exchange and payment split across cash, CityPOS, DBBLPOS, Bkash and Nagad with dues, grouped by date with a DaySum per day and a grand total",
+                        Tags        = new[] { "sales", "report", "payment", "details", "cash", "bkash", "nagad" }
+                    },
+                    new Example
+                    {
+                        Name        = "Purchase Detail",
+                        Path        = "/PurchaseDetailReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Purchase Detail Report",
+                        Description = "Purchase challan with per-item cost breakdown (product, carrying, transport, operation, VAT), quantity, purchase total and sale total grouped by bill and product group",
+                        Tags        = new[] { "purchase", "report", "challan", "cost", "supplier", "detail" }
+                    },
+                    new Example
+                    {
+                        Name        = "Salesman-wise Detailed",
+                        Path        = "/SalesmanWiseDetailedReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Salesman-wise Detailed Report",
+                        Description = "Item-level sales grouped by salesman with gross, campaign and invoice discounts, exchange, net paid and dues per invoice, with per-salesman subtotals and a grand total",
+                        Tags        = new[] { "sales", "report", "salesman", "detail", "invoice", "exchange", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Salesman-wise Summary",
+                        Path        = "/SalesmanWiseSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Salesman-wise Summary Report",
+                        Description = "Sales grouped by salesman and date with product-group totals, discount percentage and amount, exchange and net paid, with per-day DaySum and per-salesman subtotals",
+                        Tags        = new[] { "sales", "report", "salesman", "summary", "product", "discount" }
                     }
                 }
             },
  
+            // ─────────────────────────────────────────
+            // 9b. Accounting Reports
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name = "Accounting Reports",
+                Icon = "\ue8b0",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "Trial Balance",
+                        Path        = "/AccountingTrialBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Trial Balance",
+                        Description = "Trial balance for a date range with branch filter: opening, period debit, period credit and closing",
+                        Tags        = new[] { "trial", "balance", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "General Ledger",
+                        Path        = "/AccountingGeneralLedger",
+                        Icon        = "\ue8b0",
+                        Title       = "General Ledger",
+                        Description = "Posted general ledger entries by date range and branch: voucher, account, party, debit, credit and net",
+                        Tags        = new[] { "ledger", "general", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "Party Balance",
+                        Path        = "/AccountingPartyBalance",
+                        Icon        = "\ue8b0",
+                        Title       = "Party Balance",
+                        Description = "Outstanding balances per party and account: receivables, payables and advances",
+                        Tags        = new[] { "party", "balance", "outstanding", "accounting", "report" }
+                    },
+                    new Example
+                    {
+                        Name        = "Balance Rollup",
+                        Path        = "/AccountingBalanceRollup",
+                        Icon        = "\ue8b0",
+                        Title       = "Balance Rollup (Group Summary)",
+                        Description = "Group-level totals per period (Tally Group Summary style)",
+                        Tags        = new[] { "rollup", "group", "summary", "accounting", "report" }
+                    }
+                }
+            },
+
             // ─────────────────────────────────────────
             // 10. Security & Access
             // ─────────────────────────────────────────

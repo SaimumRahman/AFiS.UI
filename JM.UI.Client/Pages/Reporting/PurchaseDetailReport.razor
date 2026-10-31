@@ -1,0 +1,208 @@
+@page "/PurchaseDetailReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits PurchaseDetailReportComponent
+
+<PageTitle>Purchase Detail Report</PageTitle>
+
+<style>
+    :root {
+        --pd-primary: #4338ca;
+        --pd-primary-soft: #eef2ff;
+        --pd-primary-strong: #3730a3;
+        --pd-border: #e2e8f0;
+        --pd-text: #1e293b;
+        --pd-muted: #64748b;
+        --pd-subtotal: #f1f5f9;
+        --pd-challan: #e0e7ff;
+        --pd-radius: 10px;
+        --pd-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .pd-paper {
+        background: #fff;
+        border: 1px solid var(--pd-border);
+        border-radius: var(--pd-radius);
+        box-shadow: var(--pd-shadow);
+        padding: 1.75rem 2rem;
+    }
+
+    .pd-doc-header { text-align: center; margin-bottom: 1.25rem; }
+    .pd-doc-header .company { font-size: 1.45rem; font-weight: 700; color: var(--pd-text); letter-spacing: 0.02em; }
+    .pd-doc-header .address { font-size: 0.85rem; color: var(--pd-muted); margin-top: 2px; }
+    .pd-doc-header .title {
+        display: inline-block; margin-top: 0.5rem; font-weight: 700; font-size: 1rem; color: var(--pd-primary-strong);
+        letter-spacing: 0.04em; padding: 2px 14px; border-radius: 999px; background: var(--pd-primary-soft);
+    }
+    .pd-doc-header .range { font-size: 0.85rem; color: var(--pd-muted); margin-top: 6px; font-weight: 600; }
+
+    .pd-challan { margin-top: 1.25rem; border: 1px solid var(--pd-border); border-radius: var(--pd-radius); overflow: hidden; }
+    .pd-challan-head {
+        display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center;
+        background: linear-gradient(135deg, var(--pd-primary) 0%, var(--pd-primary-strong) 100%);
+        color: #fff; padding: 0.65rem 1rem;
+    }
+    .pd-challan-head .challan-no { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em; }
+    .pd-pill {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        background: rgba(255,255,255,0.16); padding: 3px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+    }
+    .pd-pill b { font-weight: 500; opacity: 0.8; }
+
+    .pd-section-head {
+        display: flex; gap: 1rem; align-items: baseline;
+        padding: 0.5rem 1rem; background: var(--pd-primary-soft);
+        border-top: 1px solid var(--pd-border); border-bottom: 1px solid var(--pd-border);
+    }
+    .pd-section-head .bill { font-weight: 700; color: var(--pd-primary-strong); font-size: 0.88rem; }
+    .pd-section-head .group {
+        font-size: 0.8rem; font-weight: 600; color: var(--pd-primary-strong);
+        background: #fff; border: 1px solid var(--pd-border); padding: 1px 10px; border-radius: 999px;
+    }
+
+    .pd-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .pd-table thead th {
+        text-align: left; font-weight: 700; color: var(--pd-muted); text-transform: uppercase; font-size: 0.7rem;
+        letter-spacing: 0.05em; padding: 0.5rem 0.75rem; background: #f8fafc; border-bottom: 1px solid var(--pd-border);
+    }
+    .pd-table thead th.num, .pd-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pd-table tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: var(--pd-text); vertical-align: top; }
+    .pd-table tbody tr:last-child td { border-bottom: none; }
+    .pd-table .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: var(--pd-primary-strong); font-weight: 600; }
+    .pd-item-name { font-weight: 600; }
+    .pd-breakdown { font-size: 0.72rem; color: var(--pd-muted); margin-top: 2px; letter-spacing: 0.01em; }
+
+    .pd-subtotal td, .pd-challan-total td { background: var(--pd-subtotal); font-weight: 700; }
+    .pd-challan-total td { background: var(--pd-challan); }
+    .pd-label { text-align: right; color: var(--pd-primary-strong); font-weight: 700; }
+
+    .pd-legend {
+        margin-top: 1rem; font-size: 0.76rem; color: var(--pd-muted); font-style: italic;
+        border-top: 1px solid var(--pd-border); padding-top: 0.6rem;
+    }
+
+    .pd-empty { text-align: center; color: var(--pd-muted); padding: 2rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="shopping_bag" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Purchase Detail Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate" AllowClear="true" Placeholder="From Date" Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate" AllowClear="true" Placeholder="To Date" Style="width: 150px" />
+                    <RadzenButton Icon="refresh" Text="Load" ButtonStyle="ButtonStyle.Primary" Click="LoadReport" />
+                    <RadzenButton Icon="print" Text="Print / PDF" ButtonStyle="ButtonStyle.Secondary" Click="PrintReport" IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenCard><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></RadzenCard>
+    }
+    else
+    {
+        <div class="pd-paper">
+            <div class="pd-doc-header">
+                <div class="company">ASIA FASHION</div>
+                <div class="address">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM</div>
+                <div><span class="title">PURCHASE DETAIL REPORT</span></div>
+                <div class="range">@DateRangeText</div>
+            </div>
+
+            @if (!Challans.Any())
+            {
+                <div class="pd-empty">No purchase records found for the selected period.</div>
+            }
+            else
+            {
+                @foreach (var challan in Challans)
+                {
+                    <div class="pd-challan">
+                        <div class="pd-challan-head">
+                            <span class="challan-no">P.Challan No: @Dash(challan.ChallanNo)</span>
+                            <span class="pd-pill"><b>Supplier</b> @Dash(challan.SupplierName)</span>
+                            <span class="pd-pill"><b>Bill Date</b> @challan.BillDate.ToString("dd MMM yy")</span>
+                        </div>
+
+                        @foreach (var section in challan.Sections)
+                        {
+                            <div class="pd-section-head">
+                                <span class="bill">Bill: @Dash(section.BillNo)</span>
+                                <span class="group">Group: @Dash(section.GroupName)</span>
+                            </div>
+
+                            <table class="pd-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Item Name</th>
+                                        <th class="num">Cost Price</th>
+                                        <th class="num">Qty</th>
+                                        <th>UoM</th>
+                                        <th class="num">Pur.Total</th>
+                                        <th class="num">Sale Price</th>
+                                        <th class="num">Sale Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in section.Rows)
+                                    {
+                                        <tr>
+                                            <td class="code">@Dash(row.Code)</td>
+                                            <td>
+                                                <div class="pd-item-name">@Dash(row.ItemName)</div>
+                                                <div class="pd-breakdown">@Breakdown(row)</div>
+                                            </td>
+                                            <td class="num">@Fmt(row.CostPrice)</td>
+                                            <td class="num">@FmtQty(row.Quantity)</td>
+                                            <td>@Dash(row.Uom)</td>
+                                            <td class="num">@Fmt(row.PurTotal)</td>
+                                            <td class="num">@Fmt(row.SalePrice)</td>
+                                            <td class="num">@Fmt(row.SaleTotal)</td>
+                                        </tr>
+                                    }
+                                    <tr class="pd-subtotal">
+                                        <td colspan="2" class="pd-label">SubTotal</td>
+                                        <td></td>
+                                        <td class="num">@FmtQty(section.Rows.Sum(r => r.Quantity))</td>
+                                        <td></td>
+                                        <td class="num">@Fmt(section.Rows.Sum(r => r.PurTotal))</td>
+                                        <td></td>
+                                        <td class="num">@Fmt(section.Rows.Sum(r => r.SaleTotal))</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        }
+
+                        <table class="pd-table">
+                            <tbody>
+                                <tr class="pd-challan-total">
+                                    <td colspan="2" class="pd-label">Challan Total</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="num">@Fmt(challan.TotalPur)</td>
+                                    <td></td>
+                                    <td class="num">@Fmt(challan.TotalSale)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <div class="pd-legend">
+                    Pp-Product Price, CC-Carrying Cost, TR-Transport Cost, OC-Operation Cost, VAT-Value Added Tax
+                </div>
+            }
+        </div>
+    }
+</RadzenContent>

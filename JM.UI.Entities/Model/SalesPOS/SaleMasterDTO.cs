@@ -18,7 +18,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal? InvoiceDiscount { get; set; }
         public string? InvoiceDiscountType { get; set; } = "Percentage";
         public decimal? VatAmount { get; set; }
-        public decimal? VatPercentage { get; set; } = 5m;
+        public decimal? VatPercentage { get; set; } = 0m;
         public decimal? ExchangeAmount { get; set; }
         public decimal? RoundingAmount { get; set; }
         public decimal NetAmount { get; set; }
@@ -53,6 +53,10 @@ namespace JM.UI.Entities.Model.SalesPOS
         public bool? IsBooking { get; set; }
         public bool? IsDraft { get; set; }
         public bool? IsDeleted { get; set; }
+
+        // Counter day-end closing attributes (must round-trip on edit).
+        public int? CounterId { get; set; }
+        public DateTime? BusinessDate { get; set; }
 
         public List<SaleDetailDTO> SaleDetails { get; set; } = new();
         public List<PaymentTransactionDTO> PaymentTransactions { get; set; } = new();

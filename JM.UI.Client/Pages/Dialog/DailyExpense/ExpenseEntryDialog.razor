@@ -1,4 +1,5 @@
 @using JM.Infrastructure.Models
+@using JM.UI.Entities.Model.Accounting_D
 @using JM.UI.Entities.Model.DailyExpense
 @using JM.UI.Entities.Model.FinancialAccounts
 @using JM.UI.Entities.Model.Stores
@@ -9,26 +10,34 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 
+<style>
+    .rz-dropdown-tree-popup {
+        display: none;
+        position: absolute;
+        overflow: hidden;
+        width: 380px;
+        border: var(--rz-panel-border);
+        background-color: var(--rz-panel-background-color);
+        box-shadow: var(--rz-panel-shadow);
+        border-radius: var(--rz-border-radius);
+        z-index: 1000;
+    }
+</style>
+
 <RadzenCard>
     <RadzenStack Gap="1.25rem">
         <RadzenFieldset Text="@(IsEditMode ? "Edit Expense" : "New Expense")" Icon="request_quote">
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Expense Date *" Component="ExpenseDate" />
-                    <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
+                    <RadzenDatePicker @bind-Value="Expense.ExpenseDate" DateFormat="dd/MM/yyyy" Style="width:100%" Disabled="@(!CanChooseStore)" />
+@if (!CanChooseStore)
+{
+    <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+        You can only enter expenses for today. Contact an administrator to change the date.
+    </RadzenText>
+}
                 </RadzenColumn>
-                <RadzenColumn Size="12" SizeMD="6">
-                    <RadzenLabel Text="Bill Type *" Component="BillTypeId" />
-                    <RadzenDropDown @bind-Value="Expense.BillTypeId"
-                                    Data="BillTypes"
-                                    TextProperty="Name"
-                                    ValueProperty="BillTypeId"
-                                    Placeholder="Select Bill Type"
-                                    AllowClear="true"
-                                    Style="width:100%" />
-                </RadzenColumn>
-            </RadzenRow>
-            <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Store *" Component="StoreId" />
                     <RadzenDropDown @bind-Value="Expense.StoreId"
@@ -36,11 +45,79 @@
                                     TextProperty="Name"
                                     ValueProperty="Id"
                                     Placeholder="Select Store"
-                                    Style="width:100%" />
+                                    Style="width:100%"
+                                    Disabled="@(!CanChooseStore)" />
+                    @if (!CanChooseStore)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                            You can only enter expenses for your own store. Contact an administrator to change this.
+                        </RadzenText>
+                    }
                 </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Amount *" Component="ExpenseAmount" />
                     <RadzenNumeric @bind-Value="Expense.Amount" Min="0" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenLabel Text="Auto-Post Threshold" />
+                    @if (SelectedStore == null)
+                    {
+                        <div style="padding:9px 12px;border:1px dashed var(--rz-border);border-radius:4px;color:var(--rz-text-secondary)">
+                            Select a store to see its auto-post threshold.
+                        </div>
+                    }
+                    else if (!HasLimit)
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;background:var(--rz-base-200);color:#15803d">
+                            @SelectedStore.Name: no threshold set — every expense posts to the ledger immediately.
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;background:var(--rz-base-200)">
+                            <div>
+                                @SelectedStore.Name — limit <b>@AutoPostLimit!.Value.ToString("N2")</b>
+                            </div>
+                            @if (Expense.Amount <= 0)
+                            {
+                                <div style="color:var(--rz-text-secondary);font-size:0.78rem">
+                                    Amounts up to this post to the ledger; above it goes to Post Ledger.
+                                </div>
+                            }
+                            else if (WillAutoPost)
+                            {
+                                <div style="color:#15803d;font-size:0.78rem">
+                                    This expense (@Expense.Amount.ToString("N2")) will post to the ledger automatically.
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="color:#b26a00;font-size:0.78rem">
+                                    This expense (@Expense.Amount.ToString("N2")) exceeds the limit and will be sent to Post Ledger.
+                                </div>
+                            }
+                        </div>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12">
+                    <RadzenLabel Text="Expense Account (Ledger) *" />
+                    <div style="display:flex; gap:0.3rem; align-items:center; width:100%;">
+                        <div @ref="expenseAccountTrigger" @onclick="ToggleExpenseAccount" style="position:relative; flex:1; cursor:pointer;">
+                            <RadzenTextBox ReadOnly="true" Value="@ExpenseAccountText"
+                                           Placeholder="Select expense ledger"
+                                           Style="width:100%; cursor:pointer;" />
+                            <RadzenIcon Icon="arrow_drop_down" Style="position:absolute; right:8px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--rz-text-tertiary-color);" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(ExpenseAccountText))
+                        {
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                          Click="ClearExpenseAccount" Title="Clear" />
+                        }
+                    </div>
                 </RadzenColumn>
             </RadzenRow>
             <RadzenRow Gap="1rem">
@@ -51,10 +128,10 @@
                                       ButtonSize="ButtonSize.Small"
                                       ButtonStyle="@(IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
                                       Click="@(() => SetPaidFrom(true))" />
-                        <RadzenButton Text="Bank / MFS"
+                        @* <RadzenButton Text="Bank / MFS"
                                       ButtonSize="ButtonSize.Small"
                                       ButtonStyle="@(!IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                                      Click="@(() => SetPaidFrom(false))" />
+                                      Click="@(() => SetPaidFrom(false))" /> *@
                     </div>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
@@ -111,27 +188,79 @@
     </RadzenStack>
 </RadzenCard>
 
+<RadzenPopup @ref="expenseAccountPopup" Style="padding:0;" class="rz-dropdown-tree-popup"
+             CloseOnClickOutside="true" Close="OnExpenseAccountPopupClose">
+    <RadzenTree Style="width:100%; max-height:300px; overflow:auto;" Data="@ExpenseAccountTree"
+                @bind-Value="@ExpenseAccountSelection" Change="@OnExpenseAccountSelect">
+        <RadzenTreeLevel Text="@(e => ((AccountNode)e).Display)" ChildrenProperty="Children"
+                         HasChildren="@(e => ((AccountNode)e).Children.Any())" Expanded="@(e => true)" />
+    </RadzenTree>
+</RadzenPopup>
+
 @code {
     [Parameter] public int StoreId { get; set; }
     [Parameter] public int UserId { get; set; }
     [Parameter] public int EditId { get; set; }
 
     protected DailyExpenseDTO Expense { get; set; } = new();
-    protected List<BillTypeDTO> BillTypes { get; set; } = new();
     protected List<StoreDTO> Stores { get; set; } = new();
     protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
+    protected List<AccountNode> ExpenseAccountTree { get; set; } = new();
     protected bool IsCash { get; set; } = true;
     protected bool IsProcessing { get; set; }
 
+    protected ElementReference expenseAccountTrigger;
+    protected RadzenPopup expenseAccountPopup;
+    protected object? ExpenseAccountSelection;
+    protected string? ExpenseAccountText;
+    protected bool isExpenseAccountOpen;
+
     protected bool IsEditMode => EditId > 0;
+
+    // Users in a system group (GroupsRole.IsSystem = 1) - plus the built-in super
+    // admin - may enter an expense against any store. Everyone else is pinned to
+    // the store they are signed in to.
+    protected bool CanChooseStore { get; set; }
+
+    protected StoreDTO? SelectedStore => Stores.FirstOrDefault(s => s.Id == Expense.StoreId);
+
+    protected decimal? AutoPostLimit => SelectedStore?.DailyExpenseLimit;
+
+    protected bool HasLimit => AutoPostLimit is > 0;
+
+    // Mirrors the server rule (InsertUpdateDailyExpenseHandler): a NULL or 0 threshold
+    // means "no threshold configured", so every expense auto-posts.
+    protected bool WillAutoPost => Expense.Amount <= 0 || !HasLimit || Expense.Amount <= AutoPostLimit!.Value;
+
+    protected class AccountNode
+    {
+        public int AccountId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public bool IsGroup { get; set; }
+        public List<AccountNode> Children { get; set; } = new();
+        public string Display => $"{Code} - {Name}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            BillTypes = (await ServiceUnitOfWork.DailyExpenseService.GetBillTypesForDropdown()).ToList();
+            try
+            {
+                CanChooseStore = UserId == 1
+                    || await ServiceUnitOfWork.UserGroupService.GetSystemGroupCountByUserId(UserId) > 0;
+            }
+            catch
+            {
+                CanChooseStore = false;
+            }
+
             Stores = (await ServiceUnitOfWork.StoreService.GetStores()).ToList();
             FinancialAccounts = (await ServiceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown()).ToList();
+
+            var expenseAccounts = await ServiceUnitOfWork.ChartOfAccountService.GetExpenseAccounts();
+            ExpenseAccountTree = BuildExpenseTree(expenseAccounts?.ToList() ?? new List<ChartOfAccountDTO>());
 
             if (IsEditMode)
             {
@@ -145,12 +274,26 @@
 
                 Expense = existing;
                 SetPaidFrom(!(existing.FinancialAccountId.HasValue && existing.FinancialAccountId.Value > 0));
+
+                ExpenseAccountText = existing.LedgerAccountId.HasValue
+                    ? (string.IsNullOrWhiteSpace(existing.LedgerAccountCode)
+                        ? existing.LedgerAccountName
+                        : $"{existing.LedgerAccountCode} - {existing.LedgerAccountName}")
+                    : null;
             }
             else
             {
                 Expense.ExpenseDate = DateTime.Today;
                 Expense.StoreId = StoreId > 0 ? StoreId : Expense.StoreId;
             }
+
+            // A user who may not choose a store is pinned to the one they are signed in to.
+            if (!CanChooseStore && StoreId > 0)
+                Expense.StoreId = StoreId;
+
+            // Never leave the disabled dropdown empty.
+            if (!CanChooseStore && Expense.StoreId <= 0 && Stores.Count > 0)
+                Expense.StoreId = Stores[0].Id;
         }
         catch (Exception ex)
         {
@@ -165,17 +308,68 @@
         if (cash) Expense.FinancialAccountId = null;
     }
 
+    private static List<AccountNode> BuildExpenseTree(List<ChartOfAccountDTO> accounts)
+    {
+        var nodes = new Dictionary<int, AccountNode>();
+        foreach (var a in accounts)
+            nodes[a.AccountId] = new AccountNode { AccountId = a.AccountId, Code = a.Code, Name = a.Name, IsGroup = a.IsGroup };
+
+        var roots = new List<AccountNode>();
+        foreach (var a in accounts)
+        {
+            var node = nodes[a.AccountId];
+            if (a.ParentId.HasValue && nodes.TryGetValue(a.ParentId.Value, out var parent))
+                parent.Children.Add(node);
+            else
+                roots.Add(node);
+        }
+        return roots;
+    }
+
+    protected async Task ToggleExpenseAccount()
+    {
+        isExpenseAccountOpen = !isExpenseAccountOpen;
+        await expenseAccountPopup.ToggleAsync(expenseAccountTrigger);
+    }
+
+    protected async Task OnExpenseAccountSelect()
+    {
+        if (isExpenseAccountOpen)
+        {
+            if (ExpenseAccountSelection is AccountNode node && !node.IsGroup)
+            {
+                Expense.LedgerAccountId = node.AccountId;
+                ExpenseAccountText = node.Display;
+            }
+
+            isExpenseAccountOpen = false;
+            await expenseAccountPopup.CloseAsync(expenseAccountTrigger);
+        }
+    }
+
+    protected void OnExpenseAccountPopupClose()
+    {
+        isExpenseAccountOpen = false;
+    }
+
+    protected void ClearExpenseAccount()
+    {
+        Expense.LedgerAccountId = null;
+        ExpenseAccountText = null;
+        ExpenseAccountSelection = null;
+    }
+
     protected async Task Save()
     {
-        if (Expense.BillTypeId <= 0)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a bill type.");
-            return;
-        }
-
         if (Expense.StoreId <= 0)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a store.");
+            return;
+        }
+
+        if (!Expense.LedgerAccountId.HasValue || Expense.LedgerAccountId.Value <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select an expense account (ledger).");
             return;
         }
 
@@ -197,6 +391,10 @@
             return;
         }
 
+        // The server owns the routing decision: an expense within the store's
+        // auto-post threshold is posted to the ledger immediately, otherwise it
+        // is saved unposted for the Post Ledger page. There is no daily cap to
+        // enforce here.
         Expense.CreatedBy = UserId;
         Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
         if (IsCash) Expense.FinancialAccountId = null;

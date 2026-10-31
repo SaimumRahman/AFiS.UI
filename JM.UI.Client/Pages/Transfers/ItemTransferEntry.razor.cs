@@ -31,6 +31,7 @@ namespace JM.UI.Client.Pages.Transfers
         protected bool IsFromRequisitionMode => RequisitionId.HasValue && RequisitionId.Value > 0;
         protected bool IsFromStoreReadOnly { get; set; } = false;
         protected bool IsDamagedMode { get; set; } = false;
+        protected bool IsSystemGroupUser { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
@@ -42,6 +43,16 @@ namespace JM.UI.Client.Pages.Transfers
         protected decimal? SharedIssueQty { get; set; }
         protected string SharedSerialNo { get; set; } = string.Empty;
         protected string SharedCreatedRemarks { get; set; } = string.Empty;
+
+        // ── UoM quantity rules ──────────────────────────────────────────────
+        // Yards / Meter (and their spellings) accept decimals; every other unit is
+        // whole units only. The shared qty box keeps decimals only while every
+        // preview row allows them.
+        protected bool SharedQtyAllowsDecimal =>
+            !PreviewItems.Any() || PreviewItems.All(r => UomRules.AllowsDecimalQuantity(r.UnitName));
+
+        protected string SharedQtyStep => UomRules.StepFor(SharedQtyAllowsDecimal);
+        protected string SharedQtyFormat => UomRules.FormatFor(SharedQtyAllowsDecimal);
         protected IEnumerable<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<StoreDTO> ToStores { get; set; } = new List<StoreDTO>();
         protected IEnumerable<LookupItemDTO> TransferTypes { get; set; } = new List<LookupItemDTO>();
@@ -61,6 +72,10 @@ namespace JM.UI.Client.Pages.Transfers
         // â”€â”€ Scan textbox (direct-to-grid, qty = 1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected string ScanBarcodeText { get; set; } = string.Empty;
         protected RadzenTextBox _barcodeInputRef = default!;
+
+        // ── Purchase (SystemInvoiceNo) → preview grid ───────────────────────
+        protected string PurchaseInvoiceNo { get; set; } = string.Empty;
+        protected bool IsLoadingPurchase { get; set; } = false;
         private bool _shouldFocusBarcodeInput;
         private bool _isFirstRender = true;
         protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -124,6 +139,18 @@ namespace JM.UI.Client.Pages.Transfers
                 int storeId = await GetLocalStorageInt("StoreId");
                 CurrentUserId = await GetLocalStorageInt("UserId");
 
+                // Users in a system group (GroupsRole.IsSystem = 1) may choose any
+                // transfer type; everyone else is restricted to Internal Transfer.
+                try
+                {
+                    IsSystemGroupUser = await _serviceUnitOfWork.UserGroupService
+                                            .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+                }
+                catch
+                {
+                    IsSystemGroupUser = false;
+                }
+
                 Console.WriteLine($"[DEBUG] StoreId={storeId}, UserId={CurrentUserId}");
 
                 var stores = await _serviceUnitOfWork.StoreService.GetStores()
@@ -162,8 +189,8 @@ namespace JM.UI.Client.Pages.Transfers
                     IsFromStoreReadOnly = true;
                 }
 
-                // â”€â”€ Exclude From Store from To Store list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                ToStores = stores.Where(s => s.Id != Transfer.StoreId).ToList();
+                // â”€â”€ Build To Store list (excludes From Store and Damaged store) â”€â”€
+                RebuildToStores();
 
                 // â”€â”€ Load Lookup Lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Colors = await _serviceUnitOfWork.ColorsService.GetColorss()
@@ -184,6 +211,15 @@ namespace JM.UI.Client.Pages.Transfers
                         Id = tt.TransferTypeId,
                         Name = tt.TransferTypeName
                     }).ToList();
+
+                // Non-system-group users can only perform an Internal Transfer.
+                if (!IsSystemGroupUser && !IsEditMode)
+                {
+                    var internalTransferType = TransferTypes.FirstOrDefault(t =>
+                        t.Name.Equals("Internal Transfer", StringComparison.OrdinalIgnoreCase));
+                    if (internalTransferType != null)
+                        Transfer.TransTypeID = internalTransferType.Id;
+                }
 
                 // If coming from requisition, load requisition data
                 if (IsFromRequisitionMode)
@@ -262,6 +298,10 @@ namespace JM.UI.Client.Pages.Transfers
                     });
                 }
 
+                // Whole-unit UoMs only take whole quantities (requisition qty may be fractional).
+                foreach (var requisitionRow in PreviewItems)
+                    NormalizePreviewQuantity(requisitionRow);
+
                 // Auto-select Internal Transfer type and disable switching
                 var internalTransfer = TransferTypes.FirstOrDefault(t =>
                     t.Name.Equals("Internal Transfer", StringComparison.OrdinalIgnoreCase));
@@ -297,6 +337,164 @@ namespace JM.UI.Client.Pages.Transfers
                 IsLoading = false;
             }
         }
+        // ── Purchase (SystemInvoiceNo) → preview grid ───────────────────────
+
+        protected async Task OnPurchaseInvoiceKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+        {
+            if (e.Key != "Enter") return;
+            await LoadFromPurchaseAsync();
+        }
+
+        /// <summary>
+        /// Loads every active line of a purchase (found by its SystemInvoiceNo) into the
+        /// editable preview grid, applying the same rules as the barcode paths:
+        /// lines already in the preview are skipped, lines with no stock in the From
+        /// Store are skipped, and whole-unit UoMs are rounded. Each row keeps the
+        /// purchased quantity, capped at what is actually in stock, and stays editable.
+        /// </summary>
+        protected async Task LoadFromPurchaseAsync()
+        {
+            var invoiceNo = PurchaseInvoiceNo?.Trim();
+            if (string.IsNullOrWhiteSpace(invoiceNo)) return;
+
+            if (!Transfer.StoreId.HasValue || Transfer.StoreId.Value == 0)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Warning,
+                    "Store Not Selected",
+                    "Please select a 'From Store' before loading a purchase.",
+                    duration: 5000);
+                return;
+            }
+
+            try
+            {
+                IsLoadingPurchase = true;
+                StateHasChanged();
+
+                var storeName = Stores.FirstOrDefault(s => s.Id == Transfer.StoreId)?.Name
+                                ?? $"Store #{Transfer.StoreId}";
+
+                var purchase = await _serviceUnitOfWork.PurchaseService
+                    .GetPurchaseItemsForTransfer(invoiceNo, Transfer.StoreId.Value);
+
+                if (purchase == null)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Purchase Not Found",
+                        $"No purchase was found with SystemInvoiceNo '{invoiceNo}'.",
+                        duration: 6000);
+                    return;
+                }
+
+                // Stock is checked against the From Store, so call out a mismatch.
+                if (purchase.StoreId.HasValue && purchase.StoreId.Value != Transfer.StoreId.Value)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Different Store",
+                        $"Purchase '{invoiceNo}' was booked into '{purchase.StoreName ?? "#" + purchase.StoreId}', " +
+                        $"but this transfer is from '{storeName}'. Only lines with stock there are loaded.",
+                        duration: 8000);
+                }
+
+                int added = 0, duplicate = 0, noStock = 0, rounded = 0;
+
+                foreach (var line in purchase.Items)
+                {
+                    var barcode = (line.Barcode ?? string.Empty).Trim();
+
+                    // Already in the preview? Same rule as the barcode dropdown.
+                    if (!string.IsNullOrEmpty(barcode) && PreviewItems.Any(r => r.Barcode == barcode))
+                    {
+                        duplicate++;
+                        continue;
+                    }
+
+                    // No stock in the From Store? Same rule as the barcode dropdown.
+                    if (line.CurrentStock <= 0)
+                    {
+                        noStock++;
+                        continue;
+                    }
+
+                    // Default to the purchased quantity, capped at available stock.
+                    var issueQty = Math.Min(line.PurchaseQuantity, line.CurrentStock);
+                    if (issueQty <= 0) issueQty = line.CurrentStock;
+
+                    var row = new TransferPreviewRow
+                    {
+                        ItemId = line.ItemId,
+                        Barcode = barcode,
+                        ItemName = line.ItemName ?? string.Empty,
+                        ColorId = line.ColorId,
+                        ColorName = !string.IsNullOrWhiteSpace(line.ColorName)
+                                        ? line.ColorName
+                                        : Colors.FirstOrDefault(c => c.Id == line.ColorId)?.Name ?? string.Empty,
+                        SizeId = line.SizeId,
+                        SizeName = !string.IsNullOrWhiteSpace(line.SizeName)
+                                        ? line.SizeName
+                                        : Sizes.FirstOrDefault(s => s.Id == line.SizeId)?.Name ?? string.Empty,
+                        GroupId = line.GroupId,
+                        SubGroupId = line.SubGroupId,
+                        DesignId = line.DesignId,
+                        UnitId = line.UnitId,
+                        UnitName = line.UnitName ?? string.Empty,
+                        IsNewItem = line.IsNewItem,
+                        IssueQty = issueQty,
+                        SerialNo = SharedSerialNo,
+                        CreatedRemarks = SharedCreatedRemarks,
+                        StockQuantity = line.CurrentStock,
+                        SalePrice = line.SalePrice
+                    };
+
+                    // Whole-unit UoMs (anything that is not Yards / Meter) take whole numbers only.
+                    if (NormalizePreviewQuantity(row)) rounded++;
+
+                    PreviewItems.Add(row);
+                    added++;
+                }
+
+                PreviewGrid?.Reload();
+                StateHasChanged();
+
+                if (added == 0)
+                {
+                    notificationService.Notify(
+                        NotificationSeverity.Warning,
+                        "Nothing Loaded",
+                        noStock > 0
+                            ? $"No lines from purchase '{invoiceNo}' have stock in '{storeName}'."
+                            : $"No new lines to load from purchase '{invoiceNo}'.",
+                        duration: 7000);
+                    return;
+                }
+
+                var parts = new List<string> { $"{added} item(s) loaded from purchase '{invoiceNo}'" };
+                if (duplicate > 0) parts.Add($"{duplicate} already in preview");
+                if (noStock > 0) parts.Add($"{noStock} skipped (no stock in '{storeName}')");
+
+                notificationService.Notify(
+                    NotificationSeverity.Success,
+                    "Purchase Loaded",
+                    string.Join(", ", parts) + (rounded > 0 ? $" · {rounded} qty rounded to whole units" : "") + ".");
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Error,
+                    "Load Failed",
+                    $"An unexpected error occurred while loading the purchase: {ex.Message}",
+                    duration: 7000);
+            }
+            finally
+            {
+                IsLoadingPurchase = false;
+                StateHasChanged();
+            }
+        }
+
         protected async Task LoadTransfer()
         {
             try
@@ -317,7 +515,7 @@ namespace JM.UI.Client.Pages.Transfers
                 TransferDetails = master.Details?.ToList() ?? new List<TransferDetailDTO>();
 
                 if (master.StoreId.HasValue)
-                    ToStores = Stores.Where(s => s.Id != master.StoreId.Value).ToList();
+                    RebuildToStores();
 
                 CurrentDetail = TransferService.CreateNewDetailLine();
                 PreviewItems = new List<TransferPreviewRow>();
@@ -343,7 +541,7 @@ namespace JM.UI.Client.Pages.Transfers
             if (IsFromStoreReadOnly) return;
 
             Transfer.StoreId = storeId;
-            ToStores = Stores.Where(s => s.Id != storeId).ToList();
+            RebuildToStores();
 
             if (Transfer.ToStoreId == storeId)
                 Transfer.ToStoreId = null;
@@ -376,11 +574,27 @@ namespace JM.UI.Client.Pages.Transfers
                 if (damagedStore != null)
                     Transfer.ToStoreId = damagedStore.Id;
 
-                ToStores = Stores.Where(s => s.Id != Transfer.StoreId).ToList();
                 _ = LoadItemsForStore(Transfer.StoreId);
             }
 
+            RebuildToStores();
             StateHasChanged();
+        }
+
+        private StoreDTO? DamagedStore => Stores.FirstOrDefault(s =>
+            s.Code?.Equals("dm", StringComparison.OrdinalIgnoreCase) == true);
+
+        // To Store excludes the From Store and the Damaged store (which is only
+        // used implicitly by the Damage transfer type).
+        private void RebuildToStores()
+        {
+            var list = Stores.Where(s => s.Id != Transfer.StoreId).ToList();
+
+            var damaged = DamagedStore;
+            if (damaged != null && !IsDamagedMode)
+                list = list.Where(s => s.Id != damaged.Id).ToList();
+
+            ToStores = list;
         }
 
 
@@ -388,19 +602,49 @@ namespace JM.UI.Client.Pages.Transfers
 
         protected void OnSharedFieldChanged()
         {
+            bool roundedAny = false;
+
+            // Whole-unit UoMs: a fractional shared qty is rounded to a whole number.
+            if (SharedIssueQty.HasValue)
+            {
+                var shared = SharedIssueQty.Value;
+                if (UomRules.Normalize(SharedQtyAllowsDecimal, ref shared))
+                {
+                    SharedIssueQty = shared;
+                    roundedAny = true;
+                }
+            }
+
             foreach (var row in PreviewItems)
             {
                 if (SharedIssueQty.HasValue)
                     row.IssueQty = SharedIssueQty.Value;
+
+                if (NormalizePreviewQuantity(row))
+                    roundedAny = true;
+
                 row.SerialNo = SharedSerialNo;
                 row.CreatedRemarks = SharedCreatedRemarks;
             }
+
+            if (roundedAny)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                    "Whole units only for this item's UoM — the quantity was rounded to the nearest whole number.", 4500);
+            }
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
 
         protected void OnPreviewRowChanged(TransferPreviewRow row)
         {
+            if (row != null && NormalizePreviewQuantity(row))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                    $"'{row.ItemName}' is measured in {UnitNameOf(row.UnitName, row.UnitId)} — whole units only, quantity rounded to {row.IssueQty:0}.", 4500);
+            }
+
             PreviewGrid?.Reload();
             StateHasChanged();
         }
@@ -589,6 +833,46 @@ namespace JM.UI.Client.Pages.Transfers
         private TransferPreviewRow? FindPreviewRow(string barcode)
             => PreviewItems.FirstOrDefault(r => r.Barcode == barcode);
 
+        // ── UoM quantity normalisation ──────────────────────────────────────
+        // A unit that is not measured by length (PCS, KG, ...) only accepts whole
+        // units, so any fractional quantity is rounded to the nearest whole number.
+
+        /// <summary>Unit name of a line, falling back to the unit lookup when it is missing.</summary>
+        private string UnitNameOf(string? unitName, int? unitId)
+            => !string.IsNullOrWhiteSpace(unitName)
+                ? unitName
+                : Units.FirstOrDefault(u => u.Id == unitId)?.Name ?? string.Empty;
+
+        /// <summary>
+        /// Rounds a preview row's quantity to a whole number when its unit does not
+        /// allow decimals. Returns true when the value was changed.
+        /// </summary>
+        private bool NormalizePreviewQuantity(TransferPreviewRow? row)
+        {
+            if (row == null) return false;
+
+            var qty = row.IssueQty;
+            if (!UomRules.Normalize(UnitNameOf(row.UnitName, row.UnitId), ref qty)) return false;
+
+            row.IssueQty = qty;
+            return true;
+        }
+
+        /// <summary>
+        /// Rounds a confirmed detail line's quantity to a whole number when its unit
+        /// does not allow decimals. Returns true when the value was changed.
+        /// </summary>
+        private bool NormalizeDetailQuantity(TransferDetailDTO? detail)
+        {
+            if (detail == null) return false;
+
+            var qty = detail.IssueQty;
+            if (!UomRules.Normalize(UnitNameOf(detail.UnitName, detail.UnitID), ref qty)) return false;
+
+            detail.IssueQty = qty;
+            return true;
+        }
+
         protected async Task ProcessScannedBarcode()
         {
             var barcode = ScanBarcodeText?.Trim();
@@ -646,11 +930,22 @@ namespace JM.UI.Client.Pages.Transfers
                 var itemBarcode = item.Barcode ?? barcode;
                 var issueQty = SharedIssueQty ?? 1;
 
+                // Whole-unit UoMs (anything that is not Yards / Meter) may only take
+                // whole quantities, so a fractional entry is rounded once, up front.
+                var uomName = Units.FirstOrDefault(u => u.Id == item.MesurementUnitId)?.Name ?? string.Empty;
+                if (UomRules.Normalize(uomName, ref issueQty))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Quantity Rounded",
+                        $"'{item.Name}' is measured in {uomName} — whole units only, quantity rounded to {issueQty:0}.", 4500);
+                }
+
                 // ✅ Already confirmed in the transfer list?
                 var existingConfirmed = TransferDetails.FirstOrDefault(d => d.Barcode == itemBarcode);
                 if (existingConfirmed != null)
                 {
                     var totalQty = existingConfirmed.IssueQty + issueQty;
+                    UomRules.Normalize(UnitNameOf(existingConfirmed.UnitName, existingConfirmed.UnitID), ref totalQty);
+
                     if (totalQty > item.CurrentStock)
                     {
                         notificationService.Notify(
@@ -685,6 +980,8 @@ namespace JM.UI.Client.Pages.Transfers
                 if (existingPreview != null)
                 {
                     var newTotal = existingPreview.IssueQty + issueQty;
+                    UomRules.Normalize(UnitNameOf(existingPreview.UnitName, existingPreview.UnitId), ref newTotal);
+
                     if (newTotal > item.CurrentStock)
                     {
                         notificationService.Notify(
@@ -762,6 +1059,11 @@ namespace JM.UI.Client.Pages.Transfers
                 return;
             }
 
+            // Whole-unit UoMs only take whole quantities — apply the rule before the
+            // zero-quantity filter so a row rounded down to 0 is skipped.
+            foreach (var previewRow in PreviewItems)
+                NormalizePreviewQuantity(previewRow);
+
             var validRows = PreviewItems.Where(r => r.IssueQty > 0).ToList();
             if (!validRows.Any())
             {
@@ -808,6 +1110,7 @@ namespace JM.UI.Client.Pages.Transfers
                     if (!confirmed) continue;   // user said No â€” skip silently
 
                     var totalQty = existingLine.IssueQty + row.IssueQty;
+                    UomRules.Normalize(UnitNameOf(existingLine.UnitName, existingLine.UnitID), ref totalQty);
 
                     // Stock check against combined qty
                     if (totalQty > row.StockQuantity)
@@ -977,6 +1280,9 @@ namespace JM.UI.Client.Pages.Transfers
                 return;
             }
 
+            // Whole-unit UoMs only take whole quantities.
+            NormalizePreviewQuantity(row);
+
             if (row.IssueQty <= 0)
             {
                 notificationService.Notify(NotificationSeverity.Error, "Validation",
@@ -1070,6 +1376,11 @@ namespace JM.UI.Client.Pages.Transfers
         protected async Task SaveTransfer()
         {
             if (!ValidateTransfer()) return;
+
+            // Final guard: no detail line may keep a fractional quantity on a UoM
+            // that only accepts whole units.
+            foreach (var detail in TransferDetails)
+                NormalizeDetailQuantity(detail);
 
             Transfer.Details = TransferDetails;
 
@@ -1221,7 +1532,8 @@ namespace JM.UI.Client.Pages.Transfers
                 || !string.IsNullOrWhiteSpace(SharedCreatedRemarks)
                 || SharedIssueQty.HasValue
                 || !string.IsNullOrWhiteSpace(BarcodeSearchText)
-                || !string.IsNullOrWhiteSpace(ScanBarcodeText);
+                || !string.IsNullOrWhiteSpace(ScanBarcodeText)
+                || !string.IsNullOrWhiteSpace(PurchaseInvoiceNo);
         }
         protected async Task TryResetLeftPanel()
         {

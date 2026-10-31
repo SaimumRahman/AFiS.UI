@@ -106,39 +106,46 @@
 
                 <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Actions" Width="400px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="item">
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
-                            <RadzenButton Icon="edit"
-                                          ButtonStyle="ButtonStyle.Info"
-                                          Size="ButtonSize.Small"
-                                          Variant="Variant.Flat"
-                                          Click="@(() => EditRequisition(item))"
-                                          MouseEnter="@(args => ShowTooltip(args, "Edit Requisition"))" />
+                        @if (!item.IsComplete)
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+                                <RadzenButton Icon="edit"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => EditRequisition(item))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Edit Requisition"))" />
 
-                            <RadzenButton Icon="delete"
-                                          ButtonStyle="ButtonStyle.Danger"
-                                          Size="ButtonSize.Small"
-                                          Variant="Variant.Flat"
-                                          Click="@(() => DeleteRequisition(item))"
-                                          MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => DeleteRequisition(item))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
 
-                            <RadzenButton Icon="arrow_forward"
-                                          ButtonStyle="ButtonStyle.Success"
-                                          Size="ButtonSize.Small"
-                                          Variant="Variant.Flat"
-                                          Click="@(() => CreateTransfer(item))"
-                                          MouseEnter="@(args => ShowTooltip(args, "Create Transfer from Requisition"))" />
+                                <RadzenButton Icon="arrow_forward"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => CreateTransfer(item))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Create Transfer from Requisition"))" />
 
-                            @if (CurrentUserId==1){
-                                <RadzenDropDown Data="@Statuses"
-                                                Value="@item.StatusID"
-                                                ValueProperty="Id"
-                                                TextProperty="StatusName"
-                                                Placeholder="Change Status"
-                                                Width="140px"
-                                                Change="@(args => OnStatusChanged(args, item))" />
-                            }
-                            
-                        </RadzenStack>
+                                @if (CurrentUserId==1){
+                                    <RadzenDropDown Data="@Statuses"
+                                                    Value="@item.StatusID"
+                                                    ValueProperty="Id"
+                                                    TextProperty="StatusName"
+                                                    Placeholder="Change Status"
+                                                    Width="140px"
+                                                    Change="@(args => OnStatusChanged(args, item))" />
+                                }
+
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Completed</RadzenText>
+                        }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>

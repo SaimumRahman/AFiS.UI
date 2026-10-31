@@ -26,8 +26,13 @@ namespace JM.UI.Service.Purchases
         string FormatCurrency(decimal amount);
         string FormatDate(DateTime? date);
         Task<IEnumerable<PurchaseItemDTO>> GetPurchaseItems(int purchaseId);
-        Task<SystemInVoiceDTO?> GetSystemInvoiceNew();
         Task<IEnumerable<PurchaseInvoiceDTO>> GetPurchasesByDateRange(DateTime fromDate, DateTime toDate);
+
+        /// <summary>
+        /// Finds a purchase by its SystemInvoiceNo with its lines resolved against the
+        /// given store (stock + sale rate), for Item Transfer entry.
+        /// </summary>
+        Task<PurchaseItemsForTransferDTO?> GetPurchaseItemsForTransfer(string systemInvoiceNo, int storeId);
 
     }
 }

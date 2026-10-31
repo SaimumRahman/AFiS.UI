@@ -88,5 +88,17 @@ namespace JM.UI.Service.SupplierPayments
                 throw;
             }
         }
+
+        public async Task<SupplierPaymentSourcesDTO?> GetPaymentSources(int storeId)
+        {
+            try
+            {
+                return await _unitOfWork.SupplierPaymentRepository.GetPaymentSources(storeId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

@@ -95,5 +95,19 @@ namespace JM.UI.Service.UserGroup
 
             return await _repositoryUnitOfWork.UserGroupRepository.GetAdminGroupCountByUserId(userId);
         }
+
+        public async Task<int> GetSystemGroupCountByUserId(int userId)
+        {
+            if (userId <= 0) return 0;
+
+            return await _repositoryUnitOfWork.UserGroupRepository.GetSystemGroupCountByUserId(userId);
+        }
+
+        public async Task<decimal?> GetMaxDiscountByUserId(int userId)
+        {
+            if (userId <= 0) return null;
+
+            return await _repositoryUnitOfWork.UserGroupRepository.GetMaxDiscountByUserId(userId);
+        }
     }
 }

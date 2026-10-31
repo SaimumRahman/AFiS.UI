@@ -239,5 +239,108 @@ namespace JM.UI.DataService.DAL.Users
                 throw;
             }
         }
+
+        public async Task<string> ResetUserPassword(string userName, string newPassword)
+        {
+            try
+            {
+                _logger.LogInformation("Resetting password for UserName: {UserName}", userName);
+
+                var url = "api/auth/Admin-Reset-Password" +
+                          $"?userName={Uri.EscapeDataString(userName)}" +
+                          $"&newPassword={Uri.EscapeDataString(newPassword)}";
+
+                var response = await _httpClient.PostAsync(url, null);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "Failed to reset password for UserName: {UserName}. Status: {StatusCode}, Response: {Response}",
+                        userName,
+                        response.StatusCode,
+                        responseContent);
+
+                    string message = "Failed to update the user password.";
+                    try
+                    {
+                        var errorResponse = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                        if (!string.IsNullOrWhiteSpace(errorResponse?.Message))
+                            message = errorResponse.Message;
+                    }
+                    catch
+                    {
+                        // Ignore parse errors and fall back to the default message.
+                    }
+
+                    throw new Exception(message);
+                }
+
+                _logger.LogInformation("Password reset successful for UserName: {UserName}", userName);
+                return responseContent;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "HTTP request exception during password reset for UserName: {UserName}",
+                    userName);
+
+                throw new Exception($"Failed to update user password: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<string> ChangePassword(string userName, string oldPassword, string newPassword)
+        {
+            try
+            {
+                _logger.LogInformation("Changing password for UserName: {UserName}", userName);
+
+                var request = new
+                {
+                    UserName = userName,
+                    OldPassword = oldPassword,
+                    NewPassword = newPassword
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("api/auth/Change-Password", request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError(
+                        "Failed to change password for UserName: {UserName}. Status: {StatusCode}, Response: {Response}",
+                        userName,
+                        response.StatusCode,
+                        responseContent);
+
+                    string message = "Failed to change the password.";
+                    try
+                    {
+                        var errorResponse = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                        if (!string.IsNullOrWhiteSpace(errorResponse?.Message))
+                            message = errorResponse.Message;
+                    }
+                    catch
+                    {
+                        // Ignore parse errors and fall back to the default message.
+                    }
+
+                    throw new Exception(message);
+                }
+
+                _logger.LogInformation("Password changed successfully for UserName: {UserName}", userName);
+                return responseContent;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "HTTP request exception during password change for UserName: {UserName}",
+                    userName);
+
+                throw new Exception($"Failed to change user password: {ex.Message}", ex);
+            }
+        }
     }
 }

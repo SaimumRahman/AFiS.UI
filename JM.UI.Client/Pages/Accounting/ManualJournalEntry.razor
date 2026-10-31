@@ -1,0 +1,301 @@
+@page "/ManualJournalEntry"
+@using JM.UI.Entities.Model.Accounting_D
+@attribute [Authorize]
+@inherits ManualJournalEntryComponent
+
+<PageTitle>Manual Journal Entry</PageTitle>
+
+<style>
+    .mj-wrap { width: 100%; max-width: none; }
+    .mj-grid { width: 100%; border-collapse: collapse; }
+    .mj-grid th {
+        text-align: left; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.05em; color: #64748b; padding: 0.5rem 0.5rem;
+        border-bottom: 1px solid #e2e8f0; background: #f8fafc; white-space: nowrap;
+    }
+    .mj-grid td { padding: 0.3rem 0.45rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .mj-grid tr:hover td { background: #f8fafc; }
+    .mj-grid td.num { text-align: right; }
+    .mj-lineno { color: #94a3b8; font-size: 0.8rem; font-weight: 600; text-align: center; }
+    .mj-total {
+        display: flex; gap: 2rem; justify-content: flex-end; align-items: center;
+        padding: 0.7rem 0.5rem; border-top: 2px solid #e2e8f0; font-weight: 700; color: #1e293b;
+    }
+    .mj-total span.lbl { color: #64748b; font-weight: 600; font-size: 0.8rem; }
+    .mj-net-effect { color: #94a3b8; font-size: 0.78rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard >
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="7">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.6rem">
+                    <RadzenIcon Icon="menu_book" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <div>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.H4" class="mb-0">Manual Journal Entry</RadzenText>
+                            @if (Status == "POSTED")
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@VoucherDisplay" />
+                            }
+                            else if (Status == "REVERSED")
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="REVERSED" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="DRAFT" />
+                            }
+                            @if (ReversalOf.HasValue)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Reversal entry" />
+                            }
+                        </RadzenStack>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
+                            Debit and credit must always balance. Accounts are ledger leaves only.
+                        </RadzenText>
+                    </div>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="5">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="arrow_back" Text="Back to List" ButtonStyle="ButtonStyle.Light"
+                                  Click="GoToList" />
+                    @if (IsEditable)
+                    {
+                        <RadzenButton Icon="save" Text="Save Draft" ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@(() => Save(false))" IsBusy="@IsProcessing"
+                                      Disabled="@(SelectedPeriod == null)" />
+                        <RadzenButton Icon="task_alt" Text="Post Journal" ButtonStyle="ButtonStyle.Primary"
+                                      Click="@(() => Save(true))" IsBusy="@IsProcessing"
+                                      Disabled="@(SelectedPeriod == null)" />
+                    }
+                    else if (Status == "POSTED" && IsManualEntry)
+                    {
+                        <RadzenButton Icon="undo" Text="Reverse" ButtonStyle="ButtonStyle.Danger"
+                                      Click="ReverseJournal" IsBusy="@IsProcessing" />
+                    }
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <div class="mj-wrap">
+            <RadzenCard class="mb-3">
+                <RadzenRow Gap="0.75rem">
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Branch *" Component="Branch" />
+                        <RadzenDropDown TValue="string" Name="Branch" Data="@Branches"
+                                        ValueProperty="Code" TextProperty="Display"
+                                        Value="@SelectedBranchCode"
+                                        ValueChanged="@OnBranchChanged"
+                                        Disabled="@(!IsEditable)" Style="width:100%;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Entry Date *" Component="EntryDate" />
+                        <RadzenDatePicker TValue="DateTime" Name="EntryDate"
+                                          Value="@EntryDate" ValueChanged="@OnEntryDateChanged"
+                                          Disabled="@(!IsEditable)" Style="width:100%;" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Reference" Component="Reference" />
+                        <RadzenTextBox Name="Reference" Value="@ReferenceNo"
+                                       ValueChanged="@(v => { ReferenceNo = v; MarkDirty(); })"
+                                       Disabled="@(!IsEditable)" Style="width:100%;"
+                                       Placeholder="Optional document / cheque reference" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Period" />
+                        <div style="padding:0.55rem 0;">
+                            @if (SelectedPeriod != null)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@SelectedPeriod.Display" />
+                            }
+                            else if (!string.IsNullOrWhiteSpace(LoadedPeriodName))
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@LoadedPeriodName" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="No open period" />
+                            }
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="0.75rem" class="mt-2">
+                    <RadzenColumn Size="12">
+                        <RadzenLabel Text="Narration *" Component="Narration" />
+                        <RadzenTextBox Name="Narration" Value="@Narration"
+                                       ValueChanged="@(v => { Narration = v; MarkDirty(); })"
+                                       Disabled="@(!IsEditable)" Style="width:100%;"
+                                       Placeholder="Describe the reason for this journal" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (!IsEditable)
+                {
+                    <RadzenAlert class="mt-3" AllowClose="false" Variant="Variant.Flat"
+                                 Severity="AlertSeverity.Info" Shade="Shade.Lighter">
+                        <RadzenIcon Icon="lock" Style="vertical-align:middle; margin-right:0.35rem;" />
+                        @if (Status == "POSTED")
+                        {
+                            <span>This journal is posted and immutable. Use <strong>Reverse</strong> and enter a corrected journal.</span>
+                        }
+                        else if (Status == "REVERSED")
+                        {
+                            <span>This journal has been reversed@(ReversedByVoucherNo.HasValue ? $" by JRN-{ReversedByVoucherNo}" : "").</span>
+                        }
+                        else
+                        {
+                            <span>This entry cannot be edited here.</span>
+                        }
+                    </RadzenAlert>
+                }
+                else if (IsEditable && SelectedPeriod == null)
+                {
+                    <RadzenAlert class="mt-3" AllowClose="false" Variant="Variant.Flat"
+                                 Severity="AlertSeverity.Warning" Shade="Shade.Lighter">
+                        <RadzenIcon Icon="event_busy" Style="vertical-align:middle; margin-right:0.35rem;" />
+                        No OPEN fiscal period covers @EntryDate.ToString("dd-MMM-yyyy"). Pick another date.
+                    </RadzenAlert>
+                }
+            </RadzenCard>
+
+            <RadzenCard>
+                <div style="overflow-x:auto;">
+                    <table class="mj-grid">
+                        <thead>
+                            <tr>
+                                <th style="width:38px;">#</th>
+                                <th style="width:31%;">Account (ledger leaf)</th>
+                                <th style="width:19%;">Party</th>
+                                <th style="width:12%; text-align:right;">Debit</th>
+                                <th style="width:12%; text-align:right;">Credit</th>
+                                <th style="width:19%;">Memo</th>
+                                <th style="width:100px; text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Rows.Count; i++)
+                            {
+                                var row = Rows[i];
+                                var index = i;
+                                <tr @key="row.Key">
+                                    <td class="mj-lineno">@(index + 1)</td>
+                                    <td>
+                                        <RadzenDropDown TValue="string" Data="@AccountOptions"
+                                                        ValueProperty="Code" TextProperty="Display"
+                                                        Value="@row.AccountCode"
+                                                        ValueChanged="@(v => OnAccountChanged(row, v))"
+                                                        Disabled="@(!IsEditable)"
+                                                        AllowFiltering="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        Placeholder="Select account"
+                                                        Style="width:100%;" />
+                                    </td>
+                                    <td>
+                                        @if (!ShowParty(row))
+                                        {
+                                            <span style="color:#94a3b8;">&mdash;</span>
+                                        }
+                                        else
+                                        {
+                                            <RadzenDropDown TValue="int?" Data="@GetPartyOptions(row)"
+                                                            ValueProperty="PartyId" TextProperty="Display"
+                                                            Value="@row.PartyId"
+                                                            ValueChanged="@(v => OnPartyChanged(row, v))"
+                                                            Disabled="@(!IsEditable)"
+                                                            AllowFiltering="true"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            AllowClear="@(!PartyRequired(row))"
+                                                            Placeholder="@(PartyRequired(row) ? "Party required" : "Optional")"
+                                                            Style="width:100%;" />
+                                        }
+                                    </td>
+                                    <td class="num">
+                                        <RadzenNumeric TValue="decimal?" Value="@row.Debit"
+                                                       ValueChanged="@(v => OnDebitChanged(row, v))"
+                                                       Disabled="@(!IsEditable)"
+                                                       Min="0" Format="N2"
+                                                       Style="width:100%; text-align:right;" />
+                                    </td>
+                                    <td class="num">
+                                        <RadzenNumeric TValue="decimal?" Value="@row.Credit"
+                                                       ValueChanged="@(v => OnCreditChanged(row, v))"
+                                                       Disabled="@(!IsEditable)"
+                                                       Min="0" Format="N2"
+                                                       Style="width:100%; text-align:right;" />
+                                    </td>
+                                    <td>
+                                        <RadzenTextBox Value="@row.Memo"
+                                                       ValueChanged="@(v => { row.Memo = v; MarkDirty(); })"
+                                                       Disabled="@(!IsEditable)" Style="width:100%;"
+                                                       Placeholder="Line memo" />
+                                    </td>
+                                    <td style="text-align:center; white-space:nowrap;">
+                                        @if (IsEditable)
+                                        {
+                                            <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Light"
+                                                          Size="ButtonSize.Small" title="Duplicate line"
+                                                          Click="@(() => DuplicateRow(row))" />
+                                            <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Light"
+                                                          Size="ButtonSize.Small" title="Insert line below"
+                                                          Click="@(() => InsertRowAfter(row))" />
+                                            @if (Rows.Count > 2)
+                                            {
+                                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light"
+                                                              Size="ButtonSize.Small" title="Remove line"
+                                                              Click="@(() => RemoveRow(row))" />
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (IsEditable)
+                {
+                    <div class="mt-2">
+                        <RadzenButton Icon="add" Text="Add Line" ButtonStyle="ButtonStyle.Light" Click="AddRow" />
+                    </div>
+                }
+
+                <div class="mj-total mt-3">
+                    <span><span class="lbl">Total Debit:</span> @TotalDebit.ToString("N2")</span>
+                    <span><span class="lbl">Total Credit:</span> @TotalCredit.ToString("N2")</span>
+                    <span>
+                        @if (HasLines && IsBalanced)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Balanced" Icon="check_circle" />
+                        }
+                        else if (!HasLines)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="No lines" />
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Danger"
+                                         Text="@($"Out by {Math.Abs(Difference):N2}")" Icon="error" />
+                        }
+                    </span>
+                </div>
+
+                @if (HasLines && IsBalanced && HasNoNetEffect)
+                {
+                    <div class="text-end mj-net-effect">
+                        Every account nets to zero — this entry has no accounting effect.
+                    </div>
+                }
+            </RadzenCard>
+        </div>
+    }
+</RadzenContent>

@@ -1,0 +1,132 @@
+@page "/CostCenterList"
+@using JM.UI.Client.Pages.CostCenter
+@using JM.UI.Entities.Model.CostCenters
+@attribute [Authorize]
+@inherits CostCenterListComponent
+
+<PageTitle>Cost Centers</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header Card -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="account_balance" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Cost Center Management</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="add_circle_outline"
+                                  Text="Add New Cost Center"
+                                  Click="@AddCostCenter"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Data Grid Card -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="CostCentersGrid"
+                        Data="@CostCenters"
+                        TItem="CostCenterDTO"
+                        AllowFiltering="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="10"
+                        PageSizeOptions="@(new int[] { 5, 10, 20, 50 })"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <!-- ID -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Visible="false" Property="BranchId" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                    <Template Context="costCenter">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{costCenter.BranchId}")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Code -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Property="Code" Title="Code" Width="120px">
+                    <Template Context="costCenter">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@costCenter.Code" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Name -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Property="Name" Title="Name" Width="320px">
+                    <Template Context="costCenter">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="account_balance" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 500;">
+                                @costCenter.Name
+                            </RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Branch Kind -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Property="BranchKind" Title="Kind" Width="160px">
+                    <Template Context="costCenter">
+                        @if (!string.IsNullOrWhiteSpace(costCenter.BranchKind))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@costCenter.BranchKind" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--rz-text-secondary-color);">N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Status -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Property="IsActive" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                    <Template Context="costCenter">
+                        @if (costCenter.IsActive)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Active" />
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Inactive" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <!-- Actions -->
+                <RadzenDataGridColumn TItem="CostCenterDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="costCenter">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="edit"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => EditCostCenter(costCenter))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Edit Cost Center"))" />
+
+                            @if (costCenter.IsActive)
+                            {
+                                <RadzenButton Icon="delete"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => DeleteCostCenter(costCenter))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Deactivate Cost Center"))" />
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

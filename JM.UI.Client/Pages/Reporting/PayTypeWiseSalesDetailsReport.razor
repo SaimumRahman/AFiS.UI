@@ -1,0 +1,164 @@
+@page "/PayTypeWiseSalesDetailsReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits PayTypeWiseSalesDetailsReportComponent
+
+<PageTitle>Pay Type-wise Sales Details Report</PageTitle>
+
+<style>
+    .ptw-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        border: 1px solid #444;
+    }
+    .ptw-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 5px 6px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .ptw-table td { padding: 4px 6px; border-bottom: 1px solid #e0e0e0; }
+    .ptw-table .num { text-align: right; white-space: nowrap; }
+    .ptw-table .daysum td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .ptw-table .gtd td { background: #f5f5f5; font-weight: bold; border-top: 1px solid #444; }
+    .ptw-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .ptw-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .ptw-doc-header .subtitle { font-size: 0.9rem; }
+    .ptw-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .ptw-doc-header .doc-range { font-size: 0.9rem; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="credit_card" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Pay Type-wise Sales Details Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="ptw-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM</div>
+                <div class="doc-name">PAY TYPE-WISE SALES DETAILS REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="ptw-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Customer Name</th>
+                            <th class="num">NET Amt</th>
+                            <th class="num">Exchange Amt</th>
+                            <th class="num">Cash Paid</th>
+                            <th class="num">CityPOS</th>
+                            <th class="num">DBBLPOS</th>
+                            <th class="num">Bkash</th>
+                            <th class="num">Nagad</th>
+                            <th class="num">Dues</th>
+                            <th>Rcvd By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Groups.Any())
+                        {
+                            <tr>
+                                <td colspan="12" style="text-align:center; color:#616161; padding: 14px;">
+                                    No sales records found for the selected period.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var group in Groups)
+                            {
+                                @foreach (var row in group.Rows)
+                                {
+                                    <tr>
+                                        <td>@Dash(row.InvoiceNo)</td>
+                                        <td>@row.SaleDate.ToString("dd-MMM-yy")</td>
+                                        <td>@Dash(row.CustomerName)</td>
+                                        <td class="num">@Fmt(row.NetAmount)</td>
+                                        <td class="num">@Fmt(row.ExchangeAmount)</td>
+                                        <td class="num">@Fmt(row.CashPaid)</td>
+                                        <td class="num">@Fmt(row.CityPos)</td>
+                                        <td class="num">@Fmt(row.DbbLPos)</td>
+                                        <td class="num">@Fmt(row.Bkash)</td>
+                                        <td class="num">@Fmt(row.Nagad)</td>
+                                        <td class="num">@Fmt(row.Dues)</td>
+                                        <td>@Dash(row.RcvdBy)</td>
+                                    </tr>
+                                }
+
+                                <tr class="daysum">
+                                    <td colspan="3">DaySum</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.NetAmount))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.ExchangeAmount))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.CashPaid))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.CityPos))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.DbbLPos))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.Bkash))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.Nagad))</td>
+                                    <td class="num">@Fmt(group.Rows.Sum(r => r.Dues))</td>
+                                    <td></td>
+                                </tr>
+                            }
+
+                            <tr class="gtd">
+                                <td colspan="3">GRAND TOTAL</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.NetAmount))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.ExchangeAmount))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.CashPaid))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.CityPos))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.DbbLPos))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.Bkash))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.Nagad))</td>
+                                <td class="num">@Fmt(Rows.Sum(r => r.Dues))</td>
+                                <td></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </RadzenCard>
+</RadzenContent>

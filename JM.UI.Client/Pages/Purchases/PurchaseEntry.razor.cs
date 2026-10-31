@@ -37,7 +37,6 @@ namespace JM.UI.Client.Pages.Purchases
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
-        // â”€â”€ Add to lookup fields (alongside Brand/Origin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
 
         // Catalogue auto-complete state
@@ -55,7 +54,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         // â”€â”€â”€ Preview Grid Items (editable, loaded from barcode/color/size search) â”€â”€â”€
         protected List<PreviewItemRow> PreviewItems { get; set; } = new();
-        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = new();
+        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = default!;
 
         // â”€â”€â”€ Shared price fields for preview grid (applied to all rows) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
@@ -869,7 +868,7 @@ protected bool IsProcessing { get; set; } = false;
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode
                         : barcode;
-                    if (PreviewItems.Any(p => p.Barcode == itemBarcode)) continue;
+                    if (IsBarcodeInPreview(itemBarcode)) continue;
                     var features = response.itemWiseFeatures?
                         .Where(f => f?.ItemId == item.Id)
                         .Select(f => f!.FeaturesId)
@@ -924,7 +923,7 @@ protected bool IsProcessing { get; set; } = false;
             }
             else
             {
-                if (!PreviewItems.Any(p => p.Barcode == barcode))
+                if (!IsBarcodeInPreview(barcode))
                 {
                     var newRow = new PreviewItemRow
                     {
@@ -1130,7 +1129,7 @@ protected bool IsProcessing { get; set; } = false;
                 }
 
                 PreviewItems.Clear();
-                await PreviewGrid.Reload();
+                if (PreviewGrid != null) await PreviewGrid.Reload();
                 await ItemsGrid.Reload();
                 CalculateTotals();
                 ResetSharedPricing();
@@ -1927,6 +1926,42 @@ protected bool IsProcessing { get; set; } = false;
             return string.Join("-", parts.Take(parts.Length - 2));
         }
 
+        private static bool BarcodesEqual(string? a, string? b) =>
+            string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        private bool IsBarcodeInPreview(string barcode) =>
+            PreviewItems.Any(p => BarcodesEqual(p.Barcode, barcode));
+
+        /// <summary>
+        /// Appends only barcodes that are not already present in the editable preview grid.
+        /// Duplicates (against the grid or within the incoming batch) are ignored and the
+        /// remaining rows are still added. Returns the number of rows actually appended.
+        /// </summary>
+        private int AppendPreviewRows(IEnumerable<PreviewItemRow> newRows)
+        {
+            var existing = new HashSet<string>(
+                PreviewItems
+                    .Select(p => p.Barcode?.Trim() ?? string.Empty)
+                    .Where(b => b.Length > 0),
+                StringComparer.OrdinalIgnoreCase);
+
+            var added = 0;
+
+            foreach (var row in newRows)
+            {
+                if (row == null) continue;
+
+                var key = row.Barcode?.Trim() ?? string.Empty;
+                if (key.Length == 0) continue;          // nothing to match on
+                if (!existing.Add(key)) continue;       // already in grid / duplicate in batch
+
+                PreviewItems.Add(row);
+                added++;
+            }
+
+            return added;
+        }
+
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
         {
             try
@@ -1937,7 +1972,7 @@ protected bool IsProcessing { get; set; } = false;
                         "Please select a Size before adding items to the preview.");
                     return;
                 }
-                if (PreviewItems.Any(p => p.Barcode == barcode))
+                if (IsBarcodeInPreview(barcode))
                 {
                     notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
                         "This item is already in the table");
@@ -2161,7 +2196,11 @@ Quantity = 0,
                 var newRows = BuildPreviewRowsFromResponse(response, barcode);
 
                 foreach (var row in newRows)
+                {
+                    if (IsBarcodeInPreview(row.Barcode))
+                        continue;
                     PreviewItems.Add(row);
+                }
 
                 if (newRows.Any())
                 {
@@ -2277,15 +2316,24 @@ Quantity = 0,
                         await PopulateFromExistingItem(selectedItem!, result.itemWiseFeatures);
                         DisableItemFields = false;
                         Purchase.SupplierId = selectedItem!.SupplierId;
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Success, "Success",
-                            $"Item loaded! {PreviewItems.Count} variant(s) in preview.");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Success, "Success",
+                                skipped > 0
+                                    ? $"Added {added} variant(s). {skipped} duplicate barcode(s) skipped."
+                                    : $"Item loaded! {added} variant(s) added to preview.");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                         var itemData = AvailableItems.Where(x => x.Barcode == barcode).FirstOrDefault();
                         CurrentItem.ColorId = itemData.ColorId;
                         CurrentItem.SizeId = itemData.SizeId;
@@ -2295,14 +2343,24 @@ Quantity = 0,
                         PopulateFromPurchaseItem(result.Item);
                         DisableItemFields = false;
 
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Info, "Info", "Item found in purchase history");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Info, "Info",
+                                skipped > 0
+                                    ? $"Item found in purchase history. Added {added} variant(s), {skipped} duplicate barcode(s) skipped."
+                                    : $"Item found in purchase history. Added {added} variant(s).");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                     }
                 }
                 else
@@ -2310,15 +2368,22 @@ Quantity = 0,
                     CurrentItem.Barcode = barcode;
                     DisableItemFields = false;
 
-                    PreviewItems.Clear();
                     ResetSharedPricing();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                    foreach (var row in newRows)
-                        PreviewItems.Add(row);
+                    var added = AppendPreviewRows(newRows);
+                    var skipped = Math.Max(0, newRows.Count - added);
 
-                    await PreviewGrid?.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Create New",
-                        "No item found. You can create a new item.");
+                    PreviewGrid?.Reload();
+                    if (added > 0)
+                    {
+                        notificationService.Notify(NotificationSeverity.Info, "Create New",
+                            "No item found. You can create a new item.");
+                    }
+                    else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                            $"Barcode '{barcode}' is already in the preview table.");
+                    }
                 }
             }
             catch (Exception ex)
@@ -2583,7 +2648,12 @@ Quantity = 0,
             if (IsInitialized)
             {
                 if (ItemsGrid != null) await ItemsGrid.Reload();
-                if (PreviewGrid != null) await PreviewGrid.Reload();
+
+                // The preview grid only exists in the render tree while it has
+                // rows (see @if (PreviewItems.Any()) in the razor). Reloading a
+                // grid that was never rendered throws "The render handle is not
+                // yet assigned", so only reload it when it is actually visible.
+                if (PreviewItems.Any() && PreviewGrid != null) await PreviewGrid.Reload();
             }
             // Removed StateHasChanged() - grid reload handles its own state
             ResetSharedPricing();

@@ -519,6 +519,32 @@ namespace JM.UI.DataService.DAL.SalesPOS
                 return new List<ProductSearchDTO>();
             }
         }
+
+        // Group VAT (%) for an item. Returns null when the item has no group or the
+        // group has no VAT configured; the POS shows null as 0.
+        public async Task<decimal?> GetItemVat(int itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching VAT for item: {ItemId}", itemId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/SalePOS/item-vat/{itemId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("VAT lookup failed for item {ItemId}: {Status}", itemId, response.StatusCode);
+                    return null;
+                }
+
+                return await response.Content.ReadFromJsonAsync<decimal?>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching VAT for item: {ItemId}", itemId);
+                return null;
+            }
+        }
     }
 
     internal class InvoiceNoResponse

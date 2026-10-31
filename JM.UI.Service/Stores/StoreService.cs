@@ -29,6 +29,12 @@ namespace JM.UI.Service.Stores
                 TIN = s.TIN,
                 LetterHeadFile = s.LetterHeadFile,
                 UseLetterHead = s.UseLetterHead,
+                CostCenterId = s.CostCenterId,
+                CostCenterCode = s.CostCenterCode,
+                CostCenterName = s.CostCenterName,
+                ExchangeDay = s.ExchangeDay,
+                TermsOfService = s.TermsOfService,
+                DailyExpenseLimit = s.DailyExpenseLimit,
                 CreatedOn = s.CreatedOn,
                 CreatedBy = s.CreatedBy,
                 ModifiedOn = s.ModifiedOn,
@@ -92,6 +98,15 @@ namespace JM.UI.Service.Stores
         {
             if (string.IsNullOrWhiteSpace(store.Name))
                 return Task.FromResult((false, "Store name is required."));
+
+            if (!store.CostCenterId.HasValue || store.CostCenterId.Value <= 0)
+                return Task.FromResult((false, "A cost center must be selected."));
+
+            if (!store.ExchangeDay.HasValue || store.ExchangeDay.Value <= 0)
+                return Task.FromResult((false, "Exchange day is required and must be greater than zero."));
+
+            if (store.DailyExpenseLimit.HasValue && store.DailyExpenseLimit.Value < 0)
+                return Task.FromResult((false, "Daily expense limit cannot be negative."));
 
             if (store.Name.Length > 250)
                 return Task.FromResult((false, "Store name cannot exceed 250 characters."));

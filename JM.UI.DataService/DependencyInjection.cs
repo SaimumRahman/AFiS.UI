@@ -1,8 +1,5 @@
 ﻿using JM.Infrastructure.Base;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
+using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -16,6 +13,7 @@ using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.DailyExpense;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Employees;
 using JM.UI.DataService.DAL.FinancialAccounts;
 using JM.UI.DataService.DAL.GroupActionPermission;
@@ -47,8 +45,6 @@ using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.DataService.DAL.UserGroup;
 using JM.UI.DataService.DAL.Users;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -78,14 +74,11 @@ namespace JM.UI.DataService
             services.AddScoped<IStoreRepository, StoreRepository>();
             services.AddScoped<IBanksRepository, BanksRepository>();
             services.AddScoped<IFinancialAccountsRepository, FinancialAccountsRepository>();
+            services.AddScoped<IChartOfAccountRepository, ChartOfAccountRepository>();
             services.AddScoped<IGroupRoleRepository, GroupRoleRepository>();
             services.AddScoped<IUserGroupRepository, UserGroupRepository>();
             services.AddScoped<IShiftRepository, ShiftRepository>();
             services.AddScoped<IBarcodeRepository, BarcodeRepository>();
-            services.AddScoped<IVoucherDetailsRepository, VoucherDetailsRepository>();
-            services.AddScoped<IVoucherRepository, VoucherRepository>();
-            services.AddScoped<IAccountsGroupsRepository, AccountsGroupsRepository>();
-            services.AddScoped<IAccountsRepository, AccountsRepository>();
             services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
             services.AddScoped<IPurchaseRepository, PurchaseRepository>();
             services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
@@ -113,6 +106,7 @@ namespace JM.UI.DataService
             services.AddScoped<ICouponRepository, CouponRepository>();
             services.AddScoped<ISaleRepository, SaleRepository>();
             services.AddScoped<IDailyExpenseRepository, DailyExpenseRepository>();
+            services.AddScoped<ICounterClosingRepository, CounterClosingRepository>();
             #endregion
         }
 

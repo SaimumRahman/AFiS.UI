@@ -1,8 +1,10 @@
 @page "/FinancialAccountsAdd"
 @page "/FinancialAccountsAdd/{Id:int}"
 @attribute [Authorize]
+@using JM.UI.Entities.Model.Accounting_D
 @using JM.UI.Entities.Model.Bank
 @using JM.UI.Entities.Model.FinancialAccounts
+@using JM.UI.Entities.Model.Stores
 @inherits FinancialAccountsAddComponent
 
 <PageTitle>@PageTitle</PageTitle>
@@ -102,6 +104,52 @@
                                         </RadzenStack>
                                     </RadzenColumn>
                                 }
+
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Store *" Component="StoreId" />
+                                        <RadzenDropDown @bind-Value="@FinancialAccount.StoreId"
+                                                        Name="StoreId"
+                                                        Data="@Stores"
+                                                        TextProperty="Name"
+                                                        ValueProperty="Id"
+                                                        Placeholder="Select store"
+                                                        Style="width: 100%;"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowFiltering="true" />
+                                        <RadzenRequiredValidator Component="StoreId" Text="Store is required" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenLabel Text="Ledger Code *" Component="LedgerCode" />
+                                        <RadzenDropDown @bind-Value="@FinancialAccount.LedgerCode"
+                                                        Name="LedgerCode"
+                                                        Data="@Ledgers"
+                                                        TValue="string"
+                                                        ValueProperty="Code"
+                                                        Placeholder="Select the GL ledger this account posts to"
+                                                        Style="width: 100%;"
+                                                        AllowFiltering="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                                            <Template Context="ledger">
+                                                <span>@ledger.Code — @ledger.Name</span>
+                                            </Template>
+                                            <ValueTemplate Context="ledger">
+                                                @if (ledger is null || string.IsNullOrEmpty(ledger.Code))
+                                                {
+                                                    <span>Select the GL ledger this account posts to</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@ledger.Code — @ledger.Name</span>
+                                                }
+                                            </ValueTemplate>
+                                        </RadzenDropDown>
+                                        <RadzenRequiredValidator Component="LedgerCode" Text="Ledger Code is required" />
+                                    </RadzenStack>
+                                </RadzenColumn>
 
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenStack Gap="0.25rem">
