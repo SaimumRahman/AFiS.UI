@@ -1263,6 +1263,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.VatAmount = CalculatedVat;
             Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
             Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+            Sale.TotalDiscount = InvoiceDiscountAmount + CampaignDiscountAmount + MembershipDiscountAmount + PaisaDiscount;
             Sale.NetAmount = NetPayable;
             Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
             Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
@@ -1391,6 +1392,44 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 notificationService.Notify(NotificationSeverity.Error, "Payment Failed",
                     $"Error processing payment: {ex.Message}", 4000);
+            }
+        }
+
+        // ── Deliver Booking (convert fully-paid booking to sale) ──
+        protected async Task DeliverBooking(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Deliver booking {booking.InvoiceNo}? Stock will be issued.",
+                "Deliver Booking",
+                new ConfirmOptions { OkButtonText = "Yes, Deliver", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                int storeId = Sale.StoreId ?? 0;
+                int userId = await GetLocalStorageInt("UserId");
+
+                var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
+                    booking.SaleMasterId, storeId, new List<PaymentTransactionDTO>(), userId, true);
+
+                if (saveResult.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Delivered",
+                        $"Invoice {booking.InvoiceNo} converted to sale.", 4000);
+                    await LoadBookings();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Error delivering booking: {ex.Message}", 4000);
             }
         }
 

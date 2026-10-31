@@ -525,12 +525,22 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="90" Sortable="false" Filterable="false">
                                     <Template Context="inv">
-                                        @if (IsBookingMode && inv.TotalDue > 0)
+                                        @if (IsBookingMode)
                                         {
-                                            <RadzenButton Text="Payment"
-                                                          ButtonStyle="ButtonStyle.Success"
-                                                          ButtonSize="ExtraSmall"
-                                                          Click="@(() => OpenBookingPayment(inv))" />
+                                            @if (inv.TotalDue > 0)
+                                            {
+                                                <RadzenButton Text="Payment"
+                                                              ButtonStyle="ButtonStyle.Success"
+                                                              ButtonSize="ExtraSmall"
+                                                              Click="@(() => OpenBookingPayment(inv))" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenButton Text="Deliver"
+                                                              ButtonStyle="ButtonStyle.Primary"
+                                                              ButtonSize="ExtraSmall"
+                                                              Click="@(() => DeliverBooking(inv))" />
+                                            }
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -663,6 +673,10 @@
                     <span class="value">
                         <RadzenNumeric @bind-Value="Sale.InvoiceDiscount" Min="0" Style="width:70px" ShowButtons="true" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((decimal? args) => DistributeInvoiceDiscount())" />
                         <RadzenDropDown @bind-Value="Sale.InvoiceDiscountType" Data="@DiscountTypeOptions" Style="width:150px" Disabled="@(!DistributeInvoiceDiscountEqually)" Change="@((object args) => DistributeInvoiceDiscount())" />
+                        @if (Sale.InvoiceDiscountType == "Percentage" && Sale.InvoiceDiscount.HasValue && Sale.InvoiceDiscount.Value > 0)
+                        {
+                            <span style="margin-left:8px; color:#666;">= @InvoiceDiscountAmount.ToString("N2")</span>
+                        }
                        @*  <RadzenCheckBox @bind-Value="DistributeInvoiceDiscountEqually"
                                         Style="margin-left:8px; vertical-align:middle"
                                         Change="@((bool v) => OnDistributeInvoiceDiscountModeChanged())"
@@ -694,6 +708,16 @@
                     <div class="billing-row" style="color:#28a745">
                         <span class="label">Discount Amount</span>
                         <span class="value">-@posTotalDiscount.ToString("N2")</span>
+                    </div>
+                }
+                @{
+                    var totalDiscount = InvoiceDiscountAmount + CampaignDiscountAmount + MembershipDiscountAmount + PaisaDiscount;
+                }
+                @if (totalDiscount > 0)
+                {
+                    <div class="billing-row" style="font-weight:600; color:#c62828">
+                        <span class="label">Total Discount</span>
+                        <span class="value">-@totalDiscount.ToString("N2")</span>
                     </div>
                 }
                 @if (IsCustomerRequiredForDiscount)
