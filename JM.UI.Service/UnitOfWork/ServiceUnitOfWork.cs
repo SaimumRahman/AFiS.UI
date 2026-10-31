@@ -9,6 +9,7 @@ using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
 using JM.UI.Service.AccountsGroups;
+using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
 using JM.UI.Service.Approval.Approver;
@@ -32,6 +33,8 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Groups;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
+using JM.UI.Service.DailyExpense;
+using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Discount;
 using JM.UI.Service.Ecommerce;
 using JM.UI.Service.ItemBrand;
@@ -54,6 +57,7 @@ using JM.UI.Service.Sizes;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
+using JM.UI.Service.CostCenters;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SubGroups;
 using JM.UI.Service.SupplierPayments;
@@ -64,8 +68,6 @@ using JM.UI.Service.Reporting;
 using JM.UI.Service.SalesPOS;
 using JM.UI.Service.InvRequisition;
 using JM.UI.Service.UserGroup;
-using JM.UI.Service.VoucherDetails;
-using JM.UI.Service.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -83,17 +85,17 @@ namespace JM.UI.Service.UnitOfWork
         public IDesignationService DesignationService { get; }
         public IEmployeeService EmployeeService { get; }
         public IStoreService StoreService { get; }
+        public ICostCenterService CostCenterService { get; }
         public IBanksService BanksService { get; }
         public IFinancialAccountsService FinancialAccountsService { get; }
+        public IChartOfAccountService ChartOfAccountService { get; }
+        public IOpeningBalanceService OpeningBalanceService { get; }
+        public IManualJournalService ManualJournalService { get; }
         public IGroupRoleService GroupRoleService { get; }
         public IUserGroupService UserGroupService { get; }
         public IShiftService ShiftService { get; }
         public ISizesService SizesService { get; }
         public IBarcodeService BarcodeService { get; }
-        public IVoucherDetailsService VoucherDetailsService { get; }
-        public IVoucherService VoucherService { get; }
-        public IAccountsGroupsService AccountsGroupsService { get; }
-        public IAccountsService AccountsService { get; }
         public ISupplierService SupplierService { get; }
         public IPurchaseOrderService PurchaseOrderService { get; }
         public IPurchaseService PurchaseService { get; private set; }
@@ -129,6 +131,8 @@ namespace JM.UI.Service.UnitOfWork
         public ISaleService SaleService { get; private set; }
         public IEcommerceService EcommerceService { get; private set; }
         public IReportingService ReportingService { get; private set; }
+        public IDailyExpenseService DailyExpenseService { get; private set; }
+        public ICounterClosingService CounterClosingService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
@@ -143,17 +147,17 @@ namespace JM.UI.Service.UnitOfWork
             CompanyService = new CompanyService(_repoUow);
             BanksService = new BanksService(_repoUow);
             FinancialAccountsService = new FinancialAccountsService(_repoUow);
+            ChartOfAccountService = new ChartOfAccountService(_repoUow);
+            OpeningBalanceService = new OpeningBalanceService(_repoUow);
+            ManualJournalService = new ManualJournalService(_repoUow);
             EmployeeService = new EmployeeService(_repoUow);
             StoreService = new StoreService(_repoUow);
+            CostCenterService = new CostCenterService(_repoUow);
             ShiftService = new ShiftService(_repoUow);
             GroupRoleService = new GroupRoleService(_repoUow);
             UserGroupService = new UserGroupService(_repoUow);
             SizesService = new Sizeservice(_repoUow);
             BarcodeService = new BarcodeService(_repoUow);
-            VoucherDetailsService = new VoucherDetailsService(_repoUow);
-            VoucherService = new VoucherService(_repoUow);
-            AccountsGroupsService = new AccountsGroupsService(_repoUow);
-            AccountsService = new AccountsService(_repoUow);
             SupplierService = new SupplierService(_repoUow);
             PurchaseOrderService = new PurchaseOrderService(_repoUow);
             PurchaseService = new PurchaseService(_repoUow);
@@ -189,6 +193,8 @@ namespace JM.UI.Service.UnitOfWork
             SaleService = new SaleService(_repoUow);
             EcommerceService = new EcommerceService(_repoUow, httpClientFactory, configuration);
             ReportingService = new ReportingService(_repoUow);
+            DailyExpenseService = new DailyExpenseService(_repoUow);
+            CounterClosingService = new CounterClosingService(_repoUow);
         }
         public void Dispose()
         {

@@ -33,7 +33,6 @@ namespace JM.UI.Entities.Model.Employees
         public DateTime? DateReleased { get; set; }
         public string NID { get; set; } = string.Empty;
         public string ReferredBy { get; set; } = string.Empty;
-        public int? AccountId { get; set; }
         public int? StoreId { get; set; }
         public int? DesignationId { get; set; }
         public decimal? BasicSalary { get; set; }
@@ -59,6 +58,9 @@ namespace JM.UI.Entities.Model.Employees
         public int EmpId { get; set; }
 
         public bool IsUserCreate { get; set; }
+
+        // Read-only: a login user exists for this employee (core_users.UserName = Surname).
+        public bool IsUserCreated { get; set; }
 
         public bool IsActive { get; set; } = true;
     }

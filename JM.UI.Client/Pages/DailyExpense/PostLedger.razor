@@ -1,0 +1,255 @@
+@page "/PostLedger"
+@using JM.UI.Entities.Model.DailyExpense
+@using JM.UI.Entities.Model.Stores
+@attribute [Authorize]
+@inherits PostLedgerComponent
+
+<PageTitle>Post Ledger</PageTitle>
+
+<!-- Header Card -->
+<RadzenCard class="p-3 mb-3">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 AlignItems="AlignItems.Center">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px">
+            <RadzenIcon Icon="account_balance" Style="font-size: 32px; color: var(--rz-primary);" />
+            <div>
+                <RadzenText TextStyle="TextStyle.H5"><b>Post Ledger</b></RadzenText>
+                <div style="font-size:0.8rem;color:var(--rz-text-secondary-color)">
+                    Review and post the day's expenses to the general ledger
+                </div>
+            </div>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Filter Card -->
+<RadzenCard class="p-3 mb-3">
+    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+            <label class="rz-mb-1 d-block">Business Day</label>
+            <RadzenDatePicker @bind-Value="BusinessDay" DateFormat="dd/MM/yyyy" />
+        </div>
+        <div>
+            <label class="rz-mb-1 d-block">Store</label>
+            <RadzenDropDown @bind-Value="SelectedStoreId"
+                            Data="@Stores"
+                            TextProperty="Name"
+                            ValueProperty="Id"
+                            AllowClear="true"
+                            Placeholder="All Stores"
+                            Style="width:200px" />
+        </div>
+        <RadzenButton Text="Load" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="@LoadExpenses" />
+        <RadzenButton Text="Download All"
+                      Icon="download"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(IsLoading || !HasAnyListed)"
+                      Click="@DownloadAll"
+                      Title="One PDF voucher covering every expense currently listed" />
+        <RadzenButton Text="@($"Download Selected ({DownloadSelectedCount})")"
+                      Icon="download_for_offline"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(DownloadSelectedCount == 0)"
+                      Click="@DownloadSelected"
+                      Title="One PDF voucher covering the rows ticked in the Download column" />
+        <RadzenButton Text="Clear Downloads"
+                      Icon="clear"
+                      ButtonStyle="ButtonStyle.Light"
+                      Disabled="@(DownloadSelectedCount == 0)"
+                      Click="@ClearDownloadSelection"
+                      Title="Clear the download selection" />
+        <div style="font-size:0.75rem;color:var(--rz-text-secondary-color);padding-bottom:8px">
+            Covers @BusinessWindowStart.ToString("dd MMM yyyy hh:mm tt") to @BusinessWindowEnd.AddTicks(-1).ToString("dd MMM yyyy hh:mm tt")
+        </div>
+    </div>
+</RadzenCard>
+
+<!-- Grid Card -->
+<RadzenCard class="p-3">
+    @if (IsLoading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
+    }
+    else if (!PostableExpenses.Any())
+    {
+        <div style="text-align:center;padding:40px;color:var(--rz-text-secondary-color)">
+            <RadzenIcon Icon="task_alt" Style="font-size:40px;color:var(--rz-success)" />
+            <div style="margin-top:10px;font-weight:600">No unposted expenses for this business day</div>
+            <div style="font-size:0.8rem">Expenses appear here once entered and remain unposted until you post them.</div>
+        </div>
+    }
+    else
+    {
+        <RadzenDataGrid @ref="ExpensesGrid"
+                        Data="@PostableExpenses"
+                        TItem="DailyExpenseDTO"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        AllowColumnResize="true"
+                        AllowAlternatingRows="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        PageSize="15"
+                        PageSizeOptions="@(new int[] { 10, 15, 30, 50 })"
+                        Style="border-radius: 12px;">
+            <Columns>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Filterable="false" Sortable="false" Width="48px">
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@IsSelected(data.DailyExpenseId)"
+                                        Change="@((bool v) => ToggleRow(data.DailyExpenseId, v))" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Filterable="false" Sortable="false" Width="104px">
+                    <HeaderTemplate>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="4px">
+                            <RadzenCheckBox TValue="bool"
+                                            Value="@AllDownloadSelected(PostableExpenses)"
+                                            Change="@((bool v) => ToggleDownloadAll(PostableExpenses, v))"
+                                            Title="Tick / untick every row for download" />
+                            <span>Download</span>
+                        </RadzenStack>
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@IsDownloadSelected(data.DailyExpenseId)"
+                                        Change="@((bool v) => ToggleDownloadRow(data.DailyExpenseId, v))"
+                                        Title="Tick to include this row in Download Selected" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
+                    <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="StoreName" Title="Store" Width="110px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Description" Title="Description" Width="220px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Expense Ledger" Width="200px">
+                    <Template Context="data">
+                        @if (!string.IsNullOrEmpty(data.LedgerAccountCode))
+                        {
+                            <span>@data.LedgerAccountCode - @data.LedgerAccountName</span>
+                        }
+                        else
+                        {
+                            <span style="color:var(--rz-text-secondary-color)">—</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="AccountName" Title="Paid From" Width="120px">
+                    <Template Context="data">
+                        @(string.IsNullOrEmpty(data.AccountName) ? "Cash" : data.AccountName)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Amount" Title="Amount" Width="120px">
+                    <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Filterable="false" Sortable="false" Width="70px">
+                    <Template Context="data">
+                        <RadzenButton Icon="download"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Title="Download this row as a PDF voucher"
+                                      Click="@(() => DownloadRow(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:10px">
+            <div style="font-size:0.85rem;color:var(--rz-text-secondary-color)">
+                @SelectedIds.Count of @PostableExpenses.Count selected
+            </div>
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="12px">
+                <div style="text-align:right">
+                    <div style="font-size:0.72rem;color:var(--rz-text-secondary-color)">Selected Total</div>
+                    <div style="font-weight:700;font-size:1.05rem">@SelectedTotal.ToString("N2")</div>
+                </div>
+                <RadzenButton Text="Select All"
+                              ButtonStyle="ButtonStyle.Light"
+                              Size="ButtonSize.Small"
+                              Disabled="@(SelectedIds.Count == PostableExpenses.Count)"
+                              Click="@SelectAll" />
+                <RadzenButton Text="Clear"
+                              ButtonStyle="ButtonStyle.Light"
+                              Size="ButtonSize.Small"
+                              Disabled="@(SelectedIds.Count == 0)"
+                              Click="@ClearSelection" />
+                <RadzenButton Text="Post Selected to Ledger"
+                              Icon="publish"
+                              ButtonStyle="ButtonStyle.Success"
+                              Disabled="@(SelectedIds.Count == 0 || IsPosting)"
+                              Click="@PostSelected" />
+            </RadzenStack>
+        </div>
+    }
+</RadzenCard>
+
+<!-- Posted This Day -->
+<RadzenCard class="p-3 mt-3">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" style="margin-bottom:10px">
+        <RadzenIcon Icon="history" Style="font-size:20px;color:var(--rz-text-secondary-color)" />
+        <RadzenText TextStyle="TextStyle.H6"><b>Already Posted This Day</b></RadzenText>
+        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@PostedToday.Count.ToString()" />
+    </RadzenStack>
+
+    @if (!PostedToday.Any())
+    {
+        <div style="color:var(--rz-text-secondary-color);font-size:0.85rem">Nothing has been posted for this business day yet.</div>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@PostedToday" TItem="DailyExpenseDTO" AllowPaging="true" PageSize="5"
+                        AllowAlternatingRows="true" Style="border-radius:12px">
+            <Columns>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Filterable="false" Sortable="false" Width="104px">
+                    <HeaderTemplate>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="4px">
+                            <RadzenCheckBox TValue="bool"
+                                            Value="@AllDownloadSelected(PostedToday)"
+                                            Change="@((bool v) => ToggleDownloadAll(PostedToday, v))"
+                                            Title="Tick / untick every row for download" />
+                            <span>Download</span>
+                        </RadzenStack>
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool"
+                                        Value="@IsDownloadSelected(data.DailyExpenseId)"
+                                        Change="@((bool v) => ToggleDownloadRow(data.DailyExpenseId, v))"
+                                        Title="Tick to include this row in Download Selected" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="ExpenseDate" Title="Entered At" Width="140px">
+                    <Template Context="data">@data.ExpenseDate.ToString("dd/MM/yyyy hh:mm tt")</Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Description" Title="Description" Width="220px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="Amount" Title="Amount" Width="120px">
+                    <Template Context="data"><b>@data.Amount.ToString("N2")</b></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="Voucher" Width="130px">
+                    <Template Context="data">
+                        @(data.VoucherNo.HasValue ? $"#{data.VoucherNo}" : "-")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Property="PostedByName" Title="Posted By" Width="120px" />
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Filterable="false" Sortable="false" Width="70px">
+                    <Template Context="data">
+                        <RadzenButton Icon="download"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Title="Download this row as a PDF voucher"
+                                      Click="@(() => DownloadRow(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DailyExpenseDTO" Title="" Width="110px">
+                    <Template Context="data">
+                        <RadzenButton Icon="undo" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                      Title="Reverse the ledger voucher and unpost"
+                                      Click="@(() => Unpost(data))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>

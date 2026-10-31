@@ -27,18 +27,6 @@ namespace JM.UI.Service.Designs
                 throw;
             }
         }
-        public async Task<DesignModelDTO> GetDesignCode()
-        {
-            try
-            {
-                return await _unitOfWork.DesignRepository.GetDesignCode();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
         public async Task<DesignModelDTO?> GetDesignById(int id)
         {
             try

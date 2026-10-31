@@ -1,0 +1,133 @@
+@page "/GroupWiseSalesSummaryReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits GroupWiseSalesSummaryReportComponent
+
+<PageTitle>Group-wise Sales Summary Report</PageTitle>
+
+<style>
+    .gws-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        border: 1px solid #444;
+    }
+    .gws-table thead th {
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #444;
+        white-space: nowrap;
+    }
+    .gws-table td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; }
+    .gws-table .num { text-align: right; white-space: nowrap; }
+    .gws-table .gtd td { background: #eeeeee; font-weight: bold; border-top: 1px solid #444; }
+    .gws-doc-header { text-align: center; font-family: Arial, Helvetica, sans-serif; }
+    .gws-doc-header .title { font-size: 1.4rem; font-weight: bold; }
+    .gws-doc-header .subtitle { font-size: 0.9rem; }
+    .gws-doc-header .doc-name { font-weight: bold; font-size: 1rem; }
+    .gws-doc-header .doc-range { font-size: 0.9rem; }
+    .gws-note { font-size: 0.8rem; font-style: italic; margin-top: 10px; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="bar_chart" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Group-wise Sales Summary Report</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      AllowClear="true"
+                                      Placeholder="From Date"
+                                      Style="width: 150px" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      AllowClear="true"
+                                      Placeholder="To Date"
+                                      Style="width: 150px" />
+                    <RadzenButton Icon="refresh"
+                                  Text="Load"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="LoadReport" />
+                    <RadzenButton Icon="print"
+                                  Text="Print / PDF"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="PrintReport"
+                                  IsBusy="@IsPrinting" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <RadzenCard>
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="gws-doc-header mb-3">
+                <div class="title">ASIA FASHION</div>
+                <div class="subtitle">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
+                <div class="doc-name">GROUP-WISE SALES SUMMERY REPORT</div>
+                <div class="doc-range">@DateRangeText</div>
+                <hr style="border-top: 1px solid #000; margin-top: 8px;" />
+            </div>
+
+            <table class="gws-table">
+                <thead>
+                    <tr>
+                        <th>Group Name</th>
+                        <th class="num">HLS (Tk)</th>
+                        <th class="num">GEC (Tk)</th>
+                        <th class="num">BTB (Tk)</th>
+                        <th class="num">Total (Tk)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:#616161; padding: 14px;">
+                                No sales records found for the selected period.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in Rows)
+                        {
+                            <tr>
+                                <td>@Dash(row.GroupName)</td>
+                                <td class="num">@Fmt(row.HlsAmount)</td>
+                                <td class="num">@Fmt(row.GecAmount)</td>
+                                <td class="num">@Fmt(row.BtbAmount)</td>
+                                <td class="num"><strong>@Fmt(row.TotalAmount)</strong></td>
+                            </tr>
+                        }
+
+                        @* Grand Total is summed from the group rows above. *@
+                        <tr class="gtd">
+                            <td>Grand Total</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.HlsAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.GecAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.BtbAmount))</td>
+                            <td class="num">@Fmt(Rows.Sum(r => r.TotalAmount))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (Rows.Any())
+            {
+                <div class="gws-note">*All Sales are NET (After Discount)</div>
+            }
+        }
+    </RadzenCard>
+</RadzenContent>

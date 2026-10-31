@@ -37,7 +37,6 @@ namespace JM.UI.Client.Pages.Purchases
         protected string CurrentItemImageBase64 { get; set; } = string.Empty;
         protected string CurrentItemImageMimeType { get; set; } = "image/jpeg";
 
-        // â”€â”€ Add to lookup fields (alongside Brand/Origin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         protected IEnumerable<ItemCatalogueDTO> Catalogues { get; set; } = new List<ItemCatalogueDTO>();
 
         // Catalogue auto-complete state
@@ -55,7 +54,7 @@ namespace JM.UI.Client.Pages.Purchases
 
         // â”€â”€â”€ Preview Grid Items (editable, loaded from barcode/color/size search) â”€â”€â”€
         protected List<PreviewItemRow> PreviewItems { get; set; } = new();
-        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = new();
+        protected RadzenDataGrid<PreviewItemRow> PreviewGrid = default!;
 
         // â”€â”€â”€ Shared price fields for preview grid (applied to all rows) â”€â”€â”€
         protected decimal SharedPurchasePrice { get; set; } = 0;
@@ -732,18 +731,77 @@ protected bool IsProcessing { get; set; } = false;
             }
         }
 
-        protected void OnSharedPriceChanged()
+        protected void OnSharedPurchasePriceChanged()
         {
             foreach (var row in PreviewItems)
             {
                 row.BasePurchasePrice = SharedPurchasePrice;  // raw price
-                row.SalePrice = SharedSalePrice;
-                row.OtherCost = SharedOtherCost;
-                row.CarryingCost = SharedCarryingCost;
-                row.Quantity = SharedQuantity ?? 0;
-                row.TransportCost = SharedTransportCost;
-                row.OperationalCost = SharedOperationalCost;
                 RecalculatePreviewRow(row);  // this sets row.PurchasePrice
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOtherCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OtherCost = SharedOtherCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedCarryingCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.CarryingCost = SharedCarryingCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedTransportCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.TransportCost = SharedTransportCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedOperationalCostChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.OperationalCost = SharedOperationalCost;
+                RecalculatePreviewRow(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedQuantityChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.Quantity = SharedQuantity ?? 0;
+                RecalculatePreviewRowTotal(row);
+            }
+            PreviewGrid?.Reload();
+            StateHasChanged();
+        }
+
+        protected void OnSharedSalePriceChanged()
+        {
+            foreach (var row in PreviewItems)
+            {
+                row.SalePrice = SharedSalePrice;
             }
             PreviewGrid?.Reload();
             StateHasChanged();
@@ -810,7 +868,7 @@ protected bool IsProcessing { get; set; } = false;
                     var itemBarcode = !string.IsNullOrWhiteSpace(item!.Barcode)
                         ? item.Barcode
                         : barcode;
-                    if (PreviewItems.Any(p => p.Barcode == itemBarcode)) continue;
+                    if (IsBarcodeInPreview(itemBarcode)) continue;
                     var features = response.itemWiseFeatures?
                         .Where(f => f?.ItemId == item.Id)
                         .Select(f => f!.FeaturesId)
@@ -848,16 +906,16 @@ protected bool IsProcessing { get; set; } = false;
                         CountStockBySize = item.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = item.CurrentStock,
-                        SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
-                        OtherCost = SharedOtherCost,
-                        CarryingCost = SharedCarryingCost,
-                        VatPercentage = SharedVatPercentage,
-                        TransportCost = SharedTransportCost,
-                        OperationalCost = SharedOperationalCost,
+                        SalePrice = item.SalePrice ?? 0,
+                        OtherCost = null,
+                        CarryingCost = null,
+                        VatPercentage = CurrentItem.VatPercentage,
+                        TransportCost = null,
+                        OperationalCost = null,
                         TotalAmount = 0,
                         ImageBase64 = item.ImageBase64 ?? CurrentItemImageBase64,
-                        BasePurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
-                        PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
+                        BasePurchasePrice = item.PurchasePrice ?? 0,
+                        PurchasePrice = item.PurchasePrice ?? 0,
                     };
 
                     rows.Add(row);
@@ -865,7 +923,7 @@ protected bool IsProcessing { get; set; } = false;
             }
             else
             {
-                if (!PreviewItems.Any(p => p.Barcode == barcode))
+                if (!IsBarcodeInPreview(barcode))
                 {
                     var newRow = new PreviewItemRow
                     {
@@ -893,13 +951,13 @@ protected bool IsProcessing { get; set; } = false;
                         CountStockBySize = CurrentItem.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = 0,
-                        PurchasePrice = SharedPurchasePrice,
-                        SalePrice = SharedSalePrice,
-                        OtherCost = SharedOtherCost,
-                        CarryingCost = SharedCarryingCost,
-                        VatPercentage = SharedVatPercentage,
-                        TransportCost = SharedTransportCost,
-                        OperationalCost = SharedOperationalCost,
+                        PurchasePrice = CurrentItem.PurchasePrice,
+                        SalePrice = CurrentItem.SalePrice ?? 0,
+                        OtherCost = null,
+                        CarryingCost = null,
+                        VatPercentage = CurrentItem.VatPercentage,
+                        TransportCost = null,
+                        OperationalCost = null,
                         TotalAmount = 0,
                         ImageBase64 = CurrentItemImageBase64
                     };
@@ -1071,7 +1129,7 @@ protected bool IsProcessing { get; set; } = false;
                 }
 
                 PreviewItems.Clear();
-                await PreviewGrid.Reload();
+                if (PreviewGrid != null) await PreviewGrid.Reload();
                 await ItemsGrid.Reload();
                 CalculateTotals();
                 ResetSharedPricing();
@@ -1798,6 +1856,15 @@ protected bool IsProcessing { get; set; } = false;
             CurrentItem.ImageBase64 = null;
 
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
@@ -1814,6 +1881,15 @@ protected bool IsProcessing { get; set; } = false;
             if (!sizeId.HasValue) return;
             CurrentItem.SizeId = sizeId;
             GenerateProductName();
+
+            if (IsVariantAlreadyInPreview())
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                    "This item is already in the table");
+                StateHasChanged();
+                return;
+            }
+
             await GenerateBarcode();
 
             if (!string.IsNullOrWhiteSpace(CurrentItem.Barcode))
@@ -1822,11 +1898,68 @@ protected bool IsProcessing { get; set; } = false;
             }
         }
 
+        // Duplicate guard — matched against the Preview Items table (Product + Color + Size)
+        // BEFORE barcode generation so a variant already present never hits the API / 500.
+        // Size is optional at the colour-selection stage; once chosen, the full combo is required.
+        private bool IsVariantAlreadyInPreview()
+        {
+            if (PreviewItems.Count == 0 || !CurrentItem.ColorId.HasValue) return false;
+
+            return PreviewItems.Any(p =>
+                IsSameProductAsCurrent(p)
+                && p.ColorId == CurrentItem.ColorId
+                && (!CurrentItem.SizeId.HasValue || p.SizeId == CurrentItem.SizeId));
+        }
+
+        private bool IsSameProductAsCurrent(PreviewItemRow p)
+        {
+            if (p.ItemId > 0 && p.ItemId == CurrentItem.ItemId) return true;
+
+            return !string.IsNullOrWhiteSpace(CurrentItem.ItemName)
+                && string.Equals(p.ItemName?.Trim(), CurrentItem.ItemName?.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string GetBarcodeBase(string barcode)
         {
             var parts = barcode.Split('-');
             if (parts.Length <= 2) return parts[0];
             return string.Join("-", parts.Take(parts.Length - 2));
+        }
+
+        private static bool BarcodesEqual(string? a, string? b) =>
+            string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        private bool IsBarcodeInPreview(string barcode) =>
+            PreviewItems.Any(p => BarcodesEqual(p.Barcode, barcode));
+
+        /// <summary>
+        /// Appends only barcodes that are not already present in the editable preview grid.
+        /// Duplicates (against the grid or within the incoming batch) are ignored and the
+        /// remaining rows are still added. Returns the number of rows actually appended.
+        /// </summary>
+        private int AppendPreviewRows(IEnumerable<PreviewItemRow> newRows)
+        {
+            var existing = new HashSet<string>(
+                PreviewItems
+                    .Select(p => p.Barcode?.Trim() ?? string.Empty)
+                    .Where(b => b.Length > 0),
+                StringComparer.OrdinalIgnoreCase);
+
+            var added = 0;
+
+            foreach (var row in newRows)
+            {
+                if (row == null) continue;
+
+                var key = row.Barcode?.Trim() ?? string.Empty;
+                if (key.Length == 0) continue;          // nothing to match on
+                if (!existing.Add(key)) continue;       // already in grid / duplicate in batch
+
+                PreviewItems.Add(row);
+                added++;
+            }
+
+            return added;
         }
 
         private async Task SearchSingleBarcodeAndAddToPreview(string barcode)
@@ -1839,7 +1972,12 @@ protected bool IsProcessing { get; set; } = false;
                         "Please select a Size before adding items to the preview.");
                     return;
                 }
-                if (PreviewItems.Any(p => p.Barcode == barcode)) return;
+                if (IsBarcodeInPreview(barcode))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                        "This item is already in the table");
+                    return;
+                }
                 if (PreviewItems.Count > 0)
                 {
                     var existingBase = GetBarcodeBase(PreviewItems[0].Barcode);
@@ -1887,18 +2025,18 @@ protected bool IsProcessing { get; set; } = false;
                             ProductType = CurrentItem.ProductType ?? "Sell Product",
                             CountStockByColor = CurrentItem.CountStockByColor,
                             CountStockBySize = CurrentItem.CountStockBySize,
-                            Quantity = 0,
+Quantity = 0,
                             StockQuantity = 0,
-                            PurchasePrice = SharedPurchasePrice,
-                            SalePrice = SharedSalePrice,
-                            OtherCost = SharedOtherCost,
-                            CarryingCost = SharedCarryingCost,
-                            VatPercentage = SharedVatPercentage,
-                            TransportCost = SharedTransportCost,
-                            OperationalCost = SharedOperationalCost,
+                            PurchasePrice = CurrentItem.PurchasePrice,
+                            SalePrice = CurrentItem.SalePrice ?? 0,
+                            OtherCost = null,
+                            CarryingCost = null,
+                            VatPercentage = CurrentItem.VatPercentage,
+                            TransportCost = null,
+                            OperationalCost = null,
                             TotalAmount = 0,
                            
-                            // Image is null â€” user must upload for this new color
+                            // Image is null â€" user must upload for this new color
                             ImageBase64 = null
                         };
                     }
@@ -1942,13 +2080,13 @@ protected bool IsProcessing { get; set; } = false;
                             CountStockBySize = item.CountStockBySize,
                             Quantity = 0,
                             StockQuantity = response.Stock?.Quantity ?? 0,
-                            PurchasePrice = SharedPurchasePrice > 0 ? SharedPurchasePrice : (item.PurchasePrice ?? 0),
-                            SalePrice = SharedSalePrice > 0 ? SharedSalePrice : (item.SalePrice ?? 0),
-                            OtherCost = SharedOtherCost,
-                            CarryingCost = SharedCarryingCost,
-                            VatPercentage = SharedVatPercentage,
-                            TransportCost = SharedTransportCost,
-                            OperationalCost = SharedOperationalCost,
+                            PurchasePrice = item.PurchasePrice ?? 0,
+                            SalePrice = item.SalePrice ?? 0,
+                            OtherCost = null,
+                            CarryingCost = null,
+                            VatPercentage = CurrentItem.VatPercentage,
+                            TransportCost = null,
+                            OperationalCost = null,
                             TotalAmount = 0,
                             ImageBase64 = item.ImageBase64
                         };
@@ -1981,13 +2119,13 @@ protected bool IsProcessing { get; set; } = false;
                         CountStockBySize = CurrentItem.CountStockBySize,
                         Quantity = 0,
                         StockQuantity = 0,
-                        PurchasePrice = SharedPurchasePrice,
-                        SalePrice = SharedSalePrice,
-                        OtherCost = SharedOtherCost,
-                        CarryingCost = SharedCarryingCost,
-                        VatPercentage = SharedVatPercentage,
-                        TransportCost = SharedTransportCost,
-                        OperationalCost = SharedOperationalCost,
+                        PurchasePrice = CurrentItem.PurchasePrice,
+                        SalePrice = CurrentItem.SalePrice ?? 0,
+                        OtherCost = null,
+                        CarryingCost = null,
+                        VatPercentage = CurrentItem.VatPercentage,
+                        TransportCost = null,
+                        OperationalCost = null,
                         TotalAmount = 0,
                         DesignId = CurrentItem.DesignId,  
                         // Image is null â€” user must upload for this new color
@@ -2058,7 +2196,11 @@ protected bool IsProcessing { get; set; } = false;
                 var newRows = BuildPreviewRowsFromResponse(response, barcode);
 
                 foreach (var row in newRows)
+                {
+                    if (IsBarcodeInPreview(row.Barcode))
+                        continue;
                     PreviewItems.Add(row);
+                }
 
                 if (newRows.Any())
                 {
@@ -2174,15 +2316,24 @@ protected bool IsProcessing { get; set; } = false;
                         await PopulateFromExistingItem(selectedItem!, result.itemWiseFeatures);
                         DisableItemFields = false;
                         Purchase.SupplierId = selectedItem!.SupplierId;
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Success, "Success",
-                            $"Item loaded! {PreviewItems.Count} variant(s) in preview.");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Success, "Success",
+                                skipped > 0
+                                    ? $"Added {added} variant(s). {skipped} duplicate barcode(s) skipped."
+                                    : $"Item loaded! {added} variant(s) added to preview.");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                         var itemData = AvailableItems.Where(x => x.Barcode == barcode).FirstOrDefault();
                         CurrentItem.ColorId = itemData.ColorId;
                         CurrentItem.SizeId = itemData.SizeId;
@@ -2192,14 +2343,24 @@ protected bool IsProcessing { get; set; } = false;
                         PopulateFromPurchaseItem(result.Item);
                         DisableItemFields = false;
 
-                        PreviewItems.Clear();
                         ResetSharedPricing();
                         var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                        foreach (var row in newRows)
-                            PreviewItems.Add(row);
+                        var added = AppendPreviewRows(newRows);
+                        var skipped = Math.Max(0, newRows.Count - added);
 
                         PreviewGrid?.Reload();
-                        notificationService.Notify(NotificationSeverity.Info, "Info", "Item found in purchase history");
+                        if (added > 0)
+                        {
+                            notificationService.Notify(NotificationSeverity.Info, "Info",
+                                skipped > 0
+                                    ? $"Item found in purchase history. Added {added} variant(s), {skipped} duplicate barcode(s) skipped."
+                                    : $"Item found in purchase history. Added {added} variant(s).");
+                        }
+                        else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                        {
+                            notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                                $"Barcode '{barcode}' is already in the preview table.");
+                        }
                     }
                 }
                 else
@@ -2207,15 +2368,22 @@ protected bool IsProcessing { get; set; } = false;
                     CurrentItem.Barcode = barcode;
                     DisableItemFields = false;
 
-                    PreviewItems.Clear();
                     ResetSharedPricing();
                     var newRows = BuildPreviewRowsFromResponse(result, barcode);
-                    foreach (var row in newRows)
-                        PreviewItems.Add(row);
+                    var added = AppendPreviewRows(newRows);
+                    var skipped = Math.Max(0, newRows.Count - added);
 
-                    await PreviewGrid?.Reload();
-                    notificationService.Notify(NotificationSeverity.Info, "Create New",
-                        "No item found. You can create a new item.");
+                    PreviewGrid?.Reload();
+                    if (added > 0)
+                    {
+                        notificationService.Notify(NotificationSeverity.Info, "Create New",
+                            "No item found. You can create a new item.");
+                    }
+                    else if (skipped > 0 || IsBarcodeInPreview(barcode))
+                    {
+                        notificationService.Notify(NotificationSeverity.Warning, "Duplicate",
+                            $"Barcode '{barcode}' is already in the preview table.");
+                    }
                 }
             }
             catch (Exception ex)
@@ -2319,7 +2487,6 @@ protected bool IsProcessing { get; set; } = false;
             CurrentItem.BrandId = item.BrandId;
             CurrentItem.OriginId = item.OriginId;
             SharedPurchasePrice = item.PurchasePrice;
-            SharedSalePrice = item.SalePrice ?? 0;
 
             BrandSearchText = item.BrandName ?? string.Empty;
             OriginSearchText = item.OriginName ?? string.Empty;
@@ -2481,7 +2648,12 @@ protected bool IsProcessing { get; set; } = false;
             if (IsInitialized)
             {
                 if (ItemsGrid != null) await ItemsGrid.Reload();
-                if (PreviewGrid != null) await PreviewGrid.Reload();
+
+                // The preview grid only exists in the render tree while it has
+                // rows (see @if (PreviewItems.Any()) in the razor). Reloading a
+                // grid that was never rendered throws "The render handle is not
+                // yet assigned", so only reload it when it is actually visible.
+                if (PreviewItems.Any() && PreviewGrid != null) await PreviewGrid.Reload();
             }
             // Removed StateHasChanged() - grid reload handles its own state
             ResetSharedPricing();

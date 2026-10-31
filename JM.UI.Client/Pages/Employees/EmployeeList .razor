@@ -150,6 +150,14 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <!-- User Created -->
+                <RadzenDataGridColumn TItem="EmployeeModelDTO" Property="IsUserCreated" Title="User Created" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="employee">
+                        <RadzenBadge BadgeStyle="@(employee.IsUserCreated ? BadgeStyle.Success : BadgeStyle.Light)"
+                                     Text="@(employee.IsUserCreated ? "Yes" : "No")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <!-- Actions -->
                 <RadzenDataGridColumn TItem="EmployeeModelDTO" Title="Actions" Width="160px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="employee">

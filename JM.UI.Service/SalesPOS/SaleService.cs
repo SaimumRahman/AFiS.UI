@@ -50,14 +50,16 @@ namespace JM.UI.Service.SalesPOS
             if (string.IsNullOrEmpty(sale.InvoiceNo))
                 sale.InvoiceNo = await GetNewInvoiceNo();
 
-            sale.NetAmount = CalculateNetAmount(sale);
+            var rawNet = CalculateNetAmount(sale);
+            var paisaDiscount = Math.Round(rawNet - Math.Floor(rawNet), 2);
+            sale.NetAmount = Math.Floor(rawNet);
             sale.DueAmount = sale.NetAmount - (sale.PaidAmount ?? 0);
             sale.PaymentStatus = sale.DueAmount <= 0 ? "Paid" :
                 (sale.PaidAmount > 0 ? "Partial" : "Due");
 
             // Map to API-aligned fields
             sale.TotalBill = sale.SubTotal;
-            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0);
+            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount;
             sale.TotalPaid = sale.PaidAmount ?? 0;
             sale.TotalDue = sale.DueAmount ?? 0;
             sale.TotalVat = sale.VatAmount;
@@ -70,9 +72,14 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SaveSale(sale);
         }
 
-        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy)
+        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered)
         {
-            return await _repositoryUnitOfWork.SaleRepository.SaveDuePayment(saleMasterId, storeId, payments, createdBy);
+            return await _repositoryUnitOfWork.SaleRepository.SaveDuePayment(saleMasterId, storeId, payments, createdBy, isDelivered);
+        }
+
+        public async Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.ProcessReturn(request);
         }
 
         public async Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy)
@@ -88,6 +95,11 @@ namespace JM.UI.Service.SalesPOS
         public async Task<ResponseResult> DeleteSale(int id)
         {
             return await _repositoryUnitOfWork.SaleRepository.DeleteSale(id);
+        }
+
+        public async Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy)
+        {
+            return await _repositoryUnitOfWork.SaleRepository.VoidSale(saleMasterId, voidedBy);
         }
 
         public async Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate)
@@ -120,6 +132,11 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo();
         }
 
+        public async Task<string> GetNewExchangeInvoiceNo()
+        {
+            return await _repositoryUnitOfWork.SaleRepository.GetNewExchangeInvoiceNo();
+        }
+
 
         public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId)
         {
@@ -135,6 +152,14 @@ namespace JM.UI.Service.SalesPOS
         public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
         {
             return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term);
+        }
+
+        public async Task<decimal?> GetItemVat(int itemId)
+        {
+            if (itemId <= 0)
+                return null;
+
+            return await _repositoryUnitOfWork.SaleRepository.GetItemVat(itemId);
         }
 
         public Task<(bool IsValid, string ErrorMessage)> ValidateSale(SaleMasterDTO sale)
@@ -159,7 +184,7 @@ namespace JM.UI.Service.SalesPOS
                 CreatedDate = DateTime.Now,
                 SalesType = "Sale",
                 PaymentStatus = "Due",
-                VatPercentage = 5m,
+                VatPercentage = 0m,
                 InvoiceDiscountType = "Percentage",
                 IsActive = true
             };

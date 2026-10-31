@@ -166,6 +166,8 @@ public class PurchaseReportService
                             table.Cell().BorderBottom(0.3f).BorderColor(GreyMedium).Padding(2)
                                 .Text(item.Barcode ?? "").FontSize(7.5f);
                             table.Cell().BorderBottom(0.3f).BorderColor(GreyMedium).Padding(2)
+                                .Text(item.ReturnRefNo ?? "").FontSize(7.5f);
+                            table.Cell().BorderBottom(0.3f).BorderColor(GreyMedium).Padding(2)
                                 .Text(item.ItemName ?? "").FontSize(7.5f);
                             table.Cell().BorderBottom(0.3f).BorderColor(GreyMedium).Padding(2)
                                 .AlignRight().Text($"{item.PurchasePrice:N2}").FontSize(7.5f);
@@ -184,7 +186,7 @@ public class PurchaseReportService
                             var breakdown = BuildPriceBreakdown(item);
                             if (!string.IsNullOrWhiteSpace(breakdown))
                             {
-                                table.Cell().ColumnSpan(8)
+                                table.Cell().ColumnSpan(9)
                                     .PaddingLeft(8).PaddingBottom(1)
                                     .Text(breakdown)
                                     .FontSize(6.5f).FontColor(GreyDarken1);
@@ -236,6 +238,7 @@ public class PurchaseReportService
         table.ColumnsDefinition(c =>
         {
             c.ConstantColumn(65);   // Code / Barcode
+            c.ConstantColumn(75);   // Return Ref No
             c.RelativeColumn(3);    // ItemName
             c.ConstantColumn(60);   // Cost Price
             c.ConstantColumn(45);   // Quantity
@@ -250,6 +253,8 @@ public class PurchaseReportService
     {
         table.Cell().Background(GreyLighten3).Border(0.5f).BorderColor(GreyMedium).Padding(3)
             .Text("Code").Bold().FontSize(8);
+        table.Cell().Background(GreyLighten3).Border(0.5f).BorderColor(GreyMedium).Padding(3)
+            .Text("Return Ref No").Bold().FontSize(8);
         table.Cell().Background(GreyLighten3).Border(0.5f).BorderColor(GreyMedium).Padding(3)
             .Text("ItemName").Bold().FontSize(8);
         table.Cell().Background(GreyLighten3).Border(0.5f).BorderColor(GreyMedium).Padding(3)
@@ -272,7 +277,7 @@ public class PurchaseReportService
         decimal purTotal,
         decimal saleTotal)
     {
-        table.Cell().ColumnSpan(3).Background(GreyLighten3).Padding(2)
+        table.Cell().ColumnSpan(4).Background(GreyLighten3).Padding(2)
             .AlignRight().Text("SubTotal").Bold().FontSize(8);
         table.Cell().Background(GreyLighten3).Padding(2)
             .AlignRight().Text($"{qty:N2}").Bold().FontSize(8);

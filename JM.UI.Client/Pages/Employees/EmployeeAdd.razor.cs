@@ -1,5 +1,4 @@
 ﻿// CompanyListComponent.razor.cs
-using JM.UI.Entities.Model.Accounts;
 using JM.UI.Entities.Model.Bank;
 using JM.UI.Entities.Model.Company;
 using JM.UI.Entities.Model.Designations;
@@ -36,7 +35,6 @@ namespace JM.UI.Client.Pages.Employees
         protected List<StoreDTO> Stores { get; set; } = new();
         protected List<DesignationDTO> Designations { get; set; } = new();
        protected List<ShiftDTO> Shifts { get; set; } = new();
-       protected List<AccountModelDTO> Accounts { get; set; } = new();
 
         // Gender Options
         protected List<string> GenderOptions { get; set; } = new() { "Male", "Female", "Other" };
@@ -91,8 +89,6 @@ namespace JM.UI.Client.Pages.Employees
 
                 // Load Shifts
                 Shifts = (await _serviceUnitOfWork.ShiftService.GetShift()).ToList();
-
-                Accounts = (await _serviceUnitOfWork.AccountsService.GetAccounts()).ToList();
             }
             catch (Exception ex)
             {
@@ -185,15 +181,27 @@ namespace JM.UI.Client.Pages.Employees
 
                 if (Employee.IsUserCreate && result.IsSuccessStatus == true)
                 {
-                    RegisterRequest loginRequest = new RegisterRequest
+                    if (Employee.IsUserCreated)
                     {
-                        Email = Employee.Email,
-                        Username = Employee.Surname,
-                        Password = Employee.Password,
-                        PhoneNumber = Employee.Contact,
-                        ConfirmPassword = Employee.ConfirmPassword,
-                    };
-                    await _userAuthService.Register(loginRequest);
+                        // A login user already exists for this employee — update its
+                        // password when a new one has been provided (edit mode).
+                        if (!string.IsNullOrWhiteSpace(Employee.Password))
+                        {
+                            await _userAuthService.ResetUserPassword(Employee.Surname, Employee.Password);
+                        }
+                    }
+                    else
+                    {
+                        RegisterRequest loginRequest = new RegisterRequest
+                        {
+                            Email = Employee.Email,
+                            Username = Employee.Surname,
+                            Password = Employee.Password,
+                            PhoneNumber = Employee.Contact,
+                            ConfirmPassword = Employee.ConfirmPassword,
+                        };
+                        await _userAuthService.Register(loginRequest);
+                    }
                 }
 
                 if (result.IsSuccessStatus)

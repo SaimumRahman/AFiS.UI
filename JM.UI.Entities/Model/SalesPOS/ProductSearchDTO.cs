@@ -17,6 +17,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public string? ItemName { get; set; }
         public decimal SalePrice { get; set; }
         public decimal Discount { get; set; }
+        public int DiscountTypeId { get; set; }
         public decimal Vat { get; set; }
         public bool HasDiscount { get; set; }
     }

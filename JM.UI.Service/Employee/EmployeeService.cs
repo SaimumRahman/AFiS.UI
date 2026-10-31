@@ -55,7 +55,6 @@ namespace JM.UI.Service.Employee
                 DateReleased = e.DateReleased,
                 NID = e.NID,
                 ReferredBy = e.ReferredBy,
-                AccountId = e.AccountId,
                 StoreId = e.StoreId,
                 DesignationId = e.DesignationId,
                 BasicSalary = e.BasicSalary,
@@ -69,7 +68,8 @@ namespace JM.UI.Service.Employee
                 BankName = e.BankName,
                 StoreName = e.StoreName,
                 DesignationName = e.DesignationName,
-                ShiftName = e.ShiftName
+                ShiftName = e.ShiftName,
+                IsUserCreated = e.IsUserCreated
             });
         }
 
@@ -108,7 +108,6 @@ namespace JM.UI.Service.Employee
                 DateReleased = e.DateReleased,
                 NID = e.NID,
                 ReferredBy = e.ReferredBy,
-                AccountId = e.AccountId,
                 StoreId = e.StoreId,
                 DesignationId = e.DesignationId,
                 BasicSalary = e.BasicSalary,
@@ -122,7 +121,8 @@ namespace JM.UI.Service.Employee
                 BankName = e.BankName,
                 StoreName = e.StoreName,
                 DesignationName = e.DesignationName,
-                ShiftName = e.ShiftName
+                ShiftName = e.ShiftName,
+                IsUserCreated = e.IsUserCreated
             });
         }
 

@@ -150,7 +150,7 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy)
+        public async Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered)
         {
             try
             {
@@ -162,7 +162,8 @@ namespace JM.UI.DataService.DAL.SalesPOS
                     SaleMasterId = saleMasterId,
                     StoreId = storeId,
                     CreatedBy = createdBy,
-                    Payments = payments
+                    Payments = payments,
+                    IsDelivered = isDelivered
                 });
                 var response = await httpClient.PostAsync("api/SalePOS/save-due-payment", content);
                 response.EnsureSuccessStatusCode();
@@ -179,6 +180,32 @@ namespace JM.UI.DataService.DAL.SalesPOS
             {
                 _logger.LogError(ex, "Unexpected error during save due payment");
                 throw new Exception("Unexpected error saving due payment: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request)
+        {
+            try
+            {
+                _logger.LogInformation("Processing return/exchange for invoice {Invoice}", request.ReturnInvoiceNo);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var content = JsonContent.Create(new { Return = request });
+                var response = await httpClient.PostAsync("api/SalePOS/process-return", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during return/exchange");
+                throw new Exception("Failed to process return: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during return/exchange");
+                throw new Exception("Unexpected error processing return: " + ex.Message, ex);
             }
         }
 
@@ -260,6 +287,36 @@ namespace JM.UI.DataService.DAL.SalesPOS
             {
                 _logger.LogError(ex, "Unexpected error during delete sale: {Id}", id);
                 throw new Exception($"Unexpected error deleting sale: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy)
+        {
+            try
+            {
+                _logger.LogInformation("Voiding sale: {SaleMasterId}", saleMasterId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var content = JsonContent.Create(new
+                {
+                    SaleMasterId = saleMasterId,
+                    VoidedBy = voidedBy
+                });
+                var response = await httpClient.PostAsync("api/SalePOS/void", content);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during void sale: {SaleMasterId}", saleMasterId);
+                throw new Exception("Failed to void sale: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during void sale: {SaleMasterId}", saleMasterId);
+                throw new Exception("Unexpected error voiding sale: " + ex.Message, ex);
             }
         }
 
@@ -401,6 +458,26 @@ namespace JM.UI.DataService.DAL.SalesPOS
                 throw new Exception("Failed to generate invoice number: " + ex.Message, ex);
             }
         }
+
+        public async Task<string> GetNewExchangeInvoiceNo()
+        {
+            try
+            {
+                _logger.LogInformation("Requesting new exchange invoice number");
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync("api/SalePOS/new-exchange-invoice-no");
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<InvoiceNoResponse>();
+                return result?.InvoiceNo ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching new exchange invoice number");
+                throw new Exception("Failed to generate exchange invoice number: " + ex.Message, ex);
+            }
+        }
      
         public async Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int storeId)
         {
@@ -440,6 +517,32 @@ namespace JM.UI.DataService.DAL.SalesPOS
             {
                 _logger.LogError(ex, "Error searching products");
                 return new List<ProductSearchDTO>();
+            }
+        }
+
+        // Group VAT (%) for an item. Returns null when the item has no group or the
+        // group has no VAT configured; the POS shows null as 0.
+        public async Task<decimal?> GetItemVat(int itemId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching VAT for item: {ItemId}", itemId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"api/SalePOS/item-vat/{itemId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("VAT lookup failed for item {ItemId}: {Status}", itemId, response.StatusCode);
+                    return null;
+                }
+
+                return await response.Content.ReadFromJsonAsync<decimal?>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching VAT for item: {ItemId}", itemId);
+                return null;
             }
         }
     }

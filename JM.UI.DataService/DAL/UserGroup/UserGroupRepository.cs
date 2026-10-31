@@ -226,5 +226,54 @@ namespace JM.UI.DataService.DAL.UserGroup
                 throw new Exception("Unexpected error fetching admin group count: " + ex.Message, ex);
             }
         }
+
+        public async Task<int> GetSystemGroupCountByUserId(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching system group count for user: {UserId}", userId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"UserGroups/system-count/{userId}");
+                response.EnsureSuccessStatusCode();
+
+                var count = await response.Content.ReadFromJsonAsync<int>();
+                return count;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get system group count");
+                throw new Exception("Failed to fetch system group count: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get system group count");
+                throw new Exception("Unexpected error fetching system group count: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<decimal?> GetMaxDiscountByUserId(int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching max discount for user: {UserId}", userId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"UserGroups/max-discount/{userId}");
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<decimal?>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP request failed during get max discount");
+                throw new Exception("Failed to fetch max discount: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during get max discount");
+                throw new Exception("Unexpected error fetching max discount: " + ex.Message, ex);
+            }
+        }
     }
 }

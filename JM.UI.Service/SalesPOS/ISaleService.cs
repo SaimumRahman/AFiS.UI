@@ -13,18 +13,24 @@ namespace JM.UI.Service.SalesPOS
         Task<IEnumerable<SaleSummaryDTO>> GetBookingSales();
         Task<SaleMasterDTO?> GetSaleById(int id);
         Task<ResponseResult> SaveSale(SaleMasterDTO sale);
-        Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy);
+        Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered);
+        Task<ResponseResult> ProcessReturn(SalesReturnRequestDTO request);
         Task<ResponseResult> CancelBooking(int saleMasterId, int storeId, int createdBy);
         Task<ResponseResult> UnmarkDraftSale(int saleMasterId);
         Task<ResponseResult> DeleteSale(int id);
+        Task<ResponseResult> VoidSale(int saleMasterId, int? voidedBy);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByDateRange(DateTime fromDate, DateTime toDate);
         Task<IEnumerable<SaleSummaryDTO>> GetInvoices(DateTime date, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId);
         Task<SaleMasterDTO?> GetSaleByInvoiceNo(string invoiceNo);
         Task<string> GetNewInvoiceNo();
+        Task<string> GetNewExchangeInvoiceNo();
         Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId);
         Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term);
+
+        /// <summary>VAT (%) configured on the item's group; null when no group/VAT is set.</summary>
+        Task<decimal?> GetItemVat(int itemId);
         Task<(bool IsValid, string ErrorMessage)> ValidateSale(SaleMasterDTO sale);
         SaleMasterDTO CreateNew();
         decimal CalculateSubTotal(List<SaleDetailDTO> details);

@@ -1,0 +1,426 @@
+@using JM.UI.Entities.Model.CounterClosing
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Service.UnitOfWork
+@using Radzen
+@using Radzen.Blazor
+@inject IServiceUnitOfWork ServiceUnitOfWork
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenCard>
+    <RadzenStack Gap="1rem">
+
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="8">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-0">Counters — @ViewStoreName</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption">
+                    A store keeps at least one active counter and exactly one default. New sales post to the default counter.
+                </RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4" TextAlign="TextAlign.Right">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem"
+                             JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center">
+                    @if (IsAdmin)
+                    {
+                        <RadzenDropDown TValue="int" Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                        @bind-Value="ViewStoreId"
+                                        Change="@ViewStoreChanged"
+                                        Style="min-width:180px" />
+                    }
+                    @if (CanManage)
+                    {
+                        <RadzenButton Icon="add" Text="New counter" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small" Click="@BeginCreate" />
+                    }
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (!CanManage)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">
+                You can view the counters of this store. Only a manager can add, rename, deactivate or change the default.
+            </RadzenAlert>
+        }
+
+        @if (IsEditing)
+        {
+            <RadzenCard Style="border:1px solid var(--rz-primary); border-radius:8px;">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>@(Editing.Id > 0 ? "Edit counter" : "New counter")</strong>
+                </RadzenText>
+                <RadzenRow Gap="1rem" AlignItems="AlignItems.End" class="mt-2">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Store *</RadzenText>
+                        @if (IsAdmin && Editing.Id == 0)
+                        {
+                            <RadzenDropDown TValue="int" Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                            @bind-Value="Editing.StoreId"
+                                            Change="@EditingStoreChanged"
+                                            Style="width:100%" />
+                        }
+                        else
+                        {
+                            <RadzenTextBox Value="@StoreNameOf(Editing.StoreId)" ReadOnly="true"
+                                           Style="width:100%" />
+                        }
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Name *</RadzenText>
+                        <RadzenTextBox @bind-Value="Editing.Name" MaxLength="200"
+                                       Placeholder="e.g. Counter 2" Style="width:100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="2">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Code</RadzenText>
+                        <RadzenTextBox @bind-Value="Editing.Code" MaxLength="40"
+                                       Placeholder="e.g. C2" Style="width:100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="1">
+                        <RadzenCheckBox @bind-Value="Editing.IsDefault" TValue="bool" />
+                        <RadzenLabel Text=" Default" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="1">
+                        <RadzenCheckBox @bind-Value="Editing.IsActive" TValue="bool" />
+                        <RadzenLabel Text=" Active" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="mt-3"
+                             JustifyContent="JustifyContent.End">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light"
+                                  Click="@CancelEdit" Disabled="@IsSaving" />
+                    <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                  IsBusy="@IsSaving" BusyText="Saving..."
+                                  Click="@SaveCounter" Disabled="@IsSaving" />
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        <RadzenDataGrid Data="@Counters"
+                        TItem="CounterDTO"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="10"
+                        IsLoading="@IsLoading"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact"
+                        EmptyText="No counters configured for this store yet.">
+            <Columns>
+                <RadzenDataGridColumn TItem="CounterDTO" Property="Name" Title="Name" Width="200px" />
+                <RadzenDataGridColumn TItem="CounterDTO" Property="Code" Title="Code" Width="110px" />
+
+                <RadzenDataGridColumn TItem="CounterDTO" Title="Default" Width="100px"
+                                      TextAlign="TextAlign.Center" Sortable="false">
+                    <Template Context="row">
+                        @if (row.IsDefault)
+                        {
+                            <RadzenBadge Text="Default" BadgeStyle="BadgeStyle.Primary" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CounterDTO" Title="Status" Width="110px"
+                                      TextAlign="TextAlign.Center" Sortable="false">
+                    <Template Context="row">
+                        <RadzenBadge Text="@(row.IsActive ? "Active" : "Inactive")"
+                                     BadgeStyle="@(row.IsActive ? BadgeStyle.Success : BadgeStyle.Light)" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CounterDTO" Title="Actions" Width="320px"
+                                      TextAlign="TextAlign.Center" Sortable="false">
+                    <Template Context="row">
+                        @if (CanManage)
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem"
+                                         JustifyContent="JustifyContent.Center">
+                                <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Flat" Size="ButtonSize.Small"
+                                              Disabled="@IsSaving"
+                                              Click="@(() => BeginEdit(row))" />
+
+                                @if (!row.IsDefault && row.IsActive)
+                                {
+                                    <RadzenButton Icon="star" Text="Set default" ButtonStyle="ButtonStyle.Secondary"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                  Disabled="@IsSaving"
+                                                  Click="@(() => MakeDefault(row))" />
+                                }
+
+                                @if (row.IsActive)
+                                {
+                                    <RadzenButton Icon="block" Text="Deactivate" ButtonStyle="ButtonStyle.Danger"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                  Disabled="@IsSaving"
+                                                  Click="@(() => ToggleActive(row, false))" />
+                                }
+                                else
+                                {
+                                    <RadzenButton Icon="check_circle" Text="Activate" ButtonStyle="ButtonStyle.Success"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                  Disabled="@IsSaving"
+                                                  Click="@(() => ToggleActive(row, true))" />
+                                }
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption">—</RadzenText>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light"
+                          Click="@CloseDialog" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public int StoreId { get; set; }
+    [Parameter] public string? StoreName { get; set; }
+    [Parameter] public List<StoreDTO> Stores { get; set; } = new();
+    [Parameter] public int CurrentUserId { get; set; }
+    [Parameter] public string? CurrentUserName { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    /// <summary>True for a member of any group with IsSystem = 1.</summary>
+    [Parameter] public bool IsAdmin { get; set; }
+
+    protected List<CounterDTO> Counters = new();
+    protected SaveCounterDTO Editing = new();
+    protected bool IsEditing;
+    protected bool IsLoading;
+    protected bool IsSaving;
+    protected bool HasChanges;
+    protected int ViewStoreId;
+
+    protected string ViewStoreName =>
+        Stores.FirstOrDefault(s => s.Id == ViewStoreId)?.Name ?? StoreName ?? string.Empty;
+
+    protected string StoreNameOf(int storeId) =>
+        Stores.FirstOrDefault(s => s.Id == storeId)?.Name ?? string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ViewStoreId = StoreId;
+        await LoadCounters();
+    }
+
+    protected async Task ViewStoreChanged()
+    {
+        IsEditing = false;
+        Editing = new SaveCounterDTO();
+        await LoadCounters();
+    }
+
+    protected void EditingStoreChanged()
+    {
+        // A new counter starts as "not default"; the server forces a default
+        // when the target store has none.
+        Editing.IsDefault = false;
+    }
+
+    protected async Task LoadCounters()
+    {
+        if (ViewStoreId <= 0)
+            return;
+
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            Counters = (await ServiceUnitOfWork.CounterClosingService
+                    .GetCountersForManagement(ViewStoreId))?.ToList() ?? new List<CounterDTO>();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Counters", ex.Message, 6000);
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    protected void BeginCreate()
+    {
+        Editing = new SaveCounterDTO
+        {
+            Id = 0,
+            StoreId = ViewStoreId,
+            IsActive = true,
+            IsDefault = false,
+            UserId = CurrentUserId,
+            UserName = CurrentUserName
+        };
+        IsEditing = true;
+    }
+
+    protected void BeginEdit(CounterDTO counter)
+    {
+        Editing = new SaveCounterDTO
+        {
+            Id = counter.Id,
+            StoreId = counter.StoreId,
+            Name = counter.Name,
+            Code = counter.Code,
+            IsDefault = counter.IsDefault,
+            IsActive = counter.IsActive,
+            UserId = CurrentUserId,
+            UserName = CurrentUserName
+        };
+        IsEditing = true;
+    }
+
+    protected void CancelEdit()
+    {
+        IsEditing = false;
+        Editing = new SaveCounterDTO();
+    }
+
+    protected async Task SaveCounter()
+    {
+        if (IsSaving)
+            return;
+
+        if (string.IsNullOrWhiteSpace(Editing.Name))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation",
+                "Counter name is required.", 5000);
+            return;
+        }
+
+        if (Editing.StoreId <= 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation",
+                "Select the store this counter belongs to.", 5000);
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            var result = await ServiceUnitOfWork.CounterClosingService.SaveCounter(Editing);
+
+            NotificationService.Notify(
+                result.IsSuccessStatus ? NotificationSeverity.Success : NotificationSeverity.Error,
+                result.IsSuccessStatus ? "Saved" : "Not saved",
+                result.Message, 6000);
+
+            if (result.IsSuccessStatus)
+            {
+                HasChanges = true;
+
+                // Follow the counter to the store it was saved under (admins can
+                // create a counter for a different branch).
+                var savedStoreId = Editing.StoreId;
+                IsEditing = false;
+                Editing = new SaveCounterDTO();
+
+                if (savedStoreId > 0 && savedStoreId != ViewStoreId)
+                    ViewStoreId = savedStoreId;
+
+                await LoadCounters();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Not saved", ex.Message, 6000);
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    protected async Task MakeDefault(CounterDTO counter)
+    {
+        if (IsSaving)
+            return;
+
+        var confirm = await DialogService.Confirm(
+            $"Make '{counter.Name}' the default counter for {StoreName}? New sales will post to this counter.",
+            "Set default",
+            new ConfirmOptions { OkButtonText = "Set default", CancelButtonText = "Cancel" });
+
+        if (confirm != true)
+            return;
+
+        await SaveRow(counter, isDefault: true, isActive: counter.IsActive);
+    }
+
+    protected async Task ToggleActive(CounterDTO counter, bool active)
+    {
+        if (IsSaving)
+            return;
+
+        if (!active)
+        {
+            var confirm = await DialogService.Confirm(
+                $"Deactivate '{counter.Name}'? It can no longer be selected for new sales or closings.",
+                "Deactivate counter",
+                new ConfirmOptions { OkButtonText = "Deactivate", CancelButtonText = "Cancel" });
+
+            if (confirm != true)
+                return;
+        }
+
+        await SaveRow(counter, isDefault: counter.IsDefault, isActive: active);
+    }
+
+    private async Task SaveRow(CounterDTO counter, bool isDefault, bool isActive)
+    {
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            var dto = new SaveCounterDTO
+            {
+                Id = counter.Id,
+                StoreId = counter.StoreId,
+                Name = counter.Name,
+                Code = counter.Code,
+                IsDefault = isDefault,
+                IsActive = isActive,
+                UserId = CurrentUserId,
+                UserName = CurrentUserName
+            };
+
+            var result = await ServiceUnitOfWork.CounterClosingService.SaveCounter(dto);
+
+            NotificationService.Notify(
+                result.IsSuccessStatus ? NotificationSeverity.Success : NotificationSeverity.Error,
+                result.IsSuccessStatus ? "Saved" : "Not saved",
+                result.Message, 6000);
+
+            if (result.IsSuccessStatus)
+            {
+                HasChanges = true;
+                await LoadCounters();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Not saved", ex.Message, 6000);
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    protected void CloseDialog()
+    {
+        DialogService.Close(HasChanges);
+    }
+}

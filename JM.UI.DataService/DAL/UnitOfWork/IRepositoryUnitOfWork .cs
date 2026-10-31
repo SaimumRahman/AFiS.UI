@@ -1,9 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.Accounts;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
-using JM.UI.DataService.DAL.AccountsGroups;
+﻿using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -15,6 +10,7 @@ using JM.UI.DataService.DAL.Barcodes;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
 using JM.UI.DataService.DAL.Colors;
+using JM.UI.DataService.DAL.CounterClosing;
 using JM.UI.DataService.DAL.Company;
 using JM.UI.DataService.DAL.Designations;
 using JM.UI.DataService.DAL.Designs;
@@ -28,6 +24,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
+using JM.UI.DataService.DAL.DailyExpense;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.Ecommerce;
 using JM.UI.DataService.DAL.ItemBrand;
@@ -59,6 +56,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
+using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SubGroups;
 using JM.UI.DataService.DAL.SupplierPayments;
@@ -71,12 +69,6 @@ using JM.UI.DataService.DAL.Reporting;
 using JM.UI.DataService.DAL.SalesPOS;
 using JM.UI.DataService.DAL.InvRequisition;
 using JM.UI.DataService.DAL.UserGroup;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.VoucherDetails;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
-using JM.UI.DataService.DAL.Vouchers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -93,18 +85,18 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IDesignationRepository DesignationRepository { get; }
         IBanksRepository BanksRepository { get; }
         IFinancialAccountsRepository FinancialAccountsRepository { get; }
+        IChartOfAccountRepository ChartOfAccountRepository { get; }
+        IOpeningBalanceRepository OpeningBalanceRepository { get; }
+        IManualJournalRepository ManualJournalRepository { get; }
         IEmployeeRepository EmployeeRepository { get; }
         IStoreRepository StoreRepository { get; }
+        ICostCenterRepository CostCenterRepository { get; }
         IGroupRoleRepository GroupRoleRepository { get; }
         IUserGroupRepository UserGroupRepository { get; }
         IShiftRepository ShiftRepository { get; }
         IColorsRepository ColorsRepository { get; }
         ISizesRepository SizesRepository { get; }
         IBarcodeRepository BarcodeRepository { get; }
-        IVoucherDetailsRepository VoucherDetailsRepository { get; }
-        IVoucherRepository VoucherRepository { get; }
-        IAccountsGroupsRepository AccountsGroupsRepository { get; }
-        IAccountsRepository AccountsRepository { get; }
         ISupplierRepository SupplierRepository { get; }
         IPurchaseOrderRepository PurchaseOrderRepository { get; }
         IPurchaseRepository PurchaseRepository { get; }
@@ -139,5 +131,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ISaleRepository SaleRepository { get; }
         IEcommerceRepository EcommerceRepository { get; }
         IReportingRepository ReportingRepository { get; }
+        IDailyExpenseRepository DailyExpenseRepository { get; }
+        ICounterClosingRepository CounterClosingRepository { get; }
     }
 }

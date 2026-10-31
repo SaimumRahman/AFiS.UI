@@ -4,5 +4,6 @@ namespace JM.UI.Entities.Model.SalesPOS
     {
         public List<PaymentTransactionDTO> Payments { get; set; } = new();
         public bool IsBookingPayment { get; set; }
+        public bool IsDelivered { get; set; }
     }
 }

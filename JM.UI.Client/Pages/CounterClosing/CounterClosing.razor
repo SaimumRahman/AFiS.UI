@@ -1,0 +1,532 @@
+@page "/CounterClosing"
+@using JM.UI.Entities.Model.CounterClosing
+@attribute [Authorize]
+@inherits CounterClosingComponent
+
+<PageTitle>Counter Day-End Closing</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+
+    <!-- ══════════════════════ HEADER ══════════════════════ -->
+    <RadzenCard class="mb-4">
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenColumn Size="12" SizeMD="7">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="point_of_sale" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H4" class="mb-0">Counter Day-End Closing</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="mb-0">
+                            Business day runs 06:00:00 → 05:59:59 (Asia/Dhaka)
+                        </RadzenText>
+                    </div>
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="5">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenButton Icon="settings_suggest" Text="Manage counters" ButtonStyle="ButtonStyle.Secondary"
+                                  Disabled="@(!SelectedStoreId.HasValue)"
+                                  Click="@OpenCounterManagement" />
+                    <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Light"
+                                  Click="@RefreshClick" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- ══════════════════════ FILTERS ══════════════════════ -->
+    <RadzenCard class="mb-4">
+        <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Store</RadzenText>
+                <RadzenDropDown TValue="int?" Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                @bind-Value="SelectedStoreId"
+                                Disabled="@IsStoreLocked"
+                                Change="@StoreChanged"
+                                Style="width:100%" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Counter</RadzenText>
+                <RadzenDropDown TValue="int?" Data="@Counters" TextProperty="Name" ValueProperty="Id"
+                                @bind-Value="SelectedCounterId"
+                                Change="@CounterChanged"
+                                Style="width:100%" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1">Business date (blank = today)</RadzenText>
+                <RadzenDatePicker TValue="DateTime?" @bind-Value="SelectedBusinessDate"
+                                  DateFormat="dd-MMM-yyyy" ShowTime="false" AllowClear="true"
+                                  Change="@DatePickerChanged"
+                                  Style="width:100%" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenButton Icon="search" Text="Load day" ButtonStyle="ButtonStyle.Primary"
+                              Disabled="@(!SelectedCounterId.HasValue)"
+                              Click="@LoadDayClick" Style="width:100%" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (Preview != null)
+    {
+        <!-- ══════════════════════ DAY HEADER ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenRow AlignItems="AlignItems.Center">
+                <RadzenColumn Size="12" SizeLG="9">
+                    <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="1.5rem">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Store</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0"><strong>@Preview.StoreName</strong></RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Counter</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0"><strong>@Preview.CounterName</strong></RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Cashier</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0">
+                                <strong>@(string.IsNullOrWhiteSpace(CurrentUserName) ? $"User #{CurrentUserId}" : CurrentUserName)</strong>
+                            </RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Business day</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0">
+                                <strong>@Preview.BusinessDate.ToString("dd-MMM-yyyy")</strong>
+                            </RadzenText>
+                        </div>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Period</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="mb-0">
+                                @Preview.PeriodStart.ToString("dd-MMM HH:mm") → @Preview.PeriodEnd.ToString("dd-MMM HH:mm")
+                            </RadzenText>
+                        </div>
+                    </RadzenStack>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeLG="3" TextAlign="TextAlign.Right">
+                    @if (Preview.IsClosed)
+                    {
+                        <RadzenBadge Text="CLOSED" BadgeStyle="BadgeStyle.Success" />
+                        <div class="mt-1">
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                By @Preview.ClosedByName on @Preview.ClosedAt?.ToString("dd-MMM-yyyy HH:mm")
+                            </RadzenText>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="OPEN" BadgeStyle="BadgeStyle.Warning" />
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+
+            @if (Preview.IsClosed)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false" class="mt-3">
+                    This business day is closed and read-only. New sales on this counter roll to the next business day.
+                    A manager can reopen it from the history below.
+                </RadzenAlert>
+            }
+            else if (Preview.PendingCount > 0)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false" class="mt-3">
+                    @Preview.PendingCount draft sale(s) are still open on this counter. Complete or discard them before closing.
+                </RadzenAlert>
+            }
+        </RadzenCard>
+
+        <!-- ══════════════════════ PAYMENT SUMMARY ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenText TextStyle="TextStyle.H6">Payment totals</RadzenText>
+            <RadzenRow Gap="0.75rem" class="mt-2">
+                @foreach (var method in Preview.PaymentSummary)
+                {
+                    <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
+                        <div style="border:1px solid var(--rz-base-300); border-radius:6px; padding:8px 12px;">
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">
+                                @method.PaymentMethod @(method.IsCash ? "(cash)" : "")
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.H6" class="mb-0">@method.Amount.ToString("N2")</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">@method.Count txn</RadzenText>
+                        </div>
+                    </RadzenColumn>
+                }
+                <RadzenColumn Size="6" SizeMD="3" SizeLG="2">
+                    <div style="border:1px solid var(--rz-primary); border-radius:6px; padding:8px 12px;">
+                        <RadzenText TextStyle="TextStyle.Caption" class="mb-0">All methods</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" class="mb-0">@PaymentTotal.ToString("N2")</RadzenText>
+                    </div>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- ══════════════════════ CASH IN / CASH OUT SUMMARY ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-2">Cash In (by account)</RadzenText>
+                    <RadzenDataGrid Data="@Preview.PaymentSummary" TItem="CounterPaymentSummaryDTO"
+                                    AllowPaging="false" AllowSorting="false" GridLines="DataGridGridLines.Both"
+                                    Density="Density.Compact">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="PaymentMethod" Title="Financial Account" />
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="Amount" Title="Amount"
+                                                  TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                        </Columns>
+                        <FooterTemplate>
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Total Cash In: @Preview.PaymentSummary.Sum(x => x.Amount).ToString("N2")</strong></RadzenText>
+                        </FooterTemplate>
+                    </RadzenDataGrid>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-2">Cash Out (by account)</RadzenText>
+                    <RadzenDataGrid Data="@Preview.CashOutSummary" TItem="CounterPaymentSummaryDTO"
+                                    AllowPaging="false" AllowSorting="false" GridLines="DataGridGridLines.Both"
+                                    Density="Density.Compact">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="PaymentMethod" Title="Financial Account" />
+                            <RadzenDataGridColumn TItem="CounterPaymentSummaryDTO" Property="Amount" Title="Amount"
+                                                  TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                        </Columns>
+                        <FooterTemplate>
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Total Cash Out: @Preview.CashOutSummary.Sum(x => x.Amount).ToString("N2")</strong></RadzenText>
+                        </FooterTemplate>
+                    </RadzenDataGrid>
+                </RadzenColumn>
+            </RadzenRow>
+            <RadzenRow class="mt-2">
+                <RadzenColumn Size="12" TextAlign="TextAlign.Right">
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Net Cash: @((Preview.PaymentSummary.Sum(x => x.Amount) - Preview.CashOutSummary.Sum(x => x.Amount)).ToString("N2"))</strong>
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- ══════════════════════ TRANSACTIONS ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Transactions</RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenTextBox @bind-Value="SearchText" Placeholder="Filter invoice / customer / method / status"
+                                   Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenDataGrid @ref="TransactionsGrid"
+                            Data="@Transactions"
+                            TItem="CounterTransactionDTO"
+                            AllowFiltering="true"
+                            AllowColumnResize="true"
+                            AllowAlternatingRows="true"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            PageSize="15"
+                            FilterMode="FilterMode.Advanced"
+                            ShowPagingSummary="true"
+                            IsLoading="@IsLoading"
+                            GridLines="DataGridGridLines.Both"
+                            Density="Density.Compact">
+
+                <Columns>
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="CreatedDate" Title="Time"
+                                          Width="130px" FormatString="{0:dd-MMM HH:mm}" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="InvoiceNo" Title="Invoice" Width="150px" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Title="Type" Width="100px" Filterable="false">
+                        <Template Context="row">
+                            <span style="color:@TransactionTypeColor(row.TransactionType); font-weight:600;">@row.TransactionType</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="CustomerName" Title="Customer" Width="150px" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="PaymentMethod" Title="Payment" Width="150px" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="TotalBill" Title="Bill"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="PaidAmount" Title="Paid"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+
+                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="Status" Title="Status" Width="110px" />
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+
+        <!-- ══════════════════════ CASH RECONCILIATION ══════════════════════ -->
+        <RadzenCard class="mb-4">
+            <RadzenText TextStyle="TextStyle.H6">Cash reconciliation</RadzenText>
+
+            <RadzenRow Gap="1.5rem" class="mt-2">
+                <RadzenColumn Size="12" SizeLG="7">
+
+                    <table style="width:100%; border-collapse:collapse;">
+                        <tbody>
+                            <tr style="border-bottom:1px solid var(--rz-base-300);">
+                                <td style="padding:8px 0;">Opening cash (carried forward)</td>
+                                <td style="padding:8px 0; text-align:right;">@Preview.OpeningCash.ToString("N2")</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid var(--rz-base-300);">
+                                <td style="padding:8px 0;">
+                                    Cash sales (@Preview.CashTransactionCount cash txn)
+                                </td>
+                                <td style="padding:8px 0; text-align:right;">@Preview.CashSales.ToString("N2")</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid var(--rz-base-300);">
+                                <td style="padding:8px 0;">Cash in</td>
+                                <td style="padding:8px 0; text-align:right;">@TotalCashIn.ToString("N2")</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid var(--rz-base-300);">
+                                <td style="padding:8px 0;">Cash out</td>
+                                <td style="padding:8px 0; text-align:right;">
+                                    @if (Preview.CashOutSummary != null && Preview.CashOutSummary.Any())
+                                    {
+                                        @string.Join(", ", Preview.CashOutSummary.Select(x => $"{x.PaymentMethod}={x.Amount:N2}"))
+                                    }
+                                    else
+                                    {
+                                        @Preview.CashOut.ToString("N2")
+                                    }
+                                </td>
+                            </tr>
+                            <tr style="border-top:2px solid var(--rz-base-500);">
+                                <td style="padding:10px 0;"><strong>Expected in drawer</strong></td>
+                                <td style="padding:10px 0; text-align:right;"><strong>@ExpectedCash.ToString("N2")</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    @if (!Preview.IsClosed)
+                    {
+                        <div class="mt-3">
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Cash in / out</strong></RadzenText>
+
+                            @if (Movements.Count == 0)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption">
+                                    No cash movements. Add one for petty cash, safe drops or change brought in.
+                                </RadzenText>
+                            }
+
+                            @foreach (var movement in Movements)
+                            {
+                                <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mb-1">
+                                    <RadzenColumn Size="3">
+                                        <RadzenDropDown TValue="string" Data="@(new[] { "IN", "OUT" })"
+                                                        @bind-Value="movement.Direction"
+                                                        Style="width:100%" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <RadzenNumeric TValue="decimal?" @bind-Value="movement.Amount"
+                                                       Min="0" Style="width:100%" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4">
+                                        <RadzenTextBox @bind-Value="movement.Reason" Placeholder="Reason"
+                                                       Style="width:100%" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="2">
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
+                                                      Variant="Variant.Flat" Size="ButtonSize.Small"
+                                                      Click="@(() => RemoveMovement(movement))" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="mt-2">
+                                <RadzenButton Icon="add" Text="Cash in" ButtonStyle="ButtonStyle.Success"
+                                              Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                              Click="@AddCashInClick" />
+                                <RadzenButton Icon="remove" Text="Cash out" ButtonStyle="ButtonStyle.Danger"
+                                              Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                              Click="@AddCashOutClick" />
+                            </RadzenStack>
+                        </div>
+                    }
+                    else if (Movements.Count > 0)
+                    {
+                        <div class="mt-3">
+                            <RadzenText TextStyle="TextStyle.Body2"><strong>Declared cash movements</strong></RadzenText>
+                            @foreach (var movement in Movements)
+                            {
+                                <div>@movement.Direction — @((movement.Amount ?? 0).ToString("N2")) — @movement.Reason</div>
+                            }
+                        </div>
+                    }
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeLG="5">
+                    <div style="border:1px solid var(--rz-base-300); border-radius:8px; padding:16px;">
+                        <RadzenText TextStyle="TextStyle.Body2"><strong>Counted cash</strong></RadzenText>
+
+                        @if (Preview.IsClosed)
+                        {
+                            <RadzenText TextStyle="TextStyle.H4" class="mt-1">
+                                @((ActualCash ?? 0).ToString("N2"))
+                            </RadzenText>
+                        }
+                        else
+                        {
+                            <RadzenNumeric TValue="decimal?" @bind-Value="ActualCash"
+                                           Min="0" Style="width:100%; font-size:1.5rem;" />
+                        }
+
+                        <div class="mt-3" style="border-top:1px solid var(--rz-base-300); padding-top:12px;">
+                            <RadzenRow JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.Body2">Expected</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2">@ExpectedCash.ToString("N2")</RadzenText>
+                            </RadzenRow>
+                            <RadzenRow JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.Body2">Difference</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="@($"color:{DifferenceColor};")">
+                                    @Difference.ToString("N2") (@DifferenceLabel)
+                                </RadzenText>
+                            </RadzenRow>
+                        </div>
+
+                        @if (!Preview.IsClosed)
+                        {
+                            <div class="mt-3">
+                                <RadzenText TextStyle="TextStyle.Caption">
+                                    Note @(HasDifference ? "(required — cash does not match)" : "(optional)")
+                                </RadzenText>
+                                <RadzenTextArea @bind-Value="Note" Rows="3" MaxLength="500"
+                                                Placeholder="Explain the difference or add a remark"
+                                                Style="width:100%" />
+                            </div>
+
+                            <RadzenButton Text="Submit day-end closing"
+                                          Icon="task_alt"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Disabled="@(IsSubmitting || Preview.PendingCount > 0 || !ActualCash.HasValue)"
+                                          Click="@SubmitClosing"
+                                          Style="width:100%; margin-top:1rem;" />
+                        }
+                    </div>
+
+                    <RadzenText TextStyle="TextStyle.Caption" class="mt-2">
+                        Expected cash is recalculated by the server when you submit; the figures above are a preview only.
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Body2">
+                Select a store and counter to load the business day.
+            </RadzenText>
+        </RadzenCard>
+    }
+
+    <!-- ══════════════════════ HISTORY ══════════════════════ -->
+    <RadzenCard>
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.H6" class="mb-0">Closing history</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" TextAlign="TextAlign.Right">
+                <RadzenButton Icon="refresh" Text="Reload" ButtonStyle="ButtonStyle.Light"
+                              Size="ButtonSize.Small"
+                              Click="@ReloadHistoryClick" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenDataGrid @ref="HistoryGrid"
+                        Data="@History"
+                        TItem="CounterClosingDTO"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="10"
+                        FilterMode="FilterMode.Advanced"
+                        ShowPagingSummary="true"
+                        IsLoading="@IsLoadingHistory"
+                        GridLines="DataGridGridLines.Both"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="BusinessDate" Title="Business day"
+                                      Width="120px" FormatString="{0:dd-MMM-yyyy}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="CounterName" Title="Counter" Width="120px" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="OpeningCash" Title="Opening"
+                                      Width="100px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="CashSales" Title="Cash sales"
+                                      Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="CashIn" Title="In"
+                                      Width="90px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="CashOut" Title="Out"
+                                      Width="90px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="ExpectedCash" Title="Expected"
+                                      Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="ActualCash" Title="Counted"
+                                      Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Title="Difference" Width="110px"
+                                      TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="closing">
+                        <span style="font-weight:600; color:@(closing.Difference < 0 ? "#c62828" : closing.Difference > 0 ? "#ef6c00" : "#2e7d32");">
+                            @closing.Difference.ToString("N2")
+                        </span>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Title="Status" Width="100px" Filterable="false">
+                    <Template Context="closing">
+                        <span style="font-weight:600; color:@StatusColor(closing);">@closing.Status</span>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="ClosedByName" Title="Closed by" Width="120px" />
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Property="ClosedAt" Title="Closed at"
+                                      Width="130px" FormatString="{0:dd-MMM HH:mm}" />
+
+                <RadzenDataGridColumn TItem="CounterClosingDTO" Title="Actions" Width="150px"
+                                      TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                    <Template Context="closing">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem"
+                                     JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="visibility" Text="View" ButtonStyle="ButtonStyle.Light"
+                                          Variant="Variant.Flat" Size="ButtonSize.Small"
+                                          Click="@(() => OpenHistoryRow(closing))" />
+                            @if (closing.Status == "CLOSED")
+                            {
+                                <RadzenButton Icon="lock_open" Text="Reopen" ButtonStyle="ButtonStyle.Warning"
+                                              Variant="Variant.Flat" Size="ButtonSize.Small"
+                                              Click="@(() => BeginReopen(closing))" />
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        @if (ReopenTarget != null)
+        {
+            <div class="mt-3" style="border:1px solid var(--rz-warning); border-radius:8px; padding:16px;">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    Reopen <strong>@ReopenTarget.CounterName</strong> for
+                    <strong>@ReopenTarget.BusinessDate.ToString("dd-MMM-yyyy")</strong>?
+                    The reopen is audited against your user id.
+                </RadzenText>
+                <RadzenTextArea @bind-Value="ReopenReason" Rows="2" MaxLength="500"
+                                Placeholder="Reason for reopening (required, min 5 characters)"
+                                Style="width:100%" class="mt-2" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="mt-2">
+                    <RadzenButton Text="Confirm reopen" Icon="lock_open" ButtonStyle="ButtonStyle.Warning"
+                                  Disabled="@IsReopening" Click="@ConfirmReopenClick" />
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light"
+                                  Click="@CancelReopenClick" />
+                </RadzenStack>
+            </div>
+        }
+    </RadzenCard>
+
+</RadzenContent>
