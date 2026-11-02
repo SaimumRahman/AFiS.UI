@@ -34,7 +34,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public string? StoreName { get; set; }
         public bool IsActive { get; set; } = true;
         public string? ReturnInvoiceNo { get; set; }
-        public bool IsReturnExchange { get; set; }
+        public bool? IsReturnExchange { get; set; }
         public int? MembershipTypeId { get; set; }
         public string? MembershipTypeName { get; set; }
         public int? DiscountRate { get; set; }

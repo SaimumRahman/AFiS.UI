@@ -110,7 +110,20 @@ namespace JM.UI.DataService.DAL.SalesPOS
                     return null;
                 }
 
-                return await response.Content.ReadFromJsonAsync<SaleMasterDTO>();
+                var body = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(body))
+                    return null;
+
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<SaleMasterDTO>(body,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch
+                {
+                    _logger.LogWarning("Sale response was not valid JSON for id {Id}: {Body}", id, body);
+                    return null;
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -439,14 +452,14 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<string> GetNewInvoiceNo()
+        public async Task<string> GetNewInvoiceNo(int storeId)
         {
             try
             {
-                _logger.LogInformation("Requesting new invoice number");
+                _logger.LogInformation("Requesting new invoice number for store {StoreId}", storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/new-invoice-no");
+                var response = await httpClient.GetAsync($"api/SalePOS/new-invoice-no/{storeId}");
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<InvoiceNoResponse>();

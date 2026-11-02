@@ -738,7 +738,7 @@
                         <span class="value">@(Sale.RoundingAmount > 0 ? "+" : "")@Sale.RoundingAmount?.ToString("N2")</span>
                     </div>
                 }
-                @if (Sale.IsReturnExchange && (Sale.ExchangeAmount ?? 0) > 0)
+                @if (Sale.IsReturnExchange == true && (Sale.ExchangeAmount ?? 0) > 0)
                 {
                     <div class="billing-row" style="color:#dc3545">
                         <span class="label">Exchange Credit @(!string.IsNullOrWhiteSpace(Sale.ReturnInvoiceNo) ? "(" + Sale.ReturnInvoiceNo + ")" : "")</span>

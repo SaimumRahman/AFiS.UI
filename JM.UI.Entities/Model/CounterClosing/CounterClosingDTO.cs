@@ -49,7 +49,7 @@ namespace JM.UI.Entities.Model.CounterClosing
         public decimal TotalBill { get; set; }
         public decimal PaidAmount { get; set; }
         public string Status { get; set; } = string.Empty;
-        public bool IsReturnExchange { get; set; }
+        public bool? IsReturnExchange { get; set; }
         public bool IsDraft { get; set; }
         public bool IsBooking { get; set; }
         public int? CustomerId { get; set; }

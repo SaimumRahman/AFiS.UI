@@ -197,7 +197,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             CurrentUserId = await GetLocalStorageInt("UserId");
             Sale.CreatedBy = CurrentUserId;
             await LoadInvoiceDiscountLimit();
-            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo(Sale.StoreId ?? 0);
             await LoadEmployeesByStore();
         }
 
@@ -1561,7 +1561,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.StoreId = lastStoreId > 0 ? lastStoreId : Stores.FirstOrDefault()?.Id;
                 Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
                 Sale.CreatedBy = await GetLocalStorageInt("UserId");
-                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo(Sale.StoreId ?? 0);
                 if (CartGrid != null)
                     await CartGrid.Reload();
             }
