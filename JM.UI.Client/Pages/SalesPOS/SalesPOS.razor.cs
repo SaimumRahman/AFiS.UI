@@ -1273,7 +1273,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new Dictionary<string, object>
                 {
                     { "NetPayable", NetPayable },
-                    { "StoreId", Sale.StoreId }
+                    { "StoreId", Sale.StoreId },
+                    { "CustomerSelected", SelectedCustomer != null }
                 });
             if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
                 return;
