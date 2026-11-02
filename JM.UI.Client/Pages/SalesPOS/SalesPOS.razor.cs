@@ -1374,7 +1374,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                         { "NetPayable", due },
                         { "StoreId", Sale.StoreId },
                         { "AllowBookingOption", false },
-                        { "ShowDeliveredOption", true }
+                        { "ShowDeliveredOption", true },
+                        { "ExistingPayments", sale?.PaymentTransactions ?? new List<PaymentTransactionDTO>() }
                     });
 
                 if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
