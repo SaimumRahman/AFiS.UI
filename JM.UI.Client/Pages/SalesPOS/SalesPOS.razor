@@ -478,6 +478,12 @@
                                         PagingSummaryFormat="Displaying page {0} of {1} (total {2} records)">
                             <Columns>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="InvoiceNo" Title="Invoice No" Width="120" />
+                                @* A system-group user sees every store's rows, so the branch is shown. *@
+                                <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="Store" Width="120" Sortable="false">
+                                    <Template Context="inv">
+                                        <span style="font-size:0.72rem;color:#555;">@GetStoreName(inv.StoreId)</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="CustomerName" Title="Customer" Width="140" />
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="CreatedDate" Title="Date" Width="90">
                                     <Template Context="inv">
@@ -514,7 +520,13 @@
                                         {
                                             <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Secondary" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => DownloadInvoice(inv))" />
                                         }
-                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
+                                        @* Editing an issued invoice is restricted to users in a group
+                                           with GroupsRole.IsSystem = 1. Drafts stay editable for
+                                           everyone — that is how a held sale is resumed. *@
+                                        @if (!IsInvoicesMode || IsSystemGroupUser)
+                                        {
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
+                                        }
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">

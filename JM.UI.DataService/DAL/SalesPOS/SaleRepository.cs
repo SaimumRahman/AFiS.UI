@@ -45,14 +45,15 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null)
         {
             try
             {
-                _logger.LogInformation("Fetching draft sales");
+                _logger.LogInformation("Fetching draft sales for store {StoreId}", storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/getall-draft");
+                var storeParam = storeId.HasValue ? $"?storeId={storeId}" : "";
+                var response = await httpClient.GetAsync($"api/SalePOS/getall-draft{storeParam}");
                 response.EnsureSuccessStatusCode();
 
                 var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
@@ -70,14 +71,15 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null)
         {
             try
             {
-                _logger.LogInformation("Fetching booking sales");
+                _logger.LogInformation("Fetching booking sales for store {StoreId}", storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/getall-booking");
+                var storeParam = storeId.HasValue ? $"?storeId={storeId}" : "";
+                var response = await httpClient.GetAsync($"api/SalePOS/getall-booking{storeParam}");
                 response.EnsureSuccessStatusCode();
 
                 var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();

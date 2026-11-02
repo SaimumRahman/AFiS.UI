@@ -20,14 +20,14 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSales();
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetDraftSales();
+            return await _repositoryUnitOfWork.SaleRepository.GetDraftSales(storeId);
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetBookingSales();
+            return await _repositoryUnitOfWork.SaleRepository.GetBookingSales(storeId);
         }
 
         public async Task<SaleMasterDTO?> GetSaleById(int id)

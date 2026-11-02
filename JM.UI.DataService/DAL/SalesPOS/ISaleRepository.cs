@@ -9,8 +9,8 @@ namespace JM.UI.DataService.DAL.SalesPOS
     public interface ISaleRepository
     {
         Task<IEnumerable<SaleSummaryDTO>> GetSales();
-        Task<IEnumerable<SaleSummaryDTO>> GetDraftSales();
-        Task<IEnumerable<SaleSummaryDTO>> GetBookingSales();
+        Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null);
+        Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null);
         Task<SaleMasterDTO?> GetSaleById(int id);
         Task<ResponseResult> SaveSale(SaleMasterDTO sale);
         Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered);

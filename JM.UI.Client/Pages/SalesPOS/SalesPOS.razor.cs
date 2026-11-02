@@ -195,6 +195,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected decimal NetPayable => Math.Floor(RawNetPayable);
 
+        protected bool IsSystemGroupUser { get; set; } = false;
+
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
@@ -206,8 +208,33 @@ namespace JM.UI.Client.Pages.SalesPOS
             CurrentUserId = await GetLocalStorageInt("UserId");
             Sale.CreatedBy = CurrentUserId;
             await LoadInvoiceDiscountLimit();
+            await LoadSystemGroupFlag();
             Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo(Sale.StoreId ?? 0);
             await LoadEmployeesByStore();
+        }
+
+        /// <summary>
+        /// Store filter for the Invoices / Bookings / Draft tabs. A system-group user
+        /// (GroupsRole.IsSystem = 1) gets null, meaning "every store"; everyone else is
+        /// scoped to the store they are signed in at.
+        /// </summary>
+        private int? GetScopeStoreId() => IsSystemGroupUser ? (int?)null : Sale.StoreId;
+
+        // "Admin" in AFiS means a member of any group whose GroupsRole.IsSystem = 1.
+        // Editing an issued invoice (Invoices tab) is restricted to those users.
+        private async Task LoadSystemGroupFlag()
+        {
+            try
+            {
+                IsSystemGroupUser = await _serviceUnitOfWork.UserGroupService
+                    .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+            }
+            catch (Exception ex)
+            {
+                // Never grant the right on a failure — default to hidden.
+                IsSystemGroupUser = false;
+                Console.WriteLine($"[DEBUG] LoadSystemGroupFlag failed: {ex.Message}");
+            }
         }
 
         // Reads the Sales POS invoice discount cap from the group of the signed-in
@@ -347,10 +374,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsInvoicesLoading = true;
-                var userId = await GetLocalStorageInt("UserId");
-                // User id 1 (admin) sees current-day invoices across all stores;
-                // every other user only sees their own store's current-day invoices.
-                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                // A member of any group with GroupsRole.IsSystem = 1 sees every store's
+                // invoices for today; everyone else is limited to their own store.
+                var storeId = GetScopeStoreId();
                 var today = DateTime.Today;
 
                 var all = await _serviceUnitOfWork.SaleService.GetInvoices(today, storeId);
@@ -378,8 +404,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsInvoicesLoading = true;
-                var userId = await GetLocalStorageInt("UserId");
-                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                var storeId = GetScopeStoreId();
 
                 var results = await _serviceUnitOfWork.SaleService.SearchInvoices(InvoiceSearchText.Trim(), storeId);
                 Invoices = (results ?? new List<SaleSummaryDTO>()).ToList();
@@ -400,7 +425,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsBookingsLoading = true;
-                var all = await _serviceUnitOfWork.SaleService.GetBookingSales();
+                var all = await _serviceUnitOfWork.SaleService.GetBookingSales(GetScopeStoreId());
                 Bookings = (all ?? new List<SaleSummaryDTO>()).ToList();
             }
             catch (Exception ex)
@@ -419,7 +444,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsDraftsLoading = true;
-                var all = await _serviceUnitOfWork.SaleService.GetDraftSales();
+                var all = await _serviceUnitOfWork.SaleService.GetDraftSales(GetScopeStoreId());
                 Drafts = (all ?? new List<SaleSummaryDTO>()).ToList();
             }
             catch (Exception ex)
@@ -490,6 +515,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task EditInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
+
+            // Editing an already-issued invoice is restricted to users in a group with
+            // GroupsRole.IsSystem = 1. Drafts stay editable for everyone, since that is
+            // how a held sale is resumed.
+            if (IsInvoicesMode && !IsSystemGroupUser)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Not Allowed",
+                    "You are not allowed to edit an issued invoice. Please contact an administrator.", 4500);
+                return;
+            }
+
             try
             {
                 bool editingFromDraft = IsDraftMode;
@@ -1393,11 +1429,15 @@ namespace JM.UI.Client.Pages.SalesPOS
                     return;
                 }
 
+                // Payments are stored against the booking's own store, which may differ
+                // from the signed-in user's store for a system-group user.
+                int bookingStoreId = booking.StoreId ?? Sale.StoreId ?? 0;
+
                 var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
-                        { "StoreId", Sale.StoreId },
+                        { "StoreId", bookingStoreId },
                         { "AllowBookingOption", false },
                         { "ShowDeliveredOption", true },
                         { "ExistingPayments", sale?.PaymentTransactions ?? new List<PaymentTransactionDTO>() }
@@ -1405,7 +1445,7 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
                 {
-                    int storeId = Sale.StoreId ?? 0;
+                    int storeId = bookingStoreId;
                     int userId = await GetLocalStorageInt("UserId");
 
                     var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
@@ -1453,7 +1493,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             try
             {
-                int storeId = Sale.StoreId ?? 0;
+                // Stock is issued from the booking's own store, not the signed-in user's.
+                int storeId = booking.StoreId ?? Sale.StoreId ?? 0;
                 int userId = await GetLocalStorageInt("UserId");
 
                 var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
@@ -1491,7 +1532,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             try
             {
-                int storeId = Sale.StoreId ?? 0;
+                // Reversal applies to the booking's own store, not the signed-in user's.
+                int storeId = booking.StoreId ?? Sale.StoreId ?? 0;
                 int userId = await GetLocalStorageInt("UserId");
 
                 var result = await _serviceUnitOfWork.SaleService.CancelBooking(
