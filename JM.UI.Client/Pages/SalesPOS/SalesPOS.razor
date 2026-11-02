@@ -727,6 +727,13 @@
                         <span class="value">discount applied</span>
                     </div>
                 }
+                @if (IsCrossStoreSale && SelectedCustomer == null)
+                {
+                    <div class="billing-row" style="font-size:0.72rem;color:#c62828">
+                        <span class="label">Customer required</span>
+                        <span class="value">cross-store item</span>
+                    </div>
+                }
                 <div class="billing-row">
                     <span class="label">VAT (incl.)</span>
                     <span class="value">@CalculatedVat.ToString("N2")</span>

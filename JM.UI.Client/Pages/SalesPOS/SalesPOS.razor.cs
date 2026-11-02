@@ -155,6 +155,15 @@ namespace JM.UI.Client.Pages.SalesPOS
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
 
+        // When the cart contains items from a different store than the user's locked
+        // store, a customer is mandatory so the cross-store sale can be traced.
+        protected bool IsCrossStoreSale =>
+            CartItems.Any() && Sale.StoreId.HasValue && Sale.StoreId.Value > 0
+            && CartItems.First().StoreId.HasValue
+            && CartItems.First().StoreId.Value != Sale.StoreId.Value;
+
+        protected bool IsCustomerRequired => IsCustomerRequiredForDiscount || (IsCrossStoreSale && SelectedCustomer == null);
+
         // Exact payable of the current cart BEFORE the exchange credit is applied.
         // This is the Billing Summary "Net Payable" ceiling an exchange credit is
         // allowed to reach, so it must never include Sale.ExchangeAmount.
@@ -1234,6 +1243,16 @@ namespace JM.UI.Client.Pages.SalesPOS
             {
                 await dialogService.Alert(
                     "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "Customer Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // Cross-store items require a customer for traceability.
+            if (IsCrossStoreSale && SelectedCustomer == null)
+            {
+                await dialogService.Alert(
+                    "This sale contains items from a different store, so a customer must be selected before finalising. Please select a customer.",
                     "Customer Required",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
