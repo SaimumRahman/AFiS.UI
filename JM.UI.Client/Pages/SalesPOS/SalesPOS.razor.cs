@@ -458,6 +458,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task DownloadInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
+
+            // A draft is not an issued invoice: it has no printable document. This also
+            // covers a draft row that leaks into another list while the draft list is not
+            // the active tab.
+            if (IsDraftMode || invoice.IsDraft == true)
+            {
+                notificationService.Notify(NotificationSeverity.Info, "Draft",
+                    $"Draft {invoice.InvoiceNo} has no invoice to print.", 3500);
+                return;
+            }
+
             try
             {
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
@@ -1305,17 +1316,30 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             if (saveResult.IsSuccessStatus)
             {
-                notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
-                    $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
-                await DownloadPosInvoice(Sale);
+                // A draft is held for later, not issued, so it must never produce a PDF.
+                if (Sale.IsDraft == true)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
+                        $"Draft {Sale.InvoiceNo} saved. No invoice was printed.", 4000);
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
+                        $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                    await DownloadPosInvoice(Sale);
+                }
 
-                // Clear the cart after the invoice has been downloaded and refresh the UI.
+                // Clear the cart after a successful save and refresh the UI.
                 CartItems.Clear();
                 StateHasChanged();
                 if (CartGrid != null)
                     await CartGrid.Reload();
-                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                    "Invoice downloaded successfully. Cart cleared.", 3500);
+
+                if (Sale.IsDraft != true)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                        "Invoice downloaded successfully. Cart cleared.", 3500);
+                }
 
                 await ResetForNewSale();
             }
@@ -1549,6 +1573,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
                 if (result.IsSuccessStatus)
                 {
+                    // Intentionally no invoice download here: a draft is not an issued sale.
                     notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
                         $"Draft saved as Invoice: {Sale.InvoiceNo}", 4000);
                     await ResetForNewSale();

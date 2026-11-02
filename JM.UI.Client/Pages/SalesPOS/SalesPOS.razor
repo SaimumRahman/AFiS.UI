@@ -507,7 +507,13 @@
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Property="TotalItems" Title="Items" Width="60" />
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="110" Sortable="false" Filterable="false">
                                     <Template Context="inv">
-                                        <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Secondary" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => DownloadInvoice(inv))" />
+                                        @* A draft is not an issued invoice, so it has nothing to print:
+                                           the download action is hidden in the Draft tab (and for any
+                                           row still flagged as a draft). *@
+                                        @if (!IsDraftMode && inv.IsDraft != true)
+                                        {
+                                            <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Secondary" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => DownloadInvoice(inv))" />
+                                        }
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                     </Template>
                                 </RadzenDataGridColumn>
