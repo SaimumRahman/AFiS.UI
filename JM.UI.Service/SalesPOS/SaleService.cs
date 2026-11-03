@@ -48,7 +48,7 @@ namespace JM.UI.Service.SalesPOS
             }
 
             if (string.IsNullOrEmpty(sale.InvoiceNo))
-                sale.InvoiceNo = await GetNewInvoiceNo(sale.StoreId ?? 0);
+                sale.InvoiceNo = await GetNewInvoiceNo(sale.StoreId ?? 0, sale.CreatedDate);
 
             var rawNet = CalculateNetAmount(sale);
             var paisaDiscount = Math.Round(rawNet - Math.Floor(rawNet), 2);
@@ -128,9 +128,9 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSaleByInvoiceNo(invoiceNo);
         }
 
-        public async Task<string> GetNewInvoiceNo(int storeId)
+        public async Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo(storeId);
+            return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo(storeId, saleDate);
         }
 
         public async Task<string> GetNewExchangeInvoiceNo()

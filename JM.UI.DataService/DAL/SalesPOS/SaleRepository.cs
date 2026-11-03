@@ -454,14 +454,17 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<string> GetNewInvoiceNo(int storeId)
+        public async Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null)
         {
             try
             {
-                _logger.LogInformation("Requesting new invoice number for store {StoreId}", storeId);
+                _logger.LogInformation("Requesting new invoice number for store {StoreId} date {SaleDate}", storeId, saleDate);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/new-invoice-no/{storeId}");
+                var url = $"api/SalePOS/new-invoice-no/{storeId}";
+                if (saleDate.HasValue)
+                    url += $"?date={saleDate.Value:yyyy-MM-dd}";
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<InvoiceNoResponse>();

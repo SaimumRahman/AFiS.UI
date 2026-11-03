@@ -24,7 +24,7 @@ namespace JM.UI.Service.SalesPOS
         Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId);
         Task<SaleMasterDTO?> GetSaleByInvoiceNo(string invoiceNo);
-        Task<string> GetNewInvoiceNo(int storeId);
+        Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null);
         Task<string> GetNewExchangeInvoiceNo();
         Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int? storeId);
         Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term);

@@ -7,6 +7,7 @@ using JM.UI.Entities.Model.Employees;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.SalesPOS;
+using JM.UI.Entities.Model.FinancialAccounts;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Shift;
@@ -1404,6 +1405,23 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 var store = Stores.FirstOrDefault(s => s.Id == sale.StoreId);
 
+                // Resolve payment method display names (0 = Cash, otherwise the financial
+                // account) so the PDF can print the same breakdown shown in the dialog.
+                var paymentTypeNames = new Dictionary<int, string> { { 0, "Cash" } };
+                try
+                {
+                    var accounts = await _serviceUnitOfWork.FinancialAccountsService
+                        .GetFinancialAccountsForDropdown(sale.StoreId);
+                    foreach (var a in accounts ?? new List<FinancialAccountDropdownDTO>())
+                    {
+                        var name = string.IsNullOrWhiteSpace(a.AccountNo)
+                            ? a.AccountName
+                            : $"{a.AccountName} \u00b7 {a.AccountNo}";
+                        paymentTypeNames[a.Id] = name;
+                    }
+                }
+                catch { /* fall back to account ids */ }
+
                 var pdfBytes = PosInvoicePdfService.GeneratePosInvoice(
                     sale,
                     companyName: store?.Name ?? "ASIA FASHION",
@@ -1411,7 +1429,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
                     companyVat: store?.VAT ?? "",
                     servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
-                    terms: store?.TermsOfService ?? "");
+                    terms: store?.TermsOfService ?? "",
+                    paymentTypeNames: paymentTypeNames);
 
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
