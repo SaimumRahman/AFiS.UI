@@ -150,7 +150,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         // cart items that don't already have a product-level discount.
         // When false, the discount stays at the bill level only (not pushed to lines)
         // and the Discount column becomes editable for manual per-item entry.
-        protected bool DistributeInvoiceDiscountEqually { get; set; } = true;
+        protected bool DistributeInvoiceDiscountEqually { get; set; } = false;
 
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
@@ -1283,27 +1283,37 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
-            // A bill carrying a discount must be tied to a customer. This guard runs
-            // before the payment dialog so the cashier is never asked to take payment
-            // and then rejected. The server repeats this check on save.
-            if (IsCustomerRequiredForDiscount)
+            // Customer is now mandatory for every sale (draft / booking too). The
+            // previous conditional checks (discount / cross-store / due) are commented
+            // out below and replaced by this single always-on guard.
+            if (SelectedCustomer == null)
             {
                 await dialogService.Alert(
-                    "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "A customer is required to complete this sale. Please select a customer first.",
                     "Customer Required",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
             }
 
-            // Cross-store items require a customer for traceability.
-            if (IsCrossStoreSale && SelectedCustomer == null)
-            {
-                await dialogService.Alert(
-                    "This sale contains items from a different store, so a customer must be selected before finalising. Please select a customer.",
-                    "Customer Required",
-                    new AlertOptions { OkButtonText = "OK" });
-                return;
-            }
+            // ── (commented out) discount-required guard ──
+            // if (IsCustomerRequiredForDiscount)
+            // {
+            //     await dialogService.Alert(
+            //         "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+            //         "Customer Required",
+            //         new AlertOptions { OkButtonText = "OK" });
+            //     return;
+            // }
+
+            // ── (commented out) cross-store guard ──
+            // if (IsCrossStoreSale && SelectedCustomer == null)
+            // {
+            //     await dialogService.Alert(
+            //         "This sale contains items from a different store, so a customer must be selected before finalising. Please select a customer.",
+            //         "Customer Required",
+            //         new AlertOptions { OkButtonText = "OK" });
+            //     return;
+            // }
 
             // Can only finalize a sale when every line in the cart belongs to
             // the same store.
@@ -1337,13 +1347,13 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
                 (Sale.PaidAmount > 0 ? "Partial" : "Due");
 
-            // ── Validation: a due requires a customer ──
-            if (Sale.DueAmount > 0 && SelectedCustomer == null)
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
-                    "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
-                return;
-            }
+            // ── (commented out) due-requires-customer guard ──
+            // if (Sale.DueAmount > 0 && SelectedCustomer == null)
+            // {
+            //     notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+            //         "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
+            //     return;
+            // }
 
             Sale.SaleDetails = CartItems.ToList();
             Sale.PaymentTransactions = paymentResult.Payments.ToList();
@@ -1421,6 +1431,15 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(booking.SaleMasterId);
+
+                // A booking must be tied to a customer (either the one already on the
+                // booking or the one currently selected on the POS screen).
+                if (sale?.CustomerId == null && SelectedCustomer == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                        "A customer is required for this booking. Please select a customer first.", 4500);
+                    return;
+                }
                 decimal due = sale?.TotalDue ?? booking.TotalDue;
                 if (due <= 0)
                 {
@@ -1602,6 +1621,14 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {
+            // Customer is mandatory for drafts too.
+            if (SelectedCustomer == null)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                    "A customer is required to save a draft. Please select a customer first.", 4500);
+                return;
+            }
+
             try
             {
                 Sale.SubTotal = SubTotal;
