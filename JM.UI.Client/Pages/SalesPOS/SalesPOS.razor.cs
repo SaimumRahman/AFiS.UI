@@ -1363,6 +1363,19 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             if (saveResult.IsSuccessStatus)
             {
+                // The server may have overridden the invoice number (BK-… for bookings)
+                // and decides IsBooking from the cart items. Sync the client copy so the
+                // auto-downloaded PDF prints the right heading and number.
+                if (!string.IsNullOrEmpty(saveResult.Id))
+                    Sale.InvoiceNo = saveResult.Id;
+                if (saveResult.Data != null)
+                {
+                    var isBookingStr = saveResult.Data.ToString();
+                    bool parsed = false;
+                    if (!string.IsNullOrEmpty(isBookingStr) && bool.TryParse(isBookingStr, out parsed))
+                        Sale.IsBooking = parsed;
+                }
+
                 // A draft is held for later, not issued, so it must never produce a PDF.
                 if (Sale.IsDraft == true)
                 {

@@ -338,7 +338,7 @@
                         <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenProductSearch" Text="Search" Disabled="@(SelectedEmployeeId <= 0)" />
                         <RadzenDropDown @bind-Value="SelectedEmployeeId"
                                         Data="@Employees"
-                                        TextProperty="Name"
+                                        TextProperty="Surname"
                                         ValueProperty="Id"
                                         Placeholder="Employee"
                                         AllowFiltering="true"
