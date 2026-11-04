@@ -730,11 +730,10 @@ namespace JM.UI.Client.Pages.SalesPOS
                     detail.UnitPrice = unitPrice.Value;
                 }
                 detail.TotalAmount = CalculateLineTotal(detail);
-                if (SelectedEmployeeId > 0)
-                {
-                    detail.SalesPersonId = SelectedEmployeeId;
-                    detail.SalesPersonName = SelectedEmployeeName;
-                }
+                // Capture the salesman selected at the time this row is added, so a
+                // single sale can contain lines attributed to different salesmen.
+                detail.SalesPersonId = SelectedEmployeeId > 0 ? SelectedEmployeeId : null;
+                detail.SalesPersonName = SelectedEmployeeName;
                 CartItems.Add(detail);
             }
 
@@ -1148,11 +1147,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             var emp = Employees.FirstOrDefault(e => e.Id == employeeId);
             SelectedEmployeeName = emp?.Name;
 
-            foreach (var item in CartItems)
-            {
-                item.SalesPersonId = employeeId > 0 ? employeeId : null;
-                item.SalesPersonName = SelectedEmployeeName;
-            }
+            // Each cart row keeps the salesman it was added with, so a single sale
+            // can contain lines attributed to different salesmen. Do NOT overwrite
+            // the existing rows when the dropdown changes.
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
