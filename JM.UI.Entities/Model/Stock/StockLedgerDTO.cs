@@ -20,5 +20,9 @@ public class StockLedgerDTO
     public decimal ReceiveQty { get; set; }
     public decimal IssueQty { get; set; }
     public decimal ClosingStock { get; set; }
+
+    // Item sale price (shown in the pivoted branch table).
+    public decimal SalePrice { get; set; }
+
     public DateTime LastTransactionDate { get; set; }
 }

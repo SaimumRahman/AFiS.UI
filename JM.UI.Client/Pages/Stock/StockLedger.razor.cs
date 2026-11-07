@@ -1,3 +1,4 @@
+using JM.UI.Client.Pages.Dialog.Stock;
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.ItemBrand;
@@ -16,10 +17,19 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
 {
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-    protected RadzenDataGrid<StockLedgerDTO> StockLedgerGrid = default!;
+    protected RadzenDataGrid<StockLedgerPivotRow> StockLedgerGrid = default!;
     protected IEnumerable<StockLedgerDTO> StockLedgerList = new List<StockLedgerDTO>();
     protected IEnumerable<StoreDTO> StoreList = new List<StoreDTO>();
     protected bool IsLoading;
+
+    // ── Pivoted table state ──
+    // The grid is a branch-wise pivot: one row per item, one banded four-column
+    // block per store, plus a grand-total block. Built from the same flat ledger
+    // rows the page always fetched, so the store permission rules are untouched.
+    protected List<StockLedgerStoreGroup> StoreGroups { get; set; } = new();
+    protected List<StockLedgerPivotRow> PivotRows { get; set; } = new();
+
+    protected int PivotItemCount => PivotRows.Count;
 
     protected DateTime? FromDate { get; set; }
     protected DateTime? ToDate { get; set; }
@@ -196,9 +206,14 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
                 .GetStockLedger(FromDate, ToDate, null, SelectedStoreId,
                                 SelectedGroupId, SelectedSubGroupId,
                                 SelectedDesignId, SelectedBrandId);
+
+            BuildPivot();
         }
         catch (Exception ex)
         {
+            StockLedgerList = new List<StockLedgerDTO>();
+            PivotRows = new List<StockLedgerPivotRow>();
+            StoreGroups = new List<StockLedgerStoreGroup>();
             notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load stock ledger: {ex.Message}");
         }
         finally
@@ -207,6 +222,117 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
             StateHasChanged();
         }
     }
+
+    // ──────────────────────────────────────────────────────────────────
+    //  Pivot
+    // ──────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Folds the flat (store × item) ledger rows into the branch-wise table:
+    /// one row per item, four measures per store, and a grand-total block.
+    /// </summary>
+    private void BuildPivot()
+    {
+        var rows = StockLedgerList?.ToList() ?? new List<StockLedgerDTO>();
+
+        // Columns follow the store master order (so branches keep a familiar
+        // sequence); a store missing from the master falls back to alphabetical.
+        var preferredOrder = StoreList
+            .Select((store, index) => new { Name = (store.Name ?? string.Empty).Trim(), Index = index })
+            .Where(x => x.Name.Length > 0)
+            .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Index, StringComparer.OrdinalIgnoreCase);
+
+        StoreGroups = rows
+            .Select(r => (r.StoreName ?? string.Empty).Trim())
+            .Where(name => name.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(name => preferredOrder.TryGetValue(name, out var index) ? index : int.MaxValue)
+            .ThenBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .Select(name => new StockLedgerStoreGroup { StoreName = name })
+            .ToList();
+
+        PivotRows = rows
+            .GroupBy(ItemKeyOf, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var first = group.First();
+
+                var row = new StockLedgerPivotRow
+                {
+                    ItemKey = group.Key,
+                    Barcode = string.IsNullOrWhiteSpace(first.ItemCode) ? "-" : first.ItemCode.Trim(),
+                    ItemName = first.ItemName ?? string.Empty,
+                    SalePrice = group.Max(r => r.SalePrice),
+                    GroupName = FirstValue(group, r => r.GroupName),
+                    SubGroupName = FirstValue(group, r => r.SubGroupName),
+                    DesignName = FirstValue(group, r => r.DesignName),
+                    BrandName = FirstValue(group, r => r.BrandName)
+                };
+
+                foreach (var storeRows in group.GroupBy(
+                             r => (r.StoreName ?? string.Empty).Trim(),
+                             StringComparer.OrdinalIgnoreCase))
+                {
+                    row.Cells[storeRows.Key] = new StockLedgerStoreCell
+                    {
+                        OpeningStock = storeRows.Sum(r => r.OpeningStock),
+                        ReceiveQty = storeRows.Sum(r => r.ReceiveQty),
+                        IssueQty = storeRows.Sum(r => r.IssueQty),
+                        ClosingStock = storeRows.Sum(r => r.ClosingStock)
+                    };
+                }
+
+                row.TotalOpening = row.Cells.Values.Sum(c => c.OpeningStock);
+                row.TotalReceive = row.Cells.Values.Sum(c => c.ReceiveQty);
+                row.TotalIssue = row.Cells.Values.Sum(c => c.IssueQty);
+                row.TotalClosing = row.Cells.Values.Sum(c => c.ClosingStock);
+
+                return row;
+            })
+            .OrderBy(r => r.ItemName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.Barcode, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string ItemKeyOf(StockLedgerDTO row)
+        => string.IsNullOrWhiteSpace(row.ItemCode)
+            ? "#" + (row.ItemName ?? string.Empty).Trim()
+            : row.ItemCode.Trim();
+
+    private static string FirstValue(IEnumerable<StockLedgerDTO> rows, Func<StockLedgerDTO, string> selector)
+        => rows.Select(selector)
+               .FirstOrDefault(v => !string.IsNullOrWhiteSpace(v))?.Trim() ?? string.Empty;
+
+    // ──────────────────────────────────────────────────────────────────
+    //  Product details dialog
+    // ──────────────────────────────────────────────────────────────────
+
+    protected async Task OpenItemDetails(StockLedgerPivotRow row)
+    {
+        await dialogService.OpenAsync<StockLedgerItemDialog>(
+            "Product Information",
+            new Dictionary<string, object>
+            {
+                { nameof(StockLedgerItemDialog.Item), row },
+                { nameof(StockLedgerItemDialog.Stores), StoreGroups }
+            },
+            new DialogOptions
+            {
+                Width = "760px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = true
+            });
+    }
+
+    // ── Display helpers ──────────────────────────────────────────────
+
+    protected static string Qty(decimal value) => value.ToString("N2");
+    protected static string Money(decimal value) => value.ToString("N2");
+
+    protected static string BalanceStyle(decimal value)
+        => value < 0 ? "color: var(--rz-danger); font-weight:700;" : "font-weight:700;";
 
     public void Dispose()
     {
