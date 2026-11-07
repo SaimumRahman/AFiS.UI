@@ -51,6 +51,14 @@
         flex-shrink: 0;
     }
 
+    /* Let long server messages wrap instead of overflowing the login card. */
+    .error-text {
+        flex: 1;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.35;
+    }
+
     .error-close {
         margin-left: auto;
         background: none;
@@ -96,12 +104,12 @@
             <h3>Login</h3>
 
             @* ✅ Error Message Display *@
-            @if (showError)
+            @if (showError && !string.IsNullOrWhiteSpace(errorMessage))
             {
-                <div class="error-message">
+                <div class="error-message" role="alert" aria-live="assertive">
                     <span class="error-icon">⚠️</span>
-                    <span>@errorMessage</span>
-                    <button type="button" class="error-close" @onclick="@(() => showError = false)">×</button>
+                    <span class="error-text">@errorMessage</span>
+                    <button type="button" class="error-close" title="Dismiss" @onclick="@(() => showError = false)">×</button>
                 </div>
             }
 
