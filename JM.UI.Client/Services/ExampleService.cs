@@ -519,6 +519,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Item Statement",
+                        Path        = "/ItemStatement",
+                        Icon        = "\ue8f9",
+                        Title       = "Item Statement",
+                        Description = "Comprehensive item statement: per-size branch matrix of purchases, sales, transfers, returns and adjustments with opening/closing balances",
+                        Tags        = new[] { "item", "statement", "stock", "branch", "matrix", "transaction" }
+                    },
+                    new Example
+                    {
                         Name        = "Profit / Loss",
                         Path        = "/ProfitLossReport",
                         Icon        = "\ue8f9",

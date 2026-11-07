@@ -32,4 +32,18 @@ public class StockService : IStockService
             throw;
         }
     }
+
+    public async Task<ItemStatementDTO> GetItemStatement(
+        string baseBarcode, DateTime? fromDate, DateTime? toDate)
+    {
+        try
+        {
+            return await _unitOfWork.StockRepository
+                .GetItemStatement(baseBarcode, fromDate, toDate);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
 }
