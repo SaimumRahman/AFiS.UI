@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using Radzen;
 
 namespace JM.UI.Client.Pages.Users
 {
@@ -21,6 +22,7 @@ namespace JM.UI.Client.Pages.Users
         [Inject] NavigationManager navigationManager { get; set; }
         [Inject] IJSRuntime jsRuntimes { get; set; }
         [Inject] AuthenticationStateProvider AuthStateProvider { get; set; }
+        [Inject] NotificationService notificationService { get; set; }
 
         public LoginRequest loginRequestDAO { get; set; }
         private AuthenticatedUserResponse response { get; set; }
@@ -53,10 +55,9 @@ namespace JM.UI.Client.Pages.Users
                     {
                         Console.WriteLine("❌ Login failed - no token received");
 
-                        errorMessage = "Invalid username or password. Please try again.";
+                        errorMessage = response.ErrorMessage;
                         showError = true;
 
-                        await jsRuntimes.InvokeVoidAsync("credentialAlert");
                         isLoading = false;
                         StateHasChanged();
                     }

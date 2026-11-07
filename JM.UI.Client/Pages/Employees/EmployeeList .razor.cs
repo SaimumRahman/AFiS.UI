@@ -99,6 +99,7 @@ namespace JM.UI.Client.Pages.Employees
                     Detail = $"Status updated successfully.",
                     Duration = 3000
                 });
+                StateHasChanged();
             }
         }
         protected string GetStatusText(int status) =>
