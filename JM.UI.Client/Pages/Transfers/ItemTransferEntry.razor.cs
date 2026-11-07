@@ -1430,8 +1430,22 @@ namespace JM.UI.Client.Pages.Transfers
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Save Failed",
-                        result.Message ?? "An error occurred while saving the transfer.");
+                    var message = result.Message ?? "An error occurred while saving the transfer.";
+
+                    // Stock availability is a data problem the user has to fix (lower the
+                    // qty), so it gets a blocking dialog instead of a toast that scrolls
+                    // away. The API prefixes this message with "Insufficient available stock".
+                    if (message.Contains("Insufficient available stock", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await dialogService.Alert(
+                            message,
+                            "Save Failed",
+                            new AlertOptions { OkButtonText = "Cancel" });
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Save Failed", message);
+                    }
                 }
             }
             catch (Exception ex)
