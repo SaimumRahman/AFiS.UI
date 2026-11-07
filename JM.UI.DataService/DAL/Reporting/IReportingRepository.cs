@@ -7,7 +7,19 @@ namespace JM.UI.DataService.DAL.Reporting
     {
         Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate);
-        Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(
+            int? storeId,
+            int? customerId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string? searchTerm = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? brandId = null,
+            string? barcode = null,
+            decimal? minAmount = null,
+            decimal? maxAmount = null);
         Task<IEnumerable<ExchangeReportDTO>> GetExchangeReport(int? storeId, DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<GroupWiseSalesSummaryDTO>> GetGroupWiseSalesSummary(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<GroupWiseSalesDetailsDTO>> GetGroupWiseSalesDetails(DateTime? fromDate, DateTime? toDate);

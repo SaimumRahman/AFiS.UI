@@ -76,7 +76,19 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
-        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate)
+        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(
+            int? storeId,
+            int? customerId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string? searchTerm = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? brandId = null,
+            string? barcode = null,
+            decimal? minAmount = null,
+            decimal? maxAmount = null)
         {
             try
             {
@@ -90,6 +102,22 @@ namespace JM.UI.DataService.DAL.Reporting
                     query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
                 if (toDate.HasValue)
                     query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                    query.Add($"searchTerm={Uri.EscapeDataString(searchTerm.Trim())}");
+                if (groupId.HasValue && groupId.Value > 0)
+                    query.Add($"groupId={groupId.Value}");
+                if (subGroupId.HasValue && subGroupId.Value > 0)
+                    query.Add($"subGroupId={subGroupId.Value}");
+                if (designId.HasValue && designId.Value > 0)
+                    query.Add($"designId={designId.Value}");
+                if (brandId.HasValue && brandId.Value > 0)
+                    query.Add($"brandId={brandId.Value}");
+                if (!string.IsNullOrWhiteSpace(barcode))
+                    query.Add($"barcode={Uri.EscapeDataString(barcode.Trim())}");
+                if (minAmount.HasValue && minAmount.Value > 0)
+                    query.Add($"minAmount={minAmount.Value}");
+                if (maxAmount.HasValue && maxAmount.Value > 0)
+                    query.Add($"maxAmount={maxAmount.Value}");
                 if (query.Any())
                     url += "?" + string.Join("&", query);
 

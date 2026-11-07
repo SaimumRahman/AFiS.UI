@@ -537,6 +537,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Customer-wise Sales Report",
+                        Path        = "/CustomerSalesReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Customer-wise Sales Report",
+                        Description = "Customer purchase overview with drill-down: lifetime spend, invoice history, itemized lines, receipt preview and print/PDF",
+                        Tags        = new[] { "sales", "report", "customer", "summary", "receipt", "drill-down" }
+                    },
+                    new Example
+                    {
                         Name        = "Customer-wise Sales Detail",
                         Path        = "/CustomerWiseSalesDetailReport",
                         Icon        = "\ue8f9",

@@ -1,0 +1,532 @@
+@page "/CustomerSalesReport"
+@using System.Linq
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits CustomerSalesReportComponent
+
+<PageTitle>Customer-wise Sales Report</PageTitle>
+
+<style>
+    .csr-kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--rz-text-secondary-color);
+    }
+
+    .csr-kpi-value {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--rz-primary);
+    }
+
+    .csr-kpi-line {
+        font-size: 12px;
+        color: var(--rz-text-secondary-color);
+        margin-top: 2px;
+    }
+
+    .csr-kpi-line b { color: var(--rz-text-color); }
+
+    .csr-cust-name { font-size: 17px; font-weight: 800; }
+
+    .csr-cust-meta {
+        font-size: 12px;
+        color: var(--rz-text-secondary-color);
+        line-height: 1.7;
+    }
+
+    .csr-cust-meta b { color: var(--rz-text-color); }
+
+    .csr-amt-pos { color: var(--rz-success); font-weight: 600; }
+    .csr-amt-neg { color: var(--rz-danger); font-weight: 600; }
+    .csr-mono { font-family: Consolas, "Courier New", monospace; font-size: 11px; }
+    .csr-muted { color: var(--rz-text-secondary-color); font-size: 11px; }
+
+    .csr-kpi > div {
+        border-right: 1px solid var(--rz-base-300);
+        padding-right: 14px;
+    }
+
+    .csr-kpi > div:last-child { border-right: none; }
+
+    @@media (max-width: 1100px) {
+        .csr-kpi > div { border-right: none; border-bottom: 1px solid var(--rz-base-300); padding-bottom: 10px; }
+    }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+
+    @* ══════════════════════ FILTER BAR ══════════════════════ *@
+    <RadzenCard class="mb-3 no-print">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="groups" Style="font-size: 1.8rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H5" class="mb-0">Customer-wise Sales Report</RadzenText>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Light" Click="@LoadReport" Disabled="@IsLoading" />
+                <RadzenButton Icon="picture_as_pdf"
+                              Text="@(IsPrinting ? "Generating PDF…" : "Export PDF")"
+                              ButtonStyle="ButtonStyle.Dark"
+                              Click="@PrintReport"
+                              Disabled="@(IsPrinting || IsLoading)" />
+            </RadzenStack>
+        </RadzenStack>
+
+        <RadzenRow Gap="0.75rem" class="mt-3">
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Search (customer / mobile / invoice / id)" />
+                    <RadzenTextBox @bind-Value="SearchText"
+                                   Placeholder="Type and press Enter…"
+                                   @onkeydown="OnSearchKeyDown"
+                                   Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Group" />
+                    <RadzenDropDown Data="@Groups"
+                                    @bind-Value="SelectedGroupId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Groups"
+                                    AllowClear="true"
+                                    Filterable="true"
+                                    Change="@(args => OnGroupChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Product" />
+                    <RadzenDropDown Data="@FilteredSubGroups"
+                                    @bind-Value="SelectedSubGroupId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Products"
+                                    AllowClear="true"
+                                    Filterable="true"
+                                    Change="@(args => OnSubGroupChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Sub Product" />
+                    <RadzenDropDown Data="@FilteredDesigns"
+                                    @bind-Value="SelectedDesignId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Sub Products"
+                                    AllowClear="true"
+                                    Filterable="true"
+                                    Change="@(args => OnDesignChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Brand" />
+                    <RadzenDropDown Data="@Brands"
+                                    @bind-Value="SelectedBrandId"
+                                    TextProperty="BrandName"
+                                    ValueProperty="BrandId"
+                                    Placeholder="All Brands"
+                                    AllowClear="true"
+                                    Filterable="true"
+                                    Change="@(args => OnBrandChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.75rem" class="mt-2">
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Branch" />
+                    <RadzenDropDown Data="@Stores"
+                                    @bind-Value="SelectedStoreId"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    Placeholder="All Branches"
+                                    AllowClear="true"
+                                    Filterable="true"
+                                    Change="@(args => OnStoreChanged(args as int?))"
+                                    Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Barcode / Ref. No" />
+                    <RadzenTextBox @bind-Value="FilterBarcode"
+                                   Placeholder="Barcode…"
+                                   @onkeydown="OnSearchKeyDown"
+                                   Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="From Date" />
+                    <RadzenDatePicker @bind-Value="FromDate"
+                                      DateFormat="dd/MM/yyyy"
+                                      Placeholder="From"
+                                      AllowClear="true"
+                                      Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="To Date" />
+                    <RadzenDatePicker @bind-Value="ToDate"
+                                      DateFormat="dd/MM/yyyy"
+                                      Placeholder="To"
+                                      AllowClear="true"
+                                      Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Min Amount" />
+                    <RadzenNumeric @bind-Value="MinAmount"
+                                   TValue="decimal?"
+                                   Min="0"
+                                   Format="0.00"
+                                   Placeholder="0.00"
+                                   Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Max Amount" />
+                    <RadzenNumeric @bind-Value="MaxAmount"
+                                   TValue="decimal?"
+                                   Min="0"
+                                   Format="0.00"
+                                   Placeholder="Any"
+                                   Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="mt-3">
+            <RadzenButton Icon="search" Text="Search" ButtonStyle="ButtonStyle.Primary" Click="@LoadReport" Disabled="@IsLoading" />
+            <RadzenButton Icon="restart_alt" Text="Reset" ButtonStyle="ButtonStyle.Light" Click="@ResetFilters" />
+        </RadzenStack>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenCard>
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </RadzenCard>
+    }
+    else if (!IsDetailView)
+    {
+        @* ══════════════════════ VIEW 1: CUSTOMER SUMMARY ══════════════════════ *@
+        <RadzenCard class="mb-3">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
+                <RadzenColumn Size="12" SizeMD="7">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge Text="Customer List" BadgeStyle="BadgeStyle.Dark" />
+                        <RadzenText TextStyle="TextStyle.H6" class="mb-0">Customer Purchase Overview</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="mb-0 no-print">
+                            Click a customer ID, name or mobile for details
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="5" class="no-print">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                        <RadzenButton Icon="refresh" Text="Refresh Data" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@LoadReport" />
+                        <RadzenButton Icon="picture_as_pdf"
+                                      Text="@(IsPrinting ? "Generating…" : "Export PDF")"
+                                      ButtonStyle="ButtonStyle.Dark"
+                                      Size="ButtonSize.Small"
+                                      Click="@PrintReport"
+                                      Disabled="@IsPrinting" />
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenDataGrid Data="@Summaries"
+                            TItem="CustomerSalesSummaryRow"
+                            AllowSorting="true"
+                            AllowPaging="true"
+                            AllowColumnResize="true"
+                            AllowAlternatingRows="true"
+                            PageSize="15"
+                            PageSizeOptions="@(new int[] { 10, 15, 25, 50, 100 })"
+                            ShowPagingSummary="true"
+                            PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                            Density="Density.Compact"
+                            GridLines="DataGridGridLines.Both"
+                            EmptyText="No customer sales found for the selected filters.">
+                <Columns>
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="CustomerId" Title="Customer ID" Width="120px">
+                        <Template Context="row">
+                            <RadzenButton Text="@row.DisplayCode"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenCustomer(row))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="CustomerName" Title="Customer Name" Width="260px">
+                        <Template Context="row">
+                            <RadzenStack Gap="0">
+                                <RadzenButton Text="@row.DisplayName"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => OpenCustomer(row))" />
+                                <span class="csr-muted">@Dash(row.PrimaryBranch)</span>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="CustomerPhone" Title="Mobile No" Width="140px">
+                        <Template Context="row">
+                            <RadzenButton Text="@row.DisplayPhone"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenCustomer(row))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="MembershipType" Title="Status / Tier" Width="130px" TextAlign="TextAlign.Center" Filterable="false">
+                        <Template Context="row">
+                            <RadzenBadge Text="@row.DisplayTier" BadgeStyle="@TierBadge(row.DisplayTier)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="InvoiceCount" Title="Invoices" Width="100px" TextAlign="TextAlign.Center" />
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="TotalPurchase" Title="Total Purchase Amount" Width="180px" TextAlign="TextAlign.Right">
+                        <Template Context="row">
+                            <span style="font-weight:700;">৳@Money(row.TotalPurchase)</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Property="LastPurchaseDate" Title="Last Purchase Date" Width="150px" TextAlign="TextAlign.Right">
+                        <Template Context="row">
+                            @(row.LastPurchaseDate.HasValue ? FmtDate(row.LastPurchaseDate.Value) : "-")
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerSalesSummaryRow" Title="Action" Width="110px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                        <Template Context="row">
+                            <RadzenButton Icon="arrow_forward" Text="View"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenCustomer(row))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+
+                <FooterTemplate>
+                    <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            Total Records: <strong>@CustomerCount</strong> &nbsp;|&nbsp;
+                            Invoices: <strong>@TotalInvoiceCount</strong>
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            Grand Total: <strong style="color: var(--rz-primary); font-size: 15px;">৳@Money(GrandTotal)</strong>
+                        </RadzenText>
+                    </RadzenRow>
+                </FooterTemplate>
+            </RadzenDataGrid>
+        </RadzenCard>
+    }
+    else
+    {
+        @* ══════════════════════ VIEW 2: CUSTOMER DRILL-DOWN ══════════════════════ *@
+        <RadzenCard class="mb-3 no-print">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                <RadzenButton Icon="arrow_back" Text="Back to Customer Overview List"
+                              ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Click="@CloseDetail" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Customer Profile &amp; Audit View</RadzenText>
+                    <RadzenButton Icon="picture_as_pdf"
+                                  Text="@(IsPrinting ? "Generating…" : "Export Statement PDF")"
+                                  ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                  Click="@PrintReport"
+                                  Disabled="@IsPrinting" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        @* ── KPI header ── *@
+        <RadzenCard class="mb-3">
+            <RadzenRow Gap="1rem" class="csr-kpi">
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <span class="csr-cust-name">@(SelectedCustomer!.DisplayName)</span>
+                            <RadzenBadge Text="@(SelectedCustomer!.DisplayTier)" BadgeStyle="@TierBadge(SelectedCustomer!.DisplayTier)" />
+                        </RadzenStack>
+                        <div class="csr-cust-meta">
+                            <div>ID: <b class="csr-mono">@(SelectedCustomer!.DisplayCode)</b></div>
+                            <div>Mobile: <b class="csr-mono">@(SelectedCustomer!.DisplayPhone)</b></div>
+                            <div>Primary Branch: <b>@(Dash(SelectedCustomer!.PrimaryBranch))</b></div>
+                        </div>
+                    </RadzenStack>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <div class="csr-kpi-label">Total Lifetime Spent</div>
+                    <div class="csr-kpi-value">৳@Money(DetailTotalSpent)</div>
+                    <div class="csr-kpi-line">Net after discounts &amp; campaigns</div>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <div class="csr-kpi-label">Purchase Metrics</div>
+                    <div class="csr-kpi-line" style="font-size:15px;">
+                        <b>@DetailInvoiceCount Invoices</b>
+                        <span class="csr-muted">/</span>
+                        <span style="color: var(--rz-success); font-weight:600;">Avg ৳@Money(DetailAvgInvoice)</span>
+                    </div>
+                    <div class="csr-kpi-line">
+                        Purchase Frequency: <b>@DetailFrequency.ToString("N1") orders / month</b>
+                    </div>
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="3">
+                    <div class="csr-kpi-label">Recency &amp; Loyalty</div>
+                    <div class="csr-kpi-line">
+                        Last Invoice: <b>@(DetailLastDate.HasValue ? FmtDate(DetailLastDate.Value) : "N/A")</b>
+                    </div>
+                    <div class="csr-kpi-line">
+                        Loyalty Points Earned: <b style="color: var(--rz-info);">@DetailLoyaltyPoints.ToString("N0") pts</b>
+                    </div>
+                    <RadzenBadge Text="@($"{DetailInvoiceCount} purchase(s) on record")" BadgeStyle="BadgeStyle.Success" class="mt-1" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        @* ── Itemized purchase history ── *@
+        <RadzenCard class="mb-3">
+            <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
+                <RadzenColumn Size="12" SizeMD="7">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="receipt_long" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" class="mb-0">Complete Itemized Purchase &amp; Exchange History</RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="5">
+                    <RadzenText TextStyle="TextStyle.Caption" class="mb-0" TextAlign="TextAlign.Right">
+                        Detailed invoice breakdown matching cashier logs
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenDataGrid Data="@CustomerLines"
+                            TItem="CustomerWiseSalesDetailDTO"
+                            AllowSorting="true"
+                            AllowPaging="true"
+                            AllowColumnResize="true"
+                            AllowAlternatingRows="true"
+                            PageSize="20"
+                            PageSizeOptions="@(new int[] { 20, 50, 100 })"
+                            ShowPagingSummary="true"
+                            PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                            Density="Density.Compact"
+                            GridLines="DataGridGridLines.Both"
+                            EmptyText="No purchase lines for this customer.">
+                <Columns>
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="SaleDate" Title="Sale DT" Width="160px">
+                        <Template Context="row">
+                            <span class="csr-mono">@FmtDateTime(row.SaleDate)</span>
+                            <div class="csr-muted">@Dash(row.StoreName)</div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="InvoiceNo" Title="Invoice No" Width="150px">
+                        <Template Context="row">
+                            <span class="csr-mono">@Dash(row.InvoiceNo)</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="ItemName" Title="Barcode &amp; Item Description" Width="300px">
+                        <Template Context="row">
+                            <div class="csr-mono">@Dash(row.Barcode)</div>
+                            <div style="font-weight:600;">@Dash(row.ItemName)</div>
+                            <div class="csr-muted">
+                                @Dash(row.GroupName) / @Dash(row.SubGroupName) / @Dash(row.DesignName)
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="Quantity" Title="Quantity" Width="110px" TextAlign="TextAlign.Right">
+                        <Template Context="row">@FmtQty(row.Quantity, row.UnitName)</Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="Rate" Title="Rate" Width="100px" TextAlign="TextAlign.Right">
+                        <Template Context="row">@Money(row.Rate)</Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="GrossAmount" Title="Gross Amt" Width="110px" TextAlign="TextAlign.Right">
+                        <Template Context="row">@Money(row.GrossAmount)</Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="LineDiscount" Title="Discount" Width="100px" TextAlign="TextAlign.Right">
+                        <Template Context="row">
+                            <span class="csr-amt-neg">@MoneyOrDash(row.LineDiscount)</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="Vat" Title="VAT" Width="90px" TextAlign="TextAlign.Right">
+                        <Template Context="row">@MoneyOrDash(row.Vat)</Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Property="LineNet" Title="Net Amount" Width="120px" TextAlign="TextAlign.Right" Filterable="false">
+                        <Template Context="row">
+                            <span class="csr-amt-pos">@Money(row.LineNet)</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Exchange / Status" Width="160px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                        <Template Context="row">
+                            <RadzenBadge Text="@LineStatus(row)"
+                                         BadgeStyle="@(LineIsSpecial(row) ? BadgeStyle.Warning : BadgeStyle.Success)" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Receipt" Width="90px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
+                        <Template Context="row">
+                            <RadzenButton Icon="visibility" Text="View"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenReceipt(row.InvoiceNo))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+
+                <FooterTemplate>
+                    <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.Body2" class="mb-0">
+                            CUSTOMER SUBTOTAL &nbsp;|&nbsp;
+                            Qty: <strong>@DetailTotalQty.ToString("N2")</strong> &nbsp;|&nbsp;
+                            Gross: <strong>৳@Money(DetailTotalGross)</strong> &nbsp;|&nbsp;
+                            Discount: <strong class="csr-amt-neg">৳@Money(DetailTotalLineDiscount)</strong> &nbsp;|&nbsp;
+                            VAT: <strong>৳@Money(DetailTotalVat)</strong>
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="mb-0">
+                            Net: <strong class="csr-amt-pos" style="font-size:15px;">৳@Money(DetailTotalNet)</strong>
+                        </RadzenText>
+                    </RadzenRow>
+                </FooterTemplate>
+            </RadzenDataGrid>
+        </RadzenCard>
+    }
+</RadzenContent>
