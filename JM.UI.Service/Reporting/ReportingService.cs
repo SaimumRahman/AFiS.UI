@@ -56,6 +56,11 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<PurchaseDetailDTO>> GetPurchaseDetail(DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetPurchaseDetail(fromDate, toDate);
 
+        public async Task<IEnumerable<SalesComparisonDTO>> GetSalesComparison(
+            DateTime? fromDate, DateTime? toDate, string? groupBy = "day", string? storeIds = null)
+            => await _repositoryUnitOfWork.ReportingRepository.GetSalesComparison(
+                fromDate, toDate, groupBy, storeIds);
+
         public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
             DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)
             => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseDetailed(

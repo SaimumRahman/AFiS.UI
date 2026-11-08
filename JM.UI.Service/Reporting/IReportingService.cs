@@ -26,6 +26,8 @@ namespace JM.UI.Service.Reporting
         Task<IEnumerable<InvoiceWiseSaleSummaryDTO>> GetInvoiceWiseSaleSummary(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<PayTypeWiseSalesDetailsDTO>> GetPayTypeWiseSalesDetails(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<PurchaseDetailDTO>> GetPurchaseDetail(DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<SalesComparisonDTO>> GetSalesComparison(
+            DateTime? fromDate, DateTime? toDate, string? groupBy = "day", string? storeIds = null);
         Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
             DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null);
         Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate);

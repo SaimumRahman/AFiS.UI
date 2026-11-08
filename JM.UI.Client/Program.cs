@@ -61,6 +61,7 @@ builder.Services.AddScoped<InvoiceWiseSaleSummaryReportService>();
 builder.Services.AddScoped<PayTypeWiseSalesDetailsReportService>();
 builder.Services.AddScoped<PurchaseDetailReportService>();
 builder.Services.AddScoped<SalesmanWiseDetailedReportService>();
+builder.Services.AddScoped<SalesComparisonReportService>();
 builder.Services.AddScoped<SalesmanWiseSummaryReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();
