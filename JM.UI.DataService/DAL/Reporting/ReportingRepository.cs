@@ -299,7 +299,8 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
-        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(DateTime? fromDate, DateTime? toDate)
+        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
+            DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)
         {
             try
             {
@@ -309,6 +310,10 @@ namespace JM.UI.DataService.DAL.Reporting
                     query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
                 if (toDate.HasValue)
                     query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (storeId.HasValue && storeId.Value > 0)
+                    query.Add($"storeId={storeId.Value}");
+                if (!string.IsNullOrWhiteSpace(salesmanName))
+                    query.Add($"salesmanName={Uri.EscapeDataString(salesmanName)}");
                 if (query.Any())
                     url += "?" + string.Join("&", query);
 
