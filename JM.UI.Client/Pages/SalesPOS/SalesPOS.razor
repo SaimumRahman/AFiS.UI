@@ -620,9 +620,12 @@
             <div class="pos-card sidebar-section">
                 <div class="pos-card-title" style="color:#c62828">Customer</div>
                 @* Customer is now mandatory for every sale / draft / booking. *@
-                <div style="font-size:0.68rem;color:#c62828;margin-bottom:4px">
-                    Required — a customer must be selected
-                </div>
+                @if (SelectedCustomer == null)
+                {
+                    <div style="font-size:0.68rem;color:#c62828;margin-bottom:4px">
+                        Required — a customer must be selected
+                    </div>
+                }
                 @if (SelectedCustomer != null)
                 {
                     <div class="customer-profile">
