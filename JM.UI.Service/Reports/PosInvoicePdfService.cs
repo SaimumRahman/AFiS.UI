@@ -61,8 +61,8 @@ public class PosInvoicePdfService
                     ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, sale.IsBooking == true);
                     ComposeInfo(col, sale, servedBy);
                     ComposeItems(col, sale);
-                    ComposeTotals(col, sale, paymentTypeNames);
                     ComposePayments(col, sale, paymentTypeNames);
+                    ComposeTotals(col, sale, paymentTypeNames);
                     ComposeTerms(col, terms);
                     ComposeFooter(col);
                 });
@@ -233,6 +233,36 @@ public class PosInvoicePdfService
                 row.ConstantItem(62).AlignRight().Text($"{(p.PaidAmount ?? 0):N2}").FontSize(7.5f);
             });
         }
+
+        // Cash tendered / change returned (only when recorded).
+        var tendered = sale.CashTendered ?? 0;
+        var balance = sale.BalanceReturned ?? 0;
+        if (tendered > 0)
+        {
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text("Cash Tendered").FontSize(7.5f);
+                row.ConstantItem(62).AlignRight().Text($"{tendered:N2}").FontSize(7.5f);
+            });
+        }
+        if (balance > 0)
+        {
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text("Balance (returned)").FontSize(7.5f);
+                row.ConstantItem(62).AlignRight().Text($"{balance:N2}").FontSize(7.5f);
+            });
+        }
+
+        // Total paid line at the end of the payment block.
+        var totalPaid = sale.TotalPaid > 0 ? sale.TotalPaid : payments.Sum(p => p.PaidAmount ?? 0);
+        col.Item().PaddingTop(1).Row(row =>
+        {
+            row.RelativeItem().Text("Total Paid").FontSize(7.5f).Bold();
+            row.ConstantItem(62).AlignRight().Text($"{totalPaid:N2}").FontSize(7.5f).Bold();
+        });
+
+        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Black);
     }
 
     private static void ComposeTerms(ColumnDescriptor col, string terms)

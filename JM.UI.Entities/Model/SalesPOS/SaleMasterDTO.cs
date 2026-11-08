@@ -46,6 +46,8 @@ namespace JM.UI.Entities.Model.SalesPOS
         // API-aligned fields
         public decimal TotalBill { get; set; }
         public decimal TotalDiscount { get; set; }
+        public decimal? CashTendered { get; set; }
+        public decimal? BalanceReturned { get; set; }
         public decimal TotalPaid { get; set; }
         public decimal TotalDue { get; set; }
         public decimal? TotalVat { get; set; }
