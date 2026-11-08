@@ -12,9 +12,12 @@ namespace JM.UI.Entities.Model.Discount
         public DateTime EndDate { get; set; }
         public bool IsActive { get; set; }
 
-        /// <summary>Store the campaign is valid for (mirrors DiscountManagerDetails.StoreId).</summary>
+        /// <summary>Primary store (first selected store) — kept for backward compatibility.</summary>
         public int? StoreId { get; set; }
+        /// <summary>Comma-joined store names the campaign is valid for (one detail row per store).</summary>
         public string? StoreName { get; set; }
+        /// <summary>Ids of every store the campaign is valid for (derived from its detail rows).</summary>
+        public List<int> StoreIds { get; set; } = new();
 
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }

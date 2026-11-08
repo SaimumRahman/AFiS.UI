@@ -25,8 +25,22 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
     protected List<DiscountTypeDTO> DiscountTypes { get; set; } = new();
     protected List<StoreDTO> Stores { get; set; } = new();
 
-    // Store the campaign discount is valid for (mandatory - one store per campaign)
-    protected int? SelectedStoreId { get; set; }
+    // Stores the campaign discount is valid for (mandatory - one or more stores)
+    protected List<int> SelectedStoreIds { get; set; } = new();
+    protected bool AllStoresSelected
+    {
+        get => _allStoresSelected;
+        set
+        {
+            _allStoresSelected = value;
+            if (value)
+                SelectedStoreIds = Stores.Select(s => s.Id).ToList();
+            else
+                SelectedStoreIds = new();
+            UpdateCampaignDetails();
+        }
+    }
+    private bool _allStoresSelected = false;
 
     // Grid display items
     protected List<DiscountGridItem> GridItems { get; set; } = new();
@@ -115,8 +129,18 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 Campaign = _serviceUnitOfWork.DiscountManagerService.CreateNew();
             }
 
-            // Resolve the store this campaign is scoped to (all details carry the same store)
-            SelectedStoreId = Campaign.DiscountDetails?.FirstOrDefault(d => d.StoreId.HasValue)?.StoreId ?? Campaign.StoreId;
+            // Resolve the stores this campaign is scoped to (details may span multiple stores)
+            if (Campaign.StoreIds != null && Campaign.StoreIds.Count > 0)
+                SelectedStoreIds = Campaign.StoreIds.ToList();
+            else
+                SelectedStoreIds = (Campaign.DiscountDetails ?? new List<DiscountManagerDetailsDTO>())
+                    .Where(d => d.StoreId.HasValue && d.StoreId.Value > 0)
+                    .Select(d => d.StoreId!.Value)
+                    .Distinct()
+                    .ToList();
+            if (!SelectedStoreIds.Any() && Campaign.StoreId.HasValue && Campaign.StoreId.Value > 0)
+                SelectedStoreIds.Add(Campaign.StoreId.Value);
+            _allStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
 
             await BuildGridItemsAsync();
         }
@@ -210,8 +234,18 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         SelectedCampaignId = campaignId;
         Id = campaign.Id;
 
-        // Sync the campaign's store (every detail row carries the same store)
-        SelectedStoreId = campaign.DiscountDetails?.FirstOrDefault(d => d.StoreId.HasValue)?.StoreId ?? campaign.StoreId;
+        // Sync the campaign's stores (details may span multiple stores)
+        if (campaign.StoreIds != null && campaign.StoreIds.Count > 0)
+            SelectedStoreIds = campaign.StoreIds.ToList();
+        else
+            SelectedStoreIds = (campaign.DiscountDetails ?? new List<DiscountManagerDetailsDTO>())
+                .Where(d => d.StoreId.HasValue && d.StoreId.Value > 0)
+                .Select(d => d.StoreId!.Value)
+                .Distinct()
+                .ToList();
+        if (!SelectedStoreIds.Any() && campaign.StoreId.HasValue && campaign.StoreId.Value > 0)
+            SelectedStoreIds.Add(campaign.StoreId.Value);
+        AllStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
 
         // Reset filters
         SelectedGroupId = null;
@@ -397,14 +431,14 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
             SearchText = "";
             UpdateCampaignDetails();
         }
-        else if (!SelectedStoreId.HasValue)
+        else if (SelectedStoreIds.Count == 0)
         {
             notificationService.Notify(NotificationSeverity.Warning, "Store required",
-                "⚠ Select the campaign store before scanning products.");
+                "⚠ Select at least one store before scanning products.");
         }
         else
         {
-            var apiItem = await _serviceUnitOfWork.TransferService.SearchByBarcodeExact(SearchText.Trim(), SelectedStoreId.Value);
+            var apiItem = await _serviceUnitOfWork.TransferService.SearchByBarcodeExact(SearchText.Trim(), SelectedStoreIds.First());
             if (apiItem != null)
             {
                 var gridItem = new DiscountGridItem
@@ -435,38 +469,45 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
 
     private void UpdateCampaignDetails()
     {
-        var storeName = SelectedStoreId.HasValue
-            ? Stores.FirstOrDefault(s => s.Id == SelectedStoreId.Value)?.Name
-            : null;
+        var selectedStoreNames = Stores
+            .Where(s => SelectedStoreIds.Contains(s.Id))
+            .Select(s => s.Name)
+            .ToList();
+        var storeNameJoined = selectedStoreNames.Count > 0 ? string.Join(", ", selectedStoreNames) : null;
 
-        // The campaign is valid for exactly one store, so every detail row carries it.
-        Campaign.StoreId = SelectedStoreId;
-        Campaign.StoreName = storeName;
+        // Backward-compatible primary store (first selected).
+        Campaign.StoreId = SelectedStoreIds.FirstOrDefault();
+        Campaign.StoreName = storeNameJoined;
+        Campaign.StoreIds = SelectedStoreIds.ToList();
 
-        Campaign.DiscountDetails = GridItems
-            .Where(x => x.Selected && x.DiscountValue > 0)
-            .Select(gi => new DiscountManagerDetailsDTO
+        // Fan out: one detail row per (item x selected store) so the same discount
+        // applies to every selected store. POS already filters by StoreId.
+        Campaign.DiscountDetails = (
+            from gi in GridItems.Where(x => x.Selected && x.DiscountValue > 0)
+            from storeId in SelectedStoreIds
+            let storeName = Stores.FirstOrDefault(s => s.Id == storeId)?.Name
+            select new DiscountManagerDetailsDTO
             {
                 ItemId = gi.Item.Id,
                 ItemName = gi.Item.Name,
-                StoreId = SelectedStoreId,
+                StoreId = storeId,
                 StoreName = storeName,
                 DiscountValue = gi.DiscountValue,
                 DiscountTypeId = gi.DiscountTypeId,
                 DiscountTypeName = gi.DiscountTypeName,
                 CurrentSalePrice = gi.CurrentSalePrice,
                 CreatedDate = Campaign.CreatedDate == default ? DateTime.Now : Campaign.CreatedDate
-            })
-            .ToList();
+            }
+        ).ToList();
         StateHasChanged();
     }
 
     protected async Task Save()
     {
-        if (!SelectedStoreId.HasValue)
+        if (SelectedStoreIds.Count == 0)
         {
             notificationService.Notify(NotificationSeverity.Warning, "Validation",
-                "Please select the store for which this campaign discount will be valid.");
+                "Please select at least one store for which this campaign discount will be valid.");
             return;
         }
 
@@ -509,6 +550,12 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         }
     }
 
+    protected void OnStoresChanged(object? value)
+    {
+        _allStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
+        UpdateCampaignDetails();
+    }
+
     protected void Cancel()
     {
         NavigationManager.NavigateTo("/DiscountManagerList");
@@ -519,7 +566,8 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         BulkDiscountValue = 0;
         SearchText = "";
         SelectedCampaignId = null;
-        SelectedStoreId = null;
+        SelectedStoreIds = new();
+        AllStoresSelected = false;
         SelectedGroupId = null;
         SelectedSubGroupId = null;
         SelectedDesignId = null;
