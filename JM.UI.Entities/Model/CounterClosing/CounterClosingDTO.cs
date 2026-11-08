@@ -93,9 +93,19 @@ namespace JM.UI.Entities.Model.CounterClosing
         public decimal CashOut { get; set; }
         public decimal ExpectedCash { get; set; }
 
+        public decimal AllIncome { get; set; }
+        public decimal CashIncome { get; set; }
+        public decimal BankPosAmount { get; set; }
+        public decimal MfsAmount { get; set; }
+        public decimal CashExpense { get; set; }
+        public decimal SupplierCashOut { get; set; }
+        public decimal ClosingBalance { get; set; }
+
         public int CashTransactionCount { get; set; }
         public decimal NonCashTotal { get; set; }
         public int PendingCount { get; set; }
+        public int PendingDraftCount { get; set; }
+        public int UnpostedExpenseCount { get; set; }
 
         public List<CounterPaymentSummaryDTO> PaymentSummary { get; set; } = new();
         public List<CounterPaymentSummaryDTO> CashOutSummary { get; set; } = new();
@@ -122,6 +132,13 @@ namespace JM.UI.Entities.Model.CounterClosing
         public decimal ExpectedCash { get; set; }
         public decimal ActualCash { get; set; }
         public decimal Difference { get; set; }
+
+        public decimal AllIncome { get; set; }
+        public decimal BankPosAmount { get; set; }
+        public decimal MfsAmount { get; set; }
+        public decimal CashExpense { get; set; }
+        public decimal SupplierCashOut { get; set; }
+        public bool IsAutoClosed { get; set; }
 
         public string? Note { get; set; }
         public int ClosedBy { get; set; }
