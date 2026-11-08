@@ -249,7 +249,13 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(name => preferredOrder.TryGetValue(name, out var index) ? index : int.MaxValue)
             .ThenBy(name => name, StringComparer.OrdinalIgnoreCase)
-            .Select(name => new StockLedgerStoreGroup { StoreName = name })
+            .Select(name => new StockLedgerStoreGroup
+            {
+                StoreName = name,
+                StoreId = rows.FirstOrDefault(r =>
+                    string.Equals((r.StoreName ?? string.Empty).Trim(), name,
+                                  StringComparison.OrdinalIgnoreCase))?.StoreId ?? 0
+            })
             .ToList();
 
         PivotRows = rows
@@ -269,6 +275,34 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
                     DesignName = FirstValue(group, r => r.DesignName),
                     BrandName = FirstValue(group, r => r.BrandName)
                 };
+
+                // Active campaigns are resolved per store row by the API; an item
+                // can carry the same campaign in several branches, so dedupe on
+                // campaign id + store before showing them.
+                row.Campaigns = group
+                    .Where(r => r.CampaignId.HasValue && r.CampaignId.Value > 0)
+                    .GroupBy(r => new
+                    {
+                        Id = r.CampaignId!.Value,
+                        Store = r.CampaignStoreId ?? 0
+                    })
+                    .Select(g =>
+                    {
+                        var c = g.First();
+                        return new StockLedgerCampaign
+                        {
+                            CampaignId = g.Key.Id,
+                            Name = c.CampaignName ?? string.Empty,
+                            DiscountValue = c.CampaignDiscountValue ?? 0m,
+                            DiscountTypeId = c.CampaignDiscountTypeId ?? 1,
+                            StartDate = c.CampaignStartDate ?? DateTime.MinValue,
+                            EndDate = c.CampaignEndDate ?? DateTime.MinValue,
+                            StoreId = c.CampaignStoreId
+                        };
+                    })
+                    .OrderBy(c => c.IsBranchSpecific)
+                    .ThenBy(c => c.EndDate)
+                    .ToList();
 
                 foreach (var storeRows in group.GroupBy(
                              r => (r.StoreName ?? string.Empty).Trim(),

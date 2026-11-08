@@ -21,6 +21,20 @@
         line-height: 1.3;
     }
 
+    /* Active campaign caption, shown directly under the item name. */
+    .sl-item-campaign {
+        display: inline-block;
+        margin-top: 3px;
+        padding: 1px 7px;
+        border-radius: 3px;
+        background: #f8d7da;
+        color: #842029;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: normal;
+        line-height: 1.35;
+    }
+
     /* Column band headers */
     .sl-band {
         display: block;
@@ -212,6 +226,10 @@
                                       Frozen="true">
                     <Template Context="row">
                         <div class="sl-item-name">@row.ItemName</div>
+                        @if (row.HasCampaign)
+                        {
+                            <div><span class="sl-item-campaign">🏷️ @row.CampaignText</span></div>
+                        }
                         @if (row.HasMeta)
                         {
                             <div class="sl-item-meta">@row.MetaText</div>
@@ -265,12 +283,15 @@
                     </RadzenDataGridColumn>
                 }
 
-                @* Grand total across every branch. *@
+                @* Grand total across every branch — pinned to the right edge so it stays
+                   visible while the branch bands are scrolled. *@
                 <RadzenDataGridColumn TItem="StockLedgerPivotRow"
                                       Title="Grand Total"
                                       Width="340px"
                                       Sortable="false"
-                                      Filterable="false">
+                                      Filterable="false"
+                                      Frozen="true"
+                                      FrozenPosition="Radzen.FrozenColumnPosition.Right">
                     <HeaderTemplate>
                         <div class="sl-band sl-band-total">Grand Total</div>
                     </HeaderTemplate>

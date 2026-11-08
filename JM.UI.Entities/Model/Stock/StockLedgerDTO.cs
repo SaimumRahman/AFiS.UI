@@ -24,5 +24,18 @@ public class StockLedgerDTO
     // Item sale price (shown in the pivoted branch table).
     public decimal SalePrice { get; set; }
 
+    // Active campaign for this item/store at query time. All null when there is
+    // no running campaign.
+    public int? CampaignId { get; set; }
+    public string? CampaignName { get; set; }
+    public decimal? CampaignDiscountValue { get; set; }
+    public int? CampaignDiscountTypeId { get; set; }
+    public DateTime? CampaignStartDate { get; set; }
+    public DateTime? CampaignEndDate { get; set; }
+    public int? CampaignStoreId { get; set; }
+
+    // Store identity of this row (branch names are not unique identifiers).
+    public int StoreId { get; set; }
+
     public DateTime LastTransactionDate { get; set; }
 }
