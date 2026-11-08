@@ -104,6 +104,12 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Direction" Width="150px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@DirectionStyle(item)" Text="@DirectionLabel(item)" />
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Actions" Width="400px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="item">
                         @if (!item.IsComplete)
