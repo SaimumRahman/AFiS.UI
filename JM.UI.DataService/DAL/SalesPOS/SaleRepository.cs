@@ -518,14 +518,17 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term, int? storeId = null)
         {
             try
             {
                 _logger.LogInformation("Searching products: {Term}", term);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/search-products?term={Uri.EscapeDataString(term)}");
+                var url = $"api/SalePOS/search-products?term={Uri.EscapeDataString(term)}";
+                if (storeId.HasValue && storeId.Value > 0)
+                    url += $"&storeId={storeId.Value}";
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();

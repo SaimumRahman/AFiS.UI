@@ -150,9 +150,9 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
 
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term, int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term);
+            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term, storeId);
         }
 
         public async Task<decimal?> GetItemVat(int itemId)

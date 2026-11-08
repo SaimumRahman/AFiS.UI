@@ -769,7 +769,10 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task OpenProductSearch()
         {
             var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
-                new Dictionary<string, object>(),
+                new Dictionary<string, object>
+                {
+                    { "StoreId", Sale.StoreId }
+                },
                 new DialogOptions { Width = "1000px", Height = "700px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
@@ -780,7 +783,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task OpenProductSearchWithTerm(string term)
         {
             var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
-                new Dictionary<string, object> { { "Barcode", term } },
+                new Dictionary<string, object> { { "Barcode", term }, { "StoreId", Sale.StoreId } },
                 new DialogOptions { Width = "700px", Height = "550px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
