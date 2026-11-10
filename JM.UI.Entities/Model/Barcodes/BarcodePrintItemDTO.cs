@@ -23,6 +23,14 @@ namespace JM.UI.Entities.Model.Barcodes
         public string UnitName { get; set; } = string.Empty;
         public string BrandName { get; set; } = string.Empty;
         public string ReturnRefNo { get; set; } = string.Empty;
+
+        /// <summary>
+        /// True when the item belongs to a fabric group. Group names in the database are
+        /// plural ("FABRICS"), and GroupId is the numeric group id, so the match is a
+        /// case-insensitive Contains over both rather than an equality test.
+        /// </summary>
+        public bool IsFabric => $"{GroupId} {GroupName}".ToUpperInvariant().Contains("FABRIC");
+
         public string DisplayLabel => $"{BarcodeValue}  —  {ProductName} ({GroupName})";
     }
 }

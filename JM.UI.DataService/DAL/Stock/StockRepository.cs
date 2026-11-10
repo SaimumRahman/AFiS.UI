@@ -54,4 +54,33 @@ public class StockRepository : BaseRepository, IStockRepository
             throw;
         }
     }
+
+    public async Task<ItemStatementDTO> GetItemStatement(
+        string baseBarcode, DateTime? fromDate, DateTime? toDate)
+    {
+        try
+        {
+            var httpClient = GetAuthenticatedClient("MainApi");
+
+            var queryParams = new List<string>();
+            if (!string.IsNullOrWhiteSpace(baseBarcode)) queryParams.Add($"baseBarcode={Uri.EscapeDataString(baseBarcode)}");
+            if (fromDate.HasValue) queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+            if (toDate.HasValue) queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+
+            var url = "Stock/item-statement";
+            if (queryParams.Any())
+                url += "?" + string.Join("&", queryParams);
+
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<ItemStatementDTO>();
+            return result ?? new ItemStatementDTO();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching item statement");
+            throw;
+        }
+    }
 }

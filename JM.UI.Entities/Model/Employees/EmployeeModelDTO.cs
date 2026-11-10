@@ -63,5 +63,6 @@ namespace JM.UI.Entities.Model.Employees
         public bool IsUserCreated { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public bool LockoutEnabled { get; set; }
     }
 }

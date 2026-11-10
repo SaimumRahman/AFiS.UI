@@ -29,7 +29,15 @@
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StockQuantity" Title="Stock"/>
-                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StoreName" Title="Store" />
+                <RadzenDataGridColumn TItem="ProductSearchDTO" Property="StoreName" Title="Store">
+                    <Template Context="p">
+                        <span>@p.StoreName</span>
+                        @if (p.IsOtherStore)
+                        {
+                            <span style="margin-left:4px; font-size:10px; background:#fff3e0; color:#e65100; padding:1px 4px; border-radius:3px;">Other branch</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="ProductSearchDTO" Width="90px" Sortable="false" Filterable="false">
                     <Template Context="p">
                         <RadzenButton Text="Add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Success"
@@ -51,6 +59,7 @@
 
 @code {
     [Parameter] public string Barcode { get; set; } = "";
+    [Parameter] public int? StoreId { get; set; }
 
     string SearchTerm { get; set; } = "";
     bool IsLoading;
@@ -78,7 +87,7 @@
 
         try
         {
-            SearchResults = (await ServiceUnitOfWork.SaleService.SearchProducts(SearchTerm)).ToList();
+            SearchResults = (await ServiceUnitOfWork.SaleService.SearchProducts(SearchTerm, StoreId)).ToList();
         }
         catch
         {

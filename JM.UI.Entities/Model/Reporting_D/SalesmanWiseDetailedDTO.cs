@@ -9,6 +9,8 @@ namespace JM.UI.Entities.Model.Reporting_D
         public string InvoiceNo { get; set; } = string.Empty;
         public DateTime SaleDate { get; set; }
         public string Remarks { get; set; } = string.Empty;
+        public int StoreId { get; set; }
+        public string StoreName { get; set; } = string.Empty;
         public string ItemCode { get; set; } = string.Empty;
         public string ItemName { get; set; } = string.Empty;
         public decimal Quantity { get; set; }

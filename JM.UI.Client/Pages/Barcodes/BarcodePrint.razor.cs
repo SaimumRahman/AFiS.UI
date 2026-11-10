@@ -301,10 +301,7 @@ public partial class BarcodePrintComponent : PosComponentBase
 
             foreach (var barcode in barcodes)
             {
-                decimal qty = barcode.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true
-                    ? PrintConfig.FabricRepeatCount
-                    : 1;
-                AddOrUpdatePrintItem(barcode, qty);
+                AddOrUpdatePrintItem(barcode, ResolveDefaultPrintQty(barcode));
             }
 
             notificationService.Notify(NotificationSeverity.Info, "Barcodes Loaded",
@@ -348,6 +345,40 @@ public partial class BarcodePrintComponent : PosComponentBase
     }
 
     // ── Print Item Helpers ───────────────────────────────────────
+
+    /// <summary>
+    /// Default label count for a fabric item whose unit is a length (MTR / YDS) rather
+    /// than a countable piece. Piece items print one label per purchased unit instead.
+    /// </summary>
+    protected const decimal FabricDefaultQty = 6;
+
+    /// <summary>
+    /// Units that mean "one label per unit purchased". Covers the abbreviations a user
+    /// may type when the unit master is extended (Box / Boxes / Bxs …).
+    /// </summary>
+    private static readonly string[] PieceUnitCodes =
+    {
+        "PCS", "PC", "PIECE", "PIECES",
+        "BOX", "BOXES", "BX", "BXS",
+        "PKT", "PKTS"
+    };
+
+    private static bool IsPieceUnit(string? unitName) =>
+        PieceUnitCodes.Contains((unitName ?? string.Empty).Trim().ToUpperInvariant());
+
+    /// <summary>
+    /// Print quantity applied when barcodes are loaded from a purchase:
+    /// piece items (PCS / Box) print one label per purchased unit, fabric sold by
+    /// length prints <see cref="FabricDefaultQty"/>, everything else prints 1.
+    /// </summary>
+    private static decimal ResolveDefaultPrintQty(BarcodeItemDTO barcode)
+    {
+        if (IsPieceUnit(barcode.UnitName))
+            return barcode.PurchaseQty > 0 ? barcode.PurchaseQty : 1;
+
+        return barcode.IsFabric ? FabricDefaultQty : 1;
+    }
+
     private void AddOrUpdatePrintItem(BarcodeItemDTO barcode, decimal qty)
     {
         var existing = PrintItems.FirstOrDefault(p => p.BarcodeId == barcode.Id);

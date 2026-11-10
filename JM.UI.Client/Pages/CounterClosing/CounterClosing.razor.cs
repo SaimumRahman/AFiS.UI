@@ -31,7 +31,7 @@ namespace JM.UI.Client.Pages.CounterClosing
         protected CounterClosingPreviewDTO? Preview;
         protected decimal? ActualCash;
         protected string? Note;
-        protected List<CashMovementRow> Movements = new();
+        // Cash movements are no longer declared manually - the closing balance is derived.
 
         protected string? SearchText;
 
@@ -48,14 +48,9 @@ namespace JM.UI.Client.Pages.CounterClosing
         protected string? ReopenReason;
         protected bool IsReopening;
 
-        /* ── Totals (client preview only; the server recomputes on submit) ────── */
+        /* ── Totals (server-computed; client never recomputes) ───────────────── */
 
-        protected decimal TotalCashIn => Movements.Where(m => m.Direction == "IN").Sum(m => m.Amount ?? 0);
-        protected decimal TotalCashOut => Movements.Where(m => m.Direction == "OUT").Sum(m => m.Amount ?? 0);
-
-        protected decimal ExpectedCash => Preview == null
-            ? 0
-            : Preview.OpeningCash + Preview.CashSales + TotalCashIn - TotalCashOut;
+        protected decimal ExpectedCash => Preview?.ExpectedCash ?? 0;
 
         protected decimal Difference => Math.Round((ActualCash ?? 0) - ExpectedCash, 2);
 
@@ -108,8 +103,8 @@ namespace JM.UI.Client.Pages.CounterClosing
                 }
                 catch
                 {
-                    // A failed permission probe falls back to the legacy rule.
-                    CanManageCounters = CurrentUserId == 1;
+                    // A failed permission probe means no management access.
+                    CanManageCounters = false;
                 }
 
                 if (localStoreId > 0 && Stores.Any(s => s.Id == localStoreId))
@@ -183,7 +178,6 @@ namespace JM.UI.Client.Pages.CounterClosing
                 Preview = await _serviceUnitOfWork.CounterClosingService
                     .GetPreview(SelectedStoreId.Value, SelectedCounterId.Value, SelectedBusinessDate);
 
-                Movements = new List<CashMovementRow>();
                 ActualCash = null;
                 Note = null;
 
@@ -199,13 +193,6 @@ namespace JM.UI.Client.Pages.CounterClosing
                     // Closed days are read-only: hydrate the stored reconciliation.
                     ActualCash = Preview.ActualCash;
                     Note = Preview.Note;
-                    Movements = (Preview.CashMovements ?? new List<CounterCashMovementDTO>())
-                        .Select(m => new CashMovementRow
-                        {
-                            Direction = m.Direction,
-                            Amount = m.Amount,
-                            Reason = m.Reason
-                        }).ToList();
                 }
             }
             catch (Exception ex)
@@ -238,18 +225,7 @@ namespace JM.UI.Client.Pages.CounterClosing
             }
         }
 
-        /* ── Cash movements ──────────────────────────────────────────────────── */
-
-        protected void AddMovement(string direction)
-        {
-            Movements.Add(new CashMovementRow { Direction = direction, Amount = null });
-        }
-
-        protected void RemoveMovement(CashMovementRow row)
-        {
-            Movements.Remove(row);
-        }
-
+        /* ── (cash movements no longer declared manually) ────────────────────── */
         /* ── Submit ──────────────────────────────────────────────────────────── */
 
         protected async Task SubmitClosing()
@@ -285,19 +261,12 @@ namespace JM.UI.Client.Pages.CounterClosing
                 return;
             }
 
-            var missingReason = Movements.FirstOrDefault(m => (m.Amount ?? 0) > 0 && string.IsNullOrWhiteSpace(m.Reason));
-            if (missingReason != null)
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Reason required",
-                    "Every cash in / out movement needs a short reason.", 5000);
-                return;
-            }
-
             var confirm = await dialogService.Confirm(
                 $"Close {Preview.CounterName} for business day {Preview.BusinessDate:dd-MMM-yyyy}?\n\n" +
-                $"Opening: {Preview.OpeningCash:N2} | Cash sales: {Preview.CashSales:N2} | " +
-                $"In: {TotalCashIn:N2} | Out: {TotalCashOut:N2}\n" +
-                $"Expected: {ExpectedCash:N2} | Counted: {ActualCash.Value:N2} | Difference: {Difference:N2}\n\n" +
+                $"Opening: {Preview.OpeningCash:N2} | All income: {Preview.AllIncome:N2}\n" +
+                $"Cash expenses: {Preview.CashExpense:N2} | Supplier cash: {Preview.SupplierCashOut:N2}\n" +
+                $"BankPOS: {Preview.BankPosAmount:N2} | MFS: {Preview.MfsAmount:N2}\n" +
+                $"Closing balance: {ExpectedCash:N2} | Counted: {ActualCash.Value:N2}\n\n" +
                 "No new sale, return or edit will be allowed on this counter for that business day.",
                 "Confirm day-end closing",
                 new ConfirmOptions { OkButtonText = "Close counter", CancelButtonText = "Cancel" });
@@ -319,14 +288,7 @@ namespace JM.UI.Client.Pages.CounterClosing
                     Note = string.IsNullOrWhiteSpace(Note) ? null : Note.Trim(),
                     ClosedBy = CurrentUserId,
                     ClosedByName = CurrentUserName,
-                    CashMovements = Movements
-                        .Where(m => (m.Amount ?? 0) > 0)
-                        .Select(m => new CounterCashMovementDTO
-                        {
-                            Direction = m.Direction,
-                            Amount = m.Amount!.Value,
-                            Reason = m.Reason?.Trim()
-                        }).ToList()
+                    CashMovements = new List<CounterCashMovementDTO>()
                 };
 
                 var result = await _serviceUnitOfWork.CounterClosingService.CloseCounter(dto);
@@ -509,15 +471,6 @@ namespace JM.UI.Client.Pages.CounterClosing
             await LoadHistory();
         }
 
-        protected async Task AddCashInClick()
-        {
-            AddMovement("IN");
-        }
-
-        protected async Task AddCashOutClick()
-        {
-            AddMovement("OUT");
-        }
 
         protected async Task ConfirmReopen()
         {

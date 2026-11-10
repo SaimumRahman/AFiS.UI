@@ -48,26 +48,144 @@
     .sw-label { text-align: right; color: var(--sw-primary-strong); font-weight: 700; }
 
     .sw-empty { text-align: center; color: var(--sw-muted); padding: 2rem; }
+
+    /* Taller header card so the toolbar has breathing room. */
+    .sw-toolbar-card { padding: 1.5rem 1.75rem !important; min-height: 6.25rem; display: flex; align-items: center; }
+    .sw-toolbar-card > .sw-toolbar { flex: 1 1 auto; margin: 0; }
+
+    /* ── Toolbar (title + filters) ─────────────────────────────────────── */
+    .sw-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; }
+    .sw-toolbar-title { display: flex; align-items: center; gap: 0.5rem; flex: 0 1 auto; min-width: 0; }
+    .sw-toolbar-heading { font-size: 1.25rem; font-weight: 600; color: var(--sw-text); white-space: nowrap; }
+
+    .sw-toolbar-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1 1 520px; min-width: 0; }
+
+    .sw-field { flex: 0 0 160px; min-width: 160px; }
+    .sw-field.sw-field-wide { flex: 0 0 190px; min-width: 190px; }
+
+    /* One consistent control box: 40px tall, 14px text, 6px corners. */
+    .sw-toolbar-controls .rz-datepicker-input,
+    .sw-toolbar-controls .rz-dropdown,
+    .sw-toolbar-controls .rz-button {
+        box-sizing: border-box;
+        height: 2.5rem;
+        min-height: 2.5rem;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.875rem;
+        line-height: normal;
+        margin: 0;
+    }
+
+    /* Date inputs: explicit height, centred text, room for the calendar icon. */
+    .sw-toolbar-controls .rz-datepicker-input {
+        display: block;
+        padding: 0 2rem 0 0.65rem;
+        color: var(--rz-text-color, #212121);
+    }
+    .sw-toolbar-controls .rz-datepicker-input::placeholder {
+        color: var(--rz-input-placeholder-color, #9e9e9e);
+        opacity: 1;
+    }
+
+    /* Dropdowns: never clip the label — centre it with flex, not line-height. */
+    .sw-toolbar-controls .rz-dropdown {
+        overflow: visible;
+        padding: 0;
+        color: var(--rz-text-color, #212121);
+    }
+    .sw-toolbar-controls .rz-dropdown .rz-dropdown-label {
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        height: 100%;
+        line-height: 1.25;
+        margin: 0;
+        padding: 0 2rem 0 0.65rem;
+        font-family: inherit;
+        font-size: 0.875rem;
+        color: inherit;
+    }
+    .sw-toolbar-controls .rz-dropdown .rz-dropdown-trigger {
+        inset-block: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        padding-inline-end: 0.4rem;
+    }
+
+    .sw-toolbar-controls .rz-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+        padding: 0 0.9rem;
+    }
+    .sw-toolbar-controls .rz-button .rz-button-text {
+        white-space: nowrap;
+        font-size: 0.875rem;
+        line-height: 1;
+    }
+
+    @@media (max-width: 900px) {
+        .sw-toolbar-title { width: 100%; }
+        .sw-toolbar-heading { white-space: normal; }
+        .sw-toolbar-controls { justify-content: flex-start; flex-basis: 100%; }
+    }
+
+    @@media (max-width: 600px) {
+        .sw-field, .sw-field.sw-field-wide { flex: 1 1 145px; min-width: 145px; }
+        .sw-toolbar-controls { gap: 0.5rem; }
+    }
 </style>
 
 <RadzenContent Container="main" class="p-4">
-    <RadzenCard class="mb-4">
-        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="badge" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.H4" class="mb-0">Salesman-wise Detailed Report</RadzenText>
-                </RadzenStack>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" Style="flex-wrap: wrap;">
-                    <RadzenDatePicker @bind-Value="FromDate" AllowClear="true" Placeholder="From Date" Style="width: 150px" />
-                    <RadzenDatePicker @bind-Value="ToDate" AllowClear="true" Placeholder="To Date" Style="width: 150px" />
-                    <RadzenButton Icon="refresh" Text="Load" ButtonStyle="ButtonStyle.Primary" Click="LoadReport" />
-                    <RadzenButton Icon="print" Text="Print / PDF" ButtonStyle="ButtonStyle.Secondary" Click="PrintReport" IsBusy="@IsPrinting" />
-                </RadzenStack>
-            </RadzenColumn>
-        </RadzenRow>
+    <RadzenCard class="mb-4 sw-toolbar-card">
+        <div class="sw-toolbar">
+            <div class="sw-toolbar-title">
+                <RadzenIcon Icon="badge" Style="font-size: 1.75rem; color: var(--sw-primary);" />
+                <span class="sw-toolbar-heading">Salesman-wise Detailed Report</span>
+            </div>
+
+            <div class="sw-toolbar-controls">
+                <div class="sw-field">
+                    <RadzenDatePicker @bind-Value="FromDate" AllowClear="true" Placeholder="From Date" Style="width: 100%" />
+                </div>
+                <div class="sw-field">
+                    <RadzenDatePicker @bind-Value="ToDate" AllowClear="true" Placeholder="To Date" Style="width: 100%" />
+                </div>
+                <div class="sw-field sw-field-wide">
+                    <RadzenDropDown @bind-Value="SelectedStoreId"
+                                    TValue="int?"
+                                    Data="@Stores"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Branches"
+                                    Change="@OnBranchChanged"
+                                    Style="width: 100%" />
+                </div>
+                <div class="sw-field sw-field-wide">
+                    <RadzenDropDown @bind-Value="SelectedSalesmanId"
+                                    TValue="int?"
+                                    Data="@Employees"
+                                    TextProperty="Name"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    ClearValue="null"
+                                    Placeholder="All Salesmen"
+                                    Change="@OnSalesmanChanged"
+                                    Style="width: 100%" />
+                </div>
+                <RadzenButton Icon="refresh" Text="Load" ButtonStyle="ButtonStyle.Primary" Click="LoadReport" />
+                <RadzenButton Icon="filter_alt_off" Text="Clear" ButtonStyle="ButtonStyle.Light" Click="ClearFilters" />
+                <RadzenButton Icon="download" Text="Download CSV" ButtonStyle="ButtonStyle.Success" Click="ExportCsv" IsBusy="@IsExporting" />
+                <RadzenButton Icon="print" Text="Print / PDF" ButtonStyle="ButtonStyle.Secondary" Click="PrintReport" IsBusy="@IsPrinting" />
+            </div>
+        </div>
     </RadzenCard>
 
     @if (IsLoading)
@@ -82,6 +200,19 @@
                 <div class="address">HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM.</div>
                 <div><span class="title">SALESMAN-WISE DETAILED REPORT</span></div>
                 <div class="range">@DateRangeText</div>
+                @if (!string.IsNullOrWhiteSpace(SelectedStoreName) || !string.IsNullOrWhiteSpace(SelectedSalesmanName))
+                {
+                    <div class="range" style="margin-top:2px;">
+                        @if (!string.IsNullOrWhiteSpace(SelectedStoreName))
+                        {
+                            <span>Branch: @SelectedStoreName</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(SelectedSalesmanName))
+                        {
+                            <span style="margin-left:12px;">Salesman: @SelectedSalesmanName</span>
+                        }
+                    </div>
+                }
             </div>
 
             @if (!Salesmen.Any())

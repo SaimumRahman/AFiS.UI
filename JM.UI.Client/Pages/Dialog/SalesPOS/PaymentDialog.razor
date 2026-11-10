@@ -5,24 +5,41 @@
 @using Radzen.Blazor
 @inject IServiceUnitOfWork _serviceUnitOfWork
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <div style="display:flex;flex-direction:column;gap:10px">
+
+    @if (ExistingPayments != null && ExistingPayments.Any())
+    {
+        <div class="payment-summary" style="background:#f0fdf4;border-radius:6px;padding:8px">
+            <div style="font-size:0.8rem;font-weight:600;margin-bottom:4px;color:#15803d">Previously Paid</div>
+            @foreach (var p in ExistingPayments)
+            {
+                <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:0.75rem">
+                    <span style="color:#666">@GetPaymentTypeName(p.TransactionTypeId)</span>
+                    <span style="font-weight:600">@((p.PaidAmount ?? 0).ToString("N2"))</span>
+                </div>
+            }
+            <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem;border-top:1px solid #bbf7d0;margin-top:4px">
+                <span style="color:#666;font-weight:600">Total Paid</span>
+                <span style="font-weight:700;color:#15803d">@ExistingPayments.Sum(p => p.PaidAmount ?? 0).ToString("N2")</span>
+            </div>
+        </div>
+    }
+
     <div class="payment-summary" style="background:#f0f9ff;border-radius:6px;padding:8px">
         <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem">
             <span style="color:#666">Net Payable</span>
             <span style="font-weight:600">@NetPayable.ToString("N2")</span>
         </div>
-        @if (TempPayments.Any())
-        {
-            <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem;color:#28a745">
-                <span style="color:#666">Paid</span>
-                <span style="font-weight:600">@TempPayments.Sum(p => p.PaidAmount ?? 0).ToString("N2")</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem;color:#dc3545">
-                <span style="color:#666">Due</span>
-                <span style="font-weight:600;font-weight:700">@RemainingAmount.ToString("N2")</span>
-            </div>
-        }
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem">
+            <span style="color:#666">Paid</span>
+            <span style="font-weight:600;color:#28a745">@PaidAmount.ToString("N2")</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.8rem">
+            <span style="color:#666">Remaining</span>
+            <span style="font-weight:700;color:@(RemainingAmount > 0 ? "#dc3545" : "#28a745")">@RemainingAmount.ToString("N2")</span>
+        </div>
     </div>
 
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -51,6 +68,7 @@
             </span>
         }
         <RadzenNumeric @bind-Value="PaymentAmount" Min="0" Style="width:120px" />
+        <RadzenButton Text="Fill Remaining" ButtonStyle="ButtonStyle.Info" ButtonSize="Small" Click="@FillRemaining" Disabled="@(RemainingAmount <= 0)" />
         @if (!IsCash)
         {
             <RadzenTextBox @bind-Value="TransactionNo" Placeholder="Transaction ID" Style="width:150px" />
@@ -58,28 +76,63 @@
         <RadzenButton Text="Add Payment" ButtonStyle="ButtonStyle.Success" ButtonSize="Small" Click="@AddTempPayment" Disabled="@(PaymentAmount <= 0)" />
     </div>
 
-    @if (TempPayments.Any())
+    @* A plain table is used for the payment rows. The previous RadzenDataGrid was bound to a
+       List that was mutated in place, so it kept its cached view and showed no rows even
+       though the totals and the payment counter below updated. *@
+    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;border:1px solid #e5e7eb;border-radius:6px">
+        <thead>
+            <tr style="background:#f8fafc;text-align:left">
+                <th style="padding:6px 8px;width:36px;border-bottom:1px solid #e5e7eb">#</th>
+                <th style="padding:6px 8px;border-bottom:1px solid #e5e7eb">Type</th>
+                <th style="padding:6px 8px;width:110px;text-align:right;border-bottom:1px solid #e5e7eb">Amount</th>
+                <th style="padding:6px 8px;width:150px;border-bottom:1px solid #e5e7eb">Ref</th>
+                <th style="padding:6px 8px;width:44px;border-bottom:1px solid #e5e7eb"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!TempPayments.Any())
+            {
+                <tr>
+                    <td colspan="5" style="padding:10px 8px;color:#9ca3af;text-align:center">
+                        No payment added yet. Enter an amount, choose Cash or a financial account, then press Add Payment.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @for (int i = 0; i < TempPayments.Count; i++)
+                {
+                    var row = TempPayments[i];
+                    var index = i;
+                    <tr style="border-bottom:1px solid #f1f5f9">
+                        <td style="padding:6px 8px;color:#6b7280">@(index + 1)</td>
+                        <td style="padding:6px 8px">@GetPaymentTypeName(row.TransactionTypeId)</td>
+                        <td style="padding:6px 8px;text-align:right;font-weight:600">@((row.PaidAmount ?? 0).ToString("N2"))</td>
+                        <td style="padding:6px 8px;color:#6b7280">@row.TransactionNo</td>
+                        <td style="padding:6px 8px">
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Icon="close" Click="@(() => RemoveTempPayment(index))" />
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+        <tfoot>
+            <tr style="background:#f8fafc">
+                <td colspan="2" style="padding:6px 8px;font-weight:600">Total</td>
+                <td style="padding:6px 8px;text-align:right;font-weight:700">@PaidAmount.ToString("N2")</td>
+                <td colspan="2" style="padding:6px 8px;color:#6b7280">
+                    @TempPayments.Count payment(s)
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+    @if (TempPayments.Any() && RemainingAmount > 0 && !CustomerSelected)
     {
-        <RadzenDataGrid Data="@TempPayments" TItem="PaymentTransactionDTO" ShowPaging="false">
-            <Columns>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Type" Width="220">
-                    <Template Context="p">
-                        @GetPaymentTypeName(p.TransactionTypeId)
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="Amount" Width="100">
-                    <Template Context="p">
-                        @(p.PaidAmount?.ToString("N2") ?? "0.00")
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Property="TransactionNo" Title="Ref" Width="140" />
-                <RadzenDataGridColumn TItem="PaymentTransactionDTO" Title="" Width="50">
-                    <Template Context="p">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" ButtonSize="ExtraSmall" Click="@(() => RemoveTempPayment(p))">X</RadzenButton>
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px;font-size:0.78rem;color:#b45309">
+            A balance of @RemainingAmount.ToString("N2") will remain on this invoice, so a customer must be
+            selected before it can be saved. Select a customer on the POS screen or collect the full amount.
+        </div>
     }
 
     <div style="display:flex;gap:6px;margin-top:8px">
@@ -95,7 +148,9 @@
 
     <div style="display:flex;gap:6px;justify-content:flex-end">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
-        <RadzenButton Text="Confirm Payment" ButtonStyle="ButtonStyle.Primary" Click="@ConfirmPayment" Disabled="@(TempPayments.Count == 0)" />
+        <RadzenButton Text="@($"Confirm Payment ({TempPayments.Count})")" ButtonStyle="ButtonStyle.Primary"
+                      Click="@ConfirmPayment"
+                      Disabled="@(TempPayments.Count == 0 || (RemainingAmount > 0 && !CustomerSelected))" />
     </div>
 </div>
 
@@ -103,6 +158,14 @@
     [Parameter] public decimal NetPayable { get; set; }
     [Parameter] public bool AllowBookingOption { get; set; } = true;
     [Parameter] public bool ShowDeliveredOption { get; set; }
+    [Parameter] public List<PaymentTransactionDTO>? ExistingPayments { get; set; }
+
+    /// <summary>
+    /// True when the POS screen already has a customer selected. A remaining balance (due)
+    /// cannot be saved without one, so the dialog blocks Confirm instead of letting the
+    /// caller reject the sale after the entered payments have been discarded.
+    /// </summary>
+    [Parameter] public bool CustomerSelected { get; set; } = true;
 
     /// <summary>Store of the invoice being paid: financial accounts are scoped to it.</summary>
     [Parameter] public int? StoreId { get; set; }
@@ -111,8 +174,14 @@
     bool IsCash { get; set; } = true;
     int? SelectedFinancialAccountId { get; set; }
     string TransactionNo { get; set; } = "";
+
+    // Never mutated in place: every change replaces the list so the markup above always
+    // re-renders and any grid/binding sees a new reference.
     List<PaymentTransactionDTO> TempPayments { get; set; } = new();
-    decimal RemainingAmount => NetPayable - TempPayments.Sum(p => p.PaidAmount ?? 0);
+
+    decimal PaidAmount => TempPayments.Sum(p => p.PaidAmount ?? 0);
+    decimal RemainingAmount => NetPayable - PaidAmount;
+
     bool IsBookingPayment { get; set; }
     bool IsDelivered { get; set; } = true;
 
@@ -155,18 +224,63 @@
 
     void AddTempPayment()
     {
-        if (PaymentAmount <= 0) return;
-        if (!IsCash && (SelectedFinancialAccountId == null || SelectedFinancialAccountId <= 0)) return;
-        TempPayments.Add(new PaymentTransactionDTO
+        if (PaymentAmount <= 0)
         {
-            TransactionTypeId = IsCash ? 0 : SelectedFinancialAccountId.Value,
-            PaidAmount = Math.Min(PaymentAmount, RemainingAmount > 0 ? RemainingAmount : PaymentAmount),
-            TransactionNo = !IsCash ? TransactionNo : null
-        });
-        IsCash = true;
-        SelectedFinancialAccountId = null;
+            Notify("Enter a payment amount before adding it.");
+            return;
+        }
+
+        if (!IsCash && (SelectedFinancialAccountId == null || SelectedFinancialAccountId <= 0))
+        {
+            Notify("Select a financial account, or tick Cash for a cash payment.");
+            return;
+        }
+
+        int typeId = IsCash ? 0 : SelectedFinancialAccountId!.Value;
+        string? refNo = IsCash ? null : (string.IsNullOrWhiteSpace(TransactionNo) ? null : TransactionNo.Trim());
+
+        if (TempPayments.Any(p => p.TransactionTypeId == typeId
+                                  && string.Equals(p.TransactionNo ?? "", refNo ?? "", StringComparison.OrdinalIgnoreCase)))
+        {
+            Notify("This payment is already in the list. Change the reference or the account to add another one.");
+            return;
+        }
+
+        decimal amount = PaymentAmount;
+        if (RemainingAmount <= 0)
+        {
+            Notify("The invoice is already fully covered by the payments in the list.");
+            return;
+        }
+
+        if (amount > RemainingAmount)
+        {
+            decimal reduced = RemainingAmount;
+            Notify($"Amount reduced to the remaining balance of {reduced:N2}.");
+            amount = reduced;
+        }
+
+        var newRow = new PaymentTransactionDTO
+        {
+            TransactionTypeId = typeId,
+            PaidAmount = amount,
+            TransactionNo = refNo
+        };
+
+        // Replace the list instead of appending to it (see the field comment above).
+        TempPayments = new List<PaymentTransactionDTO>(TempPayments) { newRow };
+
+        // Keep the cash/account choice so consecutive payments need only an amount,
+        // only the amount and reference are reset.
         TransactionNo = "";
-        PaymentAmount = RemainingAmount;
+        PaymentAmount = RemainingAmount > 0 ? RemainingAmount : 0;
+        StateHasChanged();
+    }
+
+    void FillRemaining()
+    {
+        if (RemainingAmount > 0)
+            PaymentAmount = RemainingAmount;
     }
 
     string GetPaymentTypeName(int transactionTypeId)
@@ -181,13 +295,34 @@
             : $"{account.AccountName} · {account.AccountNo}";
     }
 
-    void RemoveTempPayment(PaymentTransactionDTO payment)
+    void RemoveTempPayment(int index)
     {
-        TempPayments.Remove(payment);
+        if (index < 0 || index >= TempPayments.Count) return;
+
+        var remaining = new List<PaymentTransactionDTO>(TempPayments);
+        remaining.RemoveAt(index);
+        TempPayments = remaining;
+
+        if (RemainingAmount > 0 && PaymentAmount <= 0)
+            PaymentAmount = RemainingAmount;
+
+        StateHasChanged();
     }
 
     void ConfirmPayment()
     {
+        if (TempPayments.Count == 0)
+        {
+            Notify("Add at least one payment before confirming.");
+            return;
+        }
+
+        if (RemainingAmount > 0 && !CustomerSelected)
+        {
+            Notify($"A customer is required because {RemainingAmount:N2} would remain unpaid.", NotificationSeverity.Warning);
+            return;
+        }
+
         DialogService.Close(new PaymentResultDTO
         {
             Payments = TempPayments.ToList(),
@@ -199,5 +334,10 @@
     void Cancel()
     {
         DialogService.Close(null);
+    }
+
+    void Notify(string message, NotificationSeverity severity = NotificationSeverity.Warning)
+    {
+        NotificationService.Notify(severity, "Payment", message, 4000);
     }
 }

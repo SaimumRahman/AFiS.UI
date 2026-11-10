@@ -122,7 +122,9 @@
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.4rem" AlignItems="AlignItems.Center">
                                     <RadzenIcon Icon="repeat" />
                                     <RadzenText TextStyle="TextStyle.Caption">
-                                        Fabric Repeat: <strong>@PrintConfig.FabricRepeatCount×</strong>
+                                        @* Fabric sold by length (MTR/YDS) prints this many labels per
+                                           barcode; piece items print the purchased quantity instead. *@
+                                        Fabric Qty: <strong>@FabricDefaultQty×</strong>
                                     </RadzenText>
                                 </RadzenStack>
                             </RadzenStack>
@@ -301,7 +303,7 @@
                         var bc = AllBarcodes.FirstOrDefault(b => b.Id == SelectedBarcodeId);
                         @if (bc != null)
                         {
-                            <RadzenBadge BadgeStyle="@(bc.GroupName == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
+                            <RadzenBadge BadgeStyle="@(bc.IsFabric ? BadgeStyle.Warning : BadgeStyle.Info)"
                                          Text="@bc.GroupName"
                                          Style="font-size:0.85rem;" />
                         }
@@ -396,7 +398,7 @@
                             {
                                 var copyIndex = copy;
                                 var isLastCopy = copyIndex == item.PrintQty;
-                                var isFabric = item.GroupId?.Equals("FABRIC", StringComparison.OrdinalIgnoreCase) == true;
+                                var isFabric = item.IsFabric;
                                 var fields = TemplateFields; // parsed field list from selected template
 
                                 @* Physical label card — layout matches barcode_template.jpeg *@
@@ -569,7 +571,7 @@
                                 </RadzenStack>
                                 <RadzenStack Gap="0.1rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color:var(--rz-text-secondary-color);">Fabric Labels</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.IsFabric).Sum(x => x.PrintQty)</RadzenText>
                                 </RadzenStack>
                             </RadzenStack>
                         </RadzenColumn>
@@ -688,7 +690,7 @@
 
                         <RadzenDataGridColumn TItem="BarcodePrintItemDTO" Property="GroupName" Title="Group" Width="120px">
                             <Template Context="item">
-                                <RadzenBadge BadgeStyle="@(item.GroupId == "FABRIC" ? BadgeStyle.Warning : BadgeStyle.Info)"
+                                <RadzenBadge BadgeStyle="@(item.IsFabric ? BadgeStyle.Warning : BadgeStyle.Info)"
                                              Text="@item.GroupName" />
                             </Template>
                         </RadzenDataGridColumn>
@@ -740,7 +742,7 @@
                                 </RadzenStack>
                                 <RadzenStack Gap="0.1rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Fabric Labels</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.GroupId == "FABRIC").Sum(x => x.PrintQty)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6">@PrintItems.Where(x => x.IsFabric).Sum(x => x.PrintQty)</RadzenText>
                                 </RadzenStack>
                             </RadzenStack>
                         </RadzenColumn>

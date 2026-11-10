@@ -163,11 +163,11 @@
                     <Template Context="employee">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
 
-                            <RadzenToggleButton @bind-Value="@employee.IsActive"
+                            <RadzenToggleButton @bind-Value="@employee.LockoutEnabled"
                                                 ToggleButtonStyle="ButtonStyle.Success"
                                                 ButtonStyle="ButtonStyle.Light"
-                                                Icon="@(employee.IsActive ? "lock_open" : "lock")"
-                                                Text="@(employee.IsActive ? "Active" : "Inactive")"
+                                                Icon="@(employee.LockoutEnabled ? "lock_open" : "lock")"
+                                                Text="@(employee.LockoutEnabled ? "Locked" : "Unlocked")"
                                                 Size="ButtonSize.Small"
                                                 Change="@((value) => ToggleStatus(employee, value))" />
 

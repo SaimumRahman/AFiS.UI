@@ -77,7 +77,7 @@
         @* ── Mode ── *@
         <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:0.78rem;color:#666">Type:</span>
-            <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" />
+           @*  <RadzenButton Text="Return (Refund)" ButtonStyle="@(Mode == "Return" ? ButtonStyle.Primary : ButtonStyle.Secondary)" Click="@(() => { Mode = "Return"; StateHasChanged(); })" /> *@
             <RadzenButton Text="Exchange (Replace)" ButtonStyle="@(Mode == "Exchange" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
                           Disabled="@(BillingTotal <= 0 || IsExchangeBlocked)"
                           Title="@(IsExchangeBlocked ? ExchangeBlockReason : (BillingTotal <= 0 ? "Add products to the cart to use exchange" : ""))"

@@ -21,7 +21,8 @@ public class PosInvoicePdfService
         string companyContact = "",
         string companyVat = "",
         string servedBy = "",
-        string terms = "")
+        string terms = "",
+        IReadOnlyDictionary<int, string>? paymentTypeNames = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -41,6 +42,8 @@ public class PosInvoicePdfService
         }
 
         float heightMm = 120f + (itemCount * 6f) + termsHeightMm;
+        var paymentCount = sale.PaymentTransactions?.Count ?? 0;
+        heightMm += paymentCount * 4f;
 
         var document = Document.Create(container =>
         {
@@ -55,10 +58,11 @@ public class PosInvoicePdfService
 
                 page.Content().Column(col =>
                 {
-                    ComposeHeader(col, companyName, companyAddress, companyContact, companyVat);
+                    ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, sale.IsBooking == true);
                     ComposeInfo(col, sale, servedBy);
                     ComposeItems(col, sale);
-                    ComposeTotals(col, sale);
+                    ComposePayments(col, sale, paymentTypeNames);
+                    ComposeTotals(col, sale, paymentTypeNames);
                     ComposeTerms(col, terms);
                     ComposeFooter(col);
                 });
@@ -75,7 +79,8 @@ public class PosInvoicePdfService
         string companyName,
         string companyAddress,
         string companyContact,
-        string companyVat)
+        string companyVat,
+        bool isBooking = false)
     {
         col.Item().AlignCenter().Text(companyName).Bold().FontSize(13);
         if (!string.IsNullOrWhiteSpace(companyAddress))
@@ -85,7 +90,8 @@ public class PosInvoicePdfService
         if (!string.IsNullOrWhiteSpace(companyVat))
             col.Item().AlignCenter().Text($"VAT Reg No: {companyVat}").FontSize(7.5f);
 
-        col.Item().PaddingTop(2).AlignCenter().Text("SALES INVOICE").Bold().FontSize(10);
+        var invoiceHeading = isBooking ? "BOOKING INVOICE" : "SALES INVOICE";
+        col.Item().PaddingTop(2).AlignCenter().Text(invoiceHeading).Bold().FontSize(10);
         col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Black);
     }
 
@@ -154,7 +160,7 @@ public class PosInvoicePdfService
 
     // ── 4 & 5. Discount / VAT / Net Amount / Net Payable / Paid / Due ─────
 
-    private static void ComposeTotals(ColumnDescriptor col, SaleMasterDTO sale)
+    private static void ComposeTotals(ColumnDescriptor col, SaleMasterDTO sale, IReadOnlyDictionary<int, string>? paymentTypeNames = null)
     {
         var discount = (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0)
                      + (sale.InvoiceDiscount ?? 0);
@@ -199,6 +205,64 @@ public class PosInvoicePdfService
         TotalRow("Net Payable", $"{netAmount:N2}", bold: true);
         TotalRow("Paid Amount", $"{paid:N2}");
         TotalRow("Due Amount", $"{due:N2}", bold: due > 0);
+    }
+
+    // ── 5.5. Payment breakdown (per payment method, like the payment dialog) ──
+    private static void ComposePayments(ColumnDescriptor col, SaleMasterDTO sale, IReadOnlyDictionary<int, string>? paymentTypeNames)
+    {
+        var payments = sale.PaymentTransactions;
+        if (payments == null || payments.Count == 0) return;
+
+        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingTop(2).Text("Payments").Bold().FontSize(8).FontColor(GreyDark);
+
+        foreach (var p in payments)
+        {
+            string name;
+            if (paymentTypeNames != null && paymentTypeNames.TryGetValue(p.TransactionTypeId, out var n) && !string.IsNullOrWhiteSpace(n))
+                name = n;
+            else if (p.TransactionTypeId == 0)
+                name = "Cash";
+            else
+                name = $"Account #{p.TransactionTypeId}";
+
+            var refNo = string.IsNullOrWhiteSpace(p.TransactionNo) ? "" : $" ({p.TransactionNo})";
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"{name}{refNo}").FontSize(7.5f);
+                row.ConstantItem(62).AlignRight().Text($"{(p.PaidAmount ?? 0):N2}").FontSize(7.5f);
+            });
+        }
+
+        // Cash tendered / change returned (only when recorded).
+        var tendered = sale.CashTendered ?? 0;
+        var balance = sale.BalanceReturned ?? 0;
+        if (tendered > 0)
+        {
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text("Cash Tendered").FontSize(7.5f);
+                row.ConstantItem(62).AlignRight().Text($"{tendered:N2}").FontSize(7.5f);
+            });
+        }
+        if (balance > 0)
+        {
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text("Balance (returned)").FontSize(7.5f);
+                row.ConstantItem(62).AlignRight().Text($"{balance:N2}").FontSize(7.5f);
+            });
+        }
+
+        // Total paid line at the end of the payment block.
+        var totalPaid = sale.TotalPaid > 0 ? sale.TotalPaid : payments.Sum(p => p.PaidAmount ?? 0);
+        col.Item().PaddingTop(1).Row(row =>
+        {
+            row.RelativeItem().Text("Total Paid").FontSize(7.5f).Bold();
+            row.ConstantItem(62).AlignRight().Text($"{totalPaid:N2}").FontSize(7.5f).Bold();
+        });
+
+        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Black);
     }
 
     private static void ComposeTerms(ColumnDescriptor col, string terms)

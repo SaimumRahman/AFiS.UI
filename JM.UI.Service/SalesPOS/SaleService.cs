@@ -20,14 +20,14 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSales();
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetDraftSales();
+            return await _repositoryUnitOfWork.SaleRepository.GetDraftSales(storeId);
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetBookingSales();
+            return await _repositoryUnitOfWork.SaleRepository.GetBookingSales(storeId);
         }
 
         public async Task<SaleMasterDTO?> GetSaleById(int id)
@@ -48,7 +48,7 @@ namespace JM.UI.Service.SalesPOS
             }
 
             if (string.IsNullOrEmpty(sale.InvoiceNo))
-                sale.InvoiceNo = await GetNewInvoiceNo();
+                sale.InvoiceNo = await GetNewInvoiceNo(sale.StoreId ?? 0, sale.CreatedDate);
 
             var rawNet = CalculateNetAmount(sale);
             var paisaDiscount = Math.Round(rawNet - Math.Floor(rawNet), 2);
@@ -59,7 +59,8 @@ namespace JM.UI.Service.SalesPOS
 
             // Map to API-aligned fields
             sale.TotalBill = sale.SubTotal;
-            sale.TotalDiscount = (sale.InvoiceDiscount ?? 0) + (sale.CampaignDiscount ?? 0) + (sale.MembershipDiscount ?? 0) + paisaDiscount;
+            // TotalDiscount is already set correctly by the caller (SalesPOS page)
+            // using calculated amounts. Do not recalculate here.
             sale.TotalPaid = sale.PaidAmount ?? 0;
             sale.TotalDue = sale.DueAmount ?? 0;
             sale.TotalVat = sale.VatAmount;
@@ -127,9 +128,9 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.GetSaleByInvoiceNo(invoiceNo);
         }
 
-        public async Task<string> GetNewInvoiceNo()
+        public async Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo();
+            return await _repositoryUnitOfWork.SaleRepository.GetNewInvoiceNo(storeId, saleDate);
         }
 
         public async Task<string> GetNewExchangeInvoiceNo()
@@ -149,9 +150,9 @@ namespace JM.UI.Service.SalesPOS
             return await _repositoryUnitOfWork.SaleRepository.SearchByBarcode(returnRefNo, storeId.Value);
         }
 
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term, int? storeId = null)
         {
-            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term);
+            return await _repositoryUnitOfWork.SaleRepository.SearchProducts(term, storeId);
         }
 
         public async Task<decimal?> GetItemVat(int itemId)

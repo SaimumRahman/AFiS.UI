@@ -45,14 +45,15 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null)
         {
             try
             {
-                _logger.LogInformation("Fetching draft sales");
+                _logger.LogInformation("Fetching draft sales for store {StoreId}", storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/getall-draft");
+                var storeParam = storeId.HasValue ? $"?storeId={storeId}" : "";
+                var response = await httpClient.GetAsync($"api/SalePOS/getall-draft{storeParam}");
                 response.EnsureSuccessStatusCode();
 
                 var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
@@ -70,14 +71,15 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales()
+        public async Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null)
         {
             try
             {
-                _logger.LogInformation("Fetching booking sales");
+                _logger.LogInformation("Fetching booking sales for store {StoreId}", storeId);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/getall-booking");
+                var storeParam = storeId.HasValue ? $"?storeId={storeId}" : "";
+                var response = await httpClient.GetAsync($"api/SalePOS/getall-booking{storeParam}");
                 response.EnsureSuccessStatusCode();
 
                 var sales = await response.Content.ReadFromJsonAsync<List<SaleSummaryDTO>>();
@@ -110,7 +112,20 @@ namespace JM.UI.DataService.DAL.SalesPOS
                     return null;
                 }
 
-                return await response.Content.ReadFromJsonAsync<SaleMasterDTO>();
+                var body = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(body))
+                    return null;
+
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<SaleMasterDTO>(body,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch
+                {
+                    _logger.LogWarning("Sale response was not valid JSON for id {Id}: {Body}", id, body);
+                    return null;
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -439,14 +454,17 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<string> GetNewInvoiceNo()
+        public async Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null)
         {
             try
             {
-                _logger.LogInformation("Requesting new invoice number");
+                _logger.LogInformation("Requesting new invoice number for store {StoreId} date {SaleDate}", storeId, saleDate);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync("api/SalePOS/new-invoice-no");
+                var url = $"api/SalePOS/new-invoice-no/{storeId}";
+                if (saleDate.HasValue)
+                    url += $"?date={saleDate.Value:yyyy-MM-dd}";
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<InvoiceNoResponse>();
@@ -500,14 +518,17 @@ namespace JM.UI.DataService.DAL.SalesPOS
             }
         }
 
-        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term)
+        public async Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term, int? storeId = null)
         {
             try
             {
                 _logger.LogInformation("Searching products: {Term}", term);
 
                 var httpClient = GetAuthenticatedClient("MainApi");
-                var response = await httpClient.GetAsync($"api/SalePOS/search-products?term={Uri.EscapeDataString(term)}");
+                var url = $"api/SalePOS/search-products?term={Uri.EscapeDataString(term)}";
+                if (storeId.HasValue && storeId.Value > 0)
+                    url += $"&storeId={storeId.Value}";
+                var response = await httpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
