@@ -519,6 +519,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Item Statement",
+                        Path        = "/ItemStatement",
+                        Icon        = "\ue8f9",
+                        Title       = "Item Statement",
+                        Description = "Comprehensive item statement: per-size branch matrix of purchases, sales, transfers, returns and adjustments with opening/closing balances",
+                        Tags        = new[] { "item", "statement", "stock", "branch", "matrix", "transaction" }
+                    },
+                    new Example
+                    {
                         Name        = "Profit / Loss",
                         Path        = "/ProfitLossReport",
                         Icon        = "\ue8f9",
@@ -534,6 +543,15 @@ namespace JM.UI.Client.Services
                         Title       = "Booking Report",
                         Description = "Currently booked (not yet delivered) invoices with rate, quantity, gross, discount, paid and due",
                         Tags        = new[] { "booking", "report", "invoice", "due" }
+                    },
+                    new Example
+                    {
+                        Name        = "Customer-wise Sales Report",
+                        Path        = "/CustomerSalesReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Customer-wise Sales Report",
+                        Description = "Customer purchase overview with drill-down: lifetime spend, invoice history, itemized lines, receipt preview and print/PDF",
+                        Tags        = new[] { "sales", "report", "customer", "summary", "receipt", "drill-down" }
                     },
                     new Example
                     {

@@ -19,5 +19,6 @@ namespace JM.UI.Entities.Model.Users
         public DateTime ExpireDate { get; set; }
         public List<Role> Roles { get; set; }
         public int CompanyId { get; set; }
+        public string ErrorMessage { get; set; }
     }
 }

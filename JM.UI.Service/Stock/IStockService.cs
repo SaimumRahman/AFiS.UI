@@ -8,4 +8,7 @@ public interface IStockService
     Task<IEnumerable<StockLedgerDTO>> GetStockLedger(
      DateTime? fromDate, DateTime? toDate, int? itemId, int? storeId,
      int? groupId, int? subGroupId, int? designId, int? brandId);
+
+    Task<ItemStatementDTO> GetItemStatement(
+        string baseBarcode, DateTime? fromDate, DateTime? toDate);
 }

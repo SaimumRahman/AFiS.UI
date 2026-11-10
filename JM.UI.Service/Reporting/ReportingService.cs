@@ -20,8 +20,23 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetBookingReport(storeId, fromDate, toDate);
 
-        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate)
-            => await _repositoryUnitOfWork.ReportingRepository.GetCustomerWiseSalesDetail(storeId, customerId, fromDate, toDate);
+        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(
+            int? storeId,
+            int? customerId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string? searchTerm = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? brandId = null,
+            string? barcode = null,
+            decimal? minAmount = null,
+            decimal? maxAmount = null)
+            => await _repositoryUnitOfWork.ReportingRepository.GetCustomerWiseSalesDetail(
+                storeId, customerId, fromDate, toDate,
+                searchTerm, groupId, subGroupId, designId, brandId,
+                barcode, minAmount, maxAmount);
 
         public async Task<IEnumerable<ExchangeReportDTO>> GetExchangeReport(int? storeId, DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetExchangeReport(storeId, fromDate, toDate);
@@ -41,8 +56,15 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<PurchaseDetailDTO>> GetPurchaseDetail(DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetPurchaseDetail(fromDate, toDate);
 
-        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(DateTime? fromDate, DateTime? toDate)
-            => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseDetailed(fromDate, toDate);
+        public async Task<IEnumerable<SalesComparisonDTO>> GetSalesComparison(
+            DateTime? fromDate, DateTime? toDate, string? groupBy = "day", string? storeIds = null)
+            => await _repositoryUnitOfWork.ReportingRepository.GetSalesComparison(
+                fromDate, toDate, groupBy, storeIds);
+
+        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
+            DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)
+            => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseDetailed(
+                fromDate, toDate, storeId, salesmanName);
 
         public async Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseSummary(fromDate, toDate);

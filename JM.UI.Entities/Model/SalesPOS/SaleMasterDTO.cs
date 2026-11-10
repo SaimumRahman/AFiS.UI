@@ -34,7 +34,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public string? StoreName { get; set; }
         public bool IsActive { get; set; } = true;
         public string? ReturnInvoiceNo { get; set; }
-        public bool IsReturnExchange { get; set; }
+        public bool? IsReturnExchange { get; set; }
         public int? MembershipTypeId { get; set; }
         public string? MembershipTypeName { get; set; }
         public int? DiscountRate { get; set; }
@@ -46,6 +46,8 @@ namespace JM.UI.Entities.Model.SalesPOS
         // API-aligned fields
         public decimal TotalBill { get; set; }
         public decimal TotalDiscount { get; set; }
+        public decimal? CashTendered { get; set; }
+        public decimal? BalanceReturned { get; set; }
         public decimal TotalPaid { get; set; }
         public decimal TotalDue { get; set; }
         public decimal? TotalVat { get; set; }

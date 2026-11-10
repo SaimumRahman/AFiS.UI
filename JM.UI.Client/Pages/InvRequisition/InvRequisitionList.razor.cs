@@ -158,6 +158,35 @@ namespace JM.UI.Client.Pages.InvRequisition
                 ? ""
                 : value.Length <= maxChars ? value : value.Substring(0, maxChars) + "...";
 
+        // Direction is relative to the signed-in user's branch:
+        //  - "Requested by us"  -> our branch is the ToStore (we raised the request)
+        //  - "Requested from us"-> our branch is the FromStore (we must issue the goods)
+        protected string DirectionLabel(InvRequisitionMasterDTO requisition)
+        {
+            if (UserStoreId <= 0) return "-";
+
+            var isTo = requisition.ToStore == UserStoreId;
+            var isFrom = requisition.FromStore == UserStoreId;
+
+            if (isTo && isFrom) return "Internal";
+            if (isTo) return "Requested by us";
+            if (isFrom) return "Requested from us";
+            return "-";
+        }
+
+        protected BadgeStyle DirectionStyle(InvRequisitionMasterDTO requisition)
+        {
+            if (UserStoreId <= 0) return BadgeStyle.Light;
+
+            var isTo = requisition.ToStore == UserStoreId;
+            var isFrom = requisition.FromStore == UserStoreId;
+
+            if (isTo && isFrom) return BadgeStyle.Secondary;
+            if (isTo) return BadgeStyle.Primary;
+            if (isFrom) return BadgeStyle.Warning;
+            return BadgeStyle.Light;
+        }
+
         protected void ShowTooltip(ElementReference elementReference, string text)
         {
             TooltipService.Open(elementReference, text, new TooltipOptions { Position = TooltipPosition.Top });

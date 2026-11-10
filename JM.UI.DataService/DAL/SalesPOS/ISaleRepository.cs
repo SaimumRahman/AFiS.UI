@@ -9,8 +9,8 @@ namespace JM.UI.DataService.DAL.SalesPOS
     public interface ISaleRepository
     {
         Task<IEnumerable<SaleSummaryDTO>> GetSales();
-        Task<IEnumerable<SaleSummaryDTO>> GetDraftSales();
-        Task<IEnumerable<SaleSummaryDTO>> GetBookingSales();
+        Task<IEnumerable<SaleSummaryDTO>> GetDraftSales(int? storeId = null);
+        Task<IEnumerable<SaleSummaryDTO>> GetBookingSales(int? storeId = null);
         Task<SaleMasterDTO?> GetSaleById(int id);
         Task<ResponseResult> SaveSale(SaleMasterDTO sale);
         Task<ResponseResult> SaveDuePayment(int saleMasterId, int storeId, List<PaymentTransactionDTO> payments, int createdBy, bool isDelivered);
@@ -24,10 +24,10 @@ namespace JM.UI.DataService.DAL.SalesPOS
         Task<IEnumerable<SaleSummaryDTO>> SearchInvoices(string term, int? storeId);
         Task<IEnumerable<SaleSummaryDTO>> GetSalesByCustomerId(int customerId);
         Task<SaleMasterDTO?> GetSaleByInvoiceNo(string invoiceNo);
-        Task<string> GetNewInvoiceNo();
+        Task<string> GetNewInvoiceNo(int storeId, DateTime? saleDate = null);
         Task<string> GetNewExchangeInvoiceNo();
         Task<ProductSearchDTO?> SearchByBarcode(string returnRefNo, int storeId);
-        Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term);
+        Task<IEnumerable<ProductSearchDTO>> SearchProducts(string term, int? storeId = null);
 
         /// <summary>VAT (%) configured on the item's group; null when no group/VAT is set.</summary>
         Task<decimal?> GetItemVat(int itemId);

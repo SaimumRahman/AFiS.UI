@@ -1,0 +1,250 @@
+@using System.Linq
+@using JM.UI.Entities.Model.Stock
+@inject DialogService DialogService
+
+<style>
+    .sld-wrap {
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .sld-barcode {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--rz-primary);
+    }
+
+    .sld-name {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .sld-meta {
+        font-size: 12px;
+        color: var(--rz-text-secondary-color);
+    }
+
+    .sld-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px 18px;
+        padding: 14px 0;
+        border-top: 1px dashed var(--rz-base-300);
+        border-bottom: 1px dashed var(--rz-base-300);
+    }
+
+    .sld-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--rz-text-secondary-color);
+    }
+
+    .sld-value {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .sld-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+    }
+
+    .sld-table th,
+    .sld-table td {
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--rz-base-300);
+    }
+
+    .sld-table th {
+        background: var(--rz-base-100);
+        text-align: right;
+        font-weight: 600;
+        font-size: 11.5px;
+        color: var(--rz-text-secondary-color);
+    }
+
+    .sld-table th:first-child {
+        text-align: left;
+    }
+
+    .sld-table td {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .sld-table td:first-child {
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .sld-table tfoot td {
+        background: #fff8e1;
+        color: #856404;
+        font-weight: 700;
+        border-bottom: none;
+    }
+
+    .sld-stock {
+        display: inline-block;
+        min-width: 78px;
+        padding: 3px 10px;
+        border-radius: 4px;
+        background: var(--rz-base-100);
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .sld-stock.neg {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    /* Active campaign block, mirroring the redesigned report mockup. */
+    .sld-campaign {
+        background: #f8d7da;
+        color: #842029;
+        padding: 10px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .sld-campaign + .sld-campaign {
+        margin-top: 8px;
+    }
+
+    .sld-campaign .sld-campaign-title {
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .sld-campaign .sld-campaign-row {
+        display: block;
+    }
+
+    .sld-campaign strong {
+        font-weight: 700;
+    }
+</style>
+
+<RadzenStack Gap="0.5rem" class="sld-wrap">
+    <div class="sld-barcode">@Item.Barcode</div>
+    <div class="sld-name">@Item.ItemName</div>
+    <div class="sld-meta">@(Item.HasMeta ? Item.MetaText : "No classification on record")</div>
+
+    <div class="sld-grid">
+        <div>
+            <span class="sld-label">Sale Price</span>
+            <span class="sld-value">৳ @Item.SalePrice.ToString("N2")</span>
+        </div>
+        <div>
+            <span class="sld-label">Group</span>
+            <span class="sld-value">@Dash(Item.GroupName)</span>
+        </div>
+        <div>
+            <span class="sld-label">Product / Sub Product</span>
+            <span class="sld-value">@Dash(Item.SubGroupName) / @Dash(Item.DesignName)</span>
+        </div>
+        <div>
+            <span class="sld-label">Brand</span>
+            <span class="sld-value">@Dash(Item.BrandName)</span>
+        </div>
+        <div>
+            <span class="sld-label">Total Balance</span>
+            <span class="sld-value">
+                <span class="sld-stock @(Item.TotalClosing < 0 ? "neg" : "")">@Item.TotalClosing.ToString("N2")</span>
+            </span>
+        </div>
+        <div>
+            <span class="sld-label">Balance Value</span>
+            <span class="sld-value">৳ @((Item.TotalClosing * Item.SalePrice).ToString("N2"))</span>
+        </div>
+    </div>
+
+    @if (Item.HasCampaign)
+    {
+        @foreach (var campaign in Item.Campaigns)
+        {
+            <div class="sld-campaign">
+                <div class="sld-campaign-title">🏷️ Active Campaign: @campaign.Name</div>
+                <span class="sld-campaign-row"><strong>Discount:</strong> @campaign.DiscountLabel Off</span>
+                <span class="sld-campaign-row">
+                    <strong>Validity:</strong> @campaign.ValidityText (@campaign.DaysLeftText)
+                </span>
+                @if (campaign.IsBranchSpecific)
+                {
+                    <span class="sld-campaign-row">
+                        <strong>Applies to:</strong> @BranchName(campaign.StoreId!.Value) only
+                    </span>
+                }
+                else
+                {
+                    <span class="sld-campaign-row"><strong>Applies to:</strong> All branches</span>
+                }
+            </div>
+        }
+    }
+
+    <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Branch-wise movement</RadzenText>
+
+    <table class="sld-table">
+        <thead>
+            <tr>
+                <th>Branch</th>
+                <th>Opening</th>
+                <th>Receive</th>
+                <th>Issue</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var store in Stores)
+            {
+                var cell = Item.GetCell(store.StoreName);
+                <tr>
+                    <td>@store.StoreName</td>
+                    <td>@cell.OpeningStock.ToString("N2")</td>
+                    <td>@cell.ReceiveQty.ToString("N2")</td>
+                    <td>@cell.IssueQty.ToString("N2")</td>
+                    <td style="@(cell.ClosingStock < 0 ? "color: var(--rz-danger); font-weight:700;" : "font-weight:700;")">
+                        @cell.ClosingStock.ToString("N2")
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td>Grand Total</td>
+                <td>@Item.TotalOpening.ToString("N2")</td>
+                <td>@Item.TotalReceive.ToString("N2")</td>
+                <td>@Item.TotalIssue.ToString("N2")</td>
+                <td>@Item.TotalClosing.ToString("N2")</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public StockLedgerPivotRow Item { get; set; } = default!;
+    [Parameter] public List<StockLedgerStoreGroup> Stores { get; set; } = new();
+
+    private static string Dash(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+    // Store name for a branch-specific campaign; the dialog only knows the ledger
+    // rows, so fall back to the store id when the branch has no row here.
+    private string BranchName(int storeId)
+        => Stores.FirstOrDefault(s => s.StoreId == storeId)?.StoreName
+           ?? $"Store #{storeId}";
+
+    private void Close() => DialogService.Close();
+}

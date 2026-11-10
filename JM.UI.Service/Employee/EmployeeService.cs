@@ -69,7 +69,8 @@ namespace JM.UI.Service.Employee
                 StoreName = e.StoreName,
                 DesignationName = e.DesignationName,
                 ShiftName = e.ShiftName,
-                IsUserCreated = e.IsUserCreated
+                IsUserCreated = e.IsUserCreated,
+                LockoutEnabled =e.LockoutEnabled
             });
         }
 

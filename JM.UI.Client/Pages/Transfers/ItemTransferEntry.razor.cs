@@ -32,6 +32,12 @@ namespace JM.UI.Client.Pages.Transfers
         protected bool IsFromStoreReadOnly { get; set; } = false;
         protected bool IsDamagedMode { get; set; } = false;
         protected bool IsSystemGroupUser { get; set; } = false;
+
+        /// <summary>
+        /// True when the logged-in user's own store is the Head Office. Loading items
+        /// from a purchase (SystemInvoiceNo) into the preview grid is restricted to it.
+        /// </summary>
+        protected bool IsHeadOfficeUser { get; set; } = false;
         protected int CurrentUserId { get; set; } = 0;
         protected TransferMasterDTO Transfer { get; set; } = new();
         protected List<TransferDetailDTO> TransferDetails { get; set; } = new();
@@ -157,6 +163,13 @@ namespace JM.UI.Client.Pages.Transfers
                              ?? new List<StoreDTO>();
                 Stores = stores;
                 ToStores = stores;
+
+                // Loading items from a purchase invoice is a Head Office function. The
+                // decision is based on the store the user is logged in with, not on the
+                // editable From Store dropdown below.
+                var loggedInStore = stores.FirstOrDefault(s => s.Id == storeId);
+                IsHeadOfficeUser = loggedInStore != null &&
+                                   loggedInStore.Name.Contains("Head Office", StringComparison.OrdinalIgnoreCase);
 
                 if (CurrentUserId == 1)
                 {
@@ -354,6 +367,18 @@ namespace JM.UI.Client.Pages.Transfers
         /// </summary>
         protected async Task LoadFromPurchaseAsync()
         {
+            // Head Office only. The button is hidden elsewhere, but the Enter key and any
+            // future call site still go through here.
+            if (!IsHeadOfficeUser)
+            {
+                notificationService.Notify(
+                    NotificationSeverity.Warning,
+                    "Restricted",
+                    "Loading items from a purchase invoice is only available to the Head Office store.",
+                    duration: 6000);
+                return;
+            }
+
             var invoiceNo = PurchaseInvoiceNo?.Trim();
             if (string.IsNullOrWhiteSpace(invoiceNo)) return;
 
@@ -1405,8 +1430,22 @@ namespace JM.UI.Client.Pages.Transfers
                 }
                 else
                 {
-                    notificationService.Notify(NotificationSeverity.Error, "Save Failed",
-                        result.Message ?? "An error occurred while saving the transfer.");
+                    var message = result.Message ?? "An error occurred while saving the transfer.";
+
+                    // Stock availability is a data problem the user has to fix (lower the
+                    // qty), so it gets a blocking dialog instead of a toast that scrolls
+                    // away. The API prefixes this message with "Insufficient available stock".
+                    if (message.Contains("Insufficient available stock", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await dialogService.Alert(
+                            message,
+                            "Save Failed",
+                            new AlertOptions { OkButtonText = "Cancel" });
+                    }
+                    else
+                    {
+                        notificationService.Notify(NotificationSeverity.Error, "Save Failed", message);
+                    }
                 }
             }
             catch (Exception ex)

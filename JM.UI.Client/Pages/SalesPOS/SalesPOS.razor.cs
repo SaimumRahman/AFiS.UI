@@ -7,6 +7,7 @@ using JM.UI.Entities.Model.Employees;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Entities.Model.MesurementUnits;
 using JM.UI.Entities.Model.SalesPOS;
+using JM.UI.Entities.Model.FinancialAccounts;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.Shift;
@@ -155,6 +156,15 @@ namespace JM.UI.Client.Pages.SalesPOS
         // True while a discount is on the bill and no customer has been picked.
         protected bool IsCustomerRequiredForDiscount => HasDiscountOnBill && SelectedCustomer == null;
 
+        // When the cart contains items from a different store than the user's locked
+        // store, a customer is mandatory so the cross-store sale can be traced.
+        protected bool IsCrossStoreSale =>
+            CartItems.Any() && Sale.StoreId.HasValue && Sale.StoreId.Value > 0
+            && CartItems.First().StoreId.HasValue
+            && CartItems.First().StoreId.Value != Sale.StoreId.Value;
+
+        protected bool IsCustomerRequired => IsCustomerRequiredForDiscount || (IsCrossStoreSale && SelectedCustomer == null);
+
         // Exact payable of the current cart BEFORE the exchange credit is applied.
         // This is the Billing Summary "Net Payable" ceiling an exchange credit is
         // allowed to reach, so it must never include Sale.ExchangeAmount.
@@ -186,6 +196,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
         protected decimal NetPayable => Math.Floor(RawNetPayable);
 
+        protected bool IsSystemGroupUser { get; set; } = false;
+
         protected override async Task OnInitializedAsync()
         {
             NavigationGuard.IsGuardActive = true;
@@ -197,8 +209,33 @@ namespace JM.UI.Client.Pages.SalesPOS
             CurrentUserId = await GetLocalStorageInt("UserId");
             Sale.CreatedBy = CurrentUserId;
             await LoadInvoiceDiscountLimit();
-            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+            await LoadSystemGroupFlag();
+            Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo(Sale.StoreId ?? 0);
             await LoadEmployeesByStore();
+        }
+
+        /// <summary>
+        /// Store filter for the Invoices / Bookings / Draft tabs. A system-group user
+        /// (GroupsRole.IsSystem = 1) gets null, meaning "every store"; everyone else is
+        /// scoped to the store they are signed in at.
+        /// </summary>
+        private int? GetScopeStoreId() => IsSystemGroupUser ? (int?)null : Sale.StoreId;
+
+        // "Admin" in AFiS means a member of any group whose GroupsRole.IsSystem = 1.
+        // Editing an issued invoice (Invoices tab) is restricted to those users.
+        private async Task LoadSystemGroupFlag()
+        {
+            try
+            {
+                IsSystemGroupUser = await _serviceUnitOfWork.UserGroupService
+                    .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+            }
+            catch (Exception ex)
+            {
+                // Never grant the right on a failure — default to hidden.
+                IsSystemGroupUser = false;
+                Console.WriteLine($"[DEBUG] LoadSystemGroupFlag failed: {ex.Message}");
+            }
         }
 
         // Reads the Sales POS invoice discount cap from the group of the signed-in
@@ -338,10 +375,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsInvoicesLoading = true;
-                var userId = await GetLocalStorageInt("UserId");
-                // User id 1 (admin) sees current-day invoices across all stores;
-                // every other user only sees their own store's current-day invoices.
-                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                // A member of any group with GroupsRole.IsSystem = 1 sees every store's
+                // invoices for today; everyone else is limited to their own store.
+                var storeId = GetScopeStoreId();
                 var today = DateTime.Today;
 
                 var all = await _serviceUnitOfWork.SaleService.GetInvoices(today, storeId);
@@ -369,8 +405,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsInvoicesLoading = true;
-                var userId = await GetLocalStorageInt("UserId");
-                var storeId = userId == 1 ? (int?)null : Sale.StoreId;
+                var storeId = GetScopeStoreId();
 
                 var results = await _serviceUnitOfWork.SaleService.SearchInvoices(InvoiceSearchText.Trim(), storeId);
                 Invoices = (results ?? new List<SaleSummaryDTO>()).ToList();
@@ -391,7 +426,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsBookingsLoading = true;
-                var all = await _serviceUnitOfWork.SaleService.GetBookingSales();
+                var all = await _serviceUnitOfWork.SaleService.GetBookingSales(GetScopeStoreId());
                 Bookings = (all ?? new List<SaleSummaryDTO>()).ToList();
             }
             catch (Exception ex)
@@ -410,7 +445,7 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 IsDraftsLoading = true;
-                var all = await _serviceUnitOfWork.SaleService.GetDraftSales();
+                var all = await _serviceUnitOfWork.SaleService.GetDraftSales(GetScopeStoreId());
                 Drafts = (all ?? new List<SaleSummaryDTO>()).ToList();
             }
             catch (Exception ex)
@@ -449,6 +484,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task DownloadInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
+
+            // A draft is not an issued invoice: it has no printable document. This also
+            // covers a draft row that leaks into another list while the draft list is not
+            // the active tab.
+            if (IsDraftMode || invoice.IsDraft == true)
+            {
+                notificationService.Notify(NotificationSeverity.Info, "Draft",
+                    $"Draft {invoice.InvoiceNo} has no invoice to print.", 3500);
+                return;
+            }
+
             try
             {
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
@@ -470,6 +516,17 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task EditInvoice(SaleSummaryDTO invoice)
         {
             if (invoice == null) return;
+
+            // Editing an already-issued invoice is restricted to users in a group with
+            // GroupsRole.IsSystem = 1. Drafts stay editable for everyone, since that is
+            // how a held sale is resumed.
+            if (IsInvoicesMode && !IsSystemGroupUser)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Not Allowed",
+                    "You are not allowed to edit an issued invoice. Please contact an administrator.", 4500);
+                return;
+            }
+
             try
             {
                 bool editingFromDraft = IsDraftMode;
@@ -673,11 +730,10 @@ namespace JM.UI.Client.Pages.SalesPOS
                     detail.UnitPrice = unitPrice.Value;
                 }
                 detail.TotalAmount = CalculateLineTotal(detail);
-                if (SelectedEmployeeId > 0)
-                {
-                    detail.SalesPersonId = SelectedEmployeeId;
-                    detail.SalesPersonName = SelectedEmployeeName;
-                }
+                // Capture the salesman selected at the time this row is added, so a
+                // single sale can contain lines attributed to different salesmen.
+                detail.SalesPersonId = SelectedEmployeeId > 0 ? SelectedEmployeeId : null;
+                detail.SalesPersonName = SelectedEmployeeName;
                 CartItems.Add(detail);
             }
 
@@ -713,7 +769,10 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task OpenProductSearch()
         {
             var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
-                new Dictionary<string, object>(),
+                new Dictionary<string, object>
+                {
+                    { "StoreId", Sale.StoreId }
+                },
                 new DialogOptions { Width = "1000px", Height = "700px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
@@ -724,7 +783,7 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected async Task OpenProductSearchWithTerm(string term)
         {
             var product = await dialogService.OpenAsync<ProductSearchDialog>("Product Search",
-                new Dictionary<string, object> { { "Barcode", term } },
+                new Dictionary<string, object> { { "Barcode", term }, { "StoreId", Sale.StoreId } },
                 new DialogOptions { Width = "700px", Height = "550px" });
             if (product is ProductSearchDTO selected && selected.ItemId > 0)
             {
@@ -1091,11 +1150,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             var emp = Employees.FirstOrDefault(e => e.Id == employeeId);
             SelectedEmployeeName = emp?.Name;
 
-            foreach (var item in CartItems)
-            {
-                item.SalesPersonId = employeeId > 0 ? employeeId : null;
-                item.SalesPersonName = SelectedEmployeeName;
-            }
+            // Each cart row keeps the salesman it was added with, so a single sale
+            // can contain lines attributed to different salesmen. Do NOT overwrite
+            // the existing rows when the dropdown changes.
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -1227,17 +1284,37 @@ namespace JM.UI.Client.Pages.SalesPOS
                 return;
             }
 
-            // A bill carrying a discount must be tied to a customer. This guard runs
-            // before the payment dialog so the cashier is never asked to take payment
-            // and then rejected. The server repeats this check on save.
-            if (IsCustomerRequiredForDiscount)
+            // Customer is now mandatory for every sale (draft / booking too). The
+            // previous conditional checks (discount / cross-store / due) are commented
+            // out below and replaced by this single always-on guard.
+            if (SelectedCustomer == null)
             {
                 await dialogService.Alert(
-                    "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+                    "A customer is required to complete this sale. Please select a customer first.",
                     "Customer Required",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
             }
+
+            // ── (commented out) discount-required guard ──
+            // if (IsCustomerRequiredForDiscount)
+            // {
+            //     await dialogService.Alert(
+            //         "A discount is applied to this bill, so a customer must be selected before finalising. Please select a customer or remove the discount.",
+            //         "Customer Required",
+            //         new AlertOptions { OkButtonText = "OK" });
+            //     return;
+            // }
+
+            // ── (commented out) cross-store guard ──
+            // if (IsCrossStoreSale && SelectedCustomer == null)
+            // {
+            //     await dialogService.Alert(
+            //         "This sale contains items from a different store, so a customer must be selected before finalising. Please select a customer.",
+            //         "Customer Required",
+            //         new AlertOptions { OkButtonText = "OK" });
+            //     return;
+            // }
 
             // Can only finalize a sale when every line in the cart belongs to
             // the same store.
@@ -1254,7 +1331,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                 new Dictionary<string, object>
                 {
                     { "NetPayable", NetPayable },
-                    { "StoreId", Sale.StoreId }
+                    { "StoreId", Sale.StoreId },
+                    { "CustomerSelected", SelectedCustomer != null }
                 });
             if (result is not PaymentResultDTO paymentResult || paymentResult.Payments.Count == 0)
                 return;
@@ -1263,19 +1341,20 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.VatAmount = CalculatedVat;
             Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
             Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+            Sale.TotalDiscount = InvoiceDiscountAmount + CampaignDiscountAmount + MembershipDiscountAmount + PaisaDiscount;
             Sale.NetAmount = NetPayable;
             Sale.PaidAmount = paymentResult.Payments.Sum(p => p.PaidAmount ?? 0);
             Sale.DueAmount = Math.Max(0, Sale.NetAmount - (Sale.PaidAmount ?? 0));
             Sale.PaymentStatus = Sale.DueAmount <= 0 ? "Paid" :
                 (Sale.PaidAmount > 0 ? "Partial" : "Due");
 
-            // ── Validation: a due requires a customer ──
-            if (Sale.DueAmount > 0 && SelectedCustomer == null)
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
-                    "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
-                return;
-            }
+            // ── (commented out) due-requires-customer guard ──
+            // if (Sale.DueAmount > 0 && SelectedCustomer == null)
+            // {
+            //     notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+            //         "Customer is mandatory when the invoice has a due. Please select a customer first.", 4500);
+            //     return;
+            // }
 
             Sale.SaleDetails = CartItems.ToList();
             Sale.PaymentTransactions = paymentResult.Payments.ToList();
@@ -1284,17 +1363,43 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             if (saveResult.IsSuccessStatus)
             {
-                notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
-                    $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
-                await DownloadPosInvoice(Sale);
+                // The server may have overridden the invoice number (BK-… for bookings)
+                // and decides IsBooking from the cart items. Sync the client copy so the
+                // auto-downloaded PDF prints the right heading and number.
+                if (!string.IsNullOrEmpty(saveResult.Id))
+                    Sale.InvoiceNo = saveResult.Id;
+                if (saveResult.Data != null)
+                {
+                    var isBookingStr = saveResult.Data.ToString();
+                    bool parsed = false;
+                    if (!string.IsNullOrEmpty(isBookingStr) && bool.TryParse(isBookingStr, out parsed))
+                        Sale.IsBooking = parsed;
+                }
 
-                // Clear the cart after the invoice has been downloaded and refresh the UI.
+                // A draft is held for later, not issued, so it must never produce a PDF.
+                if (Sale.IsDraft == true)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
+                        $"Draft {Sale.InvoiceNo} saved. No invoice was printed.", 4000);
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Sale Saved",
+                        $"Invoice: {Sale.InvoiceNo}, Amount: {Sale.NetAmount:N2}", 5000);
+                    await DownloadPosInvoice(Sale);
+                }
+
+                // Clear the cart after a successful save and refresh the UI.
                 CartItems.Clear();
                 StateHasChanged();
                 if (CartGrid != null)
                     await CartGrid.Reload();
-                notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
-                    "Invoice downloaded successfully. Cart cleared.", 3500);
+
+                if (Sale.IsDraft != true)
+                {
+                    notificationService.Notify(NotificationSeverity.Info, "Invoice Downloaded",
+                        "Invoice downloaded successfully. Cart cleared.", 3500);
+                }
 
                 await ResetForNewSale();
             }
@@ -1313,6 +1418,23 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 var store = Stores.FirstOrDefault(s => s.Id == sale.StoreId);
 
+                // Resolve payment method display names (0 = Cash, otherwise the financial
+                // account) so the PDF can print the same breakdown shown in the dialog.
+                var paymentTypeNames = new Dictionary<int, string> { { 0, "Cash" } };
+                try
+                {
+                    var accounts = await _serviceUnitOfWork.FinancialAccountsService
+                        .GetFinancialAccountsForDropdown(sale.StoreId);
+                    foreach (var a in accounts ?? new List<FinancialAccountDropdownDTO>())
+                    {
+                        var name = string.IsNullOrWhiteSpace(a.AccountNo)
+                            ? a.AccountName
+                            : $"{a.AccountName} \u00b7 {a.AccountNo}";
+                        paymentTypeNames[a.Id] = name;
+                    }
+                }
+                catch { /* fall back to account ids */ }
+
                 var pdfBytes = PosInvoicePdfService.GeneratePosInvoice(
                     sale,
                     companyName: store?.Name ?? "ASIA FASHION",
@@ -1320,7 +1442,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
                     companyVat: store?.VAT ?? "",
                     servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
-                    terms: store?.TermsOfService ?? "");
+                    terms: store?.TermsOfService ?? "",
+                    paymentTypeNames: paymentTypeNames);
 
                 var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
@@ -1340,6 +1463,15 @@ namespace JM.UI.Client.Pages.SalesPOS
             try
             {
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(booking.SaleMasterId);
+
+                // A booking must be tied to a customer (either the one already on the
+                // booking or the one currently selected on the POS screen).
+                if (sale?.CustomerId == null && SelectedCustomer == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                        "A customer is required for this booking. Please select a customer first.", 4500);
+                    return;
+                }
                 decimal due = sale?.TotalDue ?? booking.TotalDue;
                 if (due <= 0)
                 {
@@ -1348,18 +1480,23 @@ namespace JM.UI.Client.Pages.SalesPOS
                     return;
                 }
 
+                // Payments are stored against the booking's own store, which may differ
+                // from the signed-in user's store for a system-group user.
+                int bookingStoreId = booking.StoreId ?? Sale.StoreId ?? 0;
+
                 var result = await dialogService.OpenAsync<PaymentDialog>("Payment",
                     new Dictionary<string, object>
                     {
                         { "NetPayable", due },
-                        { "StoreId", Sale.StoreId },
+                        { "StoreId", bookingStoreId },
                         { "AllowBookingOption", false },
-                        { "ShowDeliveredOption", true }
+                        { "ShowDeliveredOption", true },
+                        { "ExistingPayments", sale?.PaymentTransactions ?? new List<PaymentTransactionDTO>() }
                     });
 
                 if (result is PaymentResultDTO paymentResult && paymentResult.Payments.Count > 0)
                 {
-                    int storeId = Sale.StoreId ?? 0;
+                    int storeId = bookingStoreId;
                     int userId = await GetLocalStorageInt("UserId");
 
                     var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
@@ -1394,6 +1531,45 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
         }
 
+        // ── Deliver Booking (convert fully-paid booking to sale) ──
+        protected async Task DeliverBooking(SaleSummaryDTO booking)
+        {
+            if (booking == null) return;
+
+            var confirmed = await dialogService.Confirm(
+                $"Deliver booking {booking.InvoiceNo}? Stock will be issued.",
+                "Deliver Booking",
+                new ConfirmOptions { OkButtonText = "Yes, Deliver", CancelButtonText = "No" });
+            if (confirmed != true) return;
+
+            try
+            {
+                // Stock is issued from the booking's own store, not the signed-in user's.
+                int storeId = booking.StoreId ?? Sale.StoreId ?? 0;
+                int userId = await GetLocalStorageInt("UserId");
+
+                var saveResult = await _serviceUnitOfWork.SaleService.SaveDuePayment(
+                    booking.SaleMasterId, storeId, new List<PaymentTransactionDTO>(), userId, true);
+
+                if (saveResult.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Delivered",
+                        $"Invoice {booking.InvoiceNo} converted to sale.", 4000);
+                    await LoadBookings();
+                    StateHasChanged();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", saveResult.Message, 4000);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    $"Error delivering booking: {ex.Message}", 4000);
+            }
+        }
+
         // ── Cancel Booking ──
         protected async Task CancelBooking(SaleSummaryDTO booking)
         {
@@ -1407,7 +1583,8 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             try
             {
-                int storeId = Sale.StoreId ?? 0;
+                // Reversal applies to the booking's own store, not the signed-in user's.
+                int storeId = booking.StoreId ?? Sale.StoreId ?? 0;
                 int userId = await GetLocalStorageInt("UserId");
 
                 var result = await _serviceUnitOfWork.SaleService.CancelBooking(
@@ -1476,6 +1653,14 @@ namespace JM.UI.Client.Pages.SalesPOS
         // ── Hold Draft ──
         protected async Task HoldAsDraft()
         {
+            // Customer is mandatory for drafts too.
+            if (SelectedCustomer == null)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Customer Required",
+                    "A customer is required to save a draft. Please select a customer first.", 4500);
+                return;
+            }
+
             try
             {
                 Sale.SubTotal = SubTotal;
@@ -1489,6 +1674,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 var result = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
                 if (result.IsSuccessStatus)
                 {
+                    // Intentionally no invoice download here: a draft is not an issued sale.
                     notificationService.Notify(NotificationSeverity.Success, "Draft Saved",
                         $"Draft saved as Invoice: {Sale.InvoiceNo}", 4000);
                     await ResetForNewSale();
@@ -1522,7 +1708,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.StoreId = lastStoreId > 0 ? lastStoreId : Stores.FirstOrDefault()?.Id;
                 Sale.ShiftId = lastShiftId > 0 ? lastShiftId : Shifts.FirstOrDefault()?.Id;
                 Sale.CreatedBy = await GetLocalStorageInt("UserId");
-                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo();
+                Sale.InvoiceNo = await _serviceUnitOfWork.SaleService.GetNewInvoiceNo(Sale.StoreId ?? 0);
                 if (CartGrid != null)
                     await CartGrid.Reload();
             }

@@ -108,8 +108,11 @@ namespace JM.UI.DataService.DAL.Users
                 {
                     // Try to read error message from response body
                     var errorResponse = await response.Content.ReadFromJsonAsync<ResponseResult>();
-                    var errorMessage = errorResponse?.Message ?? "Invalid username or password.";
-                    throw new UnauthorizedAccessException(errorMessage);
+                    var errorMessage = errorResponse?.ErrorMessages.FirstOrDefault().Message ?? "Invalid username or password.";
+                    return new AuthenticatedUserResponse
+                    {
+                        ErrorMessage = errorMessage
+                    };
                 }
 
                 // Deserialize response to the correct type

@@ -1,0 +1,193 @@
+@page "/SalesComparisonReport"
+@using JM.UI.Entities.Model.Reporting_D
+@attribute [Authorize]
+@inherits SalesComparisonReportComponent
+
+<PageTitle>Branch Sales Comparison</PageTitle>
+
+<style>
+    .sc-card { background:#fff; border:1px solid #dee2e6; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,.05); padding:20px; margin-bottom:20px; }
+    .sc-title { font-size:1.25rem; font-weight:700; color:#212529; display:flex; align-items:center; gap:.5rem; }
+    .sc-table { width:100%; border-collapse:collapse; white-space:nowrap; font-size:13px; }
+    .sc-table th, .sc-table td { padding:8px 10px; border:1px solid #dee2e6; }
+    .sc-table th { background:#f8f9fa; font-weight:600; text-align:left; }
+    .sc-table .num { text-align:right; font-variant-numeric:tabular-nums; }
+    .sc-table .period { position:sticky; left:0; background:#fff; z-index:2; border-right:2px solid #dee2e6; font-weight:600; }
+    .sc-table thead .period { background:#f8f9fa; }
+    .sc-band { text-align:center; font-weight:700; }
+    .sc-band-branch { background:#e9ecef; }
+    .sc-band-combined { background:#dbeafe; color:#1e3a8a; }
+    .sc-sub { background:#f8f9fa; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#6c7480; }
+    .sc-total { font-weight:600; color:#212529; }
+    .sc-disc { color:#dc3545; }
+    .sc-net { font-weight:700; color:#212529; }
+    .sc-combined { background:#f0f7ff; }
+    .sc-combined-net { background:#dbeafe; color:#1e3a8a; font-weight:700; }
+    .sc-ytd { background:#e9ecef; font-weight:700; }
+    .sc-ytd-combined { background:#dbeafe; color:#1e3a8a; font-weight:700; font-size:1.05em; }
+    .sc-empty { text-align:center; color:#6c7480; padding:2rem; }
+    .sc-branches { display:flex; flex-wrap:wrap; gap:.75rem 1rem; padding:.6rem; background:#f8f9fa; border:1px solid #dee2e6; border-radius:4px; }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+    <!-- Header -->
+    <div class="sc-card">
+        <div class="flex justify-between items-center mb-4">
+            <div class="sc-title">
+                <RadzenIcon Icon="compare_arrows" Style="font-size:1.75rem;color:var(--rz-primary);" />
+                Branch Sales Comparison
+            </div>
+            <RadzenButton Icon="picture_as_pdf" Text="Download Report" ButtonStyle="ButtonStyle.Success"
+                          Click="PrintReport" IsBusy="@IsPrinting" />
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-col md:flex-row gap-4 items-start md:items-end">
+            <!-- Report type toggle -->
+            <div class="flex-shrink-0">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                <div class="flex bg-gray-100 rounded-md p-1 border border-gray-200">
+                    <RadzenButton Text="Date Range" Size="ButtonSize.Small"
+                                  ButtonStyle="@(ReportType == "date" ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                  Click="@(() => ReportType = "date")" />
+                    <RadzenButton Text="Month Range" Size="ButtonSize.Small"
+                                  ButtonStyle="@(ReportType == "month" ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                  Click="@(() => ReportType = "month")" />
+                </div>
+            </div>
+
+            <!-- Date pickers -->
+            @if (ReportType == "date")
+            {
+                <div class="flex gap-3 flex-shrink-0">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <RadzenDatePicker @bind-Value="FromDate" DateFormat="dd/MM/yyyy" Style="width:150px;" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <RadzenDatePicker @bind-Value="ToDate" DateFormat="dd/MM/yyyy" Style="width:150px;" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="flex gap-3 flex-shrink-0">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Month</label>
+                        <RadzenDatePicker @bind-Value="FromDate" ShowDays="false" DateFormat="MMM yyyy" Style="width:150px;" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Month</label>
+                        <RadzenDatePicker @bind-Value="ToDate" ShowDays="false" DateFormat="MMM yyyy" Style="width:150px;" />
+                    </div>
+                </div>
+            }
+
+            <!-- Branches -->
+            <div class="flex-1 w-full">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Branches</label>
+                <div class="sc-branches">
+                    <label class="flex items-center gap-2 cursor-pointer font-semibold text-blue-800">
+                        <RadzenCheckBox Value="@AllStoresSelected"
+                                        Change="@((bool v) => ToggleAllStores(v))"
+                                        Disabled="@(!CanSelectAnyStore)" />
+                        All Branches
+                    </label>
+                    <div class="w-px h-5 bg-gray-300 hidden md:block"></div>
+                    @foreach (var store in Stores)
+                    {
+                        <label class="flex items-center gap-2 cursor-pointer text-gray-700">
+                            <RadzenCheckBox Value="@SelectedStoreIds.Contains(store.Id)"
+                                            Change="@((bool v) => ToggleStore(store.Id, v))"
+                                            Disabled="@(!CanSelectAnyStore)" />
+                            @store.Name
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <!-- Generate -->
+            <div class="flex-shrink-0">
+                <label class="block text-sm font-medium text-transparent mb-1">.</label>
+                <RadzenButton Icon="search" Text="Generate" ButtonStyle="ButtonStyle.Primary"
+                              Click="Generate" IsBusy="@IsLoading" Style="height:38px;" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Table card -->
+    <div class="sc-card">
+        @if (IsLoading)
+        {
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else if (!PivotRows.Any())
+        {
+            <div class="sc-empty">No sales records for the selected filters. Press Generate.</div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="sc-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="period" style="min-width:120px;">Period</th>
+                            @foreach (var store in StoreGroups)
+                            {
+                                <th colspan="3" class="sc-band sc-band-branch border-r-2 border-gray-300">@store.StoreName</th>
+                            }
+                            <th colspan="3" class="sc-band sc-band-combined">Combined Total</th>
+                        </tr>
+                        <tr class="sc-sub">
+                            @foreach (var _ in StoreGroups)
+                            {
+                                <th class="num">Total</th>
+                                <th class="num sc-disc">Disc.</th>
+                                <th class="num sc-total border-r-2 border-gray-300">Net</th>
+                            }
+                            <th class="num sc-combined">Total</th>
+                            <th class="num sc-disc">Disc.</th>
+                            <th class="num sc-combined-net">Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in PivotRows)
+                        {
+                            <tr class="border-b border-gray-100 hover:bg-yellow-50">
+                                <td class="period">@row.PeriodLabel</td>
+                                @foreach (var store in StoreGroups)
+                                {
+                                    var cell = row.GetCell(store.StoreName);
+                                    <td class="num">@cell.Total.ToString("N0")</td>
+                                    <td class="num sc-disc">@cell.Discount.ToString("N0")</td>
+                                    <td class="num sc-total border-r-2 border-gray-200">@cell.Net.ToString("N0")</td>
+                                }
+                                <td class="num sc-combined">@row.CombinedTotal.ToString("N0")</td>
+                                <td class="num sc-disc sc-combined">@row.CombinedDiscount.ToString("N0")</td>
+                                <td class="num sc-combined-net">@row.CombinedNet.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="sc-ytd">
+                            <td class="period">YTD Total</td>
+                            @foreach (var store in StoreGroups)
+                            {
+                                var t = PivotRows.Sum(r => r.GetCell(store.StoreName).Total);
+                                var d = PivotRows.Sum(r => r.GetCell(store.StoreName).Discount);
+                                var n = PivotRows.Sum(r => r.GetCell(store.StoreName).Net);
+                                <td class="num">@t.ToString("N0")</td>
+                                <td class="num sc-disc">@d.ToString("N0")</td>
+                                <td class="num border-r-2 border-gray-300">@n.ToString("N0")</td>
+                            }
+                            <td class="num sc-ytd-combined">@PivotRows.Sum(r => r.CombinedTotal).ToString("N0")</td>
+                            <td class="num sc-disc sc-ytd-combined">@PivotRows.Sum(r => r.CombinedDiscount).ToString("N0")</td>
+                            <td class="num sc-ytd-combined" style="font-size:1.05em;">@PivotRows.Sum(r => r.CombinedNet).ToString("N0")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </div>
+</RadzenContent>

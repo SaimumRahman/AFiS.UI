@@ -15,6 +15,12 @@ namespace JM.UI.Entities.Model.Barcodes
         public string UnitName { get; set; } = string.Empty;
         public string BrandName { get; set; } = string.Empty;
         public string ReturnRefNo { get; set; } = string.Empty;
+
+        /// <summary>Quantity of the purchase line, used as the default label count for piece items.</summary>
+        public decimal PurchaseQty { get; set; }
+
+        public bool IsFabric => $"{GroupId} {GroupName}".ToUpperInvariant().Contains("FABRIC");
+
         public string DisplayLabel => $"{BarcodeValue}  —  {ProductName} ({GroupName})";
     }
 

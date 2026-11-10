@@ -7,14 +7,29 @@ namespace JM.UI.DataService.DAL.Reporting
     {
         Task<IEnumerable<ProfitLossReportDTO>> GetProfitLossReport(int? storeId, DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<BookingReportDTO>> GetBookingReport(int? storeId, DateTime? fromDate, DateTime? toDate);
-        Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(
+            int? storeId,
+            int? customerId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string? searchTerm = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? brandId = null,
+            string? barcode = null,
+            decimal? minAmount = null,
+            decimal? maxAmount = null);
         Task<IEnumerable<ExchangeReportDTO>> GetExchangeReport(int? storeId, DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<GroupWiseSalesSummaryDTO>> GetGroupWiseSalesSummary(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<GroupWiseSalesDetailsDTO>> GetGroupWiseSalesDetails(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<InvoiceWiseSaleSummaryDTO>> GetInvoiceWiseSaleSummary(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<PayTypeWiseSalesDetailsDTO>> GetPayTypeWiseSalesDetails(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<PurchaseDetailDTO>> GetPurchaseDetail(DateTime? fromDate, DateTime? toDate);
-        Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(DateTime? fromDate, DateTime? toDate);
+        Task<IEnumerable<SalesComparisonDTO>> GetSalesComparison(
+            DateTime? fromDate, DateTime? toDate, string? groupBy = "day", string? storeIds = null);
+        Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
+            DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null);
         Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate);
         Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode);
         Task<IEnumerable<GeneralLedgerDTO>> GetGeneralLedger(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode, int? accountId, int? voucherTypeId);

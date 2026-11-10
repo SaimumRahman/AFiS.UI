@@ -421,6 +421,16 @@ namespace JM.UI.Client.Pages.InvRequisition
 
         protected async Task HandleSave()
         {
+            // A requisition must move stock between two different branches. When both
+            // sides are the user's own store the branch can never see or fulfil it.
+            if (Requisition.FromStore.HasValue && Requisition.ToStore.HasValue
+                && Requisition.FromStore.Value == Requisition.ToStore.Value)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Invalid Stores",
+                    "From Store and To Store cannot be the same branch. Please choose the branch you are requesting from.");
+                return;
+            }
+
             try
             {
                 IsProcessing = true;

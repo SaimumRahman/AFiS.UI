@@ -1,0 +1,169 @@
+@page "/ItemStatement"
+@using JM.UI.Entities.Model.Stock
+@attribute [Authorize]
+@inherits ItemStatementComponent
+
+<PageTitle>Item Statement</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-4">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="mb-3">
+            <RadzenIcon Icon="inventory" Style="font-size: 2rem; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H4" class="mb-0">Comprehensive Item Statement</RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption" class="mb-0">Multi-branch matrix view</RadzenText>
+        </RadzenStack>
+
+        <RadzenRow AlignItems="AlignItems.End" Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="From Date" />
+                    <RadzenDatePicker @bind-Value="FromDate" DateFormat="dd/MM/yyyy" Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="To Date" />
+                    <RadzenDatePicker @bind-Value="ToDate" DateFormat="dd/MM/yyyy" Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Base Barcode" />
+                    <RadzenTextBox @bind-Value="BaseBarcode" Placeholder="Enter base barcode (e.g. 05-26042-MD)" Style="width:100%;" />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Icon="search" Text="Search" ButtonStyle="ButtonStyle.Primary" Click="@LoadStatement" Disabled="@IsLoading" />
+                    <RadzenButton Icon="clear" Text="Clear" ButtonStyle="ButtonStyle.Light" Click="@ClearFilters" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenCard>
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </RadzenCard>
+    }
+    else if (Statement != null && Statement.Sizes != null && Statement.Sizes.Count > 0)
+    {
+        @* Item details *@
+        <RadzenCard class="mb-4">
+            <RadzenText TextStyle="TextStyle.H6" class="mb-2">Item Details</RadzenText>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 16px; font-size:13px;">
+                <div><strong>Product Name:</strong> @Dash(Statement.ProductName)</div>
+                <div><strong>Base Barcode:</strong> @Dash(Statement.BaseBarcode)</div>
+                <div><strong>Purchase Date:</strong> @(Statement.PurchaseDate.HasValue ? FmtDate(Statement.PurchaseDate.Value) : "-")</div>
+                <div><strong>By (Entry):</strong> @Dash(Statement.PurchasedBy)</div>
+                <div><strong>Group:</strong> @Dash(Statement.GroupName)</div>
+                <div><strong>Brand:</strong> @Dash(Statement.BrandName)</div>
+                <div><strong>Supplier:</strong> @Dash(Statement.SupplierName)</div>
+                <div><strong>Unit:</strong> @Dash(Statement.UnitName)</div>
+                <div><strong>Purchase Price:</strong> @Money(Statement.PurchasePrice)</div>
+                <div><strong>Sale Price:</strong> @Money(Statement.SalePrice)</div>
+                <div><strong>Color:</strong> @Dash(Statement.ColorName)</div>
+                <div><strong>Country:</strong> @Dash(Statement.OriginName)</div>
+                <div><strong>Catalogue:</strong> @Dash(Statement.CatalogueName)</div>
+            </div>
+        </RadzenCard>
+
+        <div class="mb-3">
+            <RadzenButton Icon="picture_as_pdf"
+                          Text="@(IsPrinting ? "Generating…" : "Download PDF")"
+                          ButtonStyle="ButtonStyle.Success"
+                          Click="@PrintPdf"
+                          Disabled="@IsPrinting" />
+        </div>
+
+        @foreach (var size in Statement.Sizes)
+        {
+            <RadzenCard class="mb-4" Style="padding:0; overflow:hidden;">
+                <div style="padding:12px 16px; border-bottom:1px solid var(--rz-base-300); background:var(--rz-base-100);">
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">
+                        Barcode: @size.Barcode (Size: @size.SizeName)
+                    </RadzenText>
+                </div>
+
+                <RadzenDataGrid Data="@GetTxnRows(size)"
+                                TItem="ItemStatementTxnRow"
+                                AllowSorting="true"
+                                AllowPaging="true"
+                                AllowAlternatingRows="true"
+                                PageSize="25"
+                                PageSizeOptions="@(new int[] { 10, 25, 50, 100 })"
+                                ShowPagingSummary="true"
+                                PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                                Density="Density.Compact"
+                                GridLines="DataGridGridLines.Both">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="ItemStatementTxnRow"
+                                              Property="@nameof(ItemStatementTxnRow.Date)"
+                                              Title="Date"
+                                              Width="110px"
+                                              FormatString="{0:dd-MMM-yyyy}"
+                                              Frozen="true" />
+
+                        <RadzenDataGridColumn TItem="ItemStatementTxnRow"
+                                              Property="@nameof(ItemStatementTxnRow.Description)"
+                                              Title="Description / Reference"
+                                              Width="260px"
+                                              Frozen="true" />
+
+                        @foreach (var branch in size.Branches)
+                        {
+                            <RadzenDataGridColumn TItem="ItemStatementTxnRow"
+                                                  Title="@branch"
+                                                  Width="95px"
+                                                  TextAlign="TextAlign.Center"
+                                                  Sortable="false"
+                                                  Filterable="false">
+                                <Template Context="row">
+                                    @{
+                                        var d = row.BranchDelta.TryGetValue(branch, out var dv) ? dv : 0m;
+                                    }
+                                    @if (row.IsOpening)
+                                    {
+                                        <span style="color:var(--rz-text-secondary-color);">@d.ToString("N2")</span>
+                                    }
+                                    else if (d > 0)
+                                    {
+                                        <span style="color:#27ae60; font-weight:700;">+@d.ToString("N2")</span>
+                                    }
+                                    else if (d < 0)
+                                    {
+                                        <span style="color:#c0392b; font-weight:700;">@d.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:var(--rz-text-secondary-color);">-</span>
+                                    }
+                                </Template>
+                                <FooterTemplate>
+                                    @{
+                                        var cv = size.ClosingByBranch.TryGetValue(branch, out var v) ? v : 0m;
+                                    }
+                                    <span style="font-weight:700;">@cv.ToString("N2")</span>
+                                </FooterTemplate>
+                            </RadzenDataGridColumn>
+                        }
+
+                        <RadzenDataGridColumn TItem="ItemStatementTxnRow"
+                                              Property="@nameof(ItemStatementTxnRow.RunningTotal)"
+                                              Title="Total Stock"
+                                              Width="110px"
+                                              TextAlign="TextAlign.Right"
+                                              FormatString="{0:N2}" />
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenCard>
+        }
+    }
+    else if (Statement != null && (Statement.Sizes == null || Statement.Sizes.Count == 0) && !string.IsNullOrWhiteSpace(BaseBarcode))
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Body1">No stock movements found for the given barcode and date range.</RadzenText>
+        </RadzenCard>
+    }
+</RadzenContent>

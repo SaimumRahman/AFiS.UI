@@ -76,7 +76,19 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
-        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(int? storeId, int? customerId, DateTime? fromDate, DateTime? toDate)
+        public async Task<IEnumerable<CustomerWiseSalesDetailDTO>> GetCustomerWiseSalesDetail(
+            int? storeId,
+            int? customerId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            string? searchTerm = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? brandId = null,
+            string? barcode = null,
+            decimal? minAmount = null,
+            decimal? maxAmount = null)
         {
             try
             {
@@ -90,6 +102,22 @@ namespace JM.UI.DataService.DAL.Reporting
                     query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
                 if (toDate.HasValue)
                     query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                    query.Add($"searchTerm={Uri.EscapeDataString(searchTerm.Trim())}");
+                if (groupId.HasValue && groupId.Value > 0)
+                    query.Add($"groupId={groupId.Value}");
+                if (subGroupId.HasValue && subGroupId.Value > 0)
+                    query.Add($"subGroupId={subGroupId.Value}");
+                if (designId.HasValue && designId.Value > 0)
+                    query.Add($"designId={designId.Value}");
+                if (brandId.HasValue && brandId.Value > 0)
+                    query.Add($"brandId={brandId.Value}");
+                if (!string.IsNullOrWhiteSpace(barcode))
+                    query.Add($"barcode={Uri.EscapeDataString(barcode.Trim())}");
+                if (minAmount.HasValue && minAmount.Value > 0)
+                    query.Add($"minAmount={minAmount.Value}");
+                if (maxAmount.HasValue && maxAmount.Value > 0)
+                    query.Add($"maxAmount={maxAmount.Value}");
                 if (query.Any())
                     url += "?" + string.Join("&", query);
 
@@ -271,7 +299,40 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
-        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(DateTime? fromDate, DateTime? toDate)
+        public async Task<IEnumerable<SalesComparisonDTO>> GetSalesComparison(
+            DateTime? fromDate, DateTime? toDate, string? groupBy = "day", string? storeIds = null)
+        {
+            try
+            {
+                var url = "api/SalesComparison/detail";
+                var query = new List<string>();
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrWhiteSpace(groupBy))
+                    query.Add($"groupBy={Uri.EscapeDataString(groupBy)}");
+                if (!string.IsNullOrWhiteSpace(storeIds))
+                    query.Add($"storeIds={Uri.EscapeDataString(storeIds)}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<SalesComparisonDTO>>();
+                return result ?? new List<SalesComparisonDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sales comparison report");
+                throw new Exception("Failed to fetch sales comparison report: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
+            DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)
         {
             try
             {
@@ -281,6 +342,10 @@ namespace JM.UI.DataService.DAL.Reporting
                     query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
                 if (toDate.HasValue)
                     query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (storeId.HasValue && storeId.Value > 0)
+                    query.Add($"storeId={storeId.Value}");
+                if (!string.IsNullOrWhiteSpace(salesmanName))
+                    query.Add($"salesmanName={Uri.EscapeDataString(salesmanName)}");
                 if (query.Any())
                     url += "?" + string.Join("&", query);
 

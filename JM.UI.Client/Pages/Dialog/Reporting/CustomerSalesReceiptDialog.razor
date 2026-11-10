@@ -1,0 +1,181 @@
+@using System.Linq
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Service.Reports
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject CustomerSalesReportPdfService ReportPdfService
+@inject IJSRuntime JS
+
+<style>
+    .csr-receipt-dialog {
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .csr-receipt-store {
+        text-align: center;
+        font-weight: 800;
+        font-size: 18px;
+        letter-spacing: .04em;
+    }
+
+    .csr-receipt-sub {
+        text-align: center;
+        font-size: 11px;
+        color: var(--rz-text-secondary-color);
+        margin-bottom: 8px;
+    }
+
+    .csr-receipt-meta {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 11px;
+        border-top: 1px dashed var(--rz-base-400);
+        border-bottom: 1px dashed var(--rz-base-400);
+        padding: 8px 0;
+    }
+
+    .csr-receipt-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 2px 0;
+        font-size: 12px;
+    }
+
+    .csr-receipt-total {
+        border-top: 1px solid var(--rz-base-500);
+        margin-top: 6px;
+        padding-top: 6px;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .csr-receipt-foot {
+        text-align: center;
+        font-size: 11px;
+        color: var(--rz-text-secondary-color);
+        margin-top: 10px;
+    }
+
+    .csr-mono {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 11px;
+    }
+</style>
+
+<RadzenStack Gap="0.5rem" class="csr-receipt-dialog">
+    <div class="csr-receipt-store">ASIA FASHION</div>
+    <div class="csr-receipt-sub">
+        @(string.IsNullOrWhiteSpace(Invoice.StoreName) ? "Head Office" : Invoice.StoreName)
+    </div>
+
+    <div class="csr-receipt-meta">
+        <div class="csr-receipt-row">
+            <span>Invoice:</span><b>@Invoice.InvoiceNo</b>
+        </div>
+        <div class="csr-receipt-row">
+            <span>Date:</span><b>@Invoice.SaleDate.ToString("dd-MMM-yyyy hh:mm tt")</b>
+        </div>
+        <div class="csr-receipt-row">
+            <span>Customer:</span><b>@CustomerName</b>
+        </div>
+        <div class="csr-receipt-row">
+            <span>Mobile:</span><b>@CustomerPhone</b>
+        </div>
+        <div class="csr-receipt-row">
+            <span>Status:</span><b>@Invoice.StatusText</b>
+        </div>
+    </div>
+
+    <RadzenDataGrid Data="@Invoice.Lines"
+                    TItem="CustomerWiseSalesDetailDTO"
+                    AllowPaging="false"
+                    AllowSorting="false"
+                    AllowFiltering="false"
+                    Density="Density.Compact"
+                    GridLines="DataGridGridLines.Horizontal">
+        <Columns>
+            <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Item" Width="60%">
+                <Template Context="line">
+                    <div style="font-weight:600;">@line.ItemName</div>
+                    <div class="csr-mono" style="color: var(--rz-text-secondary-color);">@line.Barcode</div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Qty" Width="15%" TextAlign="TextAlign.Right">
+                <Template Context="line">@line.Quantity.ToString("N2") @line.UnitName</Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Rate" Width="15%" TextAlign="TextAlign.Right">
+                <Template Context="line">@line.Rate.ToString("N2")</Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CustomerWiseSalesDetailDTO" Title="Amount" Width="20%" TextAlign="TextAlign.Right">
+                <Template Context="line">@line.LineNet.ToString("N2")</Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <div class="csr-receipt-row">
+        <span>Gross:</span><b>৳@Invoice.Lines.Sum(l => l.GrossAmount).ToString("N2")</b>
+    </div>
+    <div class="csr-receipt-row">
+        <span>Discount:</span><b>-৳@Invoice.TotalDiscount.ToString("N2")</b>
+    </div>
+    <div class="csr-receipt-row">
+        <span>VAT:</span><b>৳@Invoice.Lines.Sum(l => l.Vat).ToString("N2")</b>
+    </div>
+    <div class="csr-receipt-row csr-receipt-total">
+        <span>NET PAYABLE:</span><b>৳@Invoice.InvoiceNet.ToString("N2")</b>
+    </div>
+    <div class="csr-receipt-row">
+        <span>Paid:</span><b>৳@Invoice.NetPaid.ToString("N2")</b>
+    </div>
+    <div class="csr-receipt-row">
+        <span>Due:</span><b>৳@Invoice.Due.ToString("N2")</b>
+    </div>
+
+    <div class="csr-receipt-foot">Thank you for shopping with Asia Fashion</div>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="no-print">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+        <RadzenButton Icon="picture_as_pdf"
+                      Text="@(IsPrinting ? "Generating…" : "Save PDF")"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@Print"
+                      Disabled="@IsPrinting" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public CustomerSalesInvoiceGroup Invoice { get; set; } = default!;
+    [Parameter] public string CustomerName { get; set; } = string.Empty;
+    [Parameter] public string CustomerPhone { get; set; } = string.Empty;
+
+    private bool IsPrinting { get; set; }
+
+    private void Close() => DialogService.Close();
+
+    private async Task Print()
+    {
+        try
+        {
+            IsPrinting = true;
+            StateHasChanged();
+
+            var pdfBytes = ReportPdfService.GenerateInvoiceReceipt(
+                Invoice,
+                CustomerName,
+                CustomerPhone);
+
+            var fileName = $"Invoice_{Invoice.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Failed",
+                $"Could not generate receipt: {ex.Message}");
+        }
+        finally
+        {
+            IsPrinting = false;
+            StateHasChanged();
+        }
+    }
+}

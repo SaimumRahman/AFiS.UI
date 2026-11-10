@@ -5,6 +5,78 @@
 
 <PageTitle>Stock Ledger</PageTitle>
 
+<style>
+    .sl-item-name {
+        font-weight: 600;
+        white-space: normal;
+        line-height: 1.35;
+    }
+
+    .sl-item-meta {
+        margin-top: 2px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #198754;
+        white-space: normal;
+        line-height: 1.3;
+    }
+
+    /* Active campaign caption, shown directly under the item name. */
+    .sl-item-campaign {
+        display: inline-block;
+        margin-top: 3px;
+        padding: 1px 7px;
+        border-radius: 3px;
+        background: #f8d7da;
+        color: #842029;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: normal;
+        line-height: 1.35;
+    }
+
+    /* Column band headers */
+    .sl-band {
+        display: block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 12px;
+        white-space: normal;
+    }
+
+    .sl-band-ho {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .sl-band-branch {
+        background: #e9ecef;
+        color: var(--rz-text-color);
+    }
+
+    .sl-band-total {
+        background: #fff3cd;
+        color: #664d03;
+    }
+
+    /* Grand-total data cells */
+    .sl-total-cell {
+        display: block;
+        background: #fff8e1;
+        color: #856404;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 3px;
+    }
+
+    .sl-cell-negative {
+        color: var(--rz-danger);
+        font-weight: 700;
+    }
+</style>
+
 <RadzenContent Container="main" class="p-4">
     <RadzenCard class="mb-4">
         <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
@@ -102,41 +174,156 @@
     </RadzenCard>
 
     <RadzenCard>
+        <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
+            <RadzenColumn Size="12" SizeMD="7">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="table_chart" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Consolidated Branch Stock Report</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="mb-0">
+                        Opening / Receive / Issue / Balance per branch
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="5">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                    <RadzenBadge Text="@($"{PivotItemCount} item(s)")" BadgeStyle="BadgeStyle.Light" />
+                    <RadzenBadge Text="@($"{StoreGroups.Count} branch(es)")" BadgeStyle="BadgeStyle.Secondary" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
         <RadzenDataGrid @ref="StockLedgerGrid"
-                        Data="@StockLedgerList"
-                        TItem="StockLedgerDTO"
-                        AllowFiltering="true"
-                        AllowColumnResize="true"
-                        AllowAlternatingRows="true"
-                        AllowPaging="true"
+                        Data="@PivotRows"
+                        TItem="StockLedgerPivotRow"
                         AllowSorting="true"
-                        PagerHorizontalAlign="HorizontalAlign.Center"
-                        PageSize="15"
-                        FilterMode="FilterMode.Advanced"
+                        AllowPaging="true"
+                        AllowAlternatingRows="true"
+                        PageSize="25"
+                        PageSizeOptions="@(new int[] { 10, 25, 50, 100 })"
                         ShowPagingSummary="true"
-                        IsLoading="@IsLoading"
+                        PagingSummaryFormat="@("Displaying page {0} of {1} (total {2} records)")"
+                        Density="Density.Compact"
                         GridLines="DataGridGridLines.Both"
-                        Density="Density.Compact">
+                        IsLoading="@IsLoading"
+                        EmptyText="No stock ledger entries for the selected filters.">
             <Columns>
-               @*  <RadzenDataGridColumn TItem="StockLedgerDTO" Property="LastTransactionDate" Title="Date" /> *@
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="StoreName" Title="Store" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ItemCode" Title="Item Code"  />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ItemName" Width="450px" Title="Item Name" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="GroupName" Title="Group" Width="140px" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="SubGroupName" Title="Sub Group" Width="140px" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="DesignName" Title="Design" Width="140px" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="BrandName" Title="Brand" Width="140px" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="OpeningStock" Title="Opening Stock" FormatString="{0:N2}" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ReceiveQty" Title="Receive Qty" FormatString="{0:N2}" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="IssueQty" Title="Issue Qty" FormatString="{0:N2}" />
-                <RadzenDataGridColumn TItem="StockLedgerDTO" Property="ClosingStock" Title="Closing Stock" FormatString="{0:N2}">
+                <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                      Property="@nameof(StockLedgerPivotRow.Barcode)"
+                                      Title="Barcode"
+                                      Width="120px"
+                                      Frozen="true">
                     <Template Context="row">
-                        <span style="font-weight:600; color: @(row.ClosingStock < 0 ? "red" : "inherit")">
-                            @row.ClosingStock.ToString("N2")
+                        <span style="cursor:pointer;" @onclick="@(() => OpenItemDetails(row))">
+                            <RadzenBadge Text="@row.Barcode" BadgeStyle="BadgeStyle.Light" />
                         </span>
                     </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                      Property="@nameof(StockLedgerPivotRow.ItemName)"
+                                      Title="Item Name"
+                                      Width="300px"
+                                      Frozen="true">
+                    <Template Context="row">
+                        <div class="sl-item-name">@row.ItemName</div>
+                        @if (row.HasCampaign)
+                        {
+                            <div><span class="sl-item-campaign">🏷️ @row.CampaignText</span></div>
+                        }
+                        @if (row.HasMeta)
+                        {
+                            <div class="sl-item-meta">@row.MetaText</div>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                      Property="@nameof(StockLedgerPivotRow.SalePrice)"
+                                      Title="Sale Price"
+                                      Width="110px"
+                                      TextAlign="TextAlign.Right"
+                                      FormatString="৳ {0:N2}" />
+
+                @* One banded header per branch, each holding Opn / Rec / Iss / Bal. *@
+                @foreach (var store in StoreGroups)
+                {
+                    <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                          Title="@store.StoreName"
+                                          Width="340px"
+                                          Sortable="false"
+                                          Filterable="false">
+                        <HeaderTemplate>
+                            <div class="sl-band @(store.IsHeadOffice ? "sl-band-ho" : "sl-band-branch")">
+                                @store.StoreName
+                            </div>
+                        </HeaderTemplate>
+                        <Columns>
+                            <RadzenDataGridColumn TItem="StockLedgerPivotRow" Title="Opn" Width="85px"
+                                                  TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                                <Template Context="row">@Qty(row.GetCell(store.StoreName).OpeningStock)</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="StockLedgerPivotRow" Title="Rec" Width="85px"
+                                                  TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                                <Template Context="row">@Qty(row.GetCell(store.StoreName).ReceiveQty)</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="StockLedgerPivotRow" Title="Iss" Width="85px"
+                                                  TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                                <Template Context="row">@Qty(row.GetCell(store.StoreName).IssueQty)</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="StockLedgerPivotRow" Title="Bal" Width="85px"
+                                                  TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                                <Template Context="row">
+                                    <span class="@(row.GetCell(store.StoreName).ClosingStock < 0 ? "sl-cell-negative" : "")"
+                                          style="font-weight:700;">
+                                        @Qty(row.GetCell(store.StoreName).ClosingStock)
+                                    </span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGridColumn>
+                }
+
+                @* Grand total across every branch — pinned to the right edge so it stays
+                   visible while the branch bands are scrolled. *@
+                <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                      Title="Grand Total"
+                                      Width="340px"
+                                      Sortable="false"
+                                      Filterable="false"
+                                      Frozen="true"
+                                      FrozenPosition="Radzen.FrozenColumnPosition.Right">
+                    <HeaderTemplate>
+                        <div class="sl-band sl-band-total">Grand Total</div>
+                    </HeaderTemplate>
+                    <Columns>
+                        <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                              Property="@nameof(StockLedgerPivotRow.TotalOpening)"
+                                              Title="Opn" Width="85px" TextAlign="TextAlign.Right">
+                            <Template Context="row"><span class="sl-total-cell">@Qty(row.TotalOpening)</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                              Property="@nameof(StockLedgerPivotRow.TotalReceive)"
+                                              Title="Rec" Width="85px" TextAlign="TextAlign.Right">
+                            <Template Context="row"><span class="sl-total-cell">@Qty(row.TotalReceive)</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                              Property="@nameof(StockLedgerPivotRow.TotalIssue)"
+                                              Title="Iss" Width="85px" TextAlign="TextAlign.Right">
+                            <Template Context="row"><span class="sl-total-cell">@Qty(row.TotalIssue)</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="StockLedgerPivotRow"
+                                              Property="@nameof(StockLedgerPivotRow.TotalClosing)"
+                                              Title="Bal" Width="85px" TextAlign="TextAlign.Right">
+                            <Template Context="row">
+                                <span class="sl-total-cell @(row.TotalClosing < 0 ? "sl-cell-negative" : "")">
+                                    @Qty(row.TotalClosing)
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     </RadzenCard>
 </RadzenContent>
+
