@@ -531,7 +531,7 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="70" Sortable="false" Filterable="false">
                                     <Template Context="inv">
-                                        @if (IsInvoicesMode)
+                                        @if (IsInvoicesMode && IsSystemGroupUser)
                                         {
                                             <RadzenButton Text="Void"
                                                           ButtonStyle="ButtonStyle.Danger"

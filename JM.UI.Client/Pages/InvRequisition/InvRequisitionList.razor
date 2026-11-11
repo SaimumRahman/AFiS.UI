@@ -98,9 +98,31 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Property="StatusName" Title="Status" Width="120px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Status" Width="120px" TextAlign="TextAlign.Center">
                     <Template Context="item">
                         <RadzenBadge Text="@(item.StatusName ?? "N/A")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="InvRequisitionMasterDTO" Title="Rejection Info" Width="260px" Filterable="false" Sortable="false">
+                    <Template Context="item">
+                        @if (item.StatusName == "Rejected")
+                        {
+                            <div style="font-size:0.78rem;line-height:1.35;">
+                                <div style="color:var(--rz-danger);font-weight:600;">@(string.IsNullOrWhiteSpace(item.StatusComments) ? "—" : item.StatusComments)</div>
+                                <div style="color:var(--rz-text-secondary);">
+                                    By: @(string.IsNullOrWhiteSpace(item.StatusByName) ? (item.StatusBy?.ToString() ?? "—") : item.StatusByName)
+                                    @if (item.StatusDate.HasValue)
+                                    {
+                                        <span> · @item.StatusDate.Value.ToString("dd MMM yyyy HH:mm")</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <span style="color:var(--rz-text-disabled);font-size:0.78rem;">—</span>
+                        }
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -177,6 +199,19 @@
                 }
                 else if (item.Details?.Count > 0)
                 {
+                    @if (item.StatusName == "Rejected")
+                    {
+                        <div style="margin:8px 0;padding:10px 12px;background:var(--rz-danger-lighter);border:1px solid var(--rz-danger);border-radius:var(--rz-border-radius);font-size:0.82rem;">
+                            <strong>Rejected:</strong> @(string.IsNullOrWhiteSpace(item.StatusComments) ? "—" : item.StatusComments)
+                            <span style="color:var(--rz-text-secondary);margin-left:8px;">
+                                By @(string.IsNullOrWhiteSpace(item.StatusByName) ? (item.StatusBy?.ToString() ?? "—") : item.StatusByName)
+                                @if (item.StatusDate.HasValue)
+                                {
+                                    <span> · @item.StatusDate.Value.ToString("dd MMM yyyy HH:mm")</span>
+                                }
+                            </span>
+                        </div>
+                    }
                     <RadzenCard Style="margin:8px 0;padding:12px;background:var(--rz-surface);border:1px solid var(--rz-border);border-radius:var(--rz-border-radius);">
                         <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom:8px;">
                             <RadzenIcon Icon="inventory_2" Style="margin-right:4px;" /> Items (@item.Details.Count)

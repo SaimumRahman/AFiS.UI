@@ -20,6 +20,7 @@ namespace JM.UI.Entities.Model.InvRequisition
         public int? StatusID { get; set; }
         public string? StatusName { get; set; }
         public int? StatusBy { get; set; }
+        public string? StatusByName { get; set; }
         public DateTime? StatusDate { get; set; }
         public bool IsComplete { get; set; }
         public int CreateBy { get; set; }
