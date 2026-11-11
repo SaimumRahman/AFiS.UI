@@ -633,6 +633,24 @@ namespace JM.UI.Client.Services
                         Title       = "Salesman-wise Summary Report",
                         Description = "Sales grouped by salesman and date with product-group totals, discount percentage and amount, exchange and net paid, with per-day DaySum and per-salesman subtotals",
                         Tags        = new[] { "sales", "report", "salesman", "summary", "product", "discount" }
+                    },
+                    new Example
+                    {
+                        Name        = "Branch Sales Comparison",
+                        Path        = "/SalesComparisonReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Branch Sales Comparison Report",
+                        Description = "Per-period (day/month) gross, discount and net sales for each selected branch with a combined total column and a YTD row",
+                        Tags        = new[] { "sales", "report", "branch", "comparison", "discount", "ytd" }
+                    },
+                    new Example
+                    {
+                        Name        = "Sales & Booking Report",
+                        Path        = "/SalesBookingReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Sales & Booking Report",
+                        Description = "Branch-wise sales, exchanges and new bookings with item/salesman lines, payment breakdown, dues and a collection summary",
+                        Tags        = new[] { "sales", "booking", "report", "branch", "collection", "exchange" }
                     }
                 }
             },

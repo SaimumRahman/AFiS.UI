@@ -31,6 +31,17 @@ namespace JM.UI.Service.Reporting
         Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
             DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null);
         Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate);
+        Task<SalesBookingReportDTO> GetSalesBookingReport(
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? storeId = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? catalogueId = null,
+            string? salesmanName = null,
+            int? servedByUserId = null);
+        Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null);
         Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode);
         Task<IEnumerable<GeneralLedgerDTO>> GetGeneralLedger(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode, int? accountId, int? voucherTypeId);
         Task<IEnumerable<PartyBalanceDTO>> GetPartyBalance(string? companyCode, string? partyType);

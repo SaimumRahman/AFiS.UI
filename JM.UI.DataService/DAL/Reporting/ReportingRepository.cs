@@ -331,13 +331,84 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
+        public async Task<SalesBookingReportDTO> GetSalesBookingReport(
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? storeId = null,
+            int? groupId = null,
+            int? subGroupId = null,
+            int? designId = null,
+            int? catalogueId = null,
+            string? salesmanName = null,
+            int? servedByUserId = null)
+        {
+            try
+            {
+                var url = "api/SalesBooking/detail";
+                var query = new List<string>();
+                if (fromDate.HasValue)
+                    query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue)
+                    query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (storeId.HasValue && storeId.Value > 0)
+                    query.Add($"storeId={storeId.Value}");
+                if (groupId.HasValue && groupId.Value > 0)
+                    query.Add($"groupId={groupId.Value}");
+                if (subGroupId.HasValue && subGroupId.Value > 0)
+                    query.Add($"subGroupId={subGroupId.Value}");
+                if (designId.HasValue && designId.Value > 0)
+                    query.Add($"designId={designId.Value}");
+                if (catalogueId.HasValue && catalogueId.Value > 0)
+                    query.Add($"catalogueId={catalogueId.Value}");
+                if (!string.IsNullOrWhiteSpace(salesmanName))
+                    query.Add($"salesmanName={Uri.EscapeDataString(salesmanName)}");
+                if (servedByUserId.HasValue && servedByUserId.Value > 0)
+                    query.Add($"servedByUserId={servedByUserId.Value}");
+                if (query.Any())
+                    url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<SalesBookingReportDTO>();
+                return result ?? new SalesBookingReportDTO();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sales & booking report");
+                throw new Exception("Failed to fetch sales & booking report: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null)
+        {
+            try
+            {
+                var url = "api/SalesBooking/users";
+                if (storeId.HasValue && storeId.Value > 0)
+                    url += $"?storeId={storeId.Value}";
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<SalesBookingUserDTO>>();
+                return result ?? new List<SalesBookingUserDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sales & booking report users");
+                throw new Exception("Failed to fetch served-by users: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
             DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)
         {
             try
             {
-                var url = "api/SalesmanWiseDetailed/detail";
-                var query = new List<string>();
+                var url = "api/SalesmanWiseDetailed/detail";                var query = new List<string>();
                 if (fromDate.HasValue)
                     query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
                 if (toDate.HasValue)
