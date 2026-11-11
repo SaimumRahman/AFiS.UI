@@ -564,7 +564,7 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SaleSummaryDTO" Title="" Width="80" Sortable="false" Filterable="false">
                                     <Template Context="inv">
-                                        @if (IsBookingMode)
+                                        @if (IsBookingMode && IsSystemGroupUser)
                                         {
                                             <RadzenButton Text="Cancel"
                                                           ButtonStyle="ButtonStyle.Danger"
