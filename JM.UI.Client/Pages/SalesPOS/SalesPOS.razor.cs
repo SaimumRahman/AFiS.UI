@@ -526,6 +526,12 @@ namespace JM.UI.Client.Pages.SalesPOS
                     "You are not allowed to edit an issued invoice. Please contact an administrator.", 4500);
                 return;
             }
+            if (IsBookingMode && !IsSystemGroupUser)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Not Allowed",
+                    "You are not allowed to edit a booking. Please contact an administrator.", 4500);
+                return;
+            }
 
             try
             {

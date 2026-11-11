@@ -523,7 +523,7 @@
                                         @* Editing an issued invoice is restricted to users in a group
                                            with GroupsRole.IsSystem = 1. Drafts stay editable for
                                            everyone — that is how a held sale is resumed. *@
-                                        @if (!IsInvoicesMode || IsSystemGroupUser)
+                                        @if (IsDraftMode || IsSystemGroupUser)
                                         {
                                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" ButtonSize="ExtraSmall" Variant="Variant.Flat" Click="@(() => EditInvoice(inv))" />
                                         }
