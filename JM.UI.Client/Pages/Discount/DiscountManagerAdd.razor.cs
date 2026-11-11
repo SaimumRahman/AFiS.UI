@@ -45,6 +45,15 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
     // Grid display items
     protected List<DiscountGridItem> GridItems { get; set; } = new();
 
+    // The campaign's detail rows as last loaded/saved. Selections in the grid are
+    // merged against this baseline, so products that are filtered out of the grid
+    // (or that are not loaded yet) are never silently dropped from the campaign.
+    private List<DiscountManagerDetailsDTO> _baselineDetails = new();
+
+    /// <summary>Saved products that the current filter hides but that are still kept.</summary>
+    protected int HiddenSavedItemCount { get; private set; }
+
+
     protected bool IsProcessing { get; set; } = false;
     protected bool IsLoading { get; set; } = false;
     protected bool IsEditMode => Id.HasValue && Id.Value > 0;
@@ -129,6 +138,9 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 Campaign = _serviceUnitOfWork.DiscountManagerService.CreateNew();
             }
 
+            // Baseline = what is currently saved, so grid edits merge instead of replace.
+            _baselineDetails = (Campaign.DiscountDetails ?? new List<DiscountManagerDetailsDTO>()).ToList();
+
             // Resolve the stores this campaign is scoped to (details may span multiple stores)
             if (Campaign.StoreIds != null && Campaign.StoreIds.Count > 0)
                 SelectedStoreIds = Campaign.StoreIds.ToList();
@@ -142,7 +154,9 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 SelectedStoreIds.Add(Campaign.StoreId.Value);
             _allStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
 
-            await BuildGridItemsAsync();
+            // An existing campaign must show its products straight away, without the
+            // user having to pick a filter first.
+            await BuildGridItemsAsync(forceLoadItems: IsEditMode);
         }
         catch (Exception ex)
         {
@@ -160,9 +174,13 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         SelectedGroupId.HasValue || SelectedSubGroupId.HasValue || SelectedDesignId.HasValue ||
         SelectedColorId.HasValue || SelectedSizeId.HasValue || SelectedCatalogueId.HasValue;
 
-    private async Task EnsureItemsLoadedAsync()
+    private async Task EnsureItemsLoadedAsync(bool force = false)
     {
-        if (AllItems.Any() || !AnyFilterActive()) return;
+        // Items are loaded on demand. Normally that means "when a filter is chosen",
+        // but an existing campaign must show its saved products without the user
+        // having to pick a filter first (= force).
+        if (AllItems.Any()) return;
+        if (!force && !AnyFilterActive()) return;
 
         var items = (await _serviceUnitOfWork.ItemService.GetItems()).ToList();
 
@@ -176,15 +194,15 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
             .ToList();
     }
 
-    private async Task BuildGridItemsAsync()
+    private async Task BuildGridItemsAsync(bool forceLoadItems = false)
     {
-        await EnsureItemsLoadedAsync();
+        await EnsureItemsLoadedAsync(forceLoadItems);
         var filtered = FilterItems();
         GridItems = new List<DiscountGridItem>();
 
         foreach (var item in filtered)
         {
-            var detail = Campaign.DiscountDetails.FirstOrDefault(d => d.ItemId == item.Id);
+            var detail = _baselineDetails.FirstOrDefault(d => d.ItemId == item.Id);
             GridItems.Add(new DiscountGridItem
             {
                 Item = item,
@@ -196,6 +214,14 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 CurrentSalePrice = item.SalePrice ?? 0
             });
         }
+
+        // Saved products that the active filter hides — they stay in the campaign.
+        var visibleItemIds = GridItems.Select(g => g.Item.Id).ToHashSet();
+        HiddenSavedItemCount = _baselineDetails
+            .Where(d => !visibleItemIds.Contains(d.ItemId))
+            .Select(d => d.ItemId)
+            .Distinct()
+            .Count();
     }
 
     private List<ItemDTO> FilterItems()
@@ -234,6 +260,9 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         SelectedCampaignId = campaignId;
         Id = campaign.Id;
 
+        // Baseline = what is saved now, so the grid edits merge instead of replace.
+        _baselineDetails = (campaign.DiscountDetails ?? new List<DiscountManagerDetailsDTO>()).ToList();
+
         // Sync the campaign's stores (details may span multiple stores)
         if (campaign.StoreIds != null && campaign.StoreIds.Count > 0)
             SelectedStoreIds = campaign.StoreIds.ToList();
@@ -245,7 +274,10 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
                 .ToList();
         if (!SelectedStoreIds.Any() && campaign.StoreId.HasValue && campaign.StoreId.Value > 0)
             SelectedStoreIds.Add(campaign.StoreId.Value);
-        AllStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
+        // Assign the backing field: the property's setter calls UpdateCampaignDetails(),
+        // which at this point still sees the previously loaded campaign's GridItems and
+        // would merge those stale selections into this campaign.
+        _allStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
 
         // Reset filters
         SelectedGroupId = null;
@@ -259,7 +291,7 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         BulkDiscountValue = 0;
         SearchText = string.Empty;
 
-        await BuildGridItemsAsync();
+        await BuildGridItemsAsync(forceLoadItems: true);
         StateHasChanged();
     }
 
@@ -480,25 +512,70 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         Campaign.StoreName = storeNameJoined;
         Campaign.StoreIds = SelectedStoreIds.ToList();
 
-        // Fan out: one detail row per (item x selected store) so the same discount
-        // applies to every selected store. POS already filters by StoreId.
-        Campaign.DiscountDetails = (
-            from gi in GridItems.Where(x => x.Selected && x.DiscountValue > 0)
-            from storeId in SelectedStoreIds
-            let storeName = Stores.FirstOrDefault(s => s.Id == storeId)?.Name
-            select new DiscountManagerDetailsDTO
+        // One detail row per (item x selected store) so the same discount applies to
+        // every selected store. POS already filters by StoreId.
+        var details = new List<DiscountManagerDetailsDTO>();
+
+        void AddRows(int itemId, string? itemName, decimal value, int typeId, string? typeName, decimal salePrice)
+        {
+            foreach (var storeId in SelectedStoreIds)
             {
-                ItemId = gi.Item.Id,
-                ItemName = gi.Item.Name,
-                StoreId = storeId,
-                StoreName = storeName,
-                DiscountValue = gi.DiscountValue,
-                DiscountTypeId = gi.DiscountTypeId,
-                DiscountTypeName = gi.DiscountTypeName,
-                CurrentSalePrice = gi.CurrentSalePrice,
-                CreatedDate = Campaign.CreatedDate == default ? DateTime.Now : Campaign.CreatedDate
+                details.Add(new DiscountManagerDetailsDTO
+                {
+                    ItemId = itemId,
+                    ItemName = itemName,
+                    StoreId = storeId,
+                    StoreName = Stores.FirstOrDefault(s => s.Id == storeId)?.Name,
+                    DiscountValue = value,
+                    DiscountTypeId = typeId,
+                    DiscountTypeName = typeName,
+                    CurrentSalePrice = salePrice,
+                    CreatedDate = Campaign.CreatedDate == default ? DateTime.Now : Campaign.CreatedDate
+                });
             }
-        ).ToList();
+        }
+
+        // 1. What the user currently has selected in the grid.
+        foreach (var gi in GridItems.Where(x => x.Selected && x.DiscountValue > 0))
+        {
+            AddRows(gi.Item.Id, gi.Item.Name, gi.DiscountValue, gi.DiscountTypeId, gi.DiscountTypeName, gi.CurrentSalePrice);
+        }
+
+        // 2. Saved products that the current filter hides are NOT on screen, so their
+        //    selection state is unknown — keep them exactly as saved (re-fanned across
+        //    whatever stores are selected now). Without this, opening a campaign with a
+        //    filter active and pressing Update silently deleted every other product.
+        var visibleItemIds = GridItems.Select(g => g.Item.Id).ToHashSet();
+        foreach (var group in _baselineDetails
+                     .Where(d => !visibleItemIds.Contains(d.ItemId))
+                     .GroupBy(d => d.ItemId))
+        {
+            var template = group.First();
+            AddRows(template.ItemId, template.ItemName, template.DiscountValue,
+                    template.DiscountTypeId, template.DiscountTypeName, template.CurrentSalePrice);
+        }
+
+        Campaign.DiscountDetails = details;
+
+        // Re-baseline so repeated updates (toggle, type change, store change) stay
+        // idempotent and keep the hidden rows alive.
+        _baselineDetails = details
+            .Select(d => new DiscountManagerDetailsDTO
+            {
+                Id = d.Id,
+                DiscountManagerId = d.DiscountManagerId,
+                ItemId = d.ItemId,
+                ItemName = d.ItemName,
+                StoreId = d.StoreId,
+                StoreName = d.StoreName,
+                DiscountValue = d.DiscountValue,
+                DiscountTypeId = d.DiscountTypeId,
+                DiscountTypeName = d.DiscountTypeName,
+                CurrentSalePrice = d.CurrentSalePrice,
+                CreatedDate = d.CreatedDate
+            })
+            .ToList();
+
         StateHasChanged();
     }
 
@@ -566,8 +643,9 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         BulkDiscountValue = 0;
         SearchText = "";
         SelectedCampaignId = null;
+        Id = null;
         SelectedStoreIds = new();
-        AllStoresSelected = false;
+        _allStoresSelected = false;
         SelectedGroupId = null;
         SelectedSubGroupId = null;
         SelectedDesignId = null;

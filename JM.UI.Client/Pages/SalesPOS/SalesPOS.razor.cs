@@ -529,8 +529,6 @@ namespace JM.UI.Client.Pages.SalesPOS
 
             try
             {
-                bool editingFromDraft = IsDraftMode;
-
                 var sale = await _serviceUnitOfWork.SaleService.GetSaleById(invoice.SaleMasterId);
                 if (sale == null)
                 {
@@ -556,26 +554,25 @@ namespace JM.UI.Client.Pages.SalesPOS
                 SelectedCustomer = null;
                 SelectedCustomerId = 0;
 
-                var customer = AllCustomers.FirstOrDefault(c => c.Id == sale.CustomerId);
-                if (customer != null) SelectCustomer(customer);
-
-                // When editing from the Draft list, the draft is now converted to a sale.
-                if (editingFromDraft)
+                // Restore the customer that was saved with the draft — but only when the
+                // draft actually carries one. A missing/zero CustomerId must not attach an
+                // unrelated customer (which would then compute a membership discount over
+                // the restored lines).
+                if (sale.CustomerId is > 0)
                 {
-                    var unmarkResult = await _serviceUnitOfWork.SaleService.UnmarkDraftSale(sale.SaleMasterId);
-                    if (unmarkResult.IsSuccessStatus)
-                    {
-                        sale.IsDraft = false;
-                    }
-                    else
-                    {
-                        notificationService.Notify(NotificationSeverity.Warning, "Draft Status",
-                            $"Could not unmark draft: {unmarkResult.Message}", 4000);
-                    }
+                    var customer = AllCustomers.FirstOrDefault(c => c.Id == sale.CustomerId.Value);
+                    if (customer != null) SelectCustomer(customer);
                 }
 
+                // Editing a draft must NOT clear IsDraft: the cart is still a held sale
+                // until it is actually converted. IsDraft only becomes 0 in
+                // OpenPaymentModal (invoice) or on the server when a booking is created,
+                // so an abandoned edit stays in the Draft list instead of turning into
+                // an unpaid invoice.
                 notificationService.Notify(NotificationSeverity.Info, "Editing",
-                    $"Invoice {sale.InvoiceNo} loaded for editing", 3000);
+                    invoice.IsDraft == true
+                        ? $"Draft {sale.InvoiceNo} loaded for editing"
+                        : $"Invoice {sale.InvoiceNo} loaded for editing", 3000);
             }
             catch (Exception ex)
             {
@@ -657,6 +654,12 @@ namespace JM.UI.Client.Pages.SalesPOS
         // (defaults to 1), then adds the chosen quantity to the cart.
         protected async Task PromptQuantityAndAdd(ProductSearchDTO product)
         {
+            // Refuse before asking for a quantity: a cart is locked to the branch of
+            // its first item, so there is no point walking the cashier through the
+            // quantity dialog for an item that cannot be added.
+            if (RejectDifferentBranch(product))
+                return;
+
             var result = await dialogService.OpenAsync<ItemQuantityDialog>("Item Quantity",
                 new Dictionary<string, object>
                 {
@@ -681,8 +684,42 @@ namespace JM.UI.Client.Pages.SalesPOS
                 .Sum(c => c.Qty);
         }
 
+        // Branch the cart is locked to: the store of its first line. Once a BANDARTILA
+        // item is in the cart, only BANDARTILA items can be added; the lock only changes
+        // when the cart is emptied.
+        protected int? CartStoreId => CartItems.FirstOrDefault()?.StoreId;
+
+        // True (and notifies the cashier) when the product belongs to a different
+        // branch than the one the cart is already locked to.
+        private bool RejectDifferentBranch(ProductSearchDTO product)
+        {
+            if (CartItems.Count == 0 || product.StoreId is null)
+                return false;
+
+            var cartStoreId = CartStoreId;
+            if (cartStoreId is null || cartStoreId.Value == product.StoreId.Value)
+                return false;
+
+            var cartStoreName = GetStoreName(cartStoreId);
+            var productStoreName = string.IsNullOrWhiteSpace(product.StoreName)
+                ? GetStoreName(product.StoreId)
+                : product.StoreName!;
+            var itemName = product.ProductName ?? product.ItemName ?? product.Barcode ?? "This item";
+
+            notificationService.Notify(NotificationSeverity.Error, "Different Branch",
+                $"'{itemName}' is stocked in {productStoreName}. The cart is already locked to {cartStoreName} — " +
+                $"remove the {cartStoreName} items (or clear the cart) before selling an item from another branch.",
+                6000);
+            return true;
+        }
+
         protected async Task AddProductToCart(ProductSearchDTO product, decimal qty, decimal? unitPrice = null)
         {
+            // Final guard for every caller (barcode, product search, dialog): the cart
+            // is single-branch, so an item from another branch is refused outright.
+            if (RejectDifferentBranch(product))
+                return;
+
             // Whole-unit items (everything except Yards / Meter) cannot take a fractional
             // quantity: snap it to a whole number before the cart ever sees it.
             if (UomRules.Normalize(product.UomName, ref qty))
@@ -1359,6 +1396,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.SaleDetails = CartItems.ToList();
             Sale.PaymentTransactions = paymentResult.Payments.ToList();
 
+            // This is the point where a held draft actually becomes a sale: clearing
+            // IsDraft lets the server run the paid path (payments, stock out,
+            // requisition, booking split) instead of the draft-only path. A draft that
+            // is opened for editing and then abandoned therefore stays IsDraft = 1.
+            Sale.IsDraft = false;
+
             var saveResult = await _serviceUnitOfWork.SaleService.SaveSale(Sale);
 
             if (saveResult.IsSuccessStatus)
@@ -1667,6 +1710,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.VatAmount = CalculatedVat;
                 Sale.CampaignDiscount = CampaignDiscountAmount > 0 ? CampaignDiscountAmount : null;
                 Sale.MembershipDiscount = MembershipDiscountAmount > 0 ? MembershipDiscountAmount : null;
+                // The discount breakdown has to be stored with the draft exactly as the
+                // pay path does, otherwise the draft row carries a stale TotalDiscount.
+                Sale.TotalDiscount = InvoiceDiscountAmount + CampaignDiscountAmount + MembershipDiscountAmount + PaisaDiscount;
                 Sale.NetAmount = NetPayable;
                 Sale.SaleDetails = CartItems.ToList();
                 Sale.IsDraft = true;
