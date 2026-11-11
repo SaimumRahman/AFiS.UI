@@ -10,6 +10,7 @@ namespace JM.UI.Service.InvRequisition
         Task<InvRequisitionMasterDTO?> GetById(int id);
         Task<ResponseResult> SaveUpdate(InvRequisitionMasterDTO requisition);
         Task<ResponseResult> Delete(int id);
+        Task<ResponseResult> Reject(int requisitionId, string reason, int statusBy, int userStoreId, bool isSystemGroupUser, int refundMethodId, string? refundTransactionNo);
         Task<IEnumerable<RequisitionStatusDTO>> GetRequisitionStatuses();
         Task<(bool IsValid, string ErrorMessage)> Validate(InvRequisitionMasterDTO requisition);
         InvRequisitionMasterDTO CreateNew();

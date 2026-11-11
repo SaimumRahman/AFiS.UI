@@ -17,6 +17,7 @@ namespace JM.UI.Entities.Model.SalesPOS
         public bool? IsPaid { get; set; }
         public bool? IsBooking { get; set; }
         public bool? IsDraft { get; set; }
+        public bool? IsCancelled { get; set; }
         public DateTime CreatedDate { get; set; }
         public int TotalItems { get; set; }
         public int? StoreId { get; set; }

@@ -223,5 +223,42 @@ namespace JM.UI.DataService.DAL.InvRequisition
                 throw new Exception("Unexpected error fetching requisition statuses: " + ex.Message, ex);
             }
         }
+        public async Task<ResponseResult> Reject(int requisitionId, string reason, int statusBy, int userStoreId, bool isSystemGroupUser, int refundMethodId, string? refundTransactionNo)
+        {
+            try
+            {
+                _logger.LogInformation("Rejecting requisition: {Id}", requisitionId);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var command = new
+                {
+                    RequisitionId = requisitionId,
+                    Reason = reason,
+                    StatusBy = statusBy,
+                    UserStoreId = userStoreId,
+                    IsSystemGroupUser = isSystemGroupUser,
+                    RefundMethodId = refundMethodId,
+                    RefundTransactionNo = refundTransactionNo
+                };
+                var content = JsonContent.Create(command);
+                var response = await httpClient.PostAsync("api/InvRequisition/reject", content);
+
+                var rawBody = await response.Content.ReadAsStringAsync();
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Requisition reject failed. Status: {Status} | Body: {Body}", (int)response.StatusCode, rawBody);
+                    return new ResponseResult { IsSuccessStatus = false, StatusCode = (int)response.StatusCode, Message = $"Server error ({(int)response.StatusCode}): {rawBody}" };
+                }
+
+                var result = System.Text.Json.JsonSerializer.Deserialize<ResponseResult>(rawBody,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return result ?? new ResponseResult { IsSuccessStatus = true, Message = "Requisition rejected successfully." };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during reject requisition");
+                return new ResponseResult { IsSuccessStatus = false, Message = $"Failed to reject requisition: {ex.Message}" };
+            }
+        }
     }
 }

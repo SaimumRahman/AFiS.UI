@@ -50,6 +50,18 @@ namespace JM.UI.Service.InvRequisition
             return await _repositoryUnitOfWork.InvRequisitionRepository.InsertUpdate(requisition);
         }
 
+        public async Task<ResponseResult> Reject(int requisitionId, string reason, int statusBy, int userStoreId, bool isSystemGroupUser, int refundMethodId, string? refundTransactionNo)
+        {
+            try
+            {
+                return await _repositoryUnitOfWork.InvRequisitionRepository.Reject(requisitionId, reason, statusBy, userStoreId, isSystemGroupUser, refundMethodId, refundTransactionNo);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult { IsSuccessStatus = false, Message = $"Failed to reject requisition: {ex.Message}" };
+            }
+        }
+
         public async Task<ResponseResult> Delete(int id)
         {
             try

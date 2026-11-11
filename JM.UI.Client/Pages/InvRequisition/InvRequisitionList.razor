@@ -119,13 +119,23 @@
                                               ButtonStyle="ButtonStyle.Info"
                                               Size="ButtonSize.Small"
                                               Variant="Variant.Flat"
+                                              Visible="@(item.StatusName != "Rejected" && item.RequisitionTypeID != 2)"
                                               Click="@(() => EditRequisition(item))"
                                               MouseEnter="@(args => ShowTooltip(args, "Edit Requisition"))" />
+
+                                <RadzenButton Icon="block"
+                                              ButtonStyle="ButtonStyle.Warning"
+                                              Size="ButtonSize.Small"
+                                              Variant="Variant.Flat"
+                                              Click="@(() => RejectRequisition(item))"
+                                              Visible="@(IsSystemGroupUser || (UserStoreId > 0 && item.FromStore == UserStoreId))"
+                                              MouseEnter="@(args => ShowTooltip(args, "Reject Requisition"))" />
 
                                 <RadzenButton Icon="delete"
                                               ButtonStyle="ButtonStyle.Danger"
                                               Size="ButtonSize.Small"
                                               Variant="Variant.Flat"
+                                              Visible="@(item.RequisitionTypeID != 2)"
                                               Click="@(() => DeleteRequisition(item))"
                                               MouseEnter="@(args => ShowTooltip(args, "Delete Requisition"))" />
 
@@ -133,6 +143,7 @@
                                               ButtonStyle="ButtonStyle.Success"
                                               Size="ButtonSize.Small"
                                               Variant="Variant.Flat"
+                                              Visible="@(IsSystemGroupUser || (UserStoreId > 0 && item.FromStore == UserStoreId))"
                                               Click="@(() => CreateTransfer(item))"
                                               MouseEnter="@(args => ShowTooltip(args, "Create Transfer from Requisition"))" />
 

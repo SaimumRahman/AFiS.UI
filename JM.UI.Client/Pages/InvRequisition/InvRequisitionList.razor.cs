@@ -20,6 +20,7 @@ namespace JM.UI.Client.Pages.InvRequisition
         protected HashSet<int> LoadingDetails { get; set; } = new();
         protected int CurrentUserId { get; set; }
         protected int UserStoreId { get; set; }
+        protected bool IsSystemGroupUser { get; set; } = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -36,6 +37,12 @@ namespace JM.UI.Client.Pages.InvRequisition
                 var storeIdResult = await _localStorage.GetAsync<string>("StoreId");
                 CurrentUserId = int.TryParse(userIdResult.Value, out var uid) ? uid : 0;
                 UserStoreId = int.TryParse(storeIdResult.Value, out var sid) ? sid : 0;
+			try
+			{
+				IsSystemGroupUser = await _serviceUnitOfWork.UserGroupService
+					.GetSystemGroupCountByUserId(CurrentUserId) > 0;
+			}
+			catch { IsSystemGroupUser = false; }
             }
             catch { }
         }
@@ -46,7 +53,7 @@ namespace JM.UI.Client.Pages.InvRequisition
             {
                 IsLoading = true;
 
-                if (CurrentUserId == 1)
+                if (IsSystemGroupUser || CurrentUserId == 1)
                     Requisitions = await _serviceUnitOfWork.InvRequisitionService.GetAll();
                 else
                     Requisitions = await _serviceUnitOfWork.InvRequisitionService.GetAllByStoreId(UserStoreId);
@@ -192,9 +199,42 @@ namespace JM.UI.Client.Pages.InvRequisition
             TooltipService.Open(elementReference, text, new TooltipOptions { Position = TooltipPosition.Top });
         }
 
+
+        protected async Task RejectRequisition(InvRequisitionMasterDTO requisition)
+        {
+            if (requisition == null) return;
+
+            var reason = await dialogService.OpenAsync<RejectNotesDialog>("Rejection Notes");
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Cancelled", "Rejection cancelled — a reason is required.", 3000);
+                return;
+            }
+
+            int refundMethodId = 0;
+            string? refundTxnNo = null;
+            decimal advance = requisition.ToStore.HasValue ? 0 : 0; // placeholder; server computes
+
+            var result = await _serviceUnitOfWork.InvRequisitionService.Reject(
+                requisition.RequisitionID, reason!, CurrentUserId, UserStoreId, IsSystemGroupUser,
+                refundMethodId, refundTxnNo);
+
+            if (result.IsSuccessStatus)
+            {
+                notificationService.Notify(NotificationSeverity.Success, "Rejected",
+                    result.Message ?? "Requisition rejected.", 4000);
+                await LoadRequisitions();
+            }
+            else
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error",
+                    result.Message ?? "Failed to reject requisition.", 4000);
+            }
+        }
         public void Dispose()
         {
             RequisitionsGrid?.Dispose();
         }
     }
 }
+

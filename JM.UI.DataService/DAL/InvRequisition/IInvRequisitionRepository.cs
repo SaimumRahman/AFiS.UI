@@ -10,6 +10,7 @@ namespace JM.UI.DataService.DAL.InvRequisition
         Task<InvRequisitionMasterDTO?> GetById(int id);
         Task<ResponseResult> InsertUpdate(InvRequisitionMasterDTO requisition);
         Task<ResponseResult> Delete(int id);
+        Task<ResponseResult> Reject(int requisitionId, string reason, int statusBy, int userStoreId, bool isSystemGroupUser, int refundMethodId, string? refundTransactionNo);
         Task<IEnumerable<RequisitionStatusDTO>> GetRequisitionStatuses();
         Task<ResponseResult> UpdateRequisitionStatus(int RequisitionId, int StatusId, int StatusBy, string StatusComments);
     }
