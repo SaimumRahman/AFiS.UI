@@ -40,6 +40,8 @@ namespace JM.UI.Entities.Model.Items
         public string? SupplierName { get; set; }
         public bool? RawMaterial { get; set; }
         public bool? FinishedGood { get; set; }
+        public bool? IsConsume { get; set; }
+        public bool? IsSaleable { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
         public int? LastModifiedBy { get; set; }

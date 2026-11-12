@@ -34,6 +34,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public string ImageBase64 { get; set; } 
         public bool IsSaleable { get; set; } = true;
         public bool IsConsume { get; set; }
+        public bool IsRawMaterial { get; set; }
         public bool IsNewItem { get; set; }
         public bool CountStockByColor { get; set; }
         public bool CountStockBySize { get; set; }

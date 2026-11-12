@@ -966,7 +966,12 @@ namespace JM.UI.Client.Pages.SalesPOS
             if (!CartItems.Any()) return;
 
             // Only distribute across items that don't already have a product-level discount.
-            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
+            // Zero-value lines (e.g. a free shopping bag) are excluded: the invoice
+            // discount is a percentage of the priced goods and must never make a 0.00
+            // line go negative.
+            var eligible = CartItems
+                .Where(i => !i.HasDiscount && i.UnitPrice * i.Qty > 0)
+                .ToList();
             if (!eligible.Any()) return;
 
             // When distribution is OFF, don't auto-distribute — leave the manually
@@ -1150,7 +1155,10 @@ namespace JM.UI.Client.Pages.SalesPOS
             }
 
             // Only distribute across items that don't already have a product-level discount.
-            var eligible = CartItems.Where(i => !i.HasDiscount).ToList();
+            // Zero-value lines are excluded for the same reason as the invoice discount.
+            var eligible = CartItems
+                .Where(i => !i.HasDiscount && i.UnitPrice * i.Qty > 0)
+                .ToList();
             if (!eligible.Any()) return;
 
             decimal totalDiscountAmount = NonCampaignSubTotal * (discountRate / 100m);

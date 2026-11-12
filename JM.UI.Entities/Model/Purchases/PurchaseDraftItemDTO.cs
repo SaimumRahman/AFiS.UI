@@ -60,6 +60,8 @@ namespace JM.UI.Entities.Model.Purchases
         public bool IsSaleable { get; set; }
         // FIX: IsConsume was missing — required for Consume-type items
         public bool IsConsume { get; set; }
+        // FIX: IsRawMaterial was missing — required for Raw Material-type items
+        public bool IsRawMaterial { get; set; }
         public bool IsNewItem { get; set; }
         public bool IsActive { get; set; }
         public bool CountStockByColor { get; set; }

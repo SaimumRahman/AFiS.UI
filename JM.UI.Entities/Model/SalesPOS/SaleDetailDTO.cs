@@ -35,6 +35,15 @@ namespace JM.UI.Entities.Model.SalesPOS
         /// </summary>
         public int? IsReturn { get; set; }
 
+        /// <summary>
+        /// Item classification (read-only, not persisted). A zero unit price is allowed
+        /// for Consumable / Raw Material items only.
+        /// </summary>
+        public bool IsConsume { get; set; }
+        public bool IsRawMaterial { get; set; }
+        public string? ProductType { get; set; }
+        public string? GroupName { get; set; }
+
         public static SaleDetailDTO FromProductSearch(ProductSearchDTO product, decimal qty = 1) => new()
         {
             ItemId = product.ItemId,
@@ -52,6 +61,10 @@ namespace JM.UI.Entities.Model.SalesPOS
             DiscountTypeId = product.DiscountTypeId,
             HasDiscount = product.HasDiscount,
             StoreId = product.StoreId,
+            IsConsume = product.IsConsume,
+            IsRawMaterial = product.IsRawMaterial,
+            ProductType = product.ProductType,
+            GroupName = product.GroupName,
             TotalAmount = product.UnitPrice * qty
         };
     }

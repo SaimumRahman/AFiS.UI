@@ -21,5 +21,14 @@ namespace JM.UI.Entities.Model.SalesPOS
         public decimal Vat { get; set; }
         public bool HasDiscount { get; set; }
         public bool IsOtherStore { get; set; }
+
+        /// <summary>
+        /// Item classification. Lets the POS allow a zero selling price for
+        /// Consumable / Raw Material items (e.g. shopping bags given with a purchase).
+        /// </summary>
+        public bool IsConsume { get; set; }
+        public bool IsRawMaterial { get; set; }
+        public string? ProductType { get; set; }
+        public string? GroupName { get; set; }
     }
 }

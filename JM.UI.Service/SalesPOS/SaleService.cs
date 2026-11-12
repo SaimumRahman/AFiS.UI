@@ -171,10 +171,37 @@ namespace JM.UI.Service.SalesPOS
             if (sale.SaleDetails.Any(d => d.Qty <= 0))
                 return Task.FromResult((false, "Item quantity must be greater than zero."));
 
-            if (sale.SaleDetails.Any(d => d.UnitPrice <= 0))
-                return Task.FromResult((false, "Item unit price must be greater than zero."));
+            // A zero unit price is only acceptable for Consumable / Raw Material items
+            // (shopping bags, pocketing, etc. that are given away with a purchase).
+            // Every other item still has to carry a positive price.
+            var invalidPriceLine = sale.SaleDetails
+                .Where(d => (d.IsReturn ?? 0) != 1 && d.UnitPrice <= 0 && !AllowsZeroPrice(d))
+                .FirstOrDefault();
+            if (invalidPriceLine != null)
+                return Task.FromResult((false,
+                    $"Item unit price must be greater than zero ({invalidPriceLine.Barcode ?? invalidPriceLine.ProductName}). Only Consumable / Raw Material items may be sold at 0.00."));
 
             return Task.FromResult((true, string.Empty));
+        }
+
+        /// <summary>
+        /// True when the line belongs to a Consumable / Raw Material item, which may
+        /// legitimately be sold at a 0.00 price.
+        /// </summary>
+        private static bool AllowsZeroPrice(SaleDetailDTO detail)
+        {
+            if (detail.IsConsume || detail.IsRawMaterial)
+                return true;
+
+            var productType = detail.ProductType?.Trim() ?? string.Empty;
+            if (productType.Equals("Consume", StringComparison.OrdinalIgnoreCase)
+                || productType.Equals("Raw Material", StringComparison.OrdinalIgnoreCase)
+                || productType.Equals("Both", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var group = detail.GroupName?.Trim() ?? string.Empty;
+            return group.Contains("RAW MATERIAL", StringComparison.OrdinalIgnoreCase)
+                || group.Contains("CONSUM", StringComparison.OrdinalIgnoreCase);
         }
 
         public SaleMasterDTO CreateNew()
