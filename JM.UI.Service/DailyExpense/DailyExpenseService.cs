@@ -70,5 +70,8 @@ namespace JM.UI.Service.DailyExpense
 
             return await _repositoryUnitOfWork.DailyExpenseRepository.UnpostDailyExpense(request);
         }
+
+        public async Task<DailyExpenseAvailableCashDTO?> GetAvailableCash(int storeId, int ledgerAccountId)
+            => await _repositoryUnitOfWork.DailyExpenseRepository.GetAvailableCash(storeId, ledgerAccountId);
     }
 }

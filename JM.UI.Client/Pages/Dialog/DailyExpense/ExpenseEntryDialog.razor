@@ -46,7 +46,8 @@
                                     ValueProperty="Id"
                                     Placeholder="Select Store"
                                     Style="width:100%"
-                                    Disabled="@(!CanChooseStore)" />
+                                    Disabled="@(!CanChooseStore)"
+                                    Change="@(async (object _) => await LoadAvailableCashAsync())" />
                     @if (!CanChooseStore)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b;">
@@ -151,6 +152,60 @@
                     }
                 </RadzenColumn>
             </RadzenRow>
+
+            <!-- Available cash (ledger × cost center) -->
+            @if (Expense.StoreId > 0 && Expense.LedgerAccountId.HasValue && Expense.LedgerAccountId.Value > 0)
+            {
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        @if (IsLoadingCash)
+                        {
+                            <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px">
+                                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                                <span style="margin-left:8px;color:var(--rz-text-secondary)">Loading available cash…</span>
+                            </div>
+                        }
+                        else if (AvailableCash == null)
+                        {
+                            <div style="padding:9px 12px;border:1px dashed var(--rz-border);border-radius:4px;color:var(--rz-text-secondary)">
+                                Available cash could not be loaded.
+                            </div>
+                        }
+                        else if (!AvailableCash.CostCenterLinked)
+                        {
+                            <div style="padding:9px 12px;border:1px solid var(--rz-danger);border-radius:4px;background:var(--rz-danger-lighter);color:var(--rz-danger)">
+                                This store has no cost center linked — expenses cannot be saved until a cost center is assigned.
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;background:var(--rz-base-200)">
+                                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                                    <span>
+                                        Cost Center: <b>@AvailableCash.CostCenterName (@AvailableCash.CostCenterCode)</b>
+                                    </span>
+                                    <span>
+                                        Available Cash:
+                                        <b style="color:@(AvailableCash.AvailableCash > 0 ? "#15803d" : "var(--rz-danger)")">
+                                            @AvailableCash.AvailableCash.ToString("N2")
+                                        </b>
+                                    </span>
+                                    <span style="color:var(--rz-text-secondary);font-size:0.78rem">
+                                        Funded @AvailableCash.Funded.ToString("N2") − Spent @AvailableCash.Spent.ToString("N2")
+                                    </span>
+                                </div>
+                                @if (Expense.Amount > 0 && Expense.Amount > AvailableCash.AvailableCash)
+                                {
+                                    <div style="color:var(--rz-danger);font-size:0.78rem;margin-top:6px">
+                                        Amount @Expense.Amount.ToString("N2") exceeds the available cash @AvailableCash.AvailableCash.ToString("N2") for this ledger / cost center.
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </RadzenColumn>
+                </RadzenRow>
+            }
+
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Receipt / Bill No" Component="ReceiptBillNo" />
@@ -213,6 +268,8 @@
     protected RadzenPopup expenseAccountPopup;
     protected object? ExpenseAccountSelection;
     protected string? ExpenseAccountText;
+    protected DailyExpenseAvailableCashDTO? AvailableCash { get; set; }
+    protected bool IsLoadingCash { get; set; }
     protected bool isExpenseAccountOpen;
 
     protected bool IsEditMode => EditId > 0;
@@ -294,6 +351,8 @@
             // Never leave the disabled dropdown empty.
             if (!CanChooseStore && Expense.StoreId <= 0 && Stores.Count > 0)
                 Expense.StoreId = Stores[0].Id;
+
+            await LoadAvailableCashAsync();
         }
         catch (Exception ex)
         {
@@ -340,6 +399,8 @@
             {
                 Expense.LedgerAccountId = node.AccountId;
                 ExpenseAccountText = node.Display;
+
+                await LoadAvailableCashAsync();
             }
 
             isExpenseAccountOpen = false;
@@ -357,6 +418,29 @@
         Expense.LedgerAccountId = null;
         ExpenseAccountText = null;
         ExpenseAccountSelection = null;
+        AvailableCash = null;
+    }
+
+    protected async Task LoadAvailableCashAsync()
+    {
+        AvailableCash = null;
+        if (Expense.StoreId <= 0 || !Expense.LedgerAccountId.HasValue || Expense.LedgerAccountId.Value <= 0)
+            return;
+
+        IsLoadingCash = true;
+        try
+        {
+            AvailableCash = await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        finally
+        {
+            IsLoadingCash = false;
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()
@@ -398,6 +482,24 @@
         Expense.CreatedBy = UserId;
         Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
         if (IsCash) Expense.FinancialAccountId = null;
+
+        // Available-cash (ledger × cost center) hard limit.
+        if (Expense.StoreId > 0 && Expense.LedgerAccountId.HasValue && Expense.LedgerAccountId.Value > 0)
+        {
+            AvailableCash ??= await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value);
+            if (AvailableCash == null || !AvailableCash.CostCenterLinked)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Validation",
+                    "This store has no cost center linked, so the available cash cannot be validated.", 5000);
+                return;
+            }
+            if (Expense.Amount > AvailableCash.AvailableCash)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Validation",
+                    $"Amount {Expense.Amount:N2} exceeds the available cash {AvailableCash.AvailableCash:N2} of ledger {AvailableCash.LedgerCode} for cost center {AvailableCash.CostCenterName}.", 5000);
+                return;
+            }
+        }
 
         try
         {
