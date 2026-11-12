@@ -726,6 +726,19 @@
                                                 </Template>
                                             </RadzenDataGridColumn>
 
+                                            <!-- Previous Barcode (Opening Balance only) -->
+                                            @if (Purchase.IsOpenningStock)
+                                            {
+                                                <RadzenDataGridColumn TItem="PreviewItemRow" Property="OldBarcode" Title="Prev Barcode" Width="110px">
+                                                    <Template Context="row">
+                                                        <RadzenTextBox @bind-Value="row.OldBarcode"
+                                                                       Style="width:100%; font-size:0.65rem; height:22px;"
+                                                                       Placeholder="Old Barcode"
+                                                                       Disabled="@IsProcessing" />
+                                                    </Template>
+                                                </RadzenDataGridColumn>
+                                            }
+
                                             <!-- Item Name -->
                                             <RadzenDataGridColumn TItem="PreviewItemRow" Property="ItemName" Title="Product" Width="130px">
                                                 <Template Context="row">

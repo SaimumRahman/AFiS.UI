@@ -15,6 +15,7 @@ public class PurchaseItemDTO : AuditModelDTO
     public string? SizeName { get; set; }
     public string? ImageBase64 { get; set; }
     public string? Barcode { get; set; }
+    public string? OldBarcode { get; set; }
     public string? MesurementUnitName { get; set; }
     public decimal Quantity { get; set; }
     public decimal PurchasePrice { get; set; }

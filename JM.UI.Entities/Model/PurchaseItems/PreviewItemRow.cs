@@ -9,6 +9,7 @@ namespace JM.UI.Entities.Model.PurchaseItems
         public int ItemId { get; set; }
         public string ItemName { get; set; } = string.Empty;
         public string Barcode { get; set; } = string.Empty;
+        public string? OldBarcode { get; set; }
         public int? ColorId { get; set; }
         public string ColorName { get; set; } = string.Empty;
         public int? SizeId { get; set; }

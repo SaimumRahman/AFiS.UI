@@ -39,6 +39,7 @@ namespace JM.UI.Entities.Model.Purchases
 
         // ── Barcode / UoM ────────────────────────────────────────────
         public string? Barcode { get; set; }
+        public string? OldBarcode { get; set; }
         public int? MesurementUnitId { get; set; }
         public string MesurementUnitName { get; set; }
 
