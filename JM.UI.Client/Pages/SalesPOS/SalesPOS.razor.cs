@@ -1417,13 +1417,13 @@ namespace JM.UI.Client.Pages.SalesPOS
                 // auto-downloaded PDF prints the right heading and number.
                 if (!string.IsNullOrEmpty(saveResult.Id))
                     Sale.InvoiceNo = saveResult.Id;
-                if (saveResult.Data != null)
-                {
-                    var isBookingStr = saveResult.Data.ToString();
-                    bool parsed = false;
-                    if (!string.IsNullOrEmpty(isBookingStr) && bool.TryParse(isBookingStr, out parsed))
-                        Sale.IsBooking = parsed;
-                }
+
+                // A booking is identified by its BK- invoice number (the server decides
+                // the prefix). Derive IsBooking from the number rather than from the
+                // dynamic Data payload, which deserialises as a System.Text.Json
+                // JsonElement and breaks a plain `!= null` check at runtime.
+                Sale.IsBooking = !string.IsNullOrEmpty(Sale.InvoiceNo)
+                    && Sale.InvoiceNo.StartsWith("BK-", StringComparison.OrdinalIgnoreCase);
 
                 // A draft is held for later, not issued, so it must never produce a PDF.
                 if (Sale.IsDraft == true)
@@ -1494,7 +1494,8 @@ namespace JM.UI.Client.Pages.SalesPOS
                     terms: store?.TermsOfService ?? "",
                     paymentTypeNames: paymentTypeNames);
 
-                var fileName = $"Invoice_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var prefix = (sale.IsBooking == true || (sale.InvoiceNo?.StartsWith("BK-") ?? false)) ? "Booking" : "Invoice";
+var fileName = $"{prefix}_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 await jsRuntimes.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
             }
             catch (Exception ex)

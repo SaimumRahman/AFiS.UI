@@ -58,7 +58,10 @@ public class PosInvoicePdfService
 
                 page.Content().Column(col =>
                 {
-                    ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, sale.IsBooking == true);
+                    bool isBookingDoc = sale.IsBooking == true
+    || (!string.IsNullOrWhiteSpace(sale.InvoiceNo)
+        && sale.InvoiceNo.StartsWith("BK-", StringComparison.OrdinalIgnoreCase));
+ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBookingDoc);
                     ComposeInfo(col, sale, servedBy);
                     ComposeItems(col, sale);
                     ComposePayments(col, sale, paymentTypeNames);
