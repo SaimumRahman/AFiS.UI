@@ -27,6 +27,11 @@ public partial class BookingReportComponent : PosComponentBase
     protected bool IsLoading { get; set; }
     protected bool IsPrinting { get; set; }
 
+    // ── Permission / identity ──
+    protected bool CanSelectAnyStore { get; set; }
+    protected int CurrentUserId { get; set; }
+    protected int UserStoreId { get; set; }
+
     protected string DateRangeText =>
         (FromDate.HasValue && ToDate.HasValue)
             ? $"DATE RANGE: {FromDate:dd-MMM-yy} to {ToDate:dd-MMM-yy}"
@@ -35,15 +40,48 @@ public partial class BookingReportComponent : PosComponentBase
     protected override async Task OnInitializedAsync()
     {
         await TokenService.InitializeTokenAsync();
+
+        CurrentUserId = await GetLocalStorageInt("UserId");
+        UserStoreId = await GetLocalStorageInt("StoreId");
+
+        CanSelectAnyStore = CurrentUserId == 1;
+        if (!CanSelectAnyStore)
+        {
+            try
+            {
+                CanSelectAnyStore = await _serviceUnitOfWork.UserGroupService
+                                        .GetSystemGroupCountByUserId(CurrentUserId) > 0;
+            }
+            catch { CanSelectAnyStore = false; }
+        }
+
         await LoadStores();
         await LoadReport();
+    }
+
+    private async Task<int> GetLocalStorageInt(string key)
+    {
+        try
+        {
+            var r = await _localStorage.GetAsync<string>(key);
+            if (r.Success && int.TryParse(r.Value, out var v)) return v;
+        }
+        catch { }
+        return 0;
     }
 
     private async Task LoadStores()
     {
         try
         {
-            Stores = (await _serviceUnitOfWork.StoreService.GetStores())?.ToList() ?? new List<StoreDTO>();
+            var stores = (await _serviceUnitOfWork.StoreService.GetStores())?.ToList() ?? new List<StoreDTO>();
+            Stores = CanSelectAnyStore
+                ? stores
+                : stores.Where(s => s.Id == UserStoreId).ToList();
+
+            SelectedStoreId = CanSelectAnyStore
+                ? null
+                : (Stores.FirstOrDefault()?.Id ?? (UserStoreId > 0 ? UserStoreId : (int?)null));
         }
         catch
         {

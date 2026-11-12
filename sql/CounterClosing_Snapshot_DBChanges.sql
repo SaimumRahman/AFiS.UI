@@ -1,6 +1,6 @@
 /* ============================================================================
    Counter Day-End Closing - snapshot + booking-payment + cash-out schema
-   Idempotent. Run against AFIS_MAH_LIVE.
+   Idempotent. Run against AFiSDb (103.111.224.33,50195).
    ============================================================================ */
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;

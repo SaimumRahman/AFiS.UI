@@ -61,9 +61,9 @@
                                     Data="@Stores"
                                     TextProperty="Name"
                                     ValueProperty="Id"
-                                    AllowClear="true"
-                                    ClearValue="null"
-                                    Placeholder="All Stores"
+                                    AllowClear="@CanSelectAnyStore"
+                                    Disabled="@(!CanSelectAnyStore)"
+                                    Placeholder="@(CanSelectAnyStore ? "All Stores" : "Your Store")"
                                     Style="width: 200px" />
                     <RadzenButton Icon="refresh"
                                   Text="Load"
