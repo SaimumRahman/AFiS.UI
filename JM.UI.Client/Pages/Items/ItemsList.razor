@@ -16,7 +16,18 @@
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center" Gap="0.4rem" Wrap="FlexWrap.Wrap">
+                    <RadzenTextBox @bind-Value="SearchText"
+                                   Placeholder="Barcode / item name"
+                                   Title="Search by partial barcode or partial item name"
+                                   Style="width:220px; height:34px; font-size:0.8rem;" />
+                    <RadzenButton Icon="clear"
+                                  Text="Clear"
+                                  Click="@ClearSearch"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.ExtraSmall"
+                                  Style="height:34px;" />
+                    <RadzenBadge Text="@($"{FilteredItemCount} item(s)")" BadgeStyle="BadgeStyle.Light" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -30,7 +41,7 @@
     {
         <RadzenCard>
             <RadzenDataGrid @ref="ItemsGrid" 
-                            Data="@ItemsList" 
+                            Data="@FilteredItems" 
                             TItem="ItemDTO" 
                             AllowFiltering="true" 
                             AllowColumnResize="true"
@@ -49,6 +60,11 @@
                             Responsive="true">
                 <Columns>
                     <RadzenDataGridColumn TItem="ItemDTO" Property="Id" Visible="false" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="Barcode" Title="Barcode" Width="170px" Frozen="true">
+                        <Template Context="row">
+                            <ProductInfoButton ItemId="@row.Id" Barcode="@row.Barcode" Tooltip="Product information" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="ItemDTO" Property="Name" Title="Name" Width="200px" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SubGroupName" Title="SubGroup" Width="150px" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="MesurementUnitName" Title="Unit" Width="100px" />
@@ -59,11 +75,6 @@
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="ItemDTO" Property="Barcode" Title="Barcode" Width="170px">
-                        <Template Context="row">
-                            <ProductInfoButton ItemId="row.Id" Barcode="row.Barcode" Tooltip="Product information" />
-                        </Template>
-                    </RadzenDataGridColumn>
                     
                     <RadzenDataGridColumn TItem="ItemDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="item">

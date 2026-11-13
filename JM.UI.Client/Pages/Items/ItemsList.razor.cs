@@ -14,6 +14,27 @@ namespace JM.UI.Client.Pages.Items
         protected IEnumerable<ItemDTO> ItemsList = new List<ItemDTO>();
         protected bool IsLoading;
 
+        /// <summary>Free-text filter: partial barcode OR partial item name.</summary>
+        protected string? SearchText { get; set; }
+
+        /// <summary>Grid data after the free-text filter is applied.</summary>
+        protected IEnumerable<ItemDTO> FilteredItems
+        {
+            get
+            {
+                var term = SearchText?.Trim();
+                if (string.IsNullOrEmpty(term)) return ItemsList;
+
+                return ItemsList.Where(i =>
+                    (i.Barcode ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    (i.Name ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        protected int FilteredItemCount => FilteredItems.Count();
+
+        protected void ClearSearch() => SearchText = null;
+
         protected override async Task OnInitializedAsync()
         {
             await TokenService.InitializeTokenAsync();
