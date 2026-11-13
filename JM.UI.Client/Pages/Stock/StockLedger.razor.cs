@@ -22,6 +22,19 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
     protected IEnumerable<StoreDTO> StoreList = new List<StoreDTO>();
     protected bool IsLoading;
 
+    /// <summary>Set when the branch bands change, so the grid re-registers its columns.</summary>
+    protected bool GridNeedsReload;
+
+    /// <summary>
+    /// Identity of the current set of branch bands. Bound to the grid with @key so
+    /// the grid is re-created - with all banded columns in order - whenever the set
+    /// of branches changes. Without this, Radzen keeps the columns registered on the
+    /// very first (empty, pre-data) render and the Grand Total band ends up next to
+    /// Sale Price.
+    /// </summary>
+    protected string GridKey =>
+        string.Join("|", StoreGroups.Select(g => g.StoreName));
+
     // ── Pivoted table state ──
     // The grid is a branch-wise pivot: one row per item, one banded four-column
     // block per store, plus a grand-total block. Built from the same flat ledger
@@ -50,6 +63,9 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
     protected int? SelectedSubGroupId { get; set; }
     protected int? SelectedDesignId { get; set; }
     protected int? SelectedBrandId { get; set; }
+
+    /// <summary>Free-text filter: partial barcode OR partial item name.</summary>
+    protected string? SearchText { get; set; }
 
     // Any user whose group is flagged IsSystem (GroupsRole.IsSystem = 1) - plus the
     // built-in super admin - may pick any store here. Everyone else is pinned to the
@@ -150,6 +166,7 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
         SelectedSubGroupId = null;
         SelectedDesignId = null;
         SelectedBrandId = null;
+        SearchText = null;
 
         FilteredSubGroups = AllSubGroups;
         FilteredDesigns = AllDesigns;
@@ -205,7 +222,7 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
             StockLedgerList = await _serviceUnitOfWork.StockService
                 .GetStockLedger(FromDate, ToDate, null, SelectedStoreId,
                                 SelectedGroupId, SelectedSubGroupId,
-                                SelectedDesignId, SelectedBrandId);
+                                SelectedDesignId, SelectedBrandId, SearchText);
 
             BuildPivot();
         }
@@ -219,7 +236,22 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
         finally
         {
             IsLoading = false;
+            // Branch bands are generated from StoreGroups, which is only known after
+            // the query returns. Flag the grid so it re-registers its columns on the
+            // next render - otherwise the band columns never appear and the Grand
+            // Total looks like it sits right after Sale Price.
+            GridNeedsReload = true;
             StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!GridNeedsReload) return;
+        GridNeedsReload = false;
+        if (StockLedgerGrid != null)
+        {
+            await StockLedgerGrid.Reload();
         }
     }
 
