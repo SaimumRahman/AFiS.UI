@@ -109,6 +109,7 @@ namespace JM.UI.DataService
             services.AddScoped<IDailyExpenseRepository, DailyExpenseRepository>();
             services.AddScoped<ICounterClosingRepository, CounterClosingRepository>();
             services.AddScoped<ISmsSettingsRepository, SmsSettingsRepository>();
+            services.AddScoped<ISmsLogRepository, SmsLogRepository>();
             #endregion
         }
 

@@ -135,5 +135,6 @@ namespace JM.UI.Service.UnitOfWork
         IDailyExpenseService DailyExpenseService { get; }
         ICounterClosingService CounterClosingService { get; }
         ISmsSettingsService SmsSettingsService { get; }
+        ISmsLogService SmsLogService { get; }
     }
 }

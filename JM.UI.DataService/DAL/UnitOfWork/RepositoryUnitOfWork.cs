@@ -141,6 +141,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IDailyExpenseRepository DailyExpenseRepository { get; }
         public ICounterClosingRepository CounterClosingRepository { get; }
         public ISmsSettingsRepository SmsSettingsRepository { get; }
+        public ISmsLogRepository SmsLogRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -208,6 +209,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
             CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
             SmsSettingsRepository = new SmsSettingsRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsSettingsRepository>());
+            SmsLogRepository = new SmsLogRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsLogRepository>());
         }
 
         public void Dispose()

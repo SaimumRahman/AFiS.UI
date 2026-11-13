@@ -1,4 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounting;
+using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -133,5 +133,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         IDailyExpenseRepository DailyExpenseRepository { get; }
         ICounterClosingRepository CounterClosingRepository { get; }
         ISmsSettingsRepository SmsSettingsRepository { get; }
+        ISmsLogRepository SmsLogRepository { get; }
     }
 }

@@ -136,6 +136,7 @@ namespace JM.UI.Service
             services.AddScoped<IDailyExpenseService, DailyExpenseService>();
             services.AddScoped<ICounterClosingService, CounterClosingService>();
             services.AddScoped<ISmsSettingsService, SmsSettingsService>();
+            services.AddScoped<ISmsLogService, SmsLogService>();
         }
     }
 }

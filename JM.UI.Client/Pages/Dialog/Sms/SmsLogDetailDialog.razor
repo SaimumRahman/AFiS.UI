@@ -1,0 +1,40 @@
+@using JM.UI.Entities.Model.Sms
+
+<RadzenStack Gap="0.75rem">
+    <RadzenRow>
+        <RadzenColumn Size="4" class="text-gray-500 text-sm">To:</RadzenColumn>
+        <RadzenColumn Size="8" class="font-semibold">@Log.MobileNo</RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4" class="text-gray-500 text-sm">Sent:</RadzenColumn>
+        <RadzenColumn Size="8">@Log.SentDate.ToString("dd MMM yyyy, hh:mm tt")</RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4" class="text-gray-500 text-sm">Type:</RadzenColumn>
+        <RadzenColumn Size="8">@Log.SmsType</RadzenColumn>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenColumn Size="4" class="text-gray-500 text-sm">Status:</RadzenColumn>
+        <RadzenColumn Size="8">
+            <RadzenBadge Text="@Log.Status" BadgeStyle="@(Log.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase) ? BadgeStyle.Success : BadgeStyle.Danger)" />
+        </RadzenColumn>
+    </RadzenRow>
+    @if (!Log.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(Log.ErrorDetails))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Size="AlertSize.Small">
+            @Log.ErrorDetails
+        </RadzenAlert>
+    }
+    <div>
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-1">Message Body</div>
+        <div class="text-gray-800 whitespace-pre-wrap font-mono text-xs bg-gray-50 p-3 rounded border border-gray-200">@Log.MessageBody</div>
+    </div>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" class="pt-2">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@(() => dialogService.Close())" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Inject] public DialogService dialogService { get; set; } = default!;
+    [Parameter] public SmsLogDTO Log { get; set; } = new();
+}

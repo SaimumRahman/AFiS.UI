@@ -786,6 +786,15 @@ namespace JM.UI.Client.Services
                         Title       = "SMS Settings",
                         Description = "Configure SMS provider and message templates",
                         Tags        = new[] { "sms", "settings", "template", "notification" }
+                    },
+                    new Example
+                    {
+                        Name        = "SMS Log",
+                        Path        = "/SmsLog",
+                        Icon        = "\ue88e",
+                        Title       = "SMS Log",
+                        Description = "View sent SMS delivery log",
+                        Tags        = new[] { "sms", "log", "delivery", "history" }
                     }
                 }
             }

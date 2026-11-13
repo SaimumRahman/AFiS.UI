@@ -125,6 +125,7 @@ namespace JM.UI.Service.UnitOfWork
         public IDailyExpenseService DailyExpenseService { get; private set; }
         public ICounterClosingService CounterClosingService { get; private set; }
         public ISmsSettingsService SmsSettingsService { get; private set; }
+        public ISmsLogService SmsLogService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -187,6 +188,7 @@ namespace JM.UI.Service.UnitOfWork
             DailyExpenseService = new DailyExpenseService(_repoUow);
             CounterClosingService = new CounterClosingService(_repoUow);
             SmsSettingsService = new SmsSettingsService(_repoUow);
+            SmsLogService = new SmsLogService(_repoUow);
         }
         public void Dispose()
         {
