@@ -133,6 +133,12 @@
 </style>
 
 <RadzenStack Gap="0.5rem" class="sld-wrap">
+    @if (!string.IsNullOrWhiteSpace(Item.ImageBase64))
+    {
+        <div style="text-align:center; margin-bottom:8px;">
+            <img src="@Item.ImageBase64" alt="product" style="max-height:160px; border:1px solid #cbd5e1; border-radius:8px;" />
+        </div>
+    }
     <div class="sld-barcode">@Item.Barcode</div>
     <div class="sld-name">@Item.ItemName</div>
     <div class="sld-meta">@(Item.HasMeta ? Item.MetaText : "No classification on record")</div>
@@ -154,6 +160,20 @@
             <span class="sld-label">Brand</span>
             <span class="sld-value">@Dash(Item.BrandName)</span>
         </div>
+        @if (!string.IsNullOrWhiteSpace(Item.OldBarcode))
+        {
+            <div>
+                <span class="sld-label">Old Barcode</span>
+                <span class="sld-value">@Item.OldBarcode</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Item.Features))
+        {
+            <div>
+                <span class="sld-label">Features</span>
+                <span class="sld-value">@Item.Features</span>
+            </div>
+        }
         <div>
             <span class="sld-label">Total Balance</span>
             <span class="sld-value">

@@ -93,6 +93,10 @@ public class StockLedgerPivotRow
     public string ItemName { get; set; } = string.Empty;
     public decimal SalePrice { get; set; }
 
+    public string? ImageBase64 { get; set; }
+    public string? OldBarcode { get; set; }
+    public string? Features { get; set; }
+
     public string GroupName { get; set; } = string.Empty;
     public string SubGroupName { get; set; } = string.Empty;
     public string DesignName { get; set; } = string.Empty;

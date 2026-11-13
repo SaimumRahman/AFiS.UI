@@ -24,6 +24,12 @@ public class StockLedgerDTO
     // Item sale price (shown in the pivoted branch table).
     public decimal SalePrice { get; set; }
 
+    // Item image (base64), previous barcode and features, surfaced in the product dialog.
+    public string? ImageBase64 { get; set; }
+    public string? OldBarcode { get; set; }
+    public string? Features { get; set; }
+    public string? FeaturesDisplay { get; set; }
+
     // Active campaign for this item/store at query time. All null when there is
     // no running campaign.
     public int? CampaignId { get; set; }

@@ -273,7 +273,10 @@ public partial class StockLedgerComponent : PosComponentBase, IDisposable
                     GroupName = FirstValue(group, r => r.GroupName),
                     SubGroupName = FirstValue(group, r => r.SubGroupName),
                     DesignName = FirstValue(group, r => r.DesignName),
-                    BrandName = FirstValue(group, r => r.BrandName)
+                    BrandName = FirstValue(group, r => r.BrandName),
+                    ImageBase64 = first.ImageBase64,
+                    OldBarcode = first.OldBarcode,
+                    Features = first.Features
                 };
 
                 // Active campaigns are resolved per store row by the API; an item
