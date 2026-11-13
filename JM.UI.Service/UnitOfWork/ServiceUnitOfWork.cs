@@ -1,4 +1,4 @@
-﻿using JM.UI.DataService.DAL.GroupActionPermission;
+using JM.UI.DataService.DAL.GroupActionPermission;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Service.Accounting;
@@ -27,6 +27,7 @@ using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.CounterClosing;
+using JM.UI.Service.Sms;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -123,6 +124,7 @@ namespace JM.UI.Service.UnitOfWork
         public IReportingService ReportingService { get; private set; }
         public IDailyExpenseService DailyExpenseService { get; private set; }
         public ICounterClosingService CounterClosingService { get; private set; }
+        public ISmsSettingsService SmsSettingsService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -184,6 +186,7 @@ namespace JM.UI.Service.UnitOfWork
             ReportingService = new ReportingService(_repoUow);
             DailyExpenseService = new DailyExpenseService(_repoUow);
             CounterClosingService = new CounterClosingService(_repoUow);
+            SmsSettingsService = new SmsSettingsService(_repoUow);
         }
         public void Dispose()
         {

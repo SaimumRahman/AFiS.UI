@@ -1,4 +1,4 @@
-﻿using JM.UI.DataService.DAL.StockOpenings;
+using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.Service.Accounting;
 using JM.UI.Service.Action;
 using JM.UI.Service.Approval;
@@ -26,6 +26,7 @@ using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.CounterClosing;
+using JM.UI.Service.Sms;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -133,5 +134,6 @@ namespace JM.UI.Service.UnitOfWork
         IReportingService ReportingService { get; }
         IDailyExpenseService DailyExpenseService { get; }
         ICounterClosingService CounterClosingService { get; }
+        ISmsSettingsService SmsSettingsService { get; }
     }
 }

@@ -770,6 +770,24 @@ namespace JM.UI.Client.Services
                         Tags        = new[] { "theme", "color", "appearance" }
                     }
                 }
+            },
+            // Settings
+            new Example
+            {
+                Name = "Settings",
+                Icon = "\ue8b8",
+                Children = new[]
+                {
+                    new Example
+                    {
+                        Name        = "SMS Settings",
+                        Path        = "/SmsSettings",
+                        Icon        = "\ue0b0",
+                        Title       = "SMS Settings",
+                        Description = "Configure SMS provider and message templates",
+                        Tags        = new[] { "sms", "settings", "template", "notification" }
+                    }
+                }
             }
         };
 

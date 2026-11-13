@@ -1,4 +1,4 @@
-﻿using JM.Infrastructure.Base;
+using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval.Aprrover;
 using JM.UI.DataService.DAL.Routes;
@@ -24,6 +24,7 @@ using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.CounterClosing;
+using JM.UI.Service.Sms;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -134,6 +135,7 @@ namespace JM.UI.Service
             services.AddScoped<ISaleService, SaleService>();
             services.AddScoped<IDailyExpenseService, DailyExpenseService>();
             services.AddScoped<ICounterClosingService, CounterClosingService>();
+            services.AddScoped<ISmsSettingsService, SmsSettingsService>();
         }
     }
 }

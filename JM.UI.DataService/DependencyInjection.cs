@@ -1,4 +1,4 @@
-﻿using JM.Infrastructure.Base;
+using JM.Infrastructure.Base;
 using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
@@ -35,6 +35,7 @@ using JM.UI.DataService.DAL.Purchases;
 using JM.UI.DataService.DAL.Routes;
 using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Stock;
+using JM.UI.DataService.DAL.Sms;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.SubGroups;
@@ -107,6 +108,7 @@ namespace JM.UI.DataService
             services.AddScoped<ISaleRepository, SaleRepository>();
             services.AddScoped<IDailyExpenseRepository, DailyExpenseRepository>();
             services.AddScoped<ICounterClosingRepository, CounterClosingRepository>();
+            services.AddScoped<ISmsSettingsRepository, SmsSettingsRepository>();
             #endregion
         }
 

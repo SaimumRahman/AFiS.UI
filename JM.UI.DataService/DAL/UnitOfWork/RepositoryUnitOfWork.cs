@@ -1,4 +1,4 @@
-﻿using JM.UI.DataService.DAL.Accounting;
+using JM.UI.DataService.DAL.Accounting;
 using JM.UI.DataService.DAL.Actions;
 using JM.UI.DataService.DAL.Approval;
 using JM.UI.DataService.DAL.Approval.Aprrover;
@@ -54,6 +54,7 @@ using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
+using JM.UI.DataService.DAL.Sms;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
@@ -139,6 +140,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public IReportingRepository ReportingRepository { get; }
         public IDailyExpenseRepository DailyExpenseRepository { get; }
         public ICounterClosingRepository CounterClosingRepository { get; }
+        public ISmsSettingsRepository SmsSettingsRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -205,6 +207,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
             DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
             CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
+            SmsSettingsRepository = new SmsSettingsRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsSettingsRepository>());
         }
 
         public void Dispose()
