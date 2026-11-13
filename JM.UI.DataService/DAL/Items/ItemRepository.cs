@@ -94,6 +94,23 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
+        public async Task<IEnumerable<ItemDTO>> GetItemsByBaseBarcode(string baseBarcode)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Items/GetItemsByBaseBarcode?baseBarcode={Uri.EscapeDataString(baseBarcode)}");
+                response.EnsureSuccessStatusCode();
+                var items = await response.Content.ReadFromJsonAsync<List<ItemDTO>>();
+                return items ?? new List<ItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching items by base barcode: {BaseBarcode}", baseBarcode);
+                throw;
+            }
+        }
+
         public async Task<ResponseResult> CreateItem(CreateItemRequestDTO createItemRequest)
         {
             try
@@ -136,7 +153,12 @@ namespace JM.UI.DataService.DAL.Items
                         OriginId = item.OriginId,
                         Origin = item.Origin,
                         Features = item.Features,
-                        ItemWiseFeatureId = item.ItemWiseFeatureId
+                        ItemWiseFeatureId = item.ItemWiseFeatureId,
+                        FeatureIds = item.FeatureIds,
+                        FeaturesDisplay = item.FeaturesDisplay,
+                        PurchasePrice = item.PurchasePrice,
+                        ImageBase64 = item.ImageBase64,
+                        OldBarcode = item.OldBarcode
                     }
                 };
                 var response = await httpClient.PutAsJsonAsync("Items/UpdateItem", request);

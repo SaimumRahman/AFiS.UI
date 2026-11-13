@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace JM.UI.Entities.Model.Items
 {
@@ -19,5 +20,10 @@ namespace JM.UI.Entities.Model.Items
         public string? Origin { get; set; }
         public string? Features { get; set; }
         public int? ItemWiseFeatureId { get; set; }
+        public List<int> FeatureIds { get; set; } = new();
+        public string? FeaturesDisplay { get; set; }
+        public decimal? PurchasePrice { get; set; }
+        public string? ImageBase64 { get; set; }
+        public string? OldBarcode { get; set; }
     }
 }

@@ -10,6 +10,7 @@ namespace JM.UI.Service.Items
     {
         Task<IEnumerable<ItemDTO>> GetItems();
         Task<ItemDTO?> GetItemById(int id);
+        Task<IEnumerable<ItemDTO>> GetItemsByBaseBarcode(string baseBarcode);
         Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
         Task<ResponseResult> DeleteItem(int id);
         Task<IEnumerable<ItemDTO>> GetItemsByStoreId(int storeId);

@@ -25,6 +25,7 @@ namespace JM.UI.Entities.Model.Items
         public string? UnitName { get; set; }
         public string? ShadeNo { get; set; }
         public string? ImageBase64 { get; set; }
+        public string? OldBarcode { get; set; }
         public string? MaterialType { get; set; }
         public string? Origin { get; set; }
         public string? Features { get; set; }
