@@ -1,0 +1,59 @@
+@using JM.UI.Client.Pages.Dialog.Stock
+@inject DialogService DialogService
+
+@*
+    Reusable "Product Information" trigger.
+
+    Drop this next to any barcode in any page:
+
+        <ProductInfoButton ItemId="@row.Id" />                 // info icon only
+        <ProductInfoButton ItemId="@row.Id" Barcode="@row.Barcode" />  // clickable barcode + icon
+
+    It opens the shared StockLedgerItemDialog, which - when only an ItemId is
+    given - loads the item master (image, old barcode, features, prices) and its
+    per-branch stock on demand.
+*@
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+    @if (!string.IsNullOrWhiteSpace(Barcode))
+    {
+        <a href="javascript:void(0)"
+           title="@(Tooltip ?? "Product information")"
+           style="font-family:Consolas, monospace; text-decoration:none; cursor:pointer;"
+           @onclick="OpenAsync">@Barcode</a>
+    }
+    <RadzenButton Icon="info" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                  title="@(Tooltip ?? "Product information")"
+                  Style="width:26px;height:26px;padding:0;"
+                  Click="@OpenAsync" />
+</RadzenStack>
+
+@code {
+    /// <summary>Item master id (Items.Id). Required.</summary>
+    [Parameter] public int ItemId { get; set; }
+
+    /// <summary>When supplied, the barcode text itself becomes clickable.</summary>
+    [Parameter] public string? Barcode { get; set; }
+
+    /// <summary>Optional hover text.</summary>
+    [Parameter] public string? Tooltip { get; set; }
+
+    private async Task OpenAsync()
+    {
+        if (ItemId <= 0) return;
+
+        await DialogService.OpenAsync<StockLedgerItemDialog>(
+            "Product Information",
+            new Dictionary<string, object>
+            {
+                { nameof(StockLedgerItemDialog.ItemId), ItemId }
+            },
+            new DialogOptions
+            {
+                Width = "760px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = true
+            });
+    }
+}

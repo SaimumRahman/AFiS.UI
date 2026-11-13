@@ -97,6 +97,10 @@ public class StockLedgerPivotRow
     public string? OldBarcode { get; set; }
     public string? Features { get; set; }
 
+    /// <summary>Purchase price and unit, shown by the product information dialog.</summary>
+    public decimal? PurchasePrice { get; set; }
+    public string? UnitName { get; set; }
+
     public string GroupName { get; set; } = string.Empty;
     public string SubGroupName { get; set; } = string.Empty;
     public string DesignName { get; set; } = string.Empty;

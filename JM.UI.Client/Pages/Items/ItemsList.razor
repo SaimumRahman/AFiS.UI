@@ -1,5 +1,6 @@
 @page "/ItemsList"
 @using JM.UI.Entities.Model.Items
+@using JM.UI.Client.Pages.Dialog.Shared
 @attribute [Authorize]
 @inherits ItemsListComponent
 
@@ -58,7 +59,11 @@
                     <RadzenDataGridColumn TItem="ItemDTO" Property="SalePrice" Title="Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="WholeSalePrice" Title="W.Sale Price" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn TItem="ItemDTO" Property="AlarmLevel" Title="Alarm" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="ItemDTO" Property="Barcode" Title="Barcode" Width="150px" />
+                    <RadzenDataGridColumn TItem="ItemDTO" Property="Barcode" Title="Barcode" Width="170px">
+                        <Template Context="row">
+                            <ProductInfoButton ItemId="row.Id" Barcode="row.Barcode" Tooltip="Product information" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     
                     <RadzenDataGridColumn TItem="ItemDTO" Title="Actions" Width="120px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                         <Template Context="item">

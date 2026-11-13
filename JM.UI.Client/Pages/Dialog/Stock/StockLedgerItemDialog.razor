@@ -1,6 +1,9 @@
 @using System.Linq
+@using JM.UI.Entities.Model.Items
 @using JM.UI.Entities.Model.Stock
+@using JM.UI.Service.UnitOfWork
 @inject DialogService DialogService
+@inject IServiceUnitOfWork _serviceUnitOfWork
 
 <style>
     .sld-wrap {
@@ -132,6 +135,22 @@
     }
 </style>
 
+@if (IsLoading)
+{
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="padding:36px 0;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <RadzenText TextStyle="TextStyle.Body2">Loading product information…</RadzenText>
+    </RadzenStack>
+}
+else if (!string.IsNullOrWhiteSpace(LoadError))
+{
+    <RadzenStack Gap="0.75rem" AlignItems="AlignItems.Center" Style="padding:24px;">
+        <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-danger);">@LoadError</RadzenText>
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+    </RadzenStack>
+}
+else
+{
 <RadzenStack Gap="0.5rem" class="sld-wrap">
     @if (!string.IsNullOrWhiteSpace(Item.ImageBase64))
     {
@@ -160,6 +179,20 @@
             <span class="sld-label">Brand</span>
             <span class="sld-value">@Dash(Item.BrandName)</span>
         </div>
+        @if (Item.PurchasePrice.HasValue && Item.PurchasePrice.Value > 0)
+        {
+            <div>
+                <span class="sld-label">Purchase Price</span>
+                <span class="sld-value">৳ @Item.PurchasePrice.Value.ToString("N2")</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Item.UnitName))
+        {
+            <div>
+                <span class="sld-label">Unit</span>
+                <span class="sld-value">@Item.UnitName</span>
+            </div>
+        }
         @if (!string.IsNullOrWhiteSpace(Item.OldBarcode))
         {
             <div>
@@ -252,10 +285,106 @@
         <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
     </RadzenStack>
 </RadzenStack>
+}
 
 @code {
+    /// <summary>Pre-computed row supplied by the Stock Ledger page.</summary>
     [Parameter] public StockLedgerPivotRow Item { get; set; } = default!;
     [Parameter] public List<StockLedgerStoreGroup> Stores { get; set; } = new();
+
+    /// <summary>
+    /// When the dialog is opened from anywhere else in the system, only the item
+    /// id is supplied; the dialog then loads the item and its per-branch stock.
+    /// </summary>
+    [Parameter] public int ItemId { get; set; }
+
+    private bool IsLoading;
+    private string? LoadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Already handed a fully-built row (Stock Ledger) - nothing to fetch.
+        if (Item != null && !string.IsNullOrWhiteSpace(Item.Barcode)) return;
+        if (ItemId <= 0) return;
+
+        IsLoading = true;
+        try
+        {
+            var item = await _serviceUnitOfWork.ItemService.GetItemById(ItemId);
+            if (item == null)
+            {
+                LoadError = "Item not found.";
+                return;
+            }
+
+            var ledger = (await _serviceUnitOfWork.StockService
+                .GetStockLedger(null, null, ItemId, null, null, null, null, null)).ToList();
+
+            Item = BuildRow(item, ledger);
+            Stores = ledger
+                .Select(r => (r.StoreName ?? string.Empty).Trim())
+                .Where(n => n.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(n => new StockLedgerStoreGroup
+                {
+                    StoreName = n,
+                    StoreId = ledger.FirstOrDefault(r =>
+                        string.Equals((r.StoreName ?? string.Empty).Trim(), n,
+                                      StringComparison.OrdinalIgnoreCase))?.StoreId ?? 0
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            LoadError = $"Failed to load product information: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>Builds the dialog row from the item master plus its ledger rows.</summary>
+    private static StockLedgerPivotRow BuildRow(ItemDTO item, List<StockLedgerDTO> ledger)
+    {
+        var barcode = (item.Barcode ?? string.Empty).Trim();
+        var row = new StockLedgerPivotRow
+        {
+            ItemKey = barcode.Length > 0 ? barcode : "#" + (item.Name ?? string.Empty).Trim(),
+            Barcode = barcode.Length > 0 ? barcode : "-",
+            ItemName = item.Name ?? string.Empty,
+            SalePrice = item.SalePrice ?? 0m,
+            PurchasePrice = item.PurchasePrice ?? item.LastCostPrice,
+            UnitName = item.MesurementUnitName ?? item.UnitName,
+            GroupName = item.GroupName ?? string.Empty,
+            SubGroupName = item.SubGroupName ?? string.Empty,
+            DesignName = item.DesignName ?? string.Empty,
+            BrandName = item.BrandName ?? string.Empty,
+            ImageBase64 = item.ImageBase64,
+            OldBarcode = item.OldBarcode,
+            Features = string.IsNullOrWhiteSpace(item.FeaturesDisplay) ? item.Features : item.FeaturesDisplay
+        };
+
+        foreach (var storeRows in ledger.GroupBy(
+                     r => (r.StoreName ?? string.Empty).Trim(),
+                     StringComparer.OrdinalIgnoreCase))
+        {
+            row.Cells[storeRows.Key] = new StockLedgerStoreCell
+            {
+                OpeningStock = storeRows.Sum(r => r.OpeningStock),
+                ReceiveQty = storeRows.Sum(r => r.ReceiveQty),
+                IssueQty = storeRows.Sum(r => r.IssueQty),
+                ClosingStock = storeRows.Sum(r => r.ClosingStock)
+            };
+        }
+
+        row.TotalOpening = row.Cells.Values.Sum(c => c.OpeningStock);
+        row.TotalReceive = row.Cells.Values.Sum(c => c.ReceiveQty);
+        row.TotalIssue = row.Cells.Values.Sum(c => c.IssueQty);
+        row.TotalClosing = row.Cells.Values.Sum(c => c.ClosingStock);
+
+        return row;
+    }
 
     private static string Dash(string? value)
         => string.IsNullOrWhiteSpace(value) ? "-" : value;
