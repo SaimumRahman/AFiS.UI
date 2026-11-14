@@ -30,6 +30,18 @@ FROM dbo.Routes r
 WHERE r.RoutePath = N'/SmsLog'
   AND NOT EXISTS (SELECT 1 FROM dbo.GroupRoutePermissions x WHERE x.GroupId = 4016 AND x.RouteId = r.RouteId);
 
+-- Audit Log
+IF NOT EXISTS (SELECT 1 FROM dbo.Routes WHERE RoutePath = N'/AuditLog')
+BEGIN
+    INSERT dbo.Routes (RouteName, RoutePath, IsActive)
+    VALUES (N'Audit Log', N'/AuditLog', 1);
+END
+INSERT dbo.GroupRoutePermissions (GroupId, RouteId)
+SELECT 4016, r.RouteId
+FROM dbo.Routes r
+WHERE r.RoutePath = N'/AuditLog'
+  AND NOT EXISTS (SELECT 1 FROM dbo.GroupRoutePermissions x WHERE x.GroupId = 4016 AND x.RouteId = r.RouteId);
+
 SELECT RouteId, RouteName, RoutePath, IsActive
 FROM dbo.Routes
 WHERE RoutePath IN (N'/SmsSettings', N'/SmsLog')

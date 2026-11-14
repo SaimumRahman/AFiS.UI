@@ -27,6 +27,7 @@ using JM.UI.Service.Coupon;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Sms;
+using JM.UI.Service.Audit;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -136,5 +137,6 @@ namespace JM.UI.Service.UnitOfWork
         ICounterClosingService CounterClosingService { get; }
         ISmsSettingsService SmsSettingsService { get; }
         ISmsLogService SmsLogService { get; }
+        IAuditLogService AuditLogService { get; }
     }
 }

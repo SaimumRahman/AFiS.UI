@@ -55,6 +55,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Sms;
+using JM.UI.DataService.DAL.Audit;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
@@ -134,5 +135,6 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICounterClosingRepository CounterClosingRepository { get; }
         ISmsSettingsRepository SmsSettingsRepository { get; }
         ISmsLogRepository SmsLogRepository { get; }
+        IAuditLogRepository AuditLogRepository { get; }
     }
 }

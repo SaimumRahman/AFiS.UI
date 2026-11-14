@@ -1,0 +1,36 @@
+@page "/AuditLog"
+@inherits JM.UIWeb.CustomBase.PosComponentBase
+@using JM.UI.Client.Pages.Dialog.Audit
+@using JM.UI.Entities.Model.Audit
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard>
+    <RadzenHeading Size="H4" Text="Audit Log" />
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mb-2" Wrap="FlexWrap.Wrap">
+        <RadzenTextBox @bind-Value="SearchText" Placeholder="Search table / business key / user" Style="width:260px" />
+        <RadzenTextBox @bind-Value="TableName" Placeholder="Table name (exact)" Style="width:200px" />
+        <RadzenDatePicker @bind-Value="FromDate" DateFormat="yyyy-MM-dd" />
+        <RadzenDatePicker @bind-Value="ToDate" DateFormat="yyyy-MM-dd" />
+        <RadzenButton Text="Search" Icon="search" Click="OnSearch" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="@Items" TItem="AuditLogDTO" AllowPaging="true" PageSize="@PageSize"
+                    Count="@Result.TotalCount" LoadData="@((args) => Task.CompletedTask)"
+                    IsLoading="@IsLoading" Style="height:520px">
+        <Columns>
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="ChangedAt" Title="When" Width="170px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="TableName" Title="Table" Width="150px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="Op" Title="Op" Width="60px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="RowId" Title="RowId" Width="80px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="BusinessKey" Title="Business Key" Width="180px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="StoreId" Title="Store" Width="70px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Property="ChangedBy" Title="By" Width="70px" />
+            <RadzenDataGridColumn TItem="AuditLogDTO" Title="Actions" Width="90px">
+                <Template Context="row">
+                    <RadzenButton Size="ButtonSize.Small" Icon="visibility" Click="@(() => ViewDetail(row))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>

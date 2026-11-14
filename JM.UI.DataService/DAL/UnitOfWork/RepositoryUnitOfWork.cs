@@ -55,6 +55,7 @@ using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
 using JM.UI.DataService.DAL.Sms;
+using JM.UI.DataService.DAL.Audit;
 using JM.UI.DataService.DAL.Stores;
 using JM.UI.DataService.DAL.CostCenters;
 using JM.UI.DataService.DAL.SubGroups;
@@ -142,6 +143,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICounterClosingRepository CounterClosingRepository { get; }
         public ISmsSettingsRepository SmsSettingsRepository { get; }
         public ISmsLogRepository SmsLogRepository { get; }
+        public IAuditLogRepository AuditLogRepository { get; }
 
         public RepositoryUnitOfWork(
             IHttpClientFactory factory,
@@ -210,6 +212,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
             SmsSettingsRepository = new SmsSettingsRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsSettingsRepository>());
             SmsLogRepository = new SmsLogRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsLogRepository>());
+            AuditLogRepository = new AuditLogRepository(factory, tokenProvider, loggerFactory.CreateLogger<AuditLogRepository>());
         }
 
         public void Dispose()

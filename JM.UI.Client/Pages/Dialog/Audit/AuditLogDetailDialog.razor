@@ -1,0 +1,14 @@
+@using JM.UI.Entities.Model.Audit
+@inject DialogService DialogService
+
+<RadzenStack Gap="0.5rem">
+    <RadzenText Text="@($"Table: {Row?.TableName}  |  Op: {Row?.Op}  |  RowId: {Row?.RowId}  |  When: {Row?.ChangedAt}")" />
+    <RadzenText Text="@($"BusinessKey: {Row?.BusinessKey}  |  Store: {Row?.StoreId}  |  By: {Row?.ChangedBy} ({Row?.AppUser})")" />
+    <RadzenHeading Size="H6" Text="OLD" />
+    <RadzenTextArea Value="@Row?.OldData" Rows="10" Style="width:100%;font-family:monospace" ReadOnly="true" />
+    <RadzenHeading Size="H6" Text="NEW" />
+    <RadzenTextArea Value="@Row?.NewData" Rows="10" Style="width:100%;font-family:monospace" ReadOnly="true" />
+</RadzenStack>
+@code {
+    [Parameter] public AuditLogDTO? Row { get; set; }
+}

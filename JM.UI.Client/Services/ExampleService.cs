@@ -795,6 +795,15 @@ namespace JM.UI.Client.Services
                         Title       = "SMS Log",
                         Description = "View sent SMS delivery log",
                         Tags        = new[] { "sms", "log", "delivery", "history" }
+                    },
+                    new Example
+                    {
+                        Name        = "Audit Log",
+                        Path        = "/AuditLog",
+                        Icon        = "\ue88e",
+                        Title       = "Audit Log",
+                        Description = "View before/after history of critical records",
+                        Tags        = new[] { "audit", "history", "log", "changes" }
                     }
                 }
             }

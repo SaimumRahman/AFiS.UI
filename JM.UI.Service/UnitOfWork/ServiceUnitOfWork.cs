@@ -28,6 +28,7 @@ using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Sms;
+using JM.UI.Service.Audit;
 using JM.UI.Service.Discount;
 using JM.UI.Service.ItemBrand;
 using JM.UI.Service.ItemCatalogue;
@@ -126,6 +127,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICounterClosingService CounterClosingService { get; private set; }
         public ISmsSettingsService SmsSettingsService { get; private set; }
         public ISmsLogService SmsLogService { get; private set; }
+        public IAuditLogService AuditLogService { get; private set; }
 
         public ServiceUnitOfWork(IRepositoryUnitOfWork repoUow) 
         {
@@ -189,6 +191,7 @@ namespace JM.UI.Service.UnitOfWork
             CounterClosingService = new CounterClosingService(_repoUow);
             SmsSettingsService = new SmsSettingsService(_repoUow);
             SmsLogService = new SmsLogService(_repoUow);
+            AuditLogService = new AuditLogService(_repoUow);
         }
         public void Dispose()
         {
