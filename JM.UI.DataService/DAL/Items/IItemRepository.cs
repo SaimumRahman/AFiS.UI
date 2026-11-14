@@ -11,6 +11,7 @@ namespace JM.UI.DataService.DAL.Items
         Task<IEnumerable<ItemDTO>> GetItems();
         Task<ItemDTO?> GetItemById(int id);
         Task<IEnumerable<ItemDTO>> GetItemsByBaseBarcode(string baseBarcode);
+        Task<IEnumerable<ItemDTO>> GetItemsByDesignColor(int designId, int colorId);
         Task<IEnumerable<ItemDTO>> LoadItemsBySubGroup(int subGroupId);
         //Task<ResponseResult> SaveUpdateItem(ItemDTO item);
         Task<ResponseResult> DeleteItem(int id);

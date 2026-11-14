@@ -94,6 +94,23 @@ namespace JM.UI.DataService.DAL.Items
             }
         }
 
+        public async Task<IEnumerable<ItemDTO>> GetItemsByDesignColor(int designId, int colorId)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Items/GetItemsByDesignColor?designId={designId}&colorId={colorId}");
+                response.EnsureSuccessStatusCode();
+                var items = await response.Content.ReadFromJsonAsync<List<ItemDTO>>();
+                return items ?? new List<ItemDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching items by design/color: {DesignId}/{ColorId}", designId, colorId);
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<ItemDTO>> GetItemsByBaseBarcode(string baseBarcode)
         {
             try

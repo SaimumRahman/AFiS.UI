@@ -38,6 +38,7 @@ public class ItemService : IItemService
     {
         return await _unitOfWork.ItemRepository.GetItemsByBaseBarcode(baseBarcode);
     }
+    public async Task<IEnumerable<ItemDTO>> GetItemsByDesignColor(int designId, int colorId) => await _unitOfWork.ItemRepository.GetItemsByDesignColor(designId, colorId);
    
     public async Task<ResponseResult> CreateItem(PreviewItemRow createItemRequest)
     {

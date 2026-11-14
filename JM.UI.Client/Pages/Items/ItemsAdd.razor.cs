@@ -1,4 +1,4 @@
-﻿using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.Items;
 using JM.UI.Entities.Model.ItemFeatures;
 using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.ItemBrand;
@@ -126,36 +126,13 @@ namespace JM.UI.Client.Pages.Items
                 if (!list.Any())
                 {
                     // fallback: treat the single item as the only variant
-                    var single = await _serviceUnitOfWork.ItemService.GetItemById(Id!.Value);
-                    if (single != null) list.Add(single);
+                    if (Id.HasValue)
+                    {
+                        var single = await _serviceUnitOfWork.ItemService.GetItemById(Id!.Value);
+                        if (single != null) list.Add(single);
+                    }
                 }
-                Variants = list;
-                if (Variants.Any())
-                {
-                    var first = Variants.First();
-                    LockedBaseBarcode = DeriveBaseBarcode(first.Barcode);
-                    LockedGroupName = first.GroupName ?? string.Empty;
-                    LockedSubGroupName = first.SubGroupName ?? string.Empty;
-                    // color name not in DTO; use ColorId string
-                    LockedColorName = Colors.FirstOrDefault(c => c.Id == first.ColorId)?.Name ?? first.ColorId?.ToString() ?? string.Empty;
-                    GlobalName = first.Name;
-                    GlobalBrandId = first.BrandId;
-                    GlobalOriginId = first.OriginId;
-                    GlobalUnitId = first.MesurementUnitId;
-                    GlobalCatalogueId = first.CatalogueId;
-                    GlobalFeatures = first.FeaturesDisplay ?? first.Features ?? string.Empty;
-                    // Resolve selected feature ids from feature names
-                    var names = (GlobalFeatures ?? string.Empty)
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .ToList();
-                    SelectedFeatureIds = Features
-                        .Where(f => names.Contains(f.FeatureName, StringComparer.OrdinalIgnoreCase))
-                        .Select(f => f.FeatureId)
-                        .ToList();
-                    NewFeatureNames = new List<string>();
-                    GlobalImageBase64 = first.ImageBase64;
-                    GlobalOldBarcode = first.OldBarcode; // need OldBarcode on ItemDTO? not present; use null
-                }
+                ApplyVariantMetadata(list);
             }
             catch (Exception ex)
             {
@@ -165,6 +142,59 @@ namespace JM.UI.Client.Pages.Items
             {
                 IsLoadingByComponent = false;
             }
+        }
+
+        private async Task LoadVariantsByDesignColor(int designId, int colorId)
+        {
+            try
+            {
+                IsLoadingByComponent = true;
+                var items = await _serviceUnitOfWork.ItemService.GetItemsByDesignColor(designId, colorId);
+                var list = (items ?? new List<ItemDTO>()).ToList();
+                if (!list.Any() && Id.HasValue)
+                {
+                    var single = await _serviceUnitOfWork.ItemService.GetItemById(Id!.Value);
+                    if (single != null) list.Add(single);
+                }
+                ApplyVariantMetadata(list);
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load variants: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingByComponent = false;
+            }
+        }
+
+        private void ApplyVariantMetadata(List<ItemDTO> list)
+        {
+            Variants = list ?? new List<ItemDTO>();
+            if (!Variants.Any()) return;
+            var first = Variants.First();
+            LockedBaseBarcode = DeriveBaseBarcode(first.Barcode);
+            LockedGroupName = first.GroupName ?? string.Empty;
+            LockedSubGroupName = first.SubGroupName ?? string.Empty;
+            // color name not in DTO; use ColorId string
+            LockedColorName = Colors.FirstOrDefault(c => c.Id == first.ColorId)?.Name ?? first.ColorId?.ToString() ?? string.Empty;
+            GlobalName = first.Name;
+            GlobalBrandId = first.BrandId;
+            GlobalOriginId = first.OriginId;
+            GlobalUnitId = first.MesurementUnitId;
+            GlobalCatalogueId = first.CatalogueId;
+            GlobalFeatures = first.FeaturesDisplay ?? first.Features ?? string.Empty;
+            // Resolve selected feature ids from feature names
+            var names = (GlobalFeatures ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+            SelectedFeatureIds = Features
+                .Where(f => names.Contains(f.FeatureName, StringComparer.OrdinalIgnoreCase))
+                .Select(f => f.FeatureId)
+                .ToList();
+            NewFeatureNames = new List<string>();
+            GlobalImageBase64 = first.ImageBase64;
+            GlobalOldBarcode = first.OldBarcode;
         }
 
         protected async Task FetchByBarcode()
