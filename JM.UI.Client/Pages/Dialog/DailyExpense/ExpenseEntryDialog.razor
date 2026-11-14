@@ -262,6 +262,7 @@
     protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
     protected List<AccountNode> ExpenseAccountTree { get; set; } = new();
     protected bool IsCash { get; set; } = true;
+    protected bool IsPettyCash { get; set; } = false;
     protected bool IsProcessing { get; set; }
 
     protected ElementReference expenseAccountTrigger;
@@ -430,7 +431,7 @@
         IsLoadingCash = true;
         try
         {
-            AvailableCash = await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value);
+            AvailableCash = await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value, IsPettyCash);
         }
         catch (Exception ex)
         {
@@ -481,12 +482,13 @@
         // enforce here.
         Expense.CreatedBy = UserId;
         Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
-        if (IsCash) Expense.FinancialAccountId = null;
+        Expense.FinancialAccountId = null;
+        Expense.IsPettyCash = IsPettyCash;
 
         // Available-cash (ledger × cost center) hard limit.
         if (Expense.StoreId > 0 && Expense.LedgerAccountId.HasValue && Expense.LedgerAccountId.Value > 0)
         {
-            AvailableCash ??= await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value);
+            AvailableCash ??= await ServiceUnitOfWork.DailyExpenseService.GetAvailableCash(Expense.StoreId, Expense.LedgerAccountId.Value, IsPettyCash);
             if (AvailableCash == null || !AvailableCash.CostCenterLinked)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Validation",

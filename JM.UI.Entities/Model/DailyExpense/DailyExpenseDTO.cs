@@ -33,6 +33,10 @@ namespace JM.UI.Entities.Model.DailyExpense
         public long? AccVoucherEntryId { get; set; }
         public int? VoucherNo { get; set; }
         public string VoucherStatus { get; set; }
+
+        // Payment source for the available-cash check: true = petty cash
+        // (funded balance), false = shop drawer cash.
+        public bool IsPettyCash { get; set; }
     }
 
     public class PostDailyExpensesDTO

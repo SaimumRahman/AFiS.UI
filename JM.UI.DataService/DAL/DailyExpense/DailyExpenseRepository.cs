@@ -154,13 +154,13 @@ namespace JM.UI.DataService.DAL.DailyExpense
             }
         }
 
-        public async Task<DailyExpenseAvailableCashDTO?> GetAvailableCash(int storeId, int ledgerAccountId)
+        public async Task<DailyExpenseAvailableCashDTO?> GetAvailableCash(int storeId, int ledgerAccountId, bool isPettyCash = true)
         {
             try
             {
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.GetAsync(
-                    $"DailyExpenses/GetAvailableCash?storeId={storeId}&ledgerAccountId={ledgerAccountId}");
+                    $"DailyExpenses/GetAvailableCash?storeId={storeId}&ledgerAccountId={ledgerAccountId}&isPettyCash={isPettyCash}");
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<DailyExpenseAvailableCashDTO>();
             }

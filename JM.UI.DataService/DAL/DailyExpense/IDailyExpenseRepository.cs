@@ -15,6 +15,6 @@ namespace JM.UI.DataService.DAL.DailyExpense
         Task<IEnumerable<DailyExpenseDTO>> GetDailyExpensesForPosting(DateTime businessDay, int? storeId);
         Task<ResponseResult> PostDailyExpenses(PostDailyExpensesDTO request);
         Task<ResponseResult> UnpostDailyExpense(UnpostDailyExpenseDTO request);
-        Task<DailyExpenseAvailableCashDTO?> GetAvailableCash(int storeId, int ledgerAccountId);
+        Task<DailyExpenseAvailableCashDTO?> GetAvailableCash(int storeId, int ledgerAccountId, bool isPettyCash = true);
     }
 }
