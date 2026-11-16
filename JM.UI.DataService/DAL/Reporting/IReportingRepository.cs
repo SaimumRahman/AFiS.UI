@@ -42,6 +42,13 @@ namespace JM.UI.DataService.DAL.Reporting
             string? salesmanName = null,
             int? servedByUserId = null);
         Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null);
+        Task<CollectionSummaryReportDTO> GetCollectionSummary(
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? storeId = null,
+            string? sourceType = null,
+            string? channel = null,
+            string? search = null);
         Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode);
         Task<IEnumerable<GeneralLedgerDTO>> GetGeneralLedger(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode, int? accountId, int? voucherTypeId);
         Task<IEnumerable<PartyBalanceDTO>> GetPartyBalance(string? companyCode, string? partyType);

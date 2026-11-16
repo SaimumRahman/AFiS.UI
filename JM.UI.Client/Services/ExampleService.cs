@@ -651,6 +651,15 @@ namespace JM.UI.Client.Services
                         Title       = "Sales & Booking Report",
                         Description = "Branch-wise sales, exchanges and new bookings with item/salesman lines, payment breakdown, dues and a collection summary",
                         Tags        = new[] { "sales", "booking", "report", "branch", "collection", "exchange" }
+                    },
+                    new Example
+                    {
+                        Name        = "Collection Summary",
+                        Path        = "/CollectionSummaryReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Collection Summary",
+                        Description = "Invoice-wise collection & payment mode report with channel-wise totals",
+                        Tags        = new[] { "collection", "payment", "report", "branch", "invoice" }
                     }
                 }
             },

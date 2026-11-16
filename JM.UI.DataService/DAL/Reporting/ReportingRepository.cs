@@ -381,6 +381,34 @@ namespace JM.UI.DataService.DAL.Reporting
             }
         }
 
+        public async Task<CollectionSummaryReportDTO> GetCollectionSummary(DateTime? fromDate, DateTime? toDate, int? storeId = null, string? sourceType = null, string? channel = null, string? search = null)
+        {
+            try
+            {
+                var url = "api/CollectionSummary/detail";
+                var query = new List<string>();
+                if (fromDate.HasValue) query.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue) query.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (storeId.HasValue && storeId.Value > 0) query.Add($"storeId={storeId.Value}");
+                if (!string.IsNullOrWhiteSpace(sourceType) && sourceType != "ALL") query.Add($"sourceType={Uri.EscapeDataString(sourceType)}");
+                if (!string.IsNullOrWhiteSpace(channel) && channel != "ALL") query.Add($"channel={Uri.EscapeDataString(channel)}");
+                if (!string.IsNullOrWhiteSpace(search)) query.Add($"search={Uri.EscapeDataString(search)}");
+                if (query.Any()) url += "?" + string.Join("&", query);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<CollectionSummaryReportDTO>();
+                return result ?? new CollectionSummaryReportDTO();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching collection summary report");
+                throw new Exception("Failed to fetch collection summary report: " + ex.Message, ex);
+            }
+        }
+
         public async Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null)
         {
             try
