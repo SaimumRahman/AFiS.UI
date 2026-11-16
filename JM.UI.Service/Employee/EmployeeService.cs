@@ -166,6 +166,24 @@ namespace JM.UI.Service.Employee
                 .SaveUpdateEmployee(employee);
         }
 
+        public async Task<ResponseResult> UpdateEmployeeStatus(int id, int status)
+        {
+            try
+            {
+                return await _repositoryUnitOfWork
+                    .EmployeeRepository
+                    .UpdateEmployeeStatus(id, status);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult
+                {
+                    IsSuccessStatus = false,
+                    Message = $"Failed to update status: {ex.Message}"
+                };
+            }
+        }
+
         public async Task<ResponseResult> DeleteEmployee(int id)
         {
             try

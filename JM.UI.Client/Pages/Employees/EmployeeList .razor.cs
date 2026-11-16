@@ -86,12 +86,43 @@ namespace JM.UI.Client.Pages.Employees
                     await LoadEmployees();
             }
         }
-        protected async Task ToggleStatus(EmployeeModelDTO employee, bool value)
+        protected async Task ToggleLockout(EmployeeModelDTO employee, bool value)
         {
             var result = await _userAuthService.UpdateActiveInactiveUser(employee.Surname, value);
 
             if (result)
             {
+                employee.LockoutEnabled = value;
+                notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = $"Lock status updated successfully.",
+                    Duration = 3000
+                });
+                StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to update lock status.",
+                    Duration = 4000
+                });
+                await LoadEmployees();
+            }
+        }
+
+        protected async Task ToggleStatus(EmployeeModelDTO employee, bool value)
+        {
+            var newStatus = value ? 1 : 0;
+            var result = await _serviceUnitOfWork.EmployeeService.UpdateEmployeeStatus(employee.Id, newStatus);
+
+            if (result.IsSuccessStatus)
+            {
+                employee.Status = newStatus;
                 notificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
@@ -100,6 +131,17 @@ namespace JM.UI.Client.Pages.Employees
                     Duration = 3000
                 });
                 StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = result.Message ?? "Failed to update status.",
+                    Duration = 4000
+                });
+                await LoadEmployees();
             }
         }
         protected string GetStatusText(int status) =>

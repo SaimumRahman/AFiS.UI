@@ -13,6 +13,7 @@ namespace JM.UI.Service.Employee
         Task<EmployeeModelDTO?> GetEmployeeById(int id);
         Task<EmployeeModelDTO?> GetEmployeeCode();
         Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee);
+        Task<ResponseResult> UpdateEmployeeStatus(int id, int status);
         Task<ResponseResult> DeleteEmployee(int id);
         Task<(bool IsValid, string ErrorMessage)> ValidateEmployee(EmployeeModelDTO employee);
         Task<EmployeeModelDTO> CreateNewEmployee();

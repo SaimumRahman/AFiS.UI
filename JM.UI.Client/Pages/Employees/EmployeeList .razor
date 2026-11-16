@@ -169,6 +169,14 @@
                                                 Icon="@(employee.LockoutEnabled ? "lock_open" : "lock")"
                                                 Text="@(employee.LockoutEnabled ? "Locked" : "Unlocked")"
                                                 Size="ButtonSize.Small"
+                                                Change="@((value) => ToggleLockout(employee, value))" />
+
+                            <RadzenToggleButton Value="@(employee.Status == 1)"
+                                                ToggleButtonStyle="ButtonStyle.Primary"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Icon="@(employee.Status == 1 ? "toggle_on" : "toggle_off")"
+                                                Text="@(employee.Status == 1 ? "Active" : "Inactive")"
+                                                Size="ButtonSize.Small"
                                                 Change="@((value) => ToggleStatus(employee, value))" />
 
                                           <RadzenButton Icon="edit"7

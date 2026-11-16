@@ -188,6 +188,30 @@ namespace JM.UI.DataService.DAL.Employees
             }
         }
 
+        public async Task<ResponseResult> UpdateEmployeeStatus(int id, int status)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var requestBody = new { Id = id, Status = status };
+                var content = JsonContent.Create(requestBody);
+                var response = await httpClient.PutAsync("Employees/update-status", content);
+                response.EnsureSuccessStatusCode();
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = false, Message = "No response from server" };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Failed to update employee status");
+                throw new Exception("Failed to update employee status: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating employee status");
+                throw new Exception("Unexpected error updating employee status: " + ex.Message, ex);
+            }
+        }
+
         public async Task<EmployeeModelDTO?> GetEmployeeCode()
         {
             try

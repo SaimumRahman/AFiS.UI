@@ -1043,12 +1043,12 @@ namespace JM.UI.Client.Pages.SalesPOS
                 if (storeId > 0)
                 {
                     var employees = await _serviceUnitOfWork.EmployeeService.GetEmployeesByStoreId(storeId);
-                    Employees = employees.ToList();
+                    Employees = employees.Where(e => e.Status == 1 && !e.LockoutEnabled).ToList();
                 }
                 else
                 {
                     var employees = await _serviceUnitOfWork.EmployeeService.GetEmployees();
-                    Employees = employees.ToList();
+                    Employees = employees.Where(e => e.Status == 1 && !e.LockoutEnabled).ToList();
                 }
                 SelectedEmployeeId = 0;
                 SelectedEmployeeName = null;

@@ -14,6 +14,7 @@ namespace JM.UI.DataService.DAL.Employees
         Task<EmployeeModelDTO?> GetEmployeeCode();
         Task DeleteEmployee(int id);
         Task<ResponseResult> SaveUpdateEmployee(EmployeeModelDTO employee);
+        Task<ResponseResult> UpdateEmployeeStatus(int id, int status);
         Task<EmployeeModelDTO?> GetEmployeeBySurname(string surname);
     }
 }
