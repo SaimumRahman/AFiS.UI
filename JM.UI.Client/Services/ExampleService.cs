@@ -660,6 +660,15 @@ namespace JM.UI.Client.Services
                         Title       = "Collection Summary",
                         Description = "Invoice-wise collection & payment mode report with channel-wise totals",
                         Tags        = new[] { "collection", "payment", "report", "branch", "invoice" }
+                    },
+                    new Example
+                    {
+                        Name        = "Stock Aging",
+                        Path        = "/StockAgingReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Stock Aging Report",
+                        Description = "Stock aging matrix with transfer/dead-stock/broken-size-run actions",
+                        Tags        = new[] { "stock", "aging", "transfer", "report", "branch" }
                     }
                 }
             },

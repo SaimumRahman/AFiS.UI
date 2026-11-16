@@ -12,4 +12,8 @@ public interface IStockService
 
     Task<ItemStatementDTO> GetItemStatement(
         string baseBarcode, DateTime? fromDate, DateTime? toDate);
+
+    Task<StockAgingReportDTO> GetStockAging(
+        int? groupId = null, int? brandId = null, string? agingBucket = null,
+        int? sourceStoreId = null, string? search = null);
 }

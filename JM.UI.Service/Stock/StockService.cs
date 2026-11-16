@@ -47,4 +47,17 @@ public class StockService : IStockService
             throw;
         }
     }
+
+    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null)
+    {
+        try
+        {
+            return await _unitOfWork.StockRepository
+                .GetStockAging(groupId, brandId, agingBucket, sourceStoreId, search);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
 }

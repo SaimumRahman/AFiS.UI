@@ -86,4 +86,30 @@ public class StockRepository : BaseRepository, IStockRepository
             throw;
         }
     }
+
+    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null)
+    {
+        try
+        {
+            var url = "Stock/aging";
+            var q = new List<string>();
+            if (groupId.HasValue && groupId.Value > 0) q.Add($"groupId={groupId.Value}");
+            if (brandId.HasValue && brandId.Value > 0) q.Add($"brandId={brandId.Value}");
+            if (!string.IsNullOrWhiteSpace(agingBucket) && agingBucket != "ALL") q.Add($"agingBucket={Uri.EscapeDataString(agingBucket)}");
+            if (sourceStoreId.HasValue && sourceStoreId.Value > 0) q.Add($"sourceStoreId={sourceStoreId.Value}");
+            if (!string.IsNullOrWhiteSpace(search)) q.Add($"search={Uri.EscapeDataString(search)}");
+            if (q.Any()) url += "?" + string.Join("&", q);
+
+            var httpClient = GetAuthenticatedClient("MainApi");
+            var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadFromJsonAsync<StockAgingReportDTO>();
+            return result ?? new StockAgingReportDTO();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching stock aging");
+            throw new Exception("Failed to fetch stock aging: " + ex.Message, ex);
+        }
+    }
 }
