@@ -1,0 +1,478 @@
+@using JM.UI.Entities.Model.Todo
+@using JM.UI.Service.UnitOfWork
+@inject DialogService DialogService
+
+<style>
+    .tvd-wrap { display: flex; flex-direction: column; gap: 14px; }
+
+    .tvd-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .tvd-title { font-size: 1.1rem; font-weight: 700; color: #212529; overflow-wrap: anywhere; }
+    .tvd-title-done { text-decoration: line-through; color: #6c7480; }
+
+    .tvd-details {
+        font-size: 13px;
+        color: #495057;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #fbfcfd;
+        border: 1px solid #e3e7ec;
+        border-radius: 8px;
+        padding: 10px 12px;
+    }
+
+    .tvd-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px 18px;
+        border-top: 1px dashed #e3e7ec;
+        border-bottom: 1px dashed #e3e7ec;
+        padding: 12px 0;
+    }
+
+    .tvd-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #6c7480;
+    }
+
+    .tvd-value { font-size: 13px; color: #212529; overflow-wrap: anywhere; }
+
+    .tvd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tvd-chip {
+        font-size: 11px; padding: 2px 8px; border-radius: 10px;
+        background: #eef2f7; border: 1px solid #dbe2ec; color: #33415c;
+    }
+    .tvd-chip-branch { background: #e7f1ff; border-color: #c9dcf8; color: #1e4b8f; }
+    .tvd-chip-group { background: #eaf7ee; border-color: #c8e6d1; color: #1d6b34; }
+    .tvd-chip-designation { background: #fff4e5; border-color: #f5ddbb; color: #8a5a11; }
+    .tvd-chip-user { background: #eef7fb; border-color: #cde6f0; color: #12586f; }
+
+    .tvd-section-title {
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .05em; color: #33415c; display: flex; align-items: center; gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .tvd-timeline { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
+
+    .tvd-entry {
+        border-left: 3px solid #cbd5e1;
+        background: #fbfcfd;
+        border-radius: 0 6px 6px 0;
+        padding: 8px 10px;
+    }
+
+    .tvd-entry-system { border-left-color: #94a3b8; background: #f8fafc; }
+    .tvd-entry-complete { border-left-color: #198754; }
+    .tvd-entry-reopen { border-left-color: #fd7e14; }
+
+    .tvd-entry-head { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #6c7480; }
+    .tvd-entry-user { font-weight: 700; color: #33415c; }
+    .tvd-entry-text { font-size: 13px; color: #212529; margin-top: 3px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .tvd-post { display: flex; gap: 8px; align-items: flex-start; }
+    .tvd-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; border-top: 1px solid #e3e7ec; padding-top: 12px; }
+    .tvd-error { font-size: 12px; color: #dc3545; font-weight: 600; }
+    .tvd-empty { font-size: 12px; color: #6c7480; font-style: italic; }
+    .tvd-history-row { font-size: 12px; color: #495057; padding: 4px 0; border-bottom: 1px dashed #e9ecef; }
+</style>
+
+<div class="tvd-wrap">
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="tvd-error">@ErrorMessage</div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="tvd-empty">Loading…</div>
+    }
+    else if (Detail?.Task != null)
+    {
+        var task = Detail.Task;
+
+        <div class="tvd-head">
+            <span class="tvd-title @(task.Status == 1 ? "tvd-title-done" : "")">@task.Title</span>
+            <RadzenBadge Text="@task.FlagName" BadgeStyle="@FlagBadgeStyle(task.Flag)" />
+            @if (task.IsPrivate)
+            {
+                <RadzenBadge Text="Private" BadgeStyle="BadgeStyle.Light" />
+            }
+            @if (task.Status == 1)
+            {
+                <RadzenBadge Text="Done" BadgeStyle="BadgeStyle.Success" />
+            }
+            else if (task.IsOverdue)
+            {
+                <RadzenBadge Text="Overdue" BadgeStyle="BadgeStyle.Danger" />
+            }
+            else if (task.IsDueToday)
+            {
+                <RadzenBadge Text="Due today" BadgeStyle="BadgeStyle.Warning" />
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(task.Details))
+        {
+            <div class="tvd-details">@task.Details</div>
+        }
+
+        <div class="tvd-grid">
+            <div>
+                <span class="tvd-label">Due (BD time)</span>
+                <span class="tvd-value">@(task.DueAtLocal.HasValue ? task.DueAtLocal.Value.ToString("dd MMM yyyy, hh:mm tt") : "No due date")</span>
+            </div>
+            <div>
+                <span class="tvd-label">Repeat</span>
+                <span class="tvd-value">@task.RepeatText</span>
+            </div>
+            <div>
+                <span class="tvd-label">Status</span>
+                <span class="tvd-value">@(task.Status == 1 ? "Completed" : "Open")</span>
+            </div>
+            <div>
+                <span class="tvd-label">Created by</span>
+                <span class="tvd-value">@task.CreatedByName<br /><small>@Format(task.CreatedAtLocal)</small></span>
+            </div>
+            @if (task.Status == 1)
+            {
+                <div>
+                    <span class="tvd-label">Completed by</span>
+                    <span class="tvd-value">@task.CompletedByName<br /><small>@Format(task.CompletedAtLocal)</small></span>
+                </div>
+            }
+            <div>
+                <span class="tvd-label">Audience</span>
+                <div class="tvd-chips">
+                    @if (task.AllBranches)
+                    {
+                        <span class="tvd-chip tvd-chip-branch">All branches</span>
+                    }
+                    else
+                    {
+                        @foreach (var branch in task.BranchNames)
+                        {
+                            <span class="tvd-chip tvd-chip-branch">@branch</span>
+                        }
+                    }
+                    @foreach (var group in task.GroupNames)
+                    {
+                        <span class="tvd-chip tvd-chip-group">@group</span>
+                    }
+                    @foreach (var designation in task.DesignationNames)
+                    {
+                        <span class="tvd-chip tvd-chip-designation">@designation</span>
+                    }
+                    @foreach (var user in task.UserNames)
+                    {
+                        <span class="tvd-chip tvd-chip-user">@user</span>
+                    }
+                    @if (task.IsPrivate)
+                    {
+                        <span class="tvd-chip">Only you and Admin</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Post an update ── -->
+        <div>
+            <div class="tvd-section-title"><RadzenIcon Icon="edit_note" /> Post an update</div>
+            <div class="tvd-post">
+                <RadzenTextArea @bind-Value="NewUpdate" Rows="2" MaxLength="1000"
+                                Placeholder="What is the progress? Everyone who can see this task will read it."
+                                Style="width:100%;" />
+                <RadzenButton Icon="send" Text="Post" ButtonStyle="ButtonStyle.Primary"
+                              Click="@PostUpdate" IsBusy="@IsPosting" />
+            </div>
+        </div>
+
+        <!-- ── Timeline ── -->
+        <div>
+            <div class="tvd-section-title"><RadzenIcon Icon="forum" /> Updates &amp; history</div>
+            @if (Detail.Updates.Count == 0)
+            {
+                <div class="tvd-empty">No updates yet.</div>
+            }
+            else
+            {
+                <div class="tvd-timeline">
+                    @foreach (var update in Detail.Updates.OrderByDescending(u => u.CreatedAtLocal).ThenByDescending(u => u.Id))
+                    {
+                        <div class="tvd-entry @EntryClass(update.UpdateType)">
+                            <div class="tvd-entry-head">
+                                <span class="tvd-entry-user">@update.UserName · @update.UpdateTypeName</span>
+                                <span>@Format(update.CreatedAtLocal)</span>
+                            </div>
+                            <div class="tvd-entry-text">@update.Remarks</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- ── Edit history (creator / Admin only) ── -->
+        @if (Detail.CanSeeEditHistory)
+        {
+            <div>
+                <div class="tvd-section-title"><RadzenIcon Icon="manage_history" /> Edit history</div>
+                @if (Detail.EditHistory.Count == 0)
+                {
+                    <div class="tvd-empty">This task has not been edited.</div>
+                }
+                else
+                {
+                    @foreach (var edit in Detail.EditHistory.OrderByDescending(e => e.CreatedAtLocal).ThenByDescending(e => e.Id))
+                    {
+                        <div class="tvd-history-row">
+                            <b>@edit.UserName</b> changed <b>@edit.FieldName</b>
+                            from “@edit.OldValue” to “@edit.NewValue”
+                            <span style="color:#6c7480;">· @Format(edit.CreatedAtLocal)</span>
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+        <!-- ── Actions ── -->
+        <div class="tvd-actions">
+            @if (task.Status == 0)
+            {
+                <RadzenButton Icon="check_circle" Text="Mark Done" ButtonStyle="ButtonStyle.Success"
+                              Click="@MarkDone" IsBusy="@IsWorking" />
+            }
+            else
+            {
+                <RadzenButton Icon="undo" Text="Reopen" ButtonStyle="ButtonStyle.Secondary"
+                              Click="@Reopen" IsBusy="@IsWorking" />
+            }
+
+            @if (Detail.CanEdit)
+            {
+                <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@EditTask" />
+                <RadzenButton Icon="delete" Text="Delete" ButtonStyle="ButtonStyle.Danger" Click="@DeleteTask" />
+            }
+
+            <RadzenButton Icon="close" Text="Close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int TaskId { get; set; }
+    [Parameter] public TodoLookupsDTO Lookups { get; set; } = new();
+
+    [Inject] private IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+
+    private TodoTaskDetailDTO? Detail { get; set; }
+    private string NewUpdate { get; set; } = string.Empty;
+    private bool IsLoading { get; set; }
+    private bool IsPosting { get; set; }
+    private bool IsWorking { get; set; }
+    private bool Changed { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Lookups == null) Lookups = new TodoLookupsDTO();
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            var detail = await _serviceUnitOfWork.TodoService.GetTask(TaskId);
+            if (detail?.Task == null)
+            {
+                Detail = null;
+                ErrorMessage = "You are not allowed to open this task (or it no longer exists).";
+                return;
+            }
+
+            Detail = detail;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Could not load the task: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task PostUpdate()
+    {
+        if (string.IsNullOrWhiteSpace(NewUpdate))
+        {
+            ErrorMessage = "Please write something before posting.";
+            return;
+        }
+
+        IsPosting = true;
+        ErrorMessage = null;
+        try
+        {
+            var result = await _serviceUnitOfWork.TodoService.PostUpdate(TaskId, NewUpdate.Trim());
+            if (!result.Success)
+            {
+                ErrorMessage = result.Message;
+                return;
+            }
+
+            NewUpdate = string.Empty;
+            Changed = true;
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsPosting = false;
+        }
+    }
+
+    private async Task MarkDone()
+    {
+        IsWorking = true;
+        ErrorMessage = null;
+        try
+        {
+            var note = string.IsNullOrWhiteSpace(NewUpdate) ? null : NewUpdate.Trim();
+            var result = await _serviceUnitOfWork.TodoService.MarkDone(TaskId, note);
+            if (!result.Success)
+            {
+                ErrorMessage = result.Message;
+                return;
+            }
+
+            NewUpdate = string.Empty;
+            Changed = true;
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsWorking = false;
+        }
+    }
+
+    private async Task Reopen()
+    {
+        IsWorking = true;
+        ErrorMessage = null;
+        try
+        {
+            var result = await _serviceUnitOfWork.TodoService.Reopen(TaskId);
+            if (!result.Success)
+            {
+                ErrorMessage = result.Message;
+                return;
+            }
+
+            Changed = true;
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsWorking = false;
+        }
+    }
+
+    private async Task EditTask()
+    {
+        if (Detail?.Task == null) return;
+
+        var saved = await DialogService.OpenAsync<TodoCreateEditDialog>(
+            "Edit To-Do Task",
+            new Dictionary<string, object>
+            {
+                { nameof(TodoCreateEditDialog.TaskId), TaskId },
+                { nameof(TodoCreateEditDialog.Lookups), Lookups }
+            },
+            new DialogOptions
+            {
+                Width = "860px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = true
+            });
+
+        if (saved is bool ok && ok)
+        {
+            Changed = true;
+            await Load();
+        }
+    }
+
+    private async Task DeleteTask()
+    {
+        var confirmed = await DialogService.Confirm(
+            "Delete this task? It moves to the deleted log and an Admin can restore it.",
+            "Delete task",
+            new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed != true) return;
+
+        IsWorking = true;
+        ErrorMessage = null;
+        try
+        {
+            var result = await _serviceUnitOfWork.TodoService.DeleteTask(TaskId);
+            if (!result.Success)
+            {
+                ErrorMessage = result.Message;
+                return;
+            }
+
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsWorking = false;
+        }
+    }
+
+    private void Close() => DialogService.Close(Changed);
+
+    private static BadgeStyle FlagBadgeStyle(int flag) => flag switch
+    {
+        3 => BadgeStyle.Danger,
+        2 => BadgeStyle.Warning,
+        _ => BadgeStyle.Light
+    };
+
+    private static string EntryClass(int updateType) => updateType switch
+    {
+        2 => "tvd-entry-complete",
+        3 => "tvd-entry-reopen",
+        4 => "tvd-entry-system",
+        _ => string.Empty
+    };
+
+    private static string Format(DateTime local)
+        => local == default ? "-" : local.ToString("dd MMM yyyy, hh:mm tt");
+
+    private static string Format(DateTime? local)
+        => local.HasValue ? Format(local.Value) : "-";
+}

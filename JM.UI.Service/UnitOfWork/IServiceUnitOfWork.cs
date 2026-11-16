@@ -53,6 +53,7 @@ using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Todo;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
@@ -123,6 +124,7 @@ namespace JM.UI.Service.UnitOfWork
         ICurrentStockReportService CurrentStockReportService { get; }
         ITransferService TransferService { get; }
         IStockService StockService { get; }
+        ITodoService TodoService { get; }
         IBarcodePrintConfigService BarcodePrintConfigService { get; }
         IMembershipTypeService MembershipTypeService { get; }
         ICustomerDetailsService CustomerDetailsService { get; }

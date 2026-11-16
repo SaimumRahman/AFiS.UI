@@ -1,0 +1,582 @@
+@page "/TodoDashboard"
+@using JM.UI.Entities.Model.Todo
+@attribute [Authorize]
+@inherits TodoDashboardComponent
+
+<PageTitle>To-Do List</PageTitle>
+
+<style>
+    .td-card {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.05);
+        padding: 18px 20px;
+        margin-bottom: 16px;
+    }
+
+    .td-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #212529;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .td-sub {
+        font-size: 12px;
+        color: #6c7480;
+        margin-top: 2px;
+    }
+
+    /* ── KPI tiles ── */
+    .td-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .td-kpi {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid var(--rz-primary);
+        border-radius: 8px;
+        padding: 12px 14px;
+        cursor: pointer;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+
+        .td-kpi:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,.09);
+            transform: translateY(-1px);
+        }
+
+    .td-kpi-active {
+        outline: 2px solid var(--rz-primary);
+        outline-offset: -2px;
+    }
+
+    .td-kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #6c7480;
+    }
+
+    .td-kpi-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .td-kpi-open { border-left-color: #0d6efd; }
+    .td-kpi-overdue { border-left-color: #dc3545; }
+    .td-kpi-today { border-left-color: #fd7e14; }
+    .td-kpi-done { border-left-color: #198754; }
+
+    /* ── Filters ── */
+    .td-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 12px;
+    }
+
+    .td-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 150px;
+    }
+
+        .td-field label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #6c7480;
+            white-space: nowrap;
+        }
+
+    .td-field-wide { min-width: 240px; flex: 1 1 240px; }
+
+    .td-checks {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-bottom: 2px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Tabs ── */
+    .td-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Task cards ── */
+    .td-task {
+        display: flex;
+        align-items: stretch;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .td-task-done { background: #fbfdfb; }
+
+    .td-stripe { width: 5px; flex: 0 0 5px; }
+    .td-stripe-general { background: #adb5bd; }
+    .td-stripe-important { background: #fd7e14; }
+    .td-stripe-urgent { background: #dc3545; }
+
+    .td-body { flex: 1 1 auto; padding: 12px 14px; min-width: 0; }
+
+    .td-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .td-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #212529;
+        overflow-wrap: anywhere;
+    }
+
+    .td-name-done {
+        text-decoration: line-through;
+        color: #6c7480;
+    }
+
+    .td-details {
+        font-size: 13px;
+        color: #495057;
+        margin-top: 4px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .td-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+    .td-chip {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #eef2f7;
+        color: #33415c;
+        border: 1px solid #dbe2ec;
+        white-space: nowrap;
+    }
+
+    .td-chip-private { background: #f3e8ff; border-color: #e2cdfb; color: #6b21a8; }
+    .td-chip-branch { background: #e7f1ff; border-color: #c9dcf8; color: #1e4b8f; }
+    .td-chip-group { background: #eaf7ee; border-color: #c8e6d1; color: #1d6b34; }
+    .td-chip-designation { background: #fff4e5; border-color: #f5ddbb; color: #8a5a11; }
+    .td-chip-user { background: #eef7fb; border-color: #cde6f0; color: #12586f; }
+
+    .td-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        margin-top: 9px;
+        font-size: 12px;
+        color: #6c7480;
+    }
+
+        .td-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+    .td-meta-overdue { color: #dc3545; font-weight: 600; }
+
+    .td-actions {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 14px;
+        border-left: 1px dashed #e3e7ec;
+        background: #fbfcfd;
+    }
+
+    /* ── Pager ── */
+    .td-pager {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 6px 2px 18px;
+        font-size: 12px;
+        color: #6c7480;
+    }
+
+    .td-empty {
+        background: #fff;
+        border: 1px dashed #ced4da;
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        color: #6c7480;
+    }
+</style>
+
+<RadzenContent Container="main" class="p-4">
+
+    <!-- ── Header ── -->
+    <div class="td-card">
+        <div class="flex justify-between items-start flex-wrap gap-3">
+            <div>
+                <div class="td-title">
+                    <RadzenIcon Icon="checklist" Style="font-size:1.7rem;color:var(--rz-primary);" />
+                    To-Do List Dashboard
+                </div>
+                <div class="td-sub">
+                    @if (!string.IsNullOrWhiteSpace(Me.DisplayName))
+                    {
+                        <text>Signed in as @Me.DisplayName@(string.IsNullOrWhiteSpace(Me.StoreName) ? "" : $" · {Me.StoreName}")</text>
+                        <text> &nbsp;·&nbsp; </text>
+                    }
+                    All times are Bangladesh time (GMT+6).
+                    @if (Me.CanTagBranches)
+                    {
+                        <text> You can tag tasks to branches.</text>
+                    }
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Light"
+                              Click="@(() => LoadDashboard())" IsBusy="@IsLoading" />
+                <RadzenButton Icon="add" Text="New Task" ButtonStyle="ButtonStyle.Primary"
+                              Click="@NewTask" />
+            </div>
+        </div>
+    </div>
+
+    <!-- ── KPI strip ── -->
+    <div class="td-kpis">
+        <div class="td-kpi td-kpi-open @(ActiveTab == 0 && StatusFilter == 0 && !OverdueOnly && !DueTodayOnly ? "td-kpi-active" : "")"
+             @onclick="@(() => FilterByKpi(0))">
+            <div class="td-kpi-label">Open</div>
+            <div class="td-kpi-value">@Counts.Open</div>
+        </div>
+        <div class="td-kpi td-kpi-overdue @(ActiveTab == 0 && OverdueOnly ? "td-kpi-active" : "")"
+             @onclick="@(() => FilterByKpi(1))">
+            <div class="td-kpi-label">Overdue</div>
+            <div class="td-kpi-value">@Counts.Overdue</div>
+        </div>
+        <div class="td-kpi td-kpi-today @(ActiveTab == 0 && DueTodayOnly ? "td-kpi-active" : "")"
+             @onclick="@(() => FilterByKpi(2))">
+            <div class="td-kpi-label">Due today</div>
+            <div class="td-kpi-value">@Counts.DueToday</div>
+        </div>
+        <div class="td-kpi td-kpi-done @(ActiveTab == 0 && StatusFilter == 1 ? "td-kpi-active" : "")"
+             @onclick="@(() => FilterByKpi(3))">
+            <div class="td-kpi-label">Completed</div>
+            <div class="td-kpi-value">@Counts.Completed</div>
+        </div>
+    </div>
+
+    <!-- ── Filters ── -->
+    <div class="td-card td-filters">
+        <div class="td-field td-field-wide">
+            <label>Search</label>
+            <RadzenTextBox @bind-Value="SearchText" Placeholder="Title or details…"
+                           Change="@((string v) => ApplyFilters())" Style="width:100%" />
+        </div>
+
+        <div class="td-field">
+            <label>Status</label>
+            <RadzenDropDown @bind-Value="StatusFilter" TValue="int?" Data="@StatusOptions"
+                            TextProperty="Text" ValueProperty="Value" AllowClear="true"
+                            Placeholder="All statuses" Style="width:100%"
+                            Change="@((object v) => ApplyFilters())" />
+        </div>
+
+        <div class="td-field">
+            <label>Priority</label>
+            <RadzenDropDown @bind-Value="FlagFilter" TValue="int?" Data="@Lookups.Flags"
+                            TextProperty="Name" ValueProperty="Id" AllowClear="true"
+                            Placeholder="All priorities" Style="width:100%"
+                            Change="@((object v) => ApplyFilters())" />
+        </div>
+
+        <div class="td-checks">
+            <RadzenCheckBox @bind-Value="MineOnly" TValue="bool" Text="My tasks"
+                            Change="@((bool v) => ApplyFilters())" />
+            <RadzenCheckBox @bind-Value="OverdueOnly" TValue="bool" Text="Overdue only"
+                            Change="@((bool v) => ApplyFilters())" />
+            <RadzenCheckBox @bind-Value="DueTodayOnly" TValue="bool" Text="Due today only"
+                            Change="@((bool v) => ApplyFilters())" />
+        </div>
+
+        <div class="td-field" style="min-width:auto;">
+            <label>&nbsp;</label>
+            <RadzenButton Icon="filter_alt_off" Text="Clear" ButtonStyle="ButtonStyle.Light" Click="@ClearFilters" />
+        </div>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="td-tabs">
+        <RadzenButton Text="Dashboard" Icon="space_dashboard"
+                      ButtonStyle="@(ActiveTab == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                      Click="@(() => SelectTab(0))" />
+        @if (Me.IsAdmin)
+        {
+            <RadzenButton Text="Deleted tasks" Icon="delete_outline"
+                          ButtonStyle="@(ActiveTab == 1 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                          Click="@(() => SelectTab(1))" />
+            <RadzenButton Text="Activity log" Icon="history"
+                          ButtonStyle="@(ActiveTab == 2 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                          Click="@(() => SelectTab(2))" />
+        }
+    </div>
+
+    @if (LoadError != null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowCloseButton="false" Class="mb-3">@LoadError</RadzenAlert>
+    }
+
+    @if (ActiveTab == 0)
+    {
+        <!-- ═══════════════ Dashboard ═══════════════ -->
+        @if (IsLoading && Tasks.Count == 0)
+        {
+            <div class="td-empty"><RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" /> Loading tasks…</div>
+        }
+        else if (Tasks.Count == 0)
+        {
+            <div class="td-empty">
+                <RadzenIcon Icon="task_alt" Style="font-size:2rem;opacity:.5;" />
+                <div class="mt-2">No tasks match the current filters.</div>
+                <div class="mt-2">
+                    <RadzenButton Text="Create the first task" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Small" Click="@NewTask" />
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var task in Tasks)
+            {
+                <div class="td-task @(task.Status == 1 ? "td-task-done" : "")" @key="task.Id">
+                    <div class="td-stripe @StripeClass(task.Flag)"></div>
+                    <div class="td-body">
+                        <div class="td-head">
+                            <span class="td-name @(task.Status == 1 ? "td-name-done" : "")">@task.Title</span>
+                            <RadzenBadge Text="@task.FlagName" BadgeStyle="@FlagBadgeStyle(task.Flag)" />
+                            @if (task.IsPrivate)
+                            {
+                                <RadzenBadge Text="Private" BadgeStyle="BadgeStyle.Light" />
+                            }
+                            @if (task.Status == 1)
+                            {
+                                <RadzenBadge Text="Done" BadgeStyle="BadgeStyle.Success" />
+                            }
+                            else if (task.IsOverdue)
+                            {
+                                <RadzenBadge Text="Overdue" BadgeStyle="BadgeStyle.Danger" />
+                            }
+                            else if (task.IsDueToday)
+                            {
+                                <RadzenBadge Text="Due today" BadgeStyle="BadgeStyle.Warning" />
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(task.Details))
+                        {
+                            <div class="td-details">@task.Details</div>
+                        }
+
+                        @if (HasAudience(task))
+                        {
+                            <div class="td-chips">
+                                @if (task.AllBranches)
+                                {
+                                    <span class="td-chip td-chip-branch">All branches</span>
+                                }
+                                else
+                                {
+                                    @foreach (var branch in task.BranchNames)
+                                    {
+                                        <span class="td-chip td-chip-branch">@branch</span>
+                                    }
+                                }
+                                @foreach (var group in task.GroupNames)
+                                {
+                                    <span class="td-chip td-chip-group">@group</span>
+                                }
+                                @foreach (var designation in task.DesignationNames)
+                                {
+                                    <span class="td-chip td-chip-designation">@designation</span>
+                                }
+                                @foreach (var user in task.UserNames)
+                                {
+                                    <span class="td-chip td-chip-user">@user</span>
+                                }
+                            </div>
+                        }
+
+                        <div class="td-meta">
+                            <span class="@(task.IsOverdue ? "td-meta-overdue" : "")">
+                                <RadzenIcon Icon="event" Style="font-size:1rem;" /> @DueText(task)
+                            </span>
+                            <span><RadzenIcon Icon="repeat" Style="font-size:1rem;" /> @task.RepeatText</span>
+                            <span><RadzenIcon Icon="chat_bubble_outline" Style="font-size:1rem;" /> @task.UpdateCount update(s)</span>
+                            <span><RadzenIcon Icon="person_outline" Style="font-size:1rem;" /> @task.CreatedByName · @FormatLocal(task.CreatedAtLocal)</span>
+                            @if (task.Status == 1 && !string.IsNullOrWhiteSpace(task.CompletedByName))
+                            {
+                                <span><RadzenIcon Icon="task_alt" Style="font-size:1rem;" /> @task.CompletedByName · @FormatLocal(task.CompletedAtLocal)</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="td-actions">
+                        <RadzenButton Icon="visibility" Text="Open" ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small" Click="@(() => OpenTask(task))" />
+                        @if (task.Status == 0)
+                        {
+                            <RadzenButton Icon="check" Text="Done" ButtonStyle="ButtonStyle.Success"
+                                          Size="ButtonSize.Small" Click="@(() => QuickDone(task))" />
+                        }
+                        else
+                        {
+                            <RadzenButton Icon="undo" Text="Reopen" ButtonStyle="ButtonStyle.Secondary"
+                                          Size="ButtonSize.Small" Click="@(() => QuickReopen(task))" />
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="td-pager">
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(PageNumber <= 1 || IsLoading)" Click="@(() => GoToPage(PageNumber - 1))" />
+                <span>Page @PageNumber of @(Dashboard.TotalPages <= 0 ? 1 : Dashboard.TotalPages)</span>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(PageNumber >= Dashboard.TotalPages || IsLoading)" Click="@(() => GoToPage(PageNumber + 1))" />
+                <span>· @Dashboard.TotalCount task(s)</span>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+                    Rows
+                    <RadzenDropDown TValue="int" @bind-Value="PageSize" Data="@PageSizes"
+                                    AllowClear="false" Style="width:82px;"
+                                    Change="@((object v) => OnPageSizeChanged())" />
+                </span>
+            </div>
+        }
+    }
+    else if (ActiveTab == 1 && Me.IsAdmin)
+    {
+        <!-- ═══════════════ Deleted tasks (Admin) ═══════════════ -->
+        <div class="td-card">
+            <div class="td-title" style="font-size:1rem;margin-bottom:10px;">
+                <RadzenIcon Icon="delete_outline" /> Deleted tasks
+                <span class="td-sub" style="margin-left:8px;">Original copy, deleted by and when. Nothing is ever erased.</span>
+            </div>
+
+            <RadzenDataGrid TItem="TodoDeletedTaskDTO" Data="@DeletedItems" AllowSorting="true"
+                            AllowPaging="true" PageSize="20" Density="Density.Compact"
+                            EmptyText="No deleted tasks." IsLoading="@DeletedLoading">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Property="Title" Title="Task" Width="24%" />
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Property="FlagName" Title="Priority" Width="100px" />
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="Created by" Width="14%">
+                        <Template Context="row">@row.CreatedByName · @FormatLocal(row.CreatedAtLocal)</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="Deleted by" Width="15%">
+                        <Template Context="row">@row.DeletedByName · @FormatLocal(row.DeletedAtLocal)</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Property="AudienceText" Title="Audience" Width="22%" />
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="State" Width="110px">
+                        <Template Context="row">
+                            @if (row.IsRestored)
+                            {
+                                <RadzenBadge Text="Restored" BadgeStyle="BadgeStyle.Success" />
+                            }
+                            else
+                            {
+                                <RadzenBadge Text="Deleted" BadgeStyle="BadgeStyle.Danger" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="" Width="110px" Sortable="false" Filterable="false">
+                        <Template Context="row">
+                            @if (!row.IsRestored)
+                            {
+                                <RadzenButton Icon="restore" Text="Restore" ButtonStyle="ButtonStyle.Primary"
+                                              Size="ButtonSize.Small" Click="@(() => Restore(row))" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+
+            <div class="td-pager">
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(DeletedPage <= 1 || DeletedLoading)" Click="@(() => GoToDeletedPage(DeletedPage - 1))" />
+                <span>Page @DeletedPage of @(DeletedTotalPages <= 0 ? 1 : DeletedTotalPages)</span>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(DeletedPage >= DeletedTotalPages || DeletedLoading)" Click="@(() => GoToDeletedPage(DeletedPage + 1))" />
+                <span>· @DeletedTotalCount deleted task(s)</span>
+            </div>
+        </div>
+    }
+    else if (ActiveTab == 2 && Me.IsAdmin)
+    {
+        <!-- ═══════════════ Activity log (Admin) ═══════════════ -->
+        <div class="td-card">
+            <div class="td-title" style="font-size:1rem;margin-bottom:10px;">
+                <RadzenIcon Icon="history" /> Activity log
+                <span class="td-sub" style="margin-left:8px;">Sign in, create, edit, update, complete, reopen, delete and restore.</span>
+            </div>
+
+            <div class="td-filters" style="margin-bottom:12px;">
+                <div class="td-field">
+                    <label>User</label>
+                    <RadzenDropDown @bind-Value="ActivityUserId" TValue="int?" Data="@Lookups.Users"
+                                    TextProperty="Name" ValueProperty="Id" AllowClear="true"
+                                    Placeholder="All users" Style="width:230px;"
+                                    Change="@((object v) => ApplyActivityFilter())" />
+                </div>
+                <div class="td-field" style="min-width:auto;">
+                    <label>&nbsp;</label>
+                    <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Light" Click="@(() => LoadActivity())" />
+                </div>
+            </div>
+
+            <RadzenDataGrid TItem="TodoActivityLogDTO" Data="@ActivityItems" AllowSorting="true"
+                            AllowPaging="true" PageSize="25" Density="Density.Compact"
+                            EmptyText="No activity recorded yet." IsLoading="@ActivityLoading">
+                <Columns>
+                    <RadzenDataGridColumn TItem="TodoActivityLogDTO" Title="When" Width="170px">
+                        <Template Context="row">@FormatLocal(row.CreatedAtLocal)</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="TodoActivityLogDTO" Property="UserName" Title="User" Width="18%" />
+                    <RadzenDataGridColumn TItem="TodoActivityLogDTO" Property="Action" Title="Action" Width="110px" />
+                    <RadzenDataGridColumn TItem="TodoActivityLogDTO" Property="TaskTitle" Title="Task" Width="24%" />
+                    <RadzenDataGridColumn TItem="TodoActivityLogDTO" Property="Detail" Title="Detail" />
+                </Columns>
+            </RadzenDataGrid>
+
+            <div class="td-pager">
+                <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(ActivityPage <= 1 || ActivityLoading)" Click="@(() => GoToActivityPage(ActivityPage - 1))" />
+                <span>Page @ActivityPage of @(ActivityTotalPages <= 0 ? 1 : ActivityTotalPages)</span>
+                <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Disabled="@(ActivityPage >= ActivityTotalPages || ActivityLoading)" Click="@(() => GoToActivityPage(ActivityPage + 1))" />
+                <span>· @ActivityTotalCount event(s)</span>
+            </div>
+        </div>
+    }
+
+</RadzenContent>

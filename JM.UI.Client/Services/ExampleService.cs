@@ -14,7 +14,8 @@ namespace JM.UI.Client.Services
                 Path = "/",
                 Icon = "\ue88a"
             },
- 
+
+           
             // ─────────────────────────────────────────
             // 2. Company Setup
             // ─────────────────────────────────────────
@@ -136,7 +137,20 @@ namespace JM.UI.Client.Services
                         Title       = "Membership Types",
                         Description = "Manage membership type configurations",
                         Tags        = new[] { "membership", "type", "hr" }
-                    }
+                    },
+                     // ─────────────────────────────────────────
+            // 1b. To-Do List
+            // ─────────────────────────────────────────
+            new Example
+            {
+                Name        = "To Do List",
+                Path        = "/TodoDashboard",
+                Icon        = "\ue8ef",
+                Title       = "To-Do List Dashboard",
+                Description = "Assign, follow up and close work items with branch, role and person-level targeting, activity history and an admin audit view",
+                Tags        = new[] { "todo", "task", "dashboard", "followup", "activity" }
+            },
+
                 }
             },
  

@@ -1,0 +1,392 @@
+@using JM.UI.Entities.Model.Todo
+@using JM.UI.Service.UnitOfWork
+@inject DialogService DialogService
+
+<style>
+    .tce-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .tce-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .tce-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1 1 200px;
+        min-width: 160px;
+    }
+
+        .tce-field label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #6c7480;
+        }
+
+    .tce-field-full { flex: 1 1 100%; }
+
+    .tce-section {
+        border: 1px solid #e3e7ec;
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: #fbfcfd;
+    }
+
+    .tce-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #33415c;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .tce-hint {
+        font-size: 11px;
+        color: #6c7480;
+    }
+
+    .tce-error {
+        font-size: 12px;
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .tce-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        border-top: 1px solid #e3e7ec;
+        padding-top: 12px;
+    }
+</style>
+
+<div class="tce-form">
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="tce-error">@ErrorMessage</div>
+    }
+
+    <div class="tce-row">
+        <div class="tce-field tce-field-full">
+            <label>Title *</label>
+            <RadzenTextBox @bind-Value="Model.Title" MaxLength="200" Style="width:100%"
+                           Placeholder="What needs to be done?" />
+        </div>
+    </div>
+
+    <div class="tce-row">
+        <div class="tce-field tce-field-full">
+            <label>Details</label>
+            <RadzenTextArea @bind-Value="Model.Details" Rows="3" MaxLength="4000" Style="width:100%"
+                            Placeholder="Optional description, instruction or context…" />
+        </div>
+    </div>
+
+    <div class="tce-row">
+        <div class="tce-field">
+            <label>Priority</label>
+            <RadzenDropDown @bind-Value="Model.Flag" TValue="int" Data="@Lookups.Flags"
+                            TextProperty="Name" ValueProperty="Id" AllowClear="false" Style="width:100%" />
+        </div>
+
+        <div class="tce-field">
+            <label>Due date &amp; time</label>
+            <RadzenDatePicker @bind-Value="Model.DueAtLocal" ShowTime="true" ShowSeconds="false"
+                              HourFormat="12" DateFormat="dd/MM/yyyy hh:mm tt"
+                              AllowClear="true" Style="width:100%" />
+            <span class="tce-hint">Bangladesh time (GMT+6).</span>
+        </div>
+
+        <div class="tce-field">
+            <label>Private</label>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:6px;">
+                <RadzenCheckBox @bind-Value="Model.IsPrivate" TValue="bool" />
+                <span class="tce-hint">Only you and an Admin can see it.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Repeat ── -->
+    <div class="tce-section">
+        <div class="tce-section-title"><RadzenIcon Icon="repeat" /> Repeat</div>
+
+        <div class="tce-row">
+            <div class="tce-field">
+                <label>Repeats</label>
+                <RadzenDropDown @bind-Value="Model.RepeatType" TValue="int" Data="@RepeatTypes"
+                                TextProperty="Text" ValueProperty="Value" AllowClear="false" Style="width:100%" />
+            </div>
+
+            @if (Model.RepeatType == 5)
+            {
+                <div class="tce-field" style="max-width:130px;">
+                    <label>Every</label>
+                    <RadzenNumeric @bind-Value="Model.RepeatInterval" TValue="int" Min="1" Max="365"
+                                   Style="width:100%" />
+                </div>
+                <div class="tce-field">
+                    <label>Unit</label>
+                    <RadzenDropDown @bind-Value="Model.RepeatUnit" TValue="int" Data="@RepeatUnits"
+                                    TextProperty="Text" ValueProperty="Value" AllowClear="false" Style="width:100%" />
+                </div>
+            }
+            else if (Model.RepeatType > 0)
+            {
+                <div class="tce-field" style="max-width:130px;">
+                    <label>Every</label>
+                    <RadzenNumeric @bind-Value="Model.RepeatInterval" TValue="int" Min="1" Max="365"
+                                   Style="width:100%" />
+                </div>
+            }
+        </div>
+
+        @if (Model.RepeatType > 0)
+        {
+            <div class="tce-hint mt-2">
+                A repeating task needs a due date and time. Marking it done posts an update and moves the
+                due date forward from the current due date until it lands in the future; the task stays open.
+            </div>
+        }
+    </div>
+
+    <!-- ── Audience ── -->
+    <div class="tce-section">
+        <div class="tce-section-title"><RadzenIcon Icon="groups" /> Who should see this task</div>
+
+        @if (!Model.IsPrivate)
+        {
+            <div class="tce-hint mb-2">
+                Pick at least one target. A task is shown when the branch matches <b>and</b> the role matches
+                (when both are set); whichever is set applies on its own otherwise. Named people always see it.
+                Branches can only be tagged by Admin, Managing Director, Directors and Chairman.
+            </div>
+
+            @if (Lookups.Me.CanTagBranches)
+            {
+                <div class="tce-row">
+                    <div class="tce-field">
+                        <label>Branch</label>
+                        <RadzenDropDown Data="@Lookups.Stores" @bind-Value="Model.BranchIds" Multiple="true"
+                                        ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                        Placeholder="All / select branches…" Style="width:100%" />
+                    </div>
+                    <div class="tce-field" style="max-width:220px;">
+                        <label>Every branch</label>
+                        <div style="display:flex;align-items:center;gap:8px;padding-top:6px;">
+                            <RadzenCheckBox @bind-Value="Model.AllBranches" TValue="bool" />
+                            <span class="tce-hint">Visible in every branch.</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="tce-row">
+                <div class="tce-field">
+                    <label>Role group</label>
+                    <RadzenDropDown Data="@Lookups.Groups" @bind-Value="Model.GroupIds" Multiple="true"
+                                    ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                    Placeholder="Select groups…" Style="width:100%" />
+                </div>
+                <div class="tce-field">
+                    <label>Designation</label>
+                    <RadzenDropDown Data="@Lookups.Designations" @bind-Value="Model.DesignationIds" Multiple="true"
+                                    ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                    Placeholder="Select designations…" Style="width:100%" />
+                </div>
+                <div class="tce-field">
+                    <label>Specific people</label>
+                    <RadzenDropDown Data="@Lookups.Users" @bind-Value="Model.UserIds" Multiple="true"
+                                    ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                    Placeholder="Select users…" Style="width:100%" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="tce-hint">
+                This task is private, so it is visible only to you and to an Admin. No branch, group,
+                designation or user targeting is needed.
+            </div>
+        }
+    </div>
+
+    <div class="tce-actions">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" Disabled="@IsSaving" />
+        <RadzenButton Text="@(IsEdit ? "Save Changes" : "Create Task")" Icon="save"
+                      ButtonStyle="ButtonStyle.Primary" Click="@Save" IsBusy="@IsSaving" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public int TaskId { get; set; }
+    [Parameter] public TodoLookupsDTO Lookups { get; set; } = new();
+
+    private TodoTaskSaveDTO Model { get; set; } = new();
+    private bool IsEdit => TaskId > 0;
+    private bool IsSaving { get; set; }
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private readonly List<LookupOption> RepeatTypes = new()
+    {
+        new LookupOption { Value = 0, Text = "Does not repeat" },
+        new LookupOption { Value = 1, Text = "Daily" },
+        new LookupOption { Value = 2, Text = "Weekly" },
+        new LookupOption { Value = 3, Text = "Monthly" },
+        new LookupOption { Value = 4, Text = "Yearly" },
+        new LookupOption { Value = 5, Text = "Custom interval" }
+    };
+
+    private readonly List<LookupOption> RepeatUnits = new()
+    {
+        new LookupOption { Value = 1, Text = "Day(s)" },
+        new LookupOption { Value = 2, Text = "Week(s)" },
+        new LookupOption { Value = 3, Text = "Month(s)" },
+        new LookupOption { Value = 4, Text = "Year(s)" }
+    };
+
+    [Inject] private IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Lookups == null) Lookups = new TodoLookupsDTO();
+
+        if (!IsEdit) return;
+
+        IsLoading = true;
+        try
+        {
+            var detail = await _serviceUnitOfWork.TodoService.GetTask(TaskId);
+            if (detail?.Task == null)
+            {
+                ErrorMessage = "You are not allowed to open this task (or it no longer exists).";
+                return;
+            }
+
+            // The API only returns audience *names* on the list item, so re-load the
+            // ids through the detail payload's task id and keep the names for display.
+            var task = detail.Task;
+            Model = new TodoTaskSaveDTO
+            {
+                Id = task.Id,
+                Version = task.Version,
+                Title = task.Title,
+                Details = task.Details,
+                Flag = task.Flag,
+                DueAtLocal = task.DueAtLocal,
+                RepeatType = task.RepeatType,
+                RepeatInterval = task.RepeatInterval <= 0 ? 1 : task.RepeatInterval,
+                RepeatUnit = task.RepeatUnit,
+                IsPrivate = task.IsPrivate,
+                AllBranches = task.AllBranches,
+                BranchIds = task.BranchIds?.ToList() ?? new List<int>(),
+                GroupIds = task.GroupIds?.ToList() ?? new List<int>(),
+                DesignationIds = task.DesignationIds?.ToList() ?? new List<int>(),
+                UserIds = task.UserIds?.ToList() ?? new List<int>()
+            };
+
+            if (!detail.CanEdit)
+                ErrorMessage = "Only the creator or an Admin can edit this task.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Could not load the task: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        ErrorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(Model.Title))
+        {
+            ErrorMessage = "Please enter a title.";
+            return;
+        }
+
+        if (Model.RepeatType != 0 && Model.RepeatType != 5 && Model.RepeatInterval < 1)
+            Model.RepeatInterval = 1;
+
+        if (Model.RepeatType != 0 && !Model.DueAtLocal.HasValue)
+        {
+            ErrorMessage = "A repeating task must have a due date and time.";
+            return;
+        }
+
+        if (Model.RepeatType == 0)
+        {
+            Model.RepeatInterval = 1;
+            Model.RepeatUnit = 0;
+        }
+
+        // Never send branch values from someone who may not tag branches; the server
+        // drops them anyway, but keeping the payload honest avoids surprising diffs.
+        if (!Lookups.Me.CanTagBranches)
+        {
+            Model.AllBranches = false;
+            Model.BranchIds = new List<int>();
+        }
+
+        if (!Model.IsPrivate)
+        {
+            var targets = (Model.AllBranches ? 1 : 0) + Model.BranchIds.Count
+                          + Model.GroupIds.Count + Model.DesignationIds.Count + Model.UserIds.Count;
+            if (targets == 0)
+            {
+                ErrorMessage = "Choose at least one audience target, or mark the task private.";
+                return;
+            }
+        }
+
+        IsSaving = true;
+        try
+        {
+            var result = IsEdit
+                ? await _serviceUnitOfWork.TodoService.UpdateTask(Model)
+                : await _serviceUnitOfWork.TodoService.CreateTask(Model);
+
+            if (result.Success)
+            {
+                DialogService.Close(true);
+                return;
+            }
+
+            ErrorMessage = result.Conflict
+                ? "This task was changed by someone else. Close this window, reopen the task and try again."
+                : result.Message;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private void Close() => DialogService.Close(false);
+
+    private class LookupOption
+    {
+        public int Value { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+}

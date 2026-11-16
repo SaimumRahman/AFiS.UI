@@ -51,6 +51,7 @@ using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Todo;
 using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
@@ -121,6 +122,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ICurrentStockReportRepository CurrentStockReportRepository { get; }
         ITransferRepository TransferRepository { get; }
         IStockRepository StockRepository { get; }
+        ITodoRepository TodoRepository { get; }
         IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
         IMembershipTypeRepository MembershipTypeRepository { get; }
         ICustomerDetailsRepository CustomerDetailsRepository { get; }

@@ -112,6 +112,17 @@ namespace JM.UI.Client.Pages.Users
 
                     Console.WriteLine("✅ All credentials saved successfully");
 
+                    // To-Do activity log: record the sign in. The API resolves the
+                    // user from the token we just stored, so nothing is passed here.
+                    try
+                    {
+                        await serviceUnitOfWork.TodoService.LogSignIn();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"To-Do sign-in log skipped: {ex.Message}");
+                    }
+
                     ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthentication();
 
                     Console.WriteLine("🚀 Navigating to dashboard...");

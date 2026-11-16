@@ -47,6 +47,7 @@ using JM.UI.Service.Purchases;
 using JM.UI.Service.Routes;
 using JM.UI.Service.Shift;
 using JM.UI.Service.Sizes;
+using JM.UI.Service.Todo;
 using JM.UI.Service.Stock;
 using JM.UI.Service.StockReport;
 using JM.UI.Service.Stores;
@@ -113,6 +114,7 @@ namespace JM.UI.Service.UnitOfWork
         public ICurrentStockReportService CurrentStockReportService { get; private set; }
         public ITransferService TransferService { get; private set; }
         public IStockService StockService { get; private set; }
+        public ITodoService TodoService { get; private set; }
         public IBarcodePrintConfigService BarcodePrintConfigService { get; private set; }
         public IMembershipTypeService MembershipTypeService { get; private set; }
         public ICustomerDetailsService CustomerDetailsService { get; private set; }
@@ -177,6 +179,7 @@ namespace JM.UI.Service.UnitOfWork
             CurrentStockReportService = new CurrentStockReportService(_repoUow);
             TransferService = new TransferService(_repoUow);
             StockService = new StockService(_repoUow);
+            TodoService = new TodoService(_repoUow.TodoRepository);
             BarcodePrintConfigService = new BarcodePrintConfigService(_repoUow);
             MembershipTypeService = new MembershipTypeService(_repoUow);
             CustomerDetailsService = new CustomerDetailsService(_repoUow);

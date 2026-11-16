@@ -51,6 +51,7 @@ using JM.UI.DataService.DAL.Shift;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
 using JM.UI.DataService.DAL.Sizes;
+using JM.UI.DataService.DAL.Todo;
 using JM.UI.DataService.DAL.Stock;
 using JM.UI.DataService.DAL.StockOpenings;
 using JM.UI.DataService.DAL.StockReport;
@@ -129,6 +130,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ICurrentStockReportRepository CurrentStockReportRepository { get; }
         public ITransferRepository TransferRepository { get; }
         public IStockRepository StockRepository { get; }
+        public ITodoRepository TodoRepository { get; }
         public IBarcodePrintConfigRepository BarcodePrintConfigRepository { get; }
         public IMembershipTypeRepository MembershipTypeRepository { get; }
         public ICustomerDetailsRepository CustomerDetailsRepository { get; }
@@ -198,6 +200,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             CurrentStockReportRepository = new CurrentStockReportRepository(factory, tokenProvider, loggerFactory.CreateLogger<CurrentStockReportRepository>());
             TransferRepository = new TransferRepository(factory, tokenProvider, loggerFactory.CreateLogger<TransferRepository>());
             StockRepository = new StockRepository(factory, tokenProvider, loggerFactory.CreateLogger<StockRepository>());
+            TodoRepository = new TodoRepository(factory, tokenProvider, loggerFactory.CreateLogger<TodoRepository>());
             BarcodePrintConfigRepository = new BarcodePrintConfigRepository(factory, tokenProvider, loggerFactory.CreateLogger<BarcodePrintConfigRepository>());
             MembershipTypeRepository = new MembershipTypeRepository(factory, tokenProvider, loggerFactory.CreateLogger<MembershipTypeRepository>());
             CustomerDetailsRepository = new CustomerDetailsRepository(factory, tokenProvider, loggerFactory.CreateLogger<CustomerDetailsRepository>());
