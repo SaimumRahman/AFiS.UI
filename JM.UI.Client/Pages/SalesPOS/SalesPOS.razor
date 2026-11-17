@@ -779,7 +779,7 @@
                     <span class="value">@NetPayable.ToString("N2")</span>
                 </div>
                 <div style="display:flex;gap:6px;margin-top:8px">
-                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Disabled="@(CartItems.Count == 0)" Text="Return / Exchange" />
+                    <RadzenButton Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@OpenReturnExchangeModal" Disabled="@(CartItems.Count == 0)" Text="Exchange" />
                     <RadzenButton Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Style="width:100%" Click="@OpenPaymentModal" Disabled="@(CartItems.Count == 0)" Text="Finalize Payment" />
                 </div>
             </div>

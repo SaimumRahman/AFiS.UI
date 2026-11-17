@@ -1292,7 +1292,7 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.ReturnedItems = exchange.ReturnedItems;
                 Sale.IsReturnExchange = true;
                 notificationService.Notify(NotificationSeverity.Success, "Exchange Applied",
-                    $"Credit {exchange.ExchangeAmount:N2} from invoice {exchange.ReturnInvoiceNo} applied to this sale", 5000);
+                    $"Exchange credit of {exchange.ExchangeAmount:N2} applied to this sale", 5000);
                 StateHasChanged();
             }
             else if (result is ResponseResult res)
@@ -1374,6 +1374,16 @@ namespace JM.UI.Client.Pages.SalesPOS
                 await dialogService.Alert(
                     "You cannot save the sale because all items are not from the same store.",
                     "Same Store Required",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // Exchange amount may not exceed the billing total of the current cart.
+            if ((Sale.ExchangeAmount ?? 0) > BillingTotalBeforeExchange)
+            {
+                await dialogService.Alert(
+                    $"Exchange amount of {(Sale.ExchangeAmount ?? 0):N2} cannot exceed the billing total of {BillingTotalBeforeExchange:N2}. Reduce it or remove the exchange credit before finalising.",
+                    "Exchange Amount Too High",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
             }
