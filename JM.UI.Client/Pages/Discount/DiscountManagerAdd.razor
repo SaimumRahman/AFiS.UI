@@ -76,14 +76,14 @@
                         <RadzenColumn Size="12" SizeMD="3">
                             <RadzenStack Gap="0.25rem">
                                 <RadzenLabel Text="Start Date *" Component="StartDate" />
-                                <RadzenDatePicker @bind-Value="Campaign.StartDate" Name="StartDate" Style="width: 100%;" />
+                                <RadzenDatePicker @bind-Value="Campaign.StartDate" Name="StartDate" Style="width: 100%;" Change="@(args => OnCampaignDatesChanged())" />
                                 <RadzenRequiredValidator Component="StartDate" Text="Start date is required" />
                             </RadzenStack>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="3">
                             <RadzenStack Gap="0.25rem">
                                 <RadzenLabel Text="End Date *" Component="EndDate" />
-                                <RadzenDatePicker @bind-Value="Campaign.EndDate" Name="EndDate" Style="width: 100%;" />
+                                <RadzenDatePicker @bind-Value="Campaign.EndDate" Name="EndDate" Style="width: 100%;" Change="@(args => OnCampaignDatesChanged())" />
                                 <RadzenRequiredValidator Component="EndDate" Text="End date is required" />
                             </RadzenStack>
                         </RadzenColumn>
@@ -233,10 +233,6 @@
                                    Placeholder="Scan barcode / QR or type product name..."
                                    Style="flex:1;"
                                    @onkeydown="@OnSearchKeyDown" />
-                    <RadzenButton Icon="scan"
-                                  Text="Simulate Scan"
-                                  ButtonStyle="ButtonStyle.Secondary"
-                                  Click="@SimulateScan" />
                     <RadzenButton Icon="search"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Click="@SearchByBarcode" />
@@ -293,7 +289,7 @@
                         <thead>
                             <tr style="background:var(--rz-surface);">
                                 <th style="width:36px;padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;">
-                                    <input type="checkbox" checked="@AllSelected" @onchange="() => ToggleAll()" title="Select all" />
+                                    <RadzenCheckBox Value="@AllSelected" TValue="bool" Change="@(args => ToggleAllAsync(args))" />
                                 </th>
                                 <th style="padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Product</th>
                                 <th style="padding:6px 8px;border-bottom:1px solid var(--rz-border);text-align:left;font-size:11px;font-weight:500;color:var(--rz-text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Barcode</th>
@@ -310,9 +306,20 @@
                                 var finalPrice = CalcFinalPrice(gi);
                                 <tr style="@(gi.Selected ? "background:var(--rz-info-light);" : "") @(gi.Source == "all" ? "background:var(--rz-success-light);" : "")">
                                     <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">
-                                        <input type="checkbox" checked="@gi.Selected" @onchange="() => ToggleItem(gi)" disabled="@(AllSelected && gi.Source == "all")" />
+                                        <RadzenCheckBox Value="@gi.Selected" TValue="bool"
+                                                        Change="@(args => OnItemCheckedChanged(gi, args))"
+                                                        Disabled="@(AllSelected && gi.Source == "all")" />
                                     </td>
-                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;font-weight:500;">@gi.Item.Name</td>
+                                    <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;font-weight:500;">
+                                        @gi.Item.Name
+                                        @if (gi.MovedFromCampaigns.Count > 0)
+                                        {
+                                            <div style="font-size:10.5px;font-weight:600;color:#8a5a11;margin-top:2px;white-space:normal;">
+                                                <i class="ti ti-arrow-right" style="font-size:10px;"></i>
+                                                Moves from @string.Join(", ", gi.MovedFromCampaigns)
+                                            </div>
+                                        }
+                                    </td>
                                     <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;color:var(--rz-text-secondary);font-family:var(--rz-font-mono);font-size:12px;">@gi.Item.Barcode</td>
                                     <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;color:var(--rz-text-secondary);">@(gi.Item.GroupName ?? gi.Item.ProductType ?? "-")</td>
                                     <td style="padding:7px 8px;border-bottom:1px solid var(--rz-border);vertical-align:middle;">@($"৳{gi.CurrentSalePrice:N0}")</td>

@@ -24,6 +24,12 @@ namespace JM.UI.Entities.Model.Discount
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
+        /// <summary>
+        /// True once the user confirmed the "already in another campaign" dialog, which
+        /// lets the server move the products out of the other campaign(s) on save.
+        /// </summary>
+        public bool AcknowledgeConflicts { get; set; }
+
         public List<DiscountManagerDetailsDTO> DiscountDetails { get; set; } = new();
     }
 }

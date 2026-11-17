@@ -1,9 +1,11 @@
 using JM.Infrastructure.Models;
 using JM.UI.Entities.Model.Discount;
+using JM.UI.Entities.Model.SalesPOS;
 using JM.UI.Entities.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Json;
 using System.Text;
 
@@ -94,6 +96,7 @@ namespace JM.UI.DataService.DAL.Discount
                         CreatedBy = discountManager.CreatedBy,
                         ModifiedBy = discountManager.ModifiedBy,
                         ModifiedDate = discountManager.ModifiedDate,
+                        AcknowledgeConflicts = discountManager.AcknowledgeConflicts,
                         DiscountDetails = discountManager.DiscountDetails
                     }
                 };
@@ -167,6 +170,100 @@ namespace JM.UI.DataService.DAL.Discount
             {
                 _logger.LogError(ex, "Unexpected error during get discount types");
                 throw new Exception("Unexpected error fetching discount types: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<IEnumerable<ProductSearchDTO>> SearchCampaignProductsAsync(
+            string term, IEnumerable<int> storeIds)
+        {
+            var stores = storeIds?.Distinct().ToList() ?? new List<int>();
+            if (string.IsNullOrWhiteSpace(term) || stores.Count == 0)
+                return new List<ProductSearchDTO>();
+
+            try
+            {
+                _logger.LogInformation("Searching campaign products: {Term} in stores {Stores}", term, string.Join(",", stores));
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var url = $"api/DiscountManager/search-products?term={Uri.EscapeDataString(term)}";
+                foreach (var s in stores)
+                    url += $"&storeIds={s}";
+
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return new List<ProductSearchDTO>();
+
+                var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
+                return result ?? new List<ProductSearchDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching campaign products");
+                return new List<ProductSearchDTO>();
+            }
+        }
+
+        public async Task<IEnumerable<ProductSearchDTO>> SearchCampaignBarcodeAsync(
+            string barcode, IEnumerable<int> storeIds)
+        {
+            var stores = storeIds?.Distinct().ToList() ?? new List<int>();
+            if (string.IsNullOrWhiteSpace(barcode) || stores.Count == 0)
+                return new List<ProductSearchDTO>();
+
+            try
+            {
+                _logger.LogInformation("Scanning campaign barcode: {Barcode} in stores {Stores}", barcode, string.Join(",", stores));
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var url = $"api/DiscountManager/search-barcode/{Uri.EscapeDataString(barcode)}";
+                url += "?";
+                foreach (var s in stores)
+                    url += $"storeIds={s}&";
+                url = url.TrimEnd('&');
+
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return new List<ProductSearchDTO>();
+
+                var result = await response.Content.ReadFromJsonAsync<List<ProductSearchDTO>>();
+                return result ?? new List<ProductSearchDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error scanning campaign barcode");
+                return new List<ProductSearchDTO>();
+            }
+        }
+
+        public async Task<IEnumerable<CampaignConflictDTO>> GetConflictsAsync(
+            IEnumerable<int> itemIds,
+            IEnumerable<int> storeIds,
+            DateTime startDate,
+            DateTime endDate,
+            int excludeCampaignId)
+        {
+            try
+            {
+                var payload = new
+                {
+                    ItemIds = itemIds?.Distinct().ToList() ?? new List<int>(),
+                    StoreIds = storeIds?.Distinct().ToList() ?? new List<int>(),
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    ExcludeCampaignId = excludeCampaignId
+                };
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.PostAsJsonAsync("api/DiscountManager/conflicts", payload);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadFromJsonAsync<List<CampaignConflictDTO>>();
+                return result ?? new List<CampaignConflictDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to check discount campaign conflicts");
+                return new List<CampaignConflictDTO>();
             }
         }
     }

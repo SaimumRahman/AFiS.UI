@@ -14,5 +14,11 @@ namespace JM.UI.Entities.Model.Discount
         public int DiscountTypeId { get; set; } = 1;
         public string DiscountTypeName { get; set; } = "Percentage";
         public decimal CurrentSalePrice { get; set; }
+
+        /// <summary>
+        /// Campaign names this product will be moved out of when the campaign is saved.
+        /// Populated only after the user answered "Yes" to the conflict dialog.
+        /// </summary>
+        public List<string> MovedFromCampaigns { get; set; } = new();
     }
 }

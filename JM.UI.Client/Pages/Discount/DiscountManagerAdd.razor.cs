@@ -1,9 +1,11 @@
-﻿using JM.UI.Entities.Model.Colors;
+﻿using JM.UI.Client.Pages.Dialog.Discount;
+using JM.UI.Entities.Model.Colors;
 using JM.UI.Entities.Model.Discount;
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.ItemCatalogue;
 using JM.UI.Entities.Model.Items;
+using JM.UI.Entities.Model.SalesPOS;
 using JM.UI.Entities.Model.Sizes;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.Stores;
@@ -52,6 +54,20 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
 
     /// <summary>Saved products that the current filter hides but that are still kept.</summary>
     protected int HiddenSavedItemCount { get; private set; }
+
+    // Conflict keys ("itemId:storeId:campaignId") the user already accepted in the
+    // "already in another campaign" dialog. They are what stops the dialog from being
+    // asked twice (once when adding the item, again on Save).
+    private readonly HashSet<string> _acknowledgedConflicts = new();
+
+    private static string ConflictKey(CampaignConflictDTO c)
+        => $"{c.ItemId}:{c.StoreId ?? 0}:{c.DiscountManagerId}";
+
+    private static List<string> CampaignsFor(List<CampaignConflictDTO> conflicts, int itemId)
+        => conflicts.Where(c => c.ItemId == itemId)
+                    .Select(c => c.DiscountName)
+                    .Distinct()
+                    .ToList();
 
 
     protected bool IsProcessing { get; set; } = false;
@@ -290,6 +306,7 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         FilteredDesigns = AllDesigns;
         BulkDiscountValue = 0;
         SearchText = string.Empty;
+        _acknowledgedConflicts.Clear();
 
         await BuildGridItemsAsync(forceLoadItems: true);
         StateHasChanged();
@@ -325,40 +342,152 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         await BuildGridItemsAsync();
     }
 
-    protected void ToggleItem(DiscountGridItem gridItem)
+    /// <summary>
+    /// Row checkbox. The item is only selected once the exclusivity check has passed;
+    /// on "No" the selection is reverted and nothing changes.
+    /// </summary>
+    protected async Task OnItemCheckedChanged(DiscountGridItem gridItem, bool isChecked)
     {
-        gridItem.Selected = !gridItem.Selected;
-        if (!gridItem.Selected)
+        if (!isChecked)
         {
+            gridItem.Selected = false;
             gridItem.DiscountValue = 0;
             gridItem.Source = "";
+            gridItem.MovedFromCampaigns.Clear();
+            ForgetAcknowledgements(gridItem.Item.Id);
+            UpdateCampaignDetails();
+            return;
         }
-        else if (string.IsNullOrEmpty(gridItem.Source))
+
+        var (allowed, conflicts) = await ConfirmConflictsAsync(new[] { gridItem.Item.Id });
+        if (!allowed)
         {
+            gridItem.Selected = false;
+            StateHasChanged();
+            return;
+        }
+
+        gridItem.Selected = true;
+        if (string.IsNullOrEmpty(gridItem.Source))
             gridItem.Source = "manual";
+        gridItem.MovedFromCampaigns = CampaignsFor(conflicts, gridItem.Item.Id);
+        UpdateCampaignDetails();
+    }
+
+    /// <summary>
+    /// "Select all" header checkbox. Every product is checked first: on "No" the whole
+    /// bulk action is reverted, so a single conflict can never half-apply a selection.
+    /// </summary>
+    protected async Task ToggleAllAsync(bool select)
+    {
+        if (select)
+        {
+            var newly = GridItems.Where(x => !x.Selected).ToList();
+            if (newly.Count > 0)
+            {
+                var (allowed, conflicts) = await ConfirmConflictsAsync(newly.Select(x => x.Item.Id));
+                if (!allowed)
+                {
+                    StateHasChanged();
+                    return;
+                }
+
+                foreach (var gi in newly)
+                    gi.MovedFromCampaigns = CampaignsFor(conflicts, gi.Item.Id);
+            }
+
+            foreach (var gi in GridItems)
+            {
+                gi.Selected = true;
+                if (string.IsNullOrEmpty(gi.Source))
+                    gi.Source = "all";
+            }
+        }
+        else
+        {
+            foreach (var gi in GridItems)
+            {
+                gi.Selected = false;
+                gi.DiscountValue = 0;
+                gi.Source = "";
+                gi.MovedFromCampaigns.Clear();
+            }
+            _acknowledgedConflicts.Clear();
+            BulkDiscountValue = 0;
         }
         UpdateCampaignDetails();
     }
 
-    protected void ToggleAll()
+    /// <summary>
+    /// Asks the server which of these products already sit in another active campaign
+    /// (same store, dates sharing a day). Conflicts the user already accepted are not
+    /// asked about again. Returns (true, allConflicts) when it is safe to continue.
+    /// </summary>
+    private async Task<(bool allowed, List<CampaignConflictDTO> conflicts)> ConfirmConflictsAsync(IEnumerable<int> itemIds)
     {
-        var select = !AllSelected;
-        foreach (var gi in GridItems)
+        var all = new List<CampaignConflictDTO>();
+
+        if (SelectedStoreIds.Count == 0)
+            return (true, all);
+
+        if (Campaign.StartDate == default || Campaign.EndDate == default)
+            return (true, all);
+
+        var ids = itemIds?.Distinct().ToList() ?? new List<int>();
+        if (ids.Count == 0)
+            return (true, all);
+
+        all = (await _serviceUnitOfWork.DiscountManagerService.GetConflictsAsync(
+                    ids, SelectedStoreIds, Campaign.StartDate, Campaign.EndDate, Campaign.Id))
+                .ToList();
+
+        if (all.Count == 0)
+            return (true, all);
+
+        var pending = all.Where(c => !_acknowledgedConflicts.Contains(ConflictKey(c))).ToList();
+        if (pending.Count == 0)
+            return (true, all);   // everything was already confirmed on add
+
+        var answer = await dialogService.OpenAsync<CampaignConflictDialog>(
+            "Item already in another campaign",
+            new Dictionary<string, object>
+            {
+                { nameof(CampaignConflictDialog.Conflicts), pending }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = false,
+                CloseDialogOnEsc = false
+            });
+
+        if (answer is bool yes && yes)
         {
-            gi.Selected = select;
-            if (!select)
-            {
-                gi.DiscountValue = 0;
-                gi.Source = "";
-            }
-            else if (string.IsNullOrEmpty(gi.Source))
-            {
-                gi.Source = "all";
-            }
+            foreach (var c in pending)
+                _acknowledgedConflicts.Add(ConflictKey(c));
+            return (true, all);
         }
-        if (!select)
-            BulkDiscountValue = 0;
-        UpdateCampaignDetails();
+
+        return (false, all);
+    }
+
+    private void ForgetAcknowledgements(int itemId)
+    {
+        var prefix = itemId + ":";
+        _acknowledgedConflicts.RemoveWhere(k => k.StartsWith(prefix, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The store set or the dates changed, so every previous answer is stale: clear the
+    /// tags and re-ask on Save against the new scope.
+    /// </summary>
+    private void InvalidateConflictAcknowledgements()
+    {
+        _acknowledgedConflicts.Clear();
+        foreach (var gi in GridItems)
+            gi.MovedFromCampaigns.Clear();
     }
 
     protected void OnDiscountValueChanged(DiscountGridItem gridItem, decimal val)
@@ -413,26 +542,6 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         UpdateCampaignDetails();
     }
 
-    protected void SimulateScan()
-    {
-        var unscanned = GridItems.Where(x => !x.Selected).ToList();
-        if (unscanned.Count == 0) return;
-
-        var target = unscanned[new Random().Next(unscanned.Count)];
-        target.Selected = true;
-        target.Source = "scan";
-        Scanning = true;
-        InvokeAsync(async () =>
-        {
-            await Task.Delay(800);
-            Scanning = false;
-            StateHasChanged();
-        });
-        SearchText = target.Item.Barcode ?? target.Item.Name;
-        notificationService.Notify(NotificationSeverity.Success, "Scanned", $"✓ {target.Item.Name}");
-        UpdateCampaignDetails();
-    }
-
     protected async Task OnSearchKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
@@ -444,14 +553,23 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
     protected async Task SearchByBarcode()
     {
         if (string.IsNullOrWhiteSpace(SearchText)) return;
-        var text = SearchText.Trim().ToLower();
+        var term = SearchText.Trim();
+
+        // Fast path: an already-loaded grid row matches the typed barcode exactly.
         var match = GridItems.FirstOrDefault(x =>
-            (x.Item.Barcode ?? "").ToLower() == text ||
-            x.Item.Name.ToLower().Contains(text));
+            (x.Item.Barcode ?? "").Equals(term, StringComparison.OrdinalIgnoreCase));
         if (match != null)
         {
-            match.Selected = true;
-            match.Source = "scan";
+            if (!match.Selected)
+            {
+                var (allowed, conflicts) = await ConfirmConflictsAsync(new[] { match.Item.Id });
+                if (!allowed) return;
+
+                match.Selected = true;
+                match.Source = "scan";
+                match.MovedFromCampaigns = CampaignsFor(conflicts, match.Item.Id);
+            }
+
             Scanning = true;
             InvokeAsync(async () =>
             {
@@ -462,41 +580,117 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
             notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {match.Item.Name}");
             SearchText = "";
             UpdateCampaignDetails();
+            return;
         }
-        else if (SelectedStoreIds.Count == 0)
+
+        if (SelectedStoreIds.Count == 0)
         {
             notificationService.Notify(NotificationSeverity.Warning, "Store required",
                 "⚠ Select at least one store before scanning products.");
+            return;
+        }
+
+        // Exact scan across every store the campaign covers (same matching rules as
+        // SalesPOS, but scoped to all selected stores at once).
+        var rows = (await _serviceUnitOfWork.DiscountManagerService.SearchCampaignBarcodeAsync(
+            term, SelectedStoreIds)).ToList();
+
+        if (rows.Count == 0)
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Not found",
+                $"⚠ Barcode '{term}' was not found in the selected stores.");
+            return;
+        }
+
+        // A single hit -> confirm conflicts and add directly, exactly like the POS
+        // flow. Multiple hits (same code in several products) -> let the user pick.
+        if (rows.Count == 1)
+        {
+            await AddCampaignProductAsync(rows[0]);
         }
         else
         {
-            var apiItem = await _serviceUnitOfWork.TransferService.SearchByBarcodeExact(SearchText.Trim(), SelectedStoreIds.First());
-            if (apiItem != null)
+            var picked = await OpenProductSearch(term);
+            if (picked != null)
+                await AddCampaignProductAsync(picked);
+        }
+
+        SearchText = "";
+    }
+
+    /// <summary>
+    /// Opens the SalesPOS-style product search dialog (prefilled with <paramref name="term"/>).
+    /// </summary>
+    private async Task<ProductSearchDTO?> OpenProductSearch(string? term)
+    {
+        return await dialogService.OpenAsync<DiscountProductSearchDialog>("Product Search",
+            new Dictionary<string, object>
             {
-                var gridItem = new DiscountGridItem
-                {
-                    Item = apiItem,
-                    Selected = true,
-                    Source = "scan",
-                    CurrentSalePrice = apiItem.SalePrice ?? 0
-                };
-                GridItems.Add(gridItem);
-                Scanning = true;
-                InvokeAsync(async () =>
-                {
-                    await Task.Delay(800);
-                    Scanning = false;
-                    StateHasChanged();
-                });
-                notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {apiItem.Name} (from server)");
-                SearchText = "";
+                { "Term", term ?? "" },
+                { "StoreIds", SelectedStoreIds.ToList() }
+            },
+            new DialogOptions { Width = "1000px", Height = "550px" });
+    }
+
+    /// <summary>
+    /// Adds (or selects) a product coming from the scan/search flow. Runs the
+    /// campaign-exclusivity check first; on "No" nothing changes.
+    /// </summary>
+    private async Task AddCampaignProductAsync(ProductSearchDTO p)
+    {
+        var (allowed, conflicts) = await ConfirmConflictsAsync(new[] { p.ItemId });
+        if (!allowed)
+        {
+            notificationService.Notify(NotificationSeverity.Warning, "Not added",
+                $"{p.ProductName} was not added because it is already in another campaign.");
+            return;
+        }
+
+        var existing = GridItems.FirstOrDefault(x => x.Item.Id == p.ItemId);
+        if (existing != null)
+        {
+            if (!existing.Selected)
+            {
+                existing.Selected = true;
+                existing.Source = "scan";
+                existing.MovedFromCampaigns = CampaignsFor(conflicts, p.ItemId);
                 UpdateCampaignDetails();
             }
-            else
-            {
-                notificationService.Notify(NotificationSeverity.Warning, "Not found", "⚠ No product matched");
-            }
+            notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {p.ProductName} (already in list)");
+            return;
         }
+
+        var item = new ItemDTO
+        {
+            Id = p.ItemId,
+            Name = p.ProductName ?? p.ItemName ?? "",
+            Barcode = p.Barcode,
+            GroupName = p.GroupName,
+            ProductType = p.ProductType,
+            SalePrice = p.UnitPrice,
+            CurrentStock = p.StockQuantity,
+            MesurementUnitName = p.UomName
+        };
+
+        AllItems.Add(item);
+        GridItems.Add(new DiscountGridItem
+        {
+            Item = item,
+            Selected = true,
+            Source = "scan",
+            CurrentSalePrice = p.UnitPrice,
+            MovedFromCampaigns = CampaignsFor(conflicts, p.ItemId)
+        });
+
+        Scanning = true;
+        InvokeAsync(async () =>
+        {
+            await Task.Delay(800);
+            Scanning = false;
+            StateHasChanged();
+        });
+        notificationService.Notify(NotificationSeverity.Success, "Found", $"✓ {item.Name} (from server)");
+        UpdateCampaignDetails();
     }
 
     private void UpdateCampaignDetails()
@@ -590,6 +784,28 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
 
         UpdateCampaignDetails();
 
+        // ── Exclusivity check ────────────────────────────────────────────────
+        // Only conflicts the user has not already accepted are asked about here; this
+        // also catches a stale page (someone else saved a conflicting campaign while
+        // this one was open). The server re-checks and performs the move on save.
+        if (Campaign.IsActive)
+        {
+            var detailItemIds = Campaign.DiscountDetails.Select(d => d.ItemId).Distinct().ToList();
+            var (allowed, conflicts) = await ConfirmConflictsAsync(detailItemIds);
+            if (!allowed)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Cancelled",
+                    "The campaign was not saved.");
+                return;
+            }
+            Campaign.AcknowledgeConflicts = conflicts.Count > 0;
+        }
+        else
+        {
+            // An inactive campaign never blocks (and never moves) anything.
+            Campaign.AcknowledgeConflicts = false;
+        }
+
         var userObj = await sessionStorage.GetAsync<string>("UserId");
         if (!string.IsNullOrEmpty(userObj.Value))
             Campaign.CreatedBy = userObj.Value;
@@ -630,6 +846,14 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
     protected void OnStoresChanged(object? value)
     {
         _allStoresSelected = Stores.Count > 0 && SelectedStoreIds.Count == Stores.Count;
+        InvalidateConflictAcknowledgements();
+        UpdateCampaignDetails();
+    }
+
+    /// <summary>Changing the validity window invalidates every previous conflict answer.</summary>
+    protected void OnCampaignDatesChanged()
+    {
+        InvalidateConflictAcknowledgements();
         UpdateCampaignDetails();
     }
 
@@ -646,6 +870,7 @@ public partial class DiscountManagerAddComponent : AddEditPageBase
         Id = null;
         SelectedStoreIds = new();
         _allStoresSelected = false;
+        _acknowledgedConflicts.Clear();
         SelectedGroupId = null;
         SelectedSubGroupId = null;
         SelectedDesignId = null;

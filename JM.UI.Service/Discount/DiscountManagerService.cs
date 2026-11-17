@@ -1,6 +1,7 @@
 using JM.Infrastructure.Models;
 using JM.UI.DataService.DAL.UnitOfWork;
 using JM.UI.Entities.Model.Discount;
+using JM.UI.Entities.Model.SalesPOS;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -67,6 +68,29 @@ namespace JM.UI.Service.Discount
         public async Task<IEnumerable<DiscountTypeDTO>> GetDiscountTypes()
         {
             return await _repositoryUnitOfWork.DiscountManagerRepository.GetDiscountTypes();
+        }
+
+        public async Task<IEnumerable<CampaignConflictDTO>> GetConflictsAsync(
+            IEnumerable<int> itemIds,
+            IEnumerable<int> storeIds,
+            DateTime startDate,
+            DateTime endDate,
+            int excludeCampaignId)
+        {
+            return await _repositoryUnitOfWork.DiscountManagerRepository.GetConflictsAsync(
+                itemIds, storeIds, startDate, endDate, excludeCampaignId);
+        }
+
+        public async Task<IEnumerable<ProductSearchDTO>> SearchCampaignProductsAsync(
+            string term, IEnumerable<int> storeIds)
+        {
+            return await _repositoryUnitOfWork.DiscountManagerRepository.SearchCampaignProductsAsync(term, storeIds);
+        }
+
+        public async Task<IEnumerable<ProductSearchDTO>> SearchCampaignBarcodeAsync(
+            string barcode, IEnumerable<int> storeIds)
+        {
+            return await _repositoryUnitOfWork.DiscountManagerRepository.SearchCampaignBarcodeAsync(barcode, storeIds);
         }
 
         public Task<(bool IsValid, string ErrorMessage)> Validate(DiscountManagerDTO discountManager)
