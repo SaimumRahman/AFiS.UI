@@ -113,8 +113,8 @@
         <div class="tce-field">
             <label>Private</label>
             <div style="display:flex;align-items:center;gap:8px;padding-top:6px;">
-                <RadzenCheckBox @bind-Value="Model.IsPrivate" TValue="bool" />
-                <span class="tce-hint">Only you and an Admin can see it.</span>
+                <RadzenCheckBox @bind-Value="IsPrivateSelection" TValue="bool" />
+                <span class="tce-hint">Only you can see it.</span>
             </div>
         </div>
     </div>
@@ -169,9 +169,12 @@
         @if (!Model.IsPrivate)
         {
             <div class="tce-hint mb-2">
-                Pick at least one target. A task is shown when the branch matches <b>and</b> the role matches
-                (when both are set); whichever is set applies on its own otherwise. Named people always see it.
-                Branches can only be tagged by Admin, Managing Director, Directors and Chairman.
+                Pick at least one target: a branch, "visible in every branch", a role group, a
+                designation or specific people. People you name always see the task. When both a
+                branch target and a role target are set, the user must match both; if only one is
+                set it applies on its own. If both a role group and a designation are set, the user
+                must match both. Branches and "visible in every branch" can only be set by an
+                Admin, Managing Director, Director or Chairman.
             </div>
 
             @if (Lookups.Me.CanTagBranches)
@@ -179,17 +182,25 @@
                 <div class="tce-row">
                     <div class="tce-field">
                         <label>Branch</label>
-                        <RadzenDropDown Data="@Lookups.Stores" @bind-Value="Model.BranchIds" Multiple="true"
+                        <RadzenDropDown Data="@Lookups.Stores" @bind-Value="BranchSelection" Multiple="true"
                                         ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                        Disabled="@Model.AllBranches"
                                         Placeholder="All / select branches…" Style="width:100%" />
                     </div>
                     <div class="tce-field" style="max-width:220px;">
                         <label>Every branch</label>
                         <div style="display:flex;align-items:center;gap:8px;padding-top:6px;">
-                            <RadzenCheckBox @bind-Value="Model.AllBranches" TValue="bool" />
+                            <RadzenCheckBox @bind-Value="AllBranchesSelection" TValue="bool" />
                             <span class="tce-hint">Visible in every branch.</span>
                         </div>
                     </div>
+                </div>
+            }
+            else
+            {
+                <div class="tce-hint mb-2">
+                    Branch targeting is not available to you; it is limited to Admin, Managing
+                    Director, Directors and Chairman. Target role groups, designations or people.
                 </div>
             }
 
@@ -217,8 +228,8 @@
         else
         {
             <div class="tce-hint">
-                This task is private, so it is visible only to you and to an Admin. No branch, group,
-                designation or user targeting is needed.
+                This task is private. Only you can see it, so no branch, role group, designation or
+                person targeting is needed.
             </div>
         }
     </div>
@@ -239,6 +250,52 @@
     private bool IsSaving { get; set; }
     private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Private is creator-only, so turning it on drops any audience that was picked.
+    /// </summary>
+    private bool IsPrivateSelection
+    {
+        get => Model.IsPrivate;
+        set
+        {
+            Model.IsPrivate = value;
+            if (value) ClearAudience();
+        }
+    }
+
+    /// <summary>
+    /// "Visible in every branch" and a specific branch list can never be set together:
+    /// picking branches unchecks the box, checking the box clears the branches.
+    /// </summary>
+    private bool AllBranchesSelection
+    {
+        get => Model.AllBranches;
+        set
+        {
+            Model.AllBranches = value;
+            if (value) Model.BranchIds = new List<int>();
+        }
+    }
+
+    private List<int> BranchSelection
+    {
+        get => Model.BranchIds ?? (Model.BranchIds = new List<int>());
+        set
+        {
+            Model.BranchIds = (value ?? new List<int>()).Where(id => id > 0).Distinct().ToList();
+            if (Model.BranchIds.Count > 0) Model.AllBranches = false;
+        }
+    }
+
+    private void ClearAudience()
+    {
+        Model.AllBranches = false;
+        Model.BranchIds = new List<int>();
+        Model.GroupIds = new List<int>();
+        Model.DesignationIds = new List<int>();
+        Model.UserIds = new List<int>();
+    }
 
     private readonly List<LookupOption> RepeatTypes = new()
     {
@@ -337,20 +394,27 @@
         }
 
         // Never send branch values from someone who may not tag branches; the server
-        // drops them anyway, but keeping the payload honest avoids surprising diffs.
+        // rejects such a request with 403. Keeping the payload honest avoids that.
         if (!Lookups.Me.CanTagBranches)
         {
             Model.AllBranches = false;
             Model.BranchIds = new List<int>();
         }
 
-        if (!Model.IsPrivate)
+        // No branches and "every branch" at the same time.
+        if (Model.AllBranches) Model.BranchIds = new List<int>();
+
+        if (Model.IsPrivate)
+        {
+            ClearAudience();
+        }
+        else
         {
             var targets = (Model.AllBranches ? 1 : 0) + Model.BranchIds.Count
                           + Model.GroupIds.Count + Model.DesignationIds.Count + Model.UserIds.Count;
             if (targets == 0)
             {
-                ErrorMessage = "Choose at least one audience target, or mark the task private.";
+                ErrorMessage = "Choose at least one target (branch, role group, designation or person), or mark the task private.";
                 return;
             }
         }
