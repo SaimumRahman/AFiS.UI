@@ -9,10 +9,14 @@ namespace JM.UI.Service.CustomerDetails
     public interface ICustomerDetailsService
     {
         Task<IEnumerable<CustomerDetailsDTO>> GetAllCustomers();
+        Task<IEnumerable<CustomerDetailsDTO>> GetCustomersByMobile(string mobile);
         Task<CustomerDetailsDTO?> GetCustomerById(int id);
         Task<CustomerDetailsDTO?> GetCustomerByPhone(string phone);
         Task<ResponseResult> InsertUpdateCustomer(CustomerDetailsDTO customer);
         Task<ResponseResult> DeleteCustomer(int id);
+        Task<IEnumerable<CustomerCompanyDTO>> SearchCompanies(string term);
+        Task<CustomerCompanyDTO?> GetCompanyById(int id);
+        Task<ResponseResult> CreateCompany(CustomerCompanyDTO company);
         Task<(bool IsValid, string ErrorMessage)> Validate(CustomerDetailsDTO customer);
         CustomerDetailsDTO CreateNew();
         string Truncate(string? value, int maxChars);

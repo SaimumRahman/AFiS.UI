@@ -1,238 +1,340 @@
-﻿using JM.UI.Entities.Model.CustomerDetails;
+﻿using JM.Infrastructure.Models;
+using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Entities.Model.MembershipType;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace JM.UI.Client.Pages.CustomerDetails;
-
-public partial class CustomerDetailsAddComponent : AddEditPageBase
+namespace JM.UI.Client.Pages.CustomerDetails
 {
-    [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
-
-    [Parameter] public int? Id { get; set; }
-
-    protected CustomerDetailsDTO Customer { get; set; } = new();
-    protected bool IsProcessing { get; set; } = false;
-    protected bool IsLoading { get; set; } = false;
-    protected bool IsEditMode => Id.HasValue && Id.Value > 0;
-    protected string PageTitle => IsEditMode ? "Edit Customer" : "Add New Customer";
-    protected string PageIcon => IsEditMode ? "edit" : "person_add";
-    protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
-
-    protected override async Task OnInitializedAsync()
+    public partial class CustomerDetailsAddComponent : AddEditPageBase
     {
-        NavigationGuard.IsGuardActive = true;
-        await TokenService.InitializeTokenAsync();
+        [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public DialogService DialogService { get; set; } = default!;
 
-        if (IsEditMode)
-        {
-            await LoadCustomer();
-        }
-        else
-        {
-            await InitializeCustomer();
-        }
-    }
+        [Parameter] public int? Id { get; set; }
 
-    private async Task LoadCustomer()
-    {
-        try
+        protected CustomerDetailsDTO Customer { get; set; } = new();
+        protected List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
+        protected List<CustomerCompanyDTO> CompanyResults { get; set; } = new();
+        protected List<CustomerDetailsDTO> FoundCustomers { get; set; } = new();
+
+        protected bool IsLoading { get; set; } = false;
+        protected bool IsProcessing { get; set; } = false;
+        protected bool IsEditMode => Id.HasValue && Id.Value > 0;
+        protected bool IsAdmin { get; set; } = false;
+        protected int CurrentUserId { get; set; } = 0;
+        protected bool ShowForm { get; set; } = false;
+        protected bool LookupDone { get; set; } = false;
+        protected string LookupMobile { get; set; } = string.Empty;
+        protected string LookupMobileInput { get; set; } = string.Empty;
+        protected string CompanyText { get; set; } = string.Empty;
+        protected bool SameAsMobile { get; set; } = true;
+        protected string SavedMsg { get; set; } = string.Empty;
+        protected string PageTitle => IsEditMode ? "Edit Customer" : "Add New Customer";
+        protected string PageIcon => IsEditMode ? "edit" : "person_add";
+
+        // Admin remarks (admin only) - stored as a single column; we keep a list for display.
+        protected List<(string Text, string By, DateTime At)> PendingRemarks { get; set; } = new();
+        protected string RemarkInput { get; set; } = string.Empty;
+
+        protected override async Task OnInitializedAsync()
         {
-            IsLoading = true;
-            var customer = await _serviceUnitOfWork.CustomerDetailsService.GetCustomerById(Id!.Value);
+            NavigationGuard.IsGuardActive = true;
+            await TokenService.InitializeTokenAsync();
+            await LoadUserContext();
+
             MembershipTypes = (await _serviceUnitOfWork.MembershipTypeService.GetAll()).ToList();
 
-            if (customer == null)
+            if (IsEditMode)
             {
-                notificationService.Notify(NotificationSeverity.Error, "Error", "Customer not found.");
+                await LoadCustomer();
+                ShowForm = true;
+            }
+            else
+            {
+                Customer = _serviceUnitOfWork.CustomerDetailsService.CreateNew();
+                if (Id == null) { /* new */ }
+            }
+        }
+
+        private async Task LoadUserContext()
+        {
+            try
+            {
+                var uid = await sessionStorage.GetAsync<string>("UserId");
+                if (!string.IsNullOrEmpty(uid.Value) && int.TryParse(uid.Value, out var parsed)) CurrentUserId = parsed;
+                IsAdmin = await _serviceUnitOfWork.UserGroupService.GetSystemGroupCountByUserId(CurrentUserId) > 0;
+            }
+            catch { IsAdmin = false; }
+        }
+
+        private async Task LoadCustomer()
+        {
+            try
+            {
+                IsLoading = true;
+                var customer = await _serviceUnitOfWork.CustomerDetailsService.GetCustomerById(Id!.Value);
+                if (customer == null)
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", "Customer not found.");
+                    NavigationManager.NavigateTo("/CustomerDetailsList");
+                    return;
+                }
+                Customer = customer;
+                CompanyText = customer.CompanyName ?? string.Empty;
+                ShowForm = true;
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load customer: {ex.Message}");
                 NavigationManager.NavigateTo("/CustomerDetailsList");
+            }
+            finally { IsLoading = false; }
+        }
+
+        // ---------- Step 1: mobile lookup ----------
+        protected async Task RunLookup()
+        {
+            var m = NormalizeMobile(LookupMobileInput);
+            if (!ValidMobile(m))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Validation", "Enter a valid mobile number (e.g. 01711000000).");
+                return;
+            }
+            LookupMobile = m;
+            LookupMobileInput = m;
+            FoundCustomers = (await _serviceUnitOfWork.CustomerDetailsService.GetCustomersByMobile(m)).ToList();
+            LookupDone = true;
+            StateHasChanged();
+        }
+
+        protected void OpenNewForm()
+        {
+            Customer = _serviceUnitOfWork.CustomerDetailsService.CreateNew();
+            Customer.Phone = LookupMobile;
+            Customer.WhatsApp = LookupMobile;
+            LookupDone = false;
+            ShowForm = true;
+            StateHasChanged();
+        }
+
+        protected async Task OpenEditForm(CustomerDetailsDTO c)
+        {
+            Customer = await _serviceUnitOfWork.CustomerDetailsService.GetCustomerById(c.Id) ?? c;
+            CompanyText = Customer.CompanyName ?? string.Empty;
+            LookupDone = false;
+            ShowForm = true;
+            StateHasChanged();
+        }
+
+        // ---------- Company search ----------
+        protected async Task OnCompanyInput(string value)
+        {
+            CompanyText = value;
+            Customer.CompanyName = value;
+            Customer.CompanyId = null;
+            if (string.IsNullOrWhiteSpace(value)) { CompanyResults = new List<CustomerCompanyDTO>(); return; }
+            CompanyResults = (await _serviceUnitOfWork.CustomerDetailsService.SearchCompanies(value)).ToList();
+            StateHasChanged();
+        }
+
+        protected void SelectCompany(CustomerCompanyDTO c)
+        {
+            Customer.CompanyId = c.Id;
+            Customer.CompanyName = c.Name;
+            Customer.CompanyCode = c.Code;
+            CompanyText = c.Name;
+            CompanyResults = new List<CustomerCompanyDTO>();
+            if (c.DefaultCategoryId.HasValue)
+            {
+                Customer.MemberTypeId = c.DefaultCategoryId;
+                notificationService.Notify(NotificationSeverity.Info, "Info", $"Membership category auto-selected from company. You can change it.");
+            }
+            StateHasChanged();
+        }
+
+        protected async Task RegisterCompany()
+        {
+            var name = (CompanyText ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Validation", "Type a company name first.");
+                return;
+            }
+            var code = SuggestCode(name);
+            var newCompany = new CustomerCompanyDTO { Name = name, Code = code };
+            var confirm = await DialogService.OpenAsync<CustomerCompanyRegisterDialog>(
+                "Register New Company",
+                new Dictionary<string, object> { { "Company", newCompany } });
+            if (confirm is CustomerCompanyDTO saved && saved.Id > 0)
+            {
+                Customer.CompanyId = saved.Id;
+                Customer.CompanyName = saved.Name;
+                Customer.CompanyCode = saved.Code;
+                CompanyText = saved.Name;
+                if (saved.DefaultCategoryId.HasValue) Customer.MemberTypeId = saved.DefaultCategoryId;
+                StateHasChanged();
+            }
+            else if (confirm is CustomerCompanyDTO saved2)
+            {
+                // fallback: try create directly
+                var res = await _serviceUnitOfWork.CustomerDetailsService.CreateCompany(saved2);
+                if (res.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success", "Company saved.");
+                }
+            }
+        }
+
+        // ---------- Save ----------
+        protected async Task Save()
+        {
+            await DoSave(false);
+        }
+
+        protected async Task SaveAndNew()
+        {
+            await DoSave(true);
+        }
+
+        private async Task DoSave(bool andNew)
+        {
+            // normalize mobile
+            Customer.Phone = NormalizeMobile(Customer.Phone);
+            if (!string.IsNullOrWhiteSpace(Customer.WhatsApp)) Customer.WhatsApp = NormalizeMobile(Customer.WhatsApp);
+
+            // company must resolve if text typed
+            if (!string.IsNullOrWhiteSpace(CompanyText) && !Customer.CompanyId.HasValue)
+            {
+                var matches = await _serviceUnitOfWork.CustomerDetailsService.SearchCompanies(CompanyText);
+                var exact = matches.FirstOrDefault(c => c.Name.Equals(CompanyText, StringComparison.OrdinalIgnoreCase));
+                if (exact != null) SelectCompany(exact);
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Validation", "This company is not registered yet. Please register it or clear the field.");
+                    await RegisterCompany();
+                    return;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(CompanyText)) { Customer.CompanyId = null; Customer.CompanyName = null; Customer.CompanyCode = null; }
+
+            var validation = await _serviceUnitOfWork.CustomerDetailsService.Validate(Customer);
+            if (!validation.IsValid)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
                 return;
             }
 
-            Customer = customer;
-        }
-        catch (Exception ex)
-        {
-            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load customer: {ex.Message}");
-            NavigationManager.NavigateTo("/CustomerDetailsList");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    private async Task InitializeCustomer()
-    {
-        Customer =  _serviceUnitOfWork.CustomerDetailsService.CreateNew();
-        MembershipTypes = (await _serviceUnitOfWork.MembershipTypeService.GetAll()).ToList();
-    }
-
-    protected async Task Save()
-    {
-        var userObj = await sessionStorage.GetAsync<string>("UserId");
-        int? userId = null;
-        if (!string.IsNullOrEmpty(userObj.Value) && int.TryParse(userObj.Value, out int parsedUserId))
-        {
-            userId = parsedUserId;
-        }
-
-        var validation = await _serviceUnitOfWork.CustomerDetailsService.Validate(Customer);
-        if (!validation.IsValid)
-        {
-            notificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
-            return;
-        }
-
-        Customer.IsForceAdd = false;
-
-        try
-        {
-            IsProcessing = true;
-            var result = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
-
-            if (result.IsSuccessStatus)
+            // duplicate soft-warning
+            if (Customer.Id == 0)
             {
-                notificationService.Notify(NotificationSeverity.Success, "Success",
-                    IsEditMode ? "Customer updated successfully!" : "Customer created successfully!");
-                NavigationManager.NavigateTo("/CustomerDetailsList");
-            }
-            else
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
-                if (!IsEditMode && result.StatusCode == StatusCodes.Status304NotModified)
+                var existing = await _serviceUnitOfWork.CustomerDetailsService.GetCustomersByMobile(Customer.Phone);
+                var dup = existing.Any(c => c.Name.Equals(Customer.Name, StringComparison.OrdinalIgnoreCase));
+                if (dup)
                 {
-                    var confirmed = await dialogService.Confirm(
-                        "Do you want to create a new Customer?",
-                        "Duplicate",
-                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
-                    );
-
-                    if (confirmed == true)
-                    {
-                        Customer.IsForceAdd = true;
-                        var retryResult = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
-                        if (retryResult.IsSuccessStatus)
-                        {
-                            notificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
-                            NavigationManager.NavigateTo("/CustomerDetailsList");
-                        }
-                        else
-                        {
-                            Customer.IsForceAdd = false;
-                            notificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
-                        }
-                    }
+                    var confirmed = await DialogService.Confirm("A profile with this mobile and name already exists. Create another one anyway?", "Duplicate",
+                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+                    if (confirmed != true) return;
+                    Customer.IsForceAdd = true;
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save customer: {ex.Message}");
-        }
-        finally
-        {
-            IsProcessing = false;
-        }
-    }
 
-    protected async Task SaveAndNew()
-    {
-        if (IsEditMode)
-        {
-            await Save();
-            return;
-        }
-
-        var userObj = await sessionStorage.GetAsync<string>("UserId");
-        int? userId = null;
-        if (!string.IsNullOrEmpty(userObj.Value) && int.TryParse(userObj.Value, out int parsedUserId))
-        {
-            userId = parsedUserId;
-        }
-
-        var validation = await _serviceUnitOfWork.CustomerDetailsService.Validate(Customer);
-        if (!validation.IsValid)
-        {
-            notificationService.Notify(NotificationSeverity.Warning, "Validation", validation.ErrorMessage);
-            return;
-        }
-
-        Customer.IsForceAdd = false;
-
-        try
-        {
-            IsProcessing = true;
-            var result = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
-
-            if (result.IsSuccessStatus)
+            // remarks (admin): append to Remarks column (simplest: prepend new entries)
+            if (IsAdmin && PendingRemarks.Count > 0)
             {
-                notificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
-                InitializeCustomer();
-                StateHasChanged();
+                var existing = Customer.Remarks ?? string.Empty;
+                var appended = string.Join("\n", PendingRemarks.Select(r => $"[{r.At:dd/MM/yyyy HH:mm}] {r.By}: {r.Text}"));
+                Customer.Remarks = string.IsNullOrWhiteSpace(existing) ? appended : appended + "\n" + existing;
+                PendingRemarks.Clear();
             }
-            else
-            {
-                notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
-                if (result.StatusCode == StatusCodes.Status304NotModified)
-                {
-                    var confirmed = await dialogService.Confirm(
-                        "Do you want to create a new Customer?",
-                        "Duplicate",
-                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" }
-                    );
 
-                    if (confirmed == true)
+            IsProcessing = true;
+            try
+            {
+                var result = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
+                if (result.IsSuccessStatus)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Success",
+                        Customer.Id == 0 ? "Customer created successfully!" : "Customer updated successfully!");
+                    if (andNew)
                     {
-                        Customer.IsForceAdd = true;
-                        var retryResult = await _serviceUnitOfWork.CustomerDetailsService.InsertUpdateCustomer(Customer);
-                        if (retryResult.IsSuccessStatus)
-                        {
-                            notificationService.Notify(NotificationSeverity.Success, "Success", "Customer created successfully!");
-                            InitializeCustomer();
-                            StateHasChanged();
-                        }
-                        else
-                        {
-                            Customer.IsForceAdd = false;
-                            notificationService.Notify(NotificationSeverity.Error, "Error", retryResult.Message);
-                        }
+                        Customer = _serviceUnitOfWork.CustomerDetailsService.CreateNew();
+                        Customer.Phone = LookupMobile;
+                        Customer.WhatsApp = LookupMobile;
+                        CompanyText = string.Empty;
+                        CompanyResults = new List<CustomerCompanyDTO>();
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        NavigationManager.NavigateTo("/CustomerDetailsList");
                     }
                 }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Error", result.Message);
+                }
             }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save customer: {ex.Message}");
+            }
+            finally { IsProcessing = false; }
         }
-        catch (Exception ex)
-        {
-            notificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save customer: {ex.Message}");
-        }
-        finally
-        {
-            IsProcessing = false;
-        }
-    }
 
-    protected void Cancel()
-    {
-        NavigationManager.NavigateTo("/CustomerDetailsList");
-    }
+        protected void AddRemark()
+        {
+            if (!IsAdmin) return;
+            var text = (RemarkInput ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(text)) return;
+            PendingRemarks.Insert(0, (text, "Admin", DateTime.Now));
+            RemarkInput = string.Empty;
+            StateHasChanged();
+        }
 
-    protected async Task Reset()
-    {
-        if (IsEditMode)
+        protected void SyncWhatsApp()
         {
-            await LoadCustomer();
+            if (Customer == null) return;
+            // tracked via a separate flag; keep simple: if WhatsApp equals phone, treat as same
         }
-        else
+
+        // ---------- helpers ----------
+        protected string NormalizeMobile(string? s)
         {
-            await InitializeCustomer();
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+            var d = new string(s.Where(char.IsDigit).ToArray());
+            if (d.StartsWith("880")) d = "0" + d.Substring(3);
+            return d;
         }
-        StateHasChanged();
-    }
-    public void Dispose()
-    {
-        // Deactivate when leaving the page
-        NavigationGuard.IsGuardActive = false;
+
+        protected bool ValidMobile(string m) => System.Text.RegularExpressions.Regex.IsMatch(m ?? string.Empty, @"^01[3-9]\d{8}$");
+
+        protected string SuggestCode(string name)
+        {
+            var words = (name ?? string.Empty).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var code = new string(words.Select(w => w[0]).ToArray()).ToUpperInvariant();
+            code = new string(code.Where(char.IsLetterOrDigit).ToArray());
+            return code.Length > 6 ? code.Substring(0, 6) : (code.Length < 2 ? "XX" : code);
+        }
+
+        protected async Task Cancel() => NavigationManager.NavigateTo("/CustomerDetailsList");
+
+        protected async Task Reset()
+        {
+            if (IsEditMode) await LoadCustomer();
+            else { Customer = _serviceUnitOfWork.CustomerDetailsService.CreateNew(); CompanyText = string.Empty; CompanyResults = new List<CustomerCompanyDTO>(); }
+            StateHasChanged();
+        }
+
+        public void Dispose()
+        {
+            NavigationGuard.IsGuardActive = false;
+        }
     }
 }

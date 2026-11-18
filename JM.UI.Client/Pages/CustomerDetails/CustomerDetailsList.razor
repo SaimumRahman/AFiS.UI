@@ -15,12 +15,9 @@
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                    <RadzenButton Icon="add_circle_outline"
-                                  Text="Add New Customer"
-                                  Click="@AddCustomer"
-                                  ButtonStyle="ButtonStyle.Primary"
-                                  Size="ButtonSize.Medium" />
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    <RadzenTextBox @bind-Value="SearchText" Placeholder="Search name / phone / company..." Style="width:260px;" Change="@OnSearchChanged" />
+                    <RadzenButton Icon="add_circle_outline" Text="Add New Customer" Click="@AddCustomer" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -29,7 +26,7 @@
     <!-- Data Grid Card -->
     <RadzenCard>
         <RadzenDataGrid @ref="CustomersGrid"
-                        Data="@Customers"
+                        Data="@FilteredCustomers"
                         TItem="CustomerDetailsDTO"
                         AllowFiltering="true"
                         AllowColumnResize="true"
@@ -106,7 +103,20 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <!-- Actions -->
+                <!-- Company -->
+                <RadzenDataGridColumn TItem="CustomerDetailsDTO" Title="Company" Width="130px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        @if (!string.IsNullOrWhiteSpace(item.CompanyCode))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@item.CompanyCode" />
+                        }
+                        else
+                        {
+                            <span>N/A</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
                 <RadzenDataGridColumn TItem="CustomerDetailsDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="item">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">

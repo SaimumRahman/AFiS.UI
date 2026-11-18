@@ -119,7 +119,19 @@ namespace JM.UI.DataService.DAL.CustomerDetails
                         Email = customer.Email,
                         Phone = customer.Phone,
                         Address = customer.Address,
+                        WhatsApp = customer.WhatsApp,
+                        DateOfBirth = customer.DateOfBirth,
+                        Anniversary = customer.Anniversary,
+                        CompanyId = customer.CompanyId,
+                        Designation = customer.Designation,
+                        EmployeeId = customer.EmployeeId,
+                        AddressHome = customer.AddressHome,
+                        AddressOffice = customer.AddressOffice,
+                        AddressOther = customer.AddressOther,
+                        DefaultAddressType = customer.DefaultAddressType,
                         MemberTypeId = customer.MemberTypeId,
+                        Remarks = customer.Remarks,
+                        Status = customer.Status,
                         CreatedDate = customer.CreatedDate,
                         LastModifiedDate = customer.LastModifiedDate,
                         IsForceAdd = customer.IsForceAdd
@@ -153,23 +165,92 @@ namespace JM.UI.DataService.DAL.CustomerDetails
 
                 var httpClient = GetAuthenticatedClient("MainApi");
                 var response = await httpClient.DeleteAsync($"Customers/DeleteCustomer/{id}");
-                response.EnsureSuccessStatusCode();
 
-                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                ResponseResult? result = null;
+                try { result = await response.Content.ReadFromJsonAsync<ResponseResult>(); } catch { }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return result ?? new ResponseResult { IsSuccessStatus = false, Message = "Failed to delete customer." };
+                }
 
                 _logger.LogInformation("Customer deleted successfully: {Id}", id);
-
                 return result ?? new ResponseResult { IsSuccessStatus = true, Message = "Deleted successfully" };
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request exception during delete customer: {Id}", id);
-                throw new Exception($"Failed to delete customer: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during delete customer: {Id}", id);
-                throw new Exception($"Unexpected error deleting customer: {ex.Message}", ex);
+                _logger.LogError(ex, "Unexpected error deleting customer: {Id}", id);
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<IEnumerable<CustomerDetailsDTO>> GetCustomersByMobile(string mobile)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Customers/GetCustomersByMobile/{Uri.EscapeDataString(mobile)}");
+                if (!response.IsSuccessStatusCode) return new List<CustomerDetailsDTO>();
+                return await response.Content.ReadFromJsonAsync<List<CustomerDetailsDTO>>() ?? new List<CustomerDetailsDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching customers by mobile");
+                return new List<CustomerDetailsDTO>();
+            }
+        }
+
+        public async Task<IEnumerable<CustomerCompanyDTO>> SearchCompanies(string term)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Customers/SearchCompanies?term={Uri.EscapeDataString(term ?? string.Empty)}");
+                if (!response.IsSuccessStatusCode) return new List<CustomerCompanyDTO>();
+                return await response.Content.ReadFromJsonAsync<List<CustomerCompanyDTO>>() ?? new List<CustomerCompanyDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching companies");
+                return new List<CustomerCompanyDTO>();
+            }
+        }
+
+        public async Task<CustomerCompanyDTO?> GetCompanyById(int id)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync($"Customers/GetCompanyById/{id}");
+                if (!response.IsSuccessStatusCode) return null;
+                return await response.Content.ReadFromJsonAsync<CustomerCompanyDTO>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching company by id");
+                return null;
+            }
+        }
+
+        public async Task<ResponseResult> CreateCompany(CustomerCompanyDTO company)
+        {
+            try
+            {
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.PostAsJsonAsync("Customers/CreateCompany", new { Company = company });
+                if (!response.IsSuccessStatusCode)
+                {
+                    ResponseResult? r = null;
+                    try { r = await response.Content.ReadFromJsonAsync<ResponseResult>(); } catch { }
+                    return r ?? new ResponseResult { IsSuccessStatus = false, Message = "Failed to create company." };
+                }
+                var result = await response.Content.ReadFromJsonAsync<ResponseResult>();
+                return result ?? new ResponseResult { IsSuccessStatus = true, Message = "Company saved." };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating company");
+                return new ResponseResult { IsSuccessStatus = false, Message = ex.Message };
             }
         }
     }

@@ -13,6 +13,8 @@ namespace JM.UI.Client.Pages.CustomerDetails
 
         protected RadzenDataGrid<CustomerDetailsDTO> CustomersGrid = default!;
         protected IEnumerable<CustomerDetailsDTO> Customers { get; set; } = new List<CustomerDetailsDTO>();
+        protected IEnumerable<CustomerDetailsDTO> FilteredCustomers { get; set; } = new List<CustomerDetailsDTO>();
+        protected string SearchText { get; set; } = string.Empty;
         protected bool IsLoading { get; set; } = false;
 
         protected override async Task OnInitializedAsync()
@@ -27,6 +29,7 @@ namespace JM.UI.Client.Pages.CustomerDetails
             {
                 IsLoading = true;
                 Customers = await _serviceUnitOfWork.CustomerDetailsService.GetAllCustomers();
+                ApplyFilter();
             }
             catch (Exception ex)
             {
@@ -39,6 +42,28 @@ namespace JM.UI.Client.Pages.CustomerDetails
             }
         }
 
+        protected void ApplyFilter()
+        {
+            var q = (SearchText ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(q))
+            {
+                FilteredCustomers = Customers;
+                return;
+            }
+            FilteredCustomers = Customers.Where(c =>
+                (c.Name ?? "").ToLowerInvariant().Contains(q) ||
+                (c.Phone ?? "").ToLowerInvariant().Contains(q) ||
+                (c.CompanyCode ?? "").ToLowerInvariant().Contains(q) ||
+                (c.CompanyName ?? "").ToLowerInvariant().Contains(q) ||
+                (c.Email ?? "").ToLowerInvariant().Contains(q)).ToList();
+        }
+
+        protected void OnSearchChanged(string value)
+        {
+            SearchText = value;
+            ApplyFilter();
+            StateHasChanged();
+        }
         protected void AddCustomer()
         {
             NavigationManager.NavigateTo("/CustomerDetailsAdd");

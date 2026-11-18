@@ -1,0 +1,99 @@
+@using JM.UI.Entities.Model.CustomerDetails
+@using JM.UI.Entities.Model.MembershipType
+@using JM.UI.Service.UnitOfWork
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="Company Name *" />
+        <RadzenTextBox @bind-Value="Company.Name" Style="width:100%" MaxLength="256" />
+    </RadzenStack>
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="Company Code *" />
+        <RadzenTextBox @bind-Value="Company.Code" Style="width:100%" MaxLength="6" />
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">2 to 6 letters or numbers, stored in capitals, must be unique.</RadzenText>
+    </RadzenStack>
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="Discount Category" />
+        <RadzenDropDown @bind-Value="Company.DefaultCategoryId"
+                        Data="@MembershipTypes"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        AllowClear="true"
+                        Style="width:100%" />
+    </RadzenStack>
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="Special Note" />
+        <RadzenTextArea @bind-Value="Company.SpecialNote" Rows="2" Style="width:100%" />
+    </RadzenStack>
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="Address" />
+        <RadzenTextArea @bind-Value="Company.Address" Rows="2" Style="width:100%" />
+    </RadzenStack>
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat">@ErrorMessage</RadzenAlert>
+    }
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Save Company" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@Save" IsBusy="@IsSaving" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public CustomerCompanyDTO Company { get; set; } = new();
+    [Parameter] public List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
+
+    [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+
+    private string? ErrorMessage;
+    private bool IsSaving;
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrWhiteSpace(Company.Code) && !string.IsNullOrWhiteSpace(Company.Name))
+            Company.Code = Suggest(Company.Name);
+    }
+
+    private string Suggest(string name)
+    {
+        var words = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var code = new string(words.Select(w => w[0]).ToArray()).ToUpperInvariant();
+        code = new string(code.Where(char.IsLetterOrDigit).ToArray());
+        if (code.Length > 6) code = code.Substring(0, 6);
+        if (code.Length < 2) code = "XX";
+        return code;
+    }
+
+    private async Task Save()
+    {
+        ErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(Company.Name)) { ErrorMessage = "Company name is required."; return; }
+        if (string.IsNullOrWhiteSpace(Company.Code) || Company.Code.Length < 2 || Company.Code.Length > 6)
+        { ErrorMessage = "Company code must be 2 to 6 characters."; return; }
+
+        IsSaving = true;
+        try
+        {
+            Company.Code = Company.Code.Trim().ToUpperInvariant();
+            Company.Name = Company.Name.Trim();
+            var result = await _serviceUnitOfWork.CustomerDetailsService.CreateCompany(Company);
+            if (result.IsSuccessStatus)
+            {
+                // fetch created company to get Id (search by code)
+                var list = await _serviceUnitOfWork.CustomerDetailsService.SearchCompanies(Company.Code);
+                var saved = list.FirstOrDefault(c => c.Code.Equals(Company.Code, StringComparison.OrdinalIgnoreCase));
+                if (saved != null) Company = saved;
+                DialogService.Close(Company);
+            }
+            else
+            {
+                ErrorMessage = result.Message;
+            }
+        }
+        catch (Exception ex) { ErrorMessage = ex.Message; }
+        finally { IsSaving = false; }
+    }
+
+    private void Cancel() => DialogService.Close(null);
+}
