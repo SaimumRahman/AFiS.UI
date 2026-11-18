@@ -48,12 +48,12 @@ public class StockService : IStockService
         }
     }
 
-    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null)
+    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null, bool includeHealthy = false)
     {
         try
         {
             return await _unitOfWork.StockRepository
-                .GetStockAging(groupId, brandId, agingBucket, sourceStoreId, search);
+                .GetStockAging(groupId, brandId, agingBucket, sourceStoreId, search, includeHealthy);
         }
         catch (Exception)
         {

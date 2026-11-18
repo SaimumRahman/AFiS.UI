@@ -15,5 +15,5 @@ public interface IStockRepository
 
     Task<StockAgingReportDTO> GetStockAging(
         int? groupId = null, int? brandId = null, string? agingBucket = null,
-        int? sourceStoreId = null, string? search = null);
+        int? sourceStoreId = null, string? search = null, bool includeHealthy = false);
 }

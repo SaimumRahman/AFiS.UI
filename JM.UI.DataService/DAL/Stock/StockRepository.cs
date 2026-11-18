@@ -87,7 +87,7 @@ public class StockRepository : BaseRepository, IStockRepository
         }
     }
 
-    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null)
+    public async Task<StockAgingReportDTO> GetStockAging(int? groupId = null, int? brandId = null, string? agingBucket = null, int? sourceStoreId = null, string? search = null, bool includeHealthy = false)
     {
         try
         {
@@ -98,6 +98,7 @@ public class StockRepository : BaseRepository, IStockRepository
             if (!string.IsNullOrWhiteSpace(agingBucket) && agingBucket != "ALL") q.Add($"agingBucket={Uri.EscapeDataString(agingBucket)}");
             if (sourceStoreId.HasValue && sourceStoreId.Value > 0) q.Add($"sourceStoreId={sourceStoreId.Value}");
             if (!string.IsNullOrWhiteSpace(search)) q.Add($"search={Uri.EscapeDataString(search)}");
+            q.Add($"includeHealthy={includeHealthy.ToString().ToLower()}");
             if (q.Any()) url += "?" + string.Join("&", q);
 
             var httpClient = GetAuthenticatedClient("MainApi");

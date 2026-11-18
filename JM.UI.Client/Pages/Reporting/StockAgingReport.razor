@@ -117,7 +117,9 @@
                 <label>Barcode / Ref / Item Name</label>
                 <RadzenTextBox @bind-Value="SearchText" Placeholder="Search..." Style="width:100%" />
             </div>
-            <div style="display:flex; gap:.5rem; padding-bottom:1px;">
+            <div style="display:flex; gap:.5rem; align-items:center; padding-bottom:1px;">
+                <RadzenCheckBox @bind-Value="IncludeHealthy" TValue="bool" Name="incHealthy" />
+                <label for="incHealthy" style="font-size:.8rem; margin:0;">Include healthy SKUs</label>
                 <RadzenButton Icon="search" Text="Generate" ButtonStyle="ButtonStyle.Primary" Click="Generate" IsBusy="@IsLoading" />
                 <RadzenButton Icon="filter_alt_off" Text="Clear" ButtonStyle="ButtonStyle.Light" Click="ClearFilters" />
             </div>

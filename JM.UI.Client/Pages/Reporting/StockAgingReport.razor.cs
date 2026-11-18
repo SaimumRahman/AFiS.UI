@@ -40,6 +40,7 @@ public partial class StockAgingReportComponent : PosComponentBase
     protected int UserStoreId { get; set; }
     protected string CurrentUserName { get; set; } = "-";
 
+    protected bool IncludeHealthy { get; set; } = true;
     protected StockAgingReportDTO Report { get; set; } = new();
     protected bool IsLoading { get; set; }
     protected bool IsPrinting { get; set; }
@@ -133,7 +134,7 @@ public partial class StockAgingReportComponent : PosComponentBase
         try
         {
             Report = await _serviceUnitOfWork.StockService.GetStockAging(
-                SelectedGroupId, SelectedBrandId, SelectedAgingBucket, SelectedSourceStoreId, SearchText) ?? new StockAgingReportDTO();
+                SelectedGroupId, SelectedBrandId, SelectedAgingBucket, SelectedSourceStoreId, SearchText, IncludeHealthy) ?? new StockAgingReportDTO();
             HasGenerated = true;
             SelectedIds.Clear();
             ActiveMode = "all";

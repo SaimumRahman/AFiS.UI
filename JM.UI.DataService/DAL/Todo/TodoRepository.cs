@@ -43,7 +43,7 @@ namespace JM.UI.DataService.DAL.Todo
             {
                 var client = GetAuthenticatedClient("MainApi");
                 var response = await client.GetAsync("api/Todo/lookups");
-                response.EnsureSuccessStatusCode();
+                await EnsureSuccessAsync(response, "lookups");
                 return await response.Content.ReadFromJsonAsync<TodoLookupsDTO>() ?? new TodoLookupsDTO();
             }
             catch (Exception ex)
@@ -73,7 +73,7 @@ namespace JM.UI.DataService.DAL.Todo
 
                 var client = GetAuthenticatedClient("MainApi");
                 var response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+                await EnsureSuccessAsync(response, "dashboard");
                 return await response.Content.ReadFromJsonAsync<TodoDashboardDTO>() ?? new TodoDashboardDTO();
             }
             catch (Exception ex)
@@ -212,6 +212,30 @@ namespace JM.UI.DataService.DAL.Todo
                 _logger.LogError(ex, "Error trying to {What}", what);
                 return new TodoResultDTO { Success = false, Message = ex.Message };
             }
+        }
+
+        /// <summary>
+        /// Throws with the server's own message when a GET fails, so the page shows
+        /// "You are not allowed to do this." (403) or the real route error instead of
+        /// a bare "Response status code does not indicate success" line.
+        /// </summary>
+        private async Task EnsureSuccessAsync(HttpResponseMessage response, string what)
+        {
+            if (response.IsSuccessStatusCode) return;
+
+            var body = string.Empty;
+            try { body = await response.Content.ReadAsStringAsync(); } catch { }
+            body = (body ?? string.Empty).Trim();
+            if (body.Length > 400) body = body.Substring(0, 400) + "…";
+
+            _logger.LogError("To-Do {What} failed with HTTP {Status}. Body: {Body}",
+                what, (int)response.StatusCode, body);
+
+            throw new HttpRequestException(
+                $"HTTP {(int)response.StatusCode} ({response.StatusCode}) on To-Do {what}."
+                + (body.Length > 0 ? " Server said: " + body : string.Empty),
+                null,
+                response.StatusCode);
         }
     }
 }
