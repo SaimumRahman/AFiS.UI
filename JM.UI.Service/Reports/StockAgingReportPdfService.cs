@@ -12,14 +12,34 @@ public class StockAgingReportPdfService
 {
     private const float BodyFont = 7f;
 
-    public byte[] Generate(StockAgingReportDTO report, string storeName = "-", string printedBy = "-")
-        => BuildDocument(report, storeName, printedBy).GeneratePdf();
+    /// <summary>
+    /// Quantity text for a row: two decimals for units that allow fractions
+    /// (MTR / YDS …), a whole number otherwise — matching what is stored.
+    /// </summary>
+    private static string QtyText(decimal qty, string? uomName)
+        => qty.ToString(
+            JM.UI.Entities.Model.MesurementUnits.UomRules.AllowsDecimalQuantity(uomName) ? "N2" : "N0");
 
-    public Document BuildDocument(StockAgingReportDTO report, string storeName = "-", string printedBy = "-")
+    private static string UomLabel(string? uomName)
+        => string.IsNullOrWhiteSpace(uomName) ? "pcs" : uomName.Trim();
+
+    /// <summary>Totals mix measurement units, so trim trailing zeros instead.</summary>
+    private static string SumText(decimal qty) => qty.ToString("#,##0.###");
+
+    public byte[] Generate(StockAgingReportDTO report, string storeName = "-", string printedBy = "-", int? onlyStoreId = null)
+        => BuildDocument(report, storeName, printedBy, onlyStoreId).GeneratePdf();
+
+    public Document BuildDocument(StockAgingReportDTO report, string storeName = "-", string printedBy = "-", int? onlyStoreId = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var rows = report?.Rows ?? new List<StockAgingRowDTO>();
         var stores = report?.Stores ?? new List<StockAgingStoreDTO>();
+
+        // When the page is scoped to a source branch, print only that branch's
+        // column and use it for the row totals, exactly like the on-screen grid.
+        var scopedStoreId = onlyStoreId.HasValue && onlyStoreId.Value > 0 ? onlyStoreId : null;
+        if (scopedStoreId.HasValue)
+            stores = stores.Where(s => s.StoreId == scopedStoreId.Value).ToList();
 
         return Document.Create(container =>
         {
@@ -30,7 +50,7 @@ public class StockAgingReportPdfService
                 page.DefaultTextStyle(x => x.FontSize(BodyFont).FontFamily("Arial"));
 
                 page.Header().Element(h => ComposeHeader(h, storeName, printedBy, rows.Count, report?.Kpi));
-                page.Content().Element(c => ComposeContent(c, rows, stores));
+                page.Content().Element(c => ComposeContent(c, rows, stores, scopedStoreId));
                 page.Footer().Element(ComposeFooter);
             });
         });
@@ -55,8 +75,13 @@ public class StockAgingReportPdfService
         });
     }
 
-    private void ComposeContent(IContainer container, List<StockAgingRowDTO> rows, List<StockAgingStoreDTO> stores)
+    private void ComposeContent(IContainer container, List<StockAgingRowDTO> rows, List<StockAgingStoreDTO> stores, int? scopedStoreId = null)
     {
+        decimal TotalQtyFor(StockAgingRowDTO row) =>
+            scopedStoreId.HasValue
+                ? row.Cells.FirstOrDefault(c => c.StoreId == scopedStoreId.Value)?.Qty ?? 0
+                : row.TotalQty;
+
         container.Column(col =>
         {
             col.Item().Table(table =>
@@ -95,9 +120,9 @@ public class StockAgingReportPdfService
                         var cell = row.Cells.FirstOrDefault(c => c.StoreId == st.StoreId);
                         var qty = cell?.Qty ?? 0;
                         var sold = cell?.Sold30 ?? 0;
-                        table.Cell().Text($"{qty:0}\n{sold:0} sold").AlignCenter();
+                        table.Cell().Text($"{QtyText(qty, row.UomName)}\n{sold:N0} sold").AlignCenter();
                     }
-                    table.Cell().Text($"{row.TotalQty:0} pcs\n{row.TotalCost:N0}").AlignRight();
+                    table.Cell().Text($"{QtyText(TotalQtyFor(row), row.UomName)} {UomLabel(row.UomName)}\n{TotalQtyFor(row) * row.Cost:N0}").AlignRight();
                     table.Cell().Text($"{row.AgeDays}d").AlignCenter();
                     table.Cell().Text(row.ActionText);
                 }
@@ -108,9 +133,9 @@ public class StockAgingReportPdfService
                     foreach (var st in stores)
                     {
                         var q = rows.Sum(r => r.Cells.FirstOrDefault(c => c.StoreId == st.StoreId)?.Qty ?? 0);
-                        f.Cell().Text(q.ToString("N0")).Bold().AlignCenter();
+                        f.Cell().Text(SumText(q)).Bold().AlignCenter();
                     }
-                    f.Cell().Text($"{rows.Sum(r => r.TotalQty):N0} pcs\n{rows.Sum(r => r.TotalCost):N0}").Bold().AlignRight();
+                    f.Cell().Text($"{SumText(rows.Sum(TotalQtyFor))} units\n{rows.Sum(r => TotalQtyFor(r) * r.Cost):N0}").Bold().AlignRight();
                     f.Cell().Text("").Bold();
                     f.Cell().Text("").Bold();
                 });

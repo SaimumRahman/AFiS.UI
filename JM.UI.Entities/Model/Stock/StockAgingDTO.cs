@@ -26,6 +26,8 @@ public class StockAgingRowDTO
     public string ProductName { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
     public string BrandName { get; set; } = string.Empty;
+    /// <summary>Item measurement unit exactly as saved on the item (e.g. PCS, MTR, YDS).</summary>
+    public string UomName { get; set; } = "pcs";
     public decimal Cost { get; set; }
     public decimal Mrp { get; set; }
     public decimal TotalQty { get; set; }

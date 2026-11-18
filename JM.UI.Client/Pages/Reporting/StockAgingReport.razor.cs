@@ -54,11 +54,53 @@ public partial class StockAgingReportComponent : PosComponentBase
 
     protected IEnumerable<string> AgingBuckets => new[] { "ALL", "0-30", "31-60", "61-90", "91-180", "180+" };
 
+    /// <summary>
+    /// Quantity text for a row. Items whose measurement unit allows fractions
+    /// (MTR / YDS …) are shown with two decimals exactly as stored; every other
+    /// unit is shown as a whole number.
+    /// </summary>
+    protected static string QtyText(decimal qty, string? uomName)
+        => qty.ToString(
+            JM.UI.Entities.Model.MesurementUnits.UomRules.AllowsDecimalQuantity(uomName) ? "N2" : "N0");
+
+    /// <summary>Unit label exactly as saved on the item (falls back to "pcs").</summary>
+    protected static string UomLabel(string? uomName)
+        => string.IsNullOrWhiteSpace(uomName) ? "pcs" : uomName.Trim();
+
+    /// <summary>
+    /// Total text for a footer cell that mixes measurement units, so it cannot use
+    /// a single unit's decimals: up to three decimals, trailing zeros trimmed.
+    /// </summary>
+    protected static string SumText(decimal qty) => qty.ToString("#,##0.###");
+
     protected IEnumerable<StockAgingRowDTO> FilteredRows =>
         Report.Rows.Where(r => ActiveMode == "all" ||
             (ActiveMode == "transfer" && r.Category == "Transfer") ||
             (ActiveMode == "dead" && r.Category == "Dead") ||
             (ActiveMode == "orphan" && r.Category == "Orphan"));
+
+    /// <summary>
+    /// True when the report is scoped to one source branch. In that case only that
+    /// branch's column is shown and the row totals come from that branch alone.
+    /// </summary>
+    protected bool IsBranchScoped => SelectedSourceStoreId.HasValue && SelectedSourceStoreId.Value > 0;
+
+    /// <summary>Store columns to render: all branches, or just the selected source branch.</summary>
+    protected List<StockAgingStoreDTO> DisplayStores =>
+        IsBranchScoped
+            ? Report.Stores.Where(s => s.StoreId == SelectedSourceStoreId!.Value).ToList()
+            : Report.Stores;
+
+    /// <summary>Quantity shown in the row total column (branch-scoped when a source branch is picked).</summary>
+    protected decimal DisplayTotalQty(StockAgingRowDTO row) =>
+        IsBranchScoped
+            ? row.Cells.FirstOrDefault(c => c.StoreId == SelectedSourceStoreId!.Value)?.Qty ?? 0
+            : row.TotalQty;
+
+    /// <summary>Cost of <see cref="DisplayTotalQty"/>.</summary>
+    protected decimal DisplayTotalCost(StockAgingRowDTO row) => DisplayTotalQty(row) * row.Cost;
+
+    protected decimal FilteredTotalQty => FilteredRows.Sum(r => DisplayTotalQty(r));
 
     protected int CountTransfer => Report.Rows.Count(r => r.Category == "Transfer");
     protected int CountDead => Report.Rows.Count(r => r.Category == "Dead");
@@ -203,7 +245,7 @@ public partial class StockAgingReportComponent : PosComponentBase
         {
             IsPrinting = true;
             StateHasChanged();
-            var pdfBytes = PdfService.Generate(Report, SelectedStoreName, CurrentUserName);
+            var pdfBytes = PdfService.Generate(Report, SelectedStoreName, CurrentUserName, SelectedSourceStoreId);
             var fileName = $"StockAging_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
             await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, "application/pdf", pdfBytes);
             notificationService.Notify(NotificationSeverity.Success, "Success", "Report generated.");
