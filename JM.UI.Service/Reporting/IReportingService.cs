@@ -49,6 +49,14 @@ namespace JM.UI.Service.Reporting
             string? sourceType = null,
             string? channel = null,
             string? search = null);
+        Task<SaleAnalysisReportDTO> GetSaleAnalysis(
+            DateTime? fromDate, DateTime? toDate,
+            string? storeIds = null,
+            int? groupId = null, int? subGroupId = null, int? designId = null,
+            int? originId = null, int? colorId = null, int? catalogueId = null,
+            string? features = null, string? productTerm = null,
+            decimal? minPrice = null, decimal? maxPrice = null,
+            int fastThreshold = 0, int slowThreshold = 0);
         Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode);
         Task<IEnumerable<GeneralLedgerDTO>> GetGeneralLedger(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode, int? accountId, int? voucherTypeId);
         Task<IEnumerable<PartyBalanceDTO>> GetPartyBalance(string? companyCode, string? partyType);

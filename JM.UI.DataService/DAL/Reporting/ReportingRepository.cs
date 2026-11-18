@@ -608,5 +608,48 @@ namespace JM.UI.DataService.DAL.Reporting
                 throw new Exception("Failed to fetch balance rollup report: " + ex.Message, ex);
             }
         }
+
+        public async Task<SaleAnalysisReportDTO> GetSaleAnalysis(
+            DateTime? fromDate, DateTime? toDate,
+            string? storeIds = null,
+            int? groupId = null, int? subGroupId = null, int? designId = null,
+            int? originId = null, int? colorId = null, int? catalogueId = null,
+            string? features = null, string? productTerm = null,
+            decimal? minPrice = null, decimal? maxPrice = null,
+            int fastThreshold = 0, int slowThreshold = 0)
+        {
+            try
+            {
+                var url = "api/SaleAnalysis/detail";
+                var q = new List<string>();
+                if (fromDate.HasValue) q.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
+                if (toDate.HasValue) q.Add($"toDate={toDate.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrWhiteSpace(storeIds)) q.Add($"storeIds={Uri.EscapeDataString(storeIds)}");
+                if (groupId.HasValue) q.Add($"groupId={groupId.Value}");
+                if (subGroupId.HasValue) q.Add($"subGroupId={subGroupId.Value}");
+                if (designId.HasValue) q.Add($"designId={designId.Value}");
+                if (originId.HasValue) q.Add($"originId={originId.Value}");
+                if (colorId.HasValue) q.Add($"colorId={colorId.Value}");
+                if (catalogueId.HasValue) q.Add($"catalogueId={catalogueId.Value}");
+                if (!string.IsNullOrWhiteSpace(features)) q.Add($"features={Uri.EscapeDataString(features)}");
+                if (!string.IsNullOrWhiteSpace(productTerm)) q.Add($"productTerm={Uri.EscapeDataString(productTerm)}");
+                if (minPrice.HasValue) q.Add($"minPrice={minPrice.Value}");
+                if (maxPrice.HasValue) q.Add($"maxPrice={maxPrice.Value}");
+                q.Add($"fastThreshold={fastThreshold}");
+                q.Add($"slowThreshold={slowThreshold}");
+                if (q.Any()) url += "?" + string.Join("&", q);
+
+                var httpClient = GetAuthenticatedClient("MainApi");
+                var response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                var result = await response.Content.ReadFromJsonAsync<SaleAnalysisReportDTO>();
+                return result ?? new SaleAnalysisReportDTO();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching sale analysis report");
+                throw new Exception("Failed to fetch sale analysis report: " + ex.Message, ex);
+            }
+        }
     }
 }

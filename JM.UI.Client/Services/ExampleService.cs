@@ -668,6 +668,15 @@ namespace JM.UI.Client.Services
                     },
                     new Example
                     {
+                        Name        = "Sale Analysis Report",
+                        Path        = "/SaleAnalysisReport",
+                        Icon        = "\ue8f9",
+                        Title       = "Sale Analysis Report (Fast / Slow Selling)",
+                        Description = "Fast and slow selling items by branch with item, group, origin, catalogue and color filters, period thresholds, KPIs and a branch pivot, PDF export",
+                        Tags        = new[] { "sale", "analysis", "fast", "slow", "selling", "report", "branch", "pivot" }
+                    },
+                    new Example
+                    {
                         Name        = "Collection Summary",
                         Path        = "/CollectionSummaryReport",
                         Icon        = "\ue8f9",

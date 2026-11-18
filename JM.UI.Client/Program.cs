@@ -65,6 +65,7 @@ builder.Services.AddScoped<SalesComparisonReportService>();
 builder.Services.AddScoped<SalesBookingReportPdfService>();
 builder.Services.AddScoped<CollectionSummaryReportPdfService>();
 builder.Services.AddScoped<StockAgingReportPdfService>();
+builder.Services.AddScoped<SaleAnalysisReportPdfService>();
 builder.Services.AddScoped<SalesmanWiseSummaryReportService>();
 builder.Services.AddScoped<StockTransferChallanService>();
 builder.Services.AddScoped<BarcodePrintPdfService>();

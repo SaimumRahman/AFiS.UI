@@ -88,6 +88,18 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate)
             => await _repositoryUnitOfWork.ReportingRepository.GetSalesmanWiseSummary(fromDate, toDate);
 
+        public async Task<SaleAnalysisReportDTO> GetSaleAnalysis(
+            DateTime? fromDate, DateTime? toDate,
+            string? storeIds = null,
+            int? groupId = null, int? subGroupId = null, int? designId = null,
+            int? originId = null, int? colorId = null, int? catalogueId = null,
+            string? features = null, string? productTerm = null,
+            decimal? minPrice = null, decimal? maxPrice = null,
+            int fastThreshold = 0, int slowThreshold = 0)
+            => await _repositoryUnitOfWork.ReportingRepository.GetSaleAnalysis(
+                fromDate, toDate, storeIds, groupId, subGroupId, designId,
+                originId, colorId, catalogueId, features, productTerm,
+                minPrice, maxPrice, fastThreshold, slowThreshold);
         public async Task<IEnumerable<TrialBalanceDTO>> GetTrialBalance(string? companyCode, DateTime? fromDate, DateTime? toDate, string? branchCode)
             => await _repositoryUnitOfWork.ReportingRepository.GetTrialBalance(companyCode, fromDate, toDate, branchCode);
 

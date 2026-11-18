@@ -1,0 +1,145 @@
+@page "/SaleAnalysisReport"
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Entities.Model.Groups
+@using JM.UI.Entities.Model.SubGroups
+@using JM.UI.Entities.Model.ItemOrigin
+@using JM.UI.Entities.Model.Colors
+@using JM.UI.Entities.Model.ItemCatalogue
+@inherits SaleAnalysisReportComponent
+@attribute [Authorize]
+<PageTitle>Sale Analysis Report</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard class="mb-3">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenIcon Icon="analytics" Style="font-size:1.6rem;color:var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H5" class="mb-0">Sale Analysis Report (Fast / Slow Selling)</RadzenText>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Filters (2 rows) -->
+    <RadzenCard class="mb-3">
+        <RadzenStack Gap="0.5rem">
+            <RadzenRow Gap="0.5rem">
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="From" Style="font-size:11px;" />
+                    <RadzenDatePicker @bind-Value="FromDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="To" Style="font-size:11px;" />
+                    <RadzenDatePicker @bind-Value="ToDate" DateFormat="dd/MM/yyyy" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="1">
+                    <RadzenLabel Text="Fast≥" Style="font-size:11px;" />
+                    <RadzenNumeric @bind-Value="FastThreshold" Min="1" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="1">
+                    <RadzenLabel Text="Slow≤" Style="font-size:11px;" />
+                    <RadzenNumeric @bind-Value="SlowThreshold" Min="0" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenLabel Text="Branches" Style="font-size:11px;" />
+                    <RadzenDropDown Data="@Stores" @bind-Value="SelectedStoreIds" Multiple="true"
+                                    ValueProperty="Id" TextProperty="Name" AllowFiltering="true"
+                                    Placeholder="Select branches…" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="1">
+                    <RadzenLabel Text="Group" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedGroupId" Data="@Groups" TextProperty="Name" ValueProperty="Id" AllowClear="true" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Sub-group" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedSubGroupId" Data="@SubGroups" TextProperty="Name" ValueProperty="Id" AllowClear="true" Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow Gap="0.5rem">
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Origin" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedOriginId" Data="@Origins" TextProperty="OriginName" ValueProperty="OriginId" AllowClear="true" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Color" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedColorId" Data="@Colors" TextProperty="Name" ValueProperty="Id" AllowClear="true" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Catalogue" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedCatalogueId" Data="@Catalogues" TextProperty="CatalogueName" ValueProperty="CatalogueId" AllowClear="true" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Features" Style="font-size:11px;" />
+                    <RadzenTextBox @bind-Value="FeaturesTerm" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="2">
+                    <RadzenLabel Text="Product" Style="font-size:11px;" />
+                    <RadzenTextBox @bind-Value="ProductTerm" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="3" SizeMD="1">
+                    <RadzenLabel Text="Min Price" Style="font-size:11px;" />
+                    <RadzenNumeric TValue="decimal" @bind-Value="MinPrice" Style="width:100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="3" SizeMD="1">
+                    <RadzenLabel Text="Max Price" Style="font-size:11px;" />
+                    <RadzenNumeric TValue="decimal" @bind-Value="MaxPrice" Style="width:100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Generate" Icon="play_arrow" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@Generate" IsBusy="@IsLoading" />
+                <RadzenButton Text="Download PDF" Icon="picture_as_pdf" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Click="@PrintReport" IsBusy="@IsPrinting" Disabled="@(!HasGenerated)" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    @if (IsLoading)
+    {
+        <RadzenCard class="text-center p-3"><RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></RadzenCard>
+    }
+    else if (HasGenerated)
+    {
+        <RadzenRow Gap="0.5rem" class="mb-3">
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard><RadzenText TextStyle="TextStyle.Caption">Total Items</RadzenText><RadzenText TextStyle="TextStyle.H6">@Report.Kpi.TotalItems</RadzenText></RadzenCard></RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard><RadzenText TextStyle="TextStyle.Caption">Total Qty</RadzenText><RadzenText TextStyle="TextStyle.H6">@Report.Kpi.TotalQty.ToString("N0")</RadzenText></RadzenCard></RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard><RadzenText TextStyle="TextStyle.Caption">Revenue (BDT)</RadzenText><RadzenText TextStyle="TextStyle.H6">@Report.Kpi.TotalRevenue.ToString("N2")</RadzenText></RadzenCard></RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard Style="background:#dcfce7;"><RadzenText TextStyle="TextStyle.Caption">Fast</RadzenText><RadzenText TextStyle="TextStyle.H6" Style="color:#166534;">@Report.Kpi.FastCount</RadzenText></RadzenCard></RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard Style="background:#fee2e2;"><RadzenText TextStyle="TextStyle.Caption">Slow</RadzenText><RadzenText TextStyle="TextStyle.H6" Style="color:#991b1b;">@Report.Kpi.SlowCount</RadzenText></RadzenCard></RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="2"><RadzenCard><RadzenText TextStyle="TextStyle.Caption">Zero-sales</RadzenText><RadzenText TextStyle="TextStyle.H6">@Report.Kpi.ZeroSalesCount</RadzenText></RadzenCard></RadzenColumn>
+        </RadzenRow>
+
+        <RadzenCard>
+            <RadzenDataGrid Data="@Report.Rows" TItem="SaleAnalysisRowDTO" AllowPaging="true" PageSize="25" AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Advanced" Density="Density.Compact">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Title="Class" Width="70px" TextAlign="TextAlign.Center">
+                        <Template Context="r">
+                            <span style="@ClassBadge(r.Classification);padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;">@r.Classification</span>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Barcode" Title="Barcode" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="ItemName" Title="Item" Width="180px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="GroupName" Title="Group" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SubGroupName" Title="Sub-group" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Origin" Title="Origin" Width="90px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Catalogue" Title="Catalogue" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Color" Title="Color" Width="90px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SalePrice" Title="Sale Price" Width="90px" TextAlign="TextAlign.Right">
+                        <Template Context="r">@r.SalePrice.ToString("N2")</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="QtySold" Title="Qty Sold" Width="80px" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Revenue" Title="Revenue (BDT)" Width="110px" TextAlign="TextAlign.Right">
+                        <Template Context="r">@r.Revenue.ToString("N2")</Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="CurrentStock" Title="Stock" Width="70px" TextAlign="TextAlign.Right" />
+                    @foreach (var st in Report.Stores)
+                    {
+                        <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Title="@st.Name" Width="70px" TextAlign="TextAlign.Right">
+                            <Template Context="r">
+                                @(r.BranchQtys.FirstOrDefault(b => b.StoreId == st.Id)?.Qty.ToString("N0") ?? "0")
+                            </Template>
+                        </RadzenDataGridColumn>
+                    }
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    }
+</RadzenContent>
