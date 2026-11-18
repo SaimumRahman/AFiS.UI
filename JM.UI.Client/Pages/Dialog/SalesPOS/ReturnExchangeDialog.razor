@@ -35,6 +35,14 @@
             </div>
         }
 
+        @if (HasCustomerMismatch)
+        {
+            <div style="background:#f8d7da;border:1px solid #f5c2c7;border-radius:6px;padding:8px 10px;font-size:0.78rem;color:#842029">
+                <RadzenIcon Icon="person_off" Style="vertical-align:middle;margin-right:0.25rem;" />
+                <strong>Customer mismatch:</strong> @CustomerMismatchMessage
+            </div>
+        }
+
         @* ── Items of the invoice to exchange ── *@
         <div>
             <div class="pos-card-title" style="margin-bottom:4px">Items to Exchange</div>
@@ -82,7 +90,7 @@
         <div style="display:flex;gap:8px;justify-content:flex-end">
             <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
             <RadzenButton Text="Apply Exchange" ButtonStyle="ButtonStyle.Warning" Click="@ApplyExchange"
-                          Disabled="@(TotalCredit <= 0 || TotalCredit > BillingTotal || IsExchangeBlocked)" />
+                          Disabled="@(TotalCredit <= 0 || TotalCredit > BillingTotal || IsExchangeBlocked || HasCustomerMismatch)" />
         </div>
     }
     else
@@ -98,11 +106,30 @@
     [Parameter] public int UserId { get; set; }
     [Parameter] public decimal BillingTotal { get; set; }
 
+    /// <summary>Customer currently selected in the SalesPOS cart (0 = none).</summary>
+    [Parameter] public int CartCustomerId { get; set; }
+    [Parameter] public string? CartCustomerName { get; set; }
+
     protected string InvoiceSearch { get; set; } = "";
     protected SaleMasterDTO? OriginalSale { get; set; }
     protected List<ReturnEditLine> ReturnLines { get; set; } = new();
     protected string? ExchangeBlockReason { get; set; }
     protected bool IsExchangeBlocked => !string.IsNullOrEmpty(ExchangeBlockReason);
+
+    /// <summary>
+    /// True when the cart already has a customer and the invoice being exchanged
+    /// belongs to a different one. The exchange must not be applied in that case:
+    /// the cart customer has to be changed first.
+    /// </summary>
+    protected bool HasCustomerMismatch =>
+        CartCustomerId > 0
+        && (OriginalSale?.CustomerId ?? 0) > 0
+        && CartCustomerId != OriginalSale!.CustomerId;
+
+    protected string CustomerMismatchMessage =>
+        $"The customer in the cart ({CartCustomerName}) does not match the customer on invoice "
+        + $"{OriginalSale?.InvoiceNo} ({OriginalSale?.CustomerName}). "
+        + "Please change the customer in the cart before proceeding with the exchange.";
 
     protected decimal TotalCredit => ReturnLines.Sum(r => r.Credit);
     protected decimal RemainingPayable => Math.Max(BillingTotal - TotalCredit, 0);
@@ -204,6 +231,16 @@
             return;
         }
 
+        // The exchange invoice belongs to a different customer than the one already
+        // in the cart: refuse to apply and ask the cashier to change the cart
+        // customer first.
+        if (HasCustomerMismatch)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Customer Mismatch",
+                CustomerMismatchMessage, 7000);
+            return;
+        }
+
         if (TotalCredit > BillingTotal)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Exchange Credit Exceeds Billing Total",
@@ -224,6 +261,8 @@
         {
             ReturnInvoiceNo = OriginalSale!.InvoiceNo,
             ExchangeAmount = TotalCredit,
+            InvoiceCustomerId = OriginalSale.CustomerId ?? 0,
+            InvoiceCustomerName = OriginalSale.CustomerName,
             ReturnedItems = selected.Select(r => new ReturnedItemDTO
             {
                 SalesDetailsId = r.SalesDetailsId,

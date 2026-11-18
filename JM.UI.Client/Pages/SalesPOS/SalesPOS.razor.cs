@@ -73,6 +73,13 @@ namespace JM.UI.Client.Pages.SalesPOS
         protected int SelectedCustomerId { get; set; }
         protected CustomerDetailsDTO? SelectedCustomer { get; set; }
 
+        // Customer recorded on the invoice whose exchange credit was applied. Kept so
+        // the finalise step can refuse to save if the cart customer was changed to a
+        // different person after the exchange was applied.
+        private int _exchangeInvoiceCustomerId;
+        private string? _exchangeInvoiceCustomerName;
+        private string? _exchangeInvoiceNo;
+
         // ── Customer Search ──
         protected string CustomerSearchText { get; set; } = "";
         protected List<CustomerDetailsDTO> FilteredCustomers =>
@@ -955,6 +962,13 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.InvoiceDiscount = null;
             Sale.CampaignDiscount = null;
             Sale.VatPercentage = 0;
+            Sale.ExchangeAmount = null;
+            Sale.ReturnInvoiceNo = null;
+            Sale.ReturnedItems = new();
+            Sale.IsReturnExchange = false;
+            _exchangeInvoiceCustomerId = 0;
+            _exchangeInvoiceCustomerName = null;
+            _exchangeInvoiceNo = null;
             if (CartGrid != null)
                 CartGrid.Reload();
             StateHasChanged();
@@ -1279,7 +1293,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 {
                     { "StoreId", storeId },
                     { "UserId", userId },
-                    { "BillingTotal", BillingTotalBeforeExchange }
+                    { "BillingTotal", BillingTotalBeforeExchange },
+                    { "CartCustomerId", SelectedCustomerId },
+                    { "CartCustomerName", SelectedCustomer?.Name ?? string.Empty }
                 },
                 new DialogOptions { Width = "760px" });
 
@@ -1291,6 +1307,9 @@ namespace JM.UI.Client.Pages.SalesPOS
                 Sale.ReturnInvoiceNo = exchange.ReturnInvoiceNo;
                 Sale.ReturnedItems = exchange.ReturnedItems;
                 Sale.IsReturnExchange = true;
+                _exchangeInvoiceCustomerId = exchange.InvoiceCustomerId;
+                _exchangeInvoiceCustomerName = exchange.InvoiceCustomerName;
+                _exchangeInvoiceNo = exchange.ReturnInvoiceNo;
                 notificationService.Notify(NotificationSeverity.Success, "Exchange Applied",
                     $"Exchange credit of {exchange.ExchangeAmount:N2} applied to this sale", 5000);
                 StateHasChanged();
@@ -1317,6 +1336,9 @@ namespace JM.UI.Client.Pages.SalesPOS
             Sale.ReturnInvoiceNo = null;
             Sale.ReturnedItems = new();
             Sale.IsReturnExchange = false;
+            _exchangeInvoiceCustomerId = 0;
+            _exchangeInvoiceCustomerName = null;
+            _exchangeInvoiceNo = null;
             StateHasChanged();
         }
 
@@ -1384,6 +1406,24 @@ namespace JM.UI.Client.Pages.SalesPOS
                 await dialogService.Alert(
                     $"Exchange amount of {(Sale.ExchangeAmount ?? 0):N2} cannot exceed the billing total of {BillingTotalBeforeExchange:N2}. Reduce it or remove the exchange credit before finalising.",
                     "Exchange Amount Too High",
+                    new AlertOptions { OkButtonText = "OK" });
+                return;
+            }
+
+            // The exchange credit was taken from an invoice that belongs to a
+            // specific customer. If the cart customer was changed afterwards, the
+            // exchange no longer matches and must not be saved.
+            if (Sale.IsReturnExchange == true
+                && (Sale.ExchangeAmount ?? 0) > 0
+                && _exchangeInvoiceCustomerId > 0
+                && SelectedCustomerId > 0
+                && SelectedCustomerId != _exchangeInvoiceCustomerId)
+            {
+                await dialogService.Alert(
+                    $"The customer in the cart ({SelectedCustomer?.Name}) does not match the customer on the exchange invoice "
+                    + $"{_exchangeInvoiceNo} ({_exchangeInvoiceCustomerName}). "
+                    + "Please change the customer in the cart back to match the invoice, or remove the exchange credit.",
+                    "Customer Mismatch",
                     new AlertOptions { OkButtonText = "OK" });
                 return;
             }
