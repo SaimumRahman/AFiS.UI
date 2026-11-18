@@ -44,6 +44,8 @@ namespace JM.UI.Entities.Model.Todo
         public string FlagName { get; set; } = "General";
         public int CreatedBy { get; set; }
         public string CreatedByName { get; set; } = string.Empty;
+        public string CreatedByDesignation { get; set; } = string.Empty;
+        public string CreatedByBranch { get; set; } = string.Empty;
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? DueAtUtc { get; set; }
         public int RepeatType { get; set; }
@@ -107,6 +109,8 @@ namespace JM.UI.Entities.Model.Todo
         public int TaskId { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
+        public string DesignationName { get; set; } = string.Empty;
+        public string BranchName { get; set; } = string.Empty;
         public DateTime CreatedAtUtc { get; set; }
         public DateTime CreatedAtLocal { get; set; }
         public string Remarks { get; set; } = string.Empty;

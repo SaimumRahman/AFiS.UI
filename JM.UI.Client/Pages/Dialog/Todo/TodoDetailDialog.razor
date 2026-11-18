@@ -136,7 +136,12 @@
             </div>
             <div>
                 <span class="tvd-label">Created by</span>
-                <span class="tvd-value">@task.CreatedByName<br /><small>@Format(task.CreatedAtLocal)</small></span>
+                <span class="tvd-value">
+                    <TodoPersonLabel Name="@task.CreatedByName"
+                                     Designation="@task.CreatedByDesignation"
+                                     Branch="@task.CreatedByBranch" />
+                    <br /><small>@Format(task.CreatedAtLocal)</small>
+                </span>
             </div>
             @if (task.Status == 1)
             {
@@ -205,7 +210,12 @@
                     {
                         <div class="tvd-entry @EntryClass(update.UpdateType)">
                             <div class="tvd-entry-head">
-                                <span class="tvd-entry-user">@update.UserName · @update.UpdateTypeName</span>
+                                <span class="tvd-entry-user">
+                                    <TodoPersonLabel Name="@update.UserName"
+                                                     Designation="@update.DesignationName"
+                                                     Branch="@update.BranchName"
+                                                     Suffix="@update.UpdateTypeName" />
+                                </span>
                                 <span>@Format(update.CreatedAtLocal)</span>
                             </div>
                             <div class="tvd-entry-text">@update.Remarks</div>
@@ -239,20 +249,22 @@
         }
 
         <!-- ── Actions ── -->
+        @* Mark Done / Reopen / Edit / Delete are creator-or-Admin only. The server
+           enforces the same rule, the UI just hides what would fail. *@
         <div class="tvd-actions">
-            @if (task.Status == 0)
-            {
-                <RadzenButton Icon="check_circle" Text="Mark Done" ButtonStyle="ButtonStyle.Success"
-                              Click="@MarkDone" IsBusy="@IsWorking" />
-            }
-            else
-            {
-                <RadzenButton Icon="undo" Text="Reopen" ButtonStyle="ButtonStyle.Secondary"
-                              Click="@Reopen" IsBusy="@IsWorking" />
-            }
-
             @if (Detail.CanEdit)
             {
+                @if (task.Status == 0)
+                {
+                    <RadzenButton Icon="check_circle" Text="Mark Done" ButtonStyle="ButtonStyle.Success"
+                                  Click="@MarkDone" IsBusy="@IsWorking" />
+                }
+                else
+                {
+                    <RadzenButton Icon="undo" Text="Reopen" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@Reopen" IsBusy="@IsWorking" />
+                }
+
                 <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Light" Click="@EditTask" />
                 <RadzenButton Icon="delete" Text="Delete" ButtonStyle="ButtonStyle.Danger" Click="@DeleteTask" />
             }

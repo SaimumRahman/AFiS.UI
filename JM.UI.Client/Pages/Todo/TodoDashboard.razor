@@ -445,12 +445,9 @@
                     <div class="td-actions">
                         <RadzenButton Icon="visibility" Text="Open" ButtonStyle="ButtonStyle.Light"
                                       Size="ButtonSize.Small" Click="@(() => OpenTask(task))" />
-                        @if (task.Status == 0)
-                        {
-                            <RadzenButton Icon="check" Text="Done" ButtonStyle="ButtonStyle.Success"
-                                          Size="ButtonSize.Small" Click="@(() => QuickDone(task))" />
-                        }
-                        else
+                        @* No "Done" button in the list: a task is completed only from the
+                           Task Details modal, by its creator or an Admin. *@
+                        @if (task.Status == 1 && task.CanEdit)
                         {
                             <RadzenButton Icon="undo" Text="Reopen" ButtonStyle="ButtonStyle.Secondary"
                                           Size="ButtonSize.Small" Click="@(() => QuickReopen(task))" />

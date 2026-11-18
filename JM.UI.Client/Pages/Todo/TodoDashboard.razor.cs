@@ -299,26 +299,6 @@ public partial class TodoDashboardComponent : PosComponentBase
         }
     }
 
-    protected async Task QuickDone(TodoTaskListItemDTO task)
-    {
-        var confirmed = await dialogService.Confirm(
-            "Mark this task as done?", "Complete task",
-            new ConfirmOptions { OkButtonText = "Mark Done", CancelButtonText = "Cancel" });
-
-        if (confirmed != true) return;
-
-        var result = await _serviceUnitOfWork.TodoService.MarkDone(task.Id, null);
-        if (result.Success)
-        {
-            Notify(result.Message);
-            await ReloadCurrentView();
-        }
-        else
-        {
-            ShowError(result.Message);
-        }
-    }
-
     protected async Task QuickReopen(TodoTaskListItemDTO task)
     {
         var result = await _serviceUnitOfWork.TodoService.Reopen(task.Id);

@@ -1,0 +1,54 @@
+@*
+    Shared "name · designation · branch" label.
+    Used by "Created by" and by every entry in "Updates & history" so both read
+    exactly the same way. Any missing part is skipped — never "null" and never a
+    stray separator.
+*@
+
+<span class="tpl-wrap">
+    <span class="tpl-name">@(string.IsNullOrWhiteSpace(Name) ? "Unknown" : Name.Trim())</span>
+    @if (Parts.Count > 0)
+    {
+        @foreach (var part in Parts)
+        {
+            <span class="tpl-sep">·</span><span class="tpl-extra">@part</span>
+        }
+    }
+    @if (!string.IsNullOrWhiteSpace(Suffix))
+    {
+        <span class="tpl-sep">·</span><span class="tpl-suffix">@Suffix</span>
+    }
+</span>
+
+@code {
+    /// <summary>Person's display name.</summary>
+    [Parameter] public string? Name { get; set; }
+
+    /// <summary>Designation, e.g. "Manager". Skipped when empty.</summary>
+    [Parameter] public string? Designation { get; set; }
+
+    /// <summary>Branch name, e.g. "Bandartila Branch". Skipped when empty.</summary>
+    [Parameter] public string? Branch { get; set; }
+
+    /// <summary>Optional trailing text, e.g. "Update" for a timeline entry.</summary>
+    [Parameter] public string? Suffix { get; set; }
+
+    private List<string> Parts
+    {
+        get
+        {
+            var list = new List<string>();
+            if (!string.IsNullOrWhiteSpace(Designation)) list.Add(Designation!.Trim());
+            if (!string.IsNullOrWhiteSpace(Branch)) list.Add(Branch!.Trim());
+            return list;
+        }
+    }
+}
+
+<style>
+    .tpl-wrap { display: inline; }
+    .tpl-name { font-weight: inherit; }
+    .tpl-sep { color: #adb5bd; margin: 0 3px; }
+    .tpl-extra { font-size: .85em; font-weight: 400; color: #6c7480; }
+    .tpl-suffix { font-weight: inherit; }
+</style>
