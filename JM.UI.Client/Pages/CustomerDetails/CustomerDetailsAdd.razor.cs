@@ -114,11 +114,33 @@ namespace JM.UI.Client.Pages.CustomerDetails
             StateHasChanged();
         }
 
-        protected void OpenNewForm()
+        protected async Task OpenNewForm()
         {
+            // Same mobile can hold multiple customers, but only after explicit confirmation.
+            if (!string.IsNullOrWhiteSpace(LookupMobile))
+            {
+                var existing = (await _serviceUnitOfWork.CustomerDetailsService.GetCustomersByMobile(LookupMobile)).ToList();
+                if (existing.Count > 0)
+                {
+                    var names = string.Join(", ", existing.Take(5).Select(c => $"{c.Name} (#{c.Id})"));
+                    var confirmed = await DialogService.Confirm(
+                        $"Mobile {LookupMobile} is already registered to: {names}. " +
+                        $"Multiple customers can share the same mobile number. Do you want to add another customer with this number?",
+                        "Mobile Number Already Registered",
+                        new ConfirmOptions
+                        {
+                            OkButtonText = "Yes, Add Another",
+                            CancelButtonText = "No",
+                            CloseDialogOnEsc = true
+                        });
+                    if (confirmed != true) return;
+                }
+            }
+
             Customer = _serviceUnitOfWork.CustomerDetailsService.CreateNew();
             Customer.Phone = LookupMobile;
             Customer.WhatsApp = LookupMobile;
+            Customer.IsForceAdd = true;
             LookupDone = false;
             ShowForm = true;
             StateHasChanged();
@@ -231,18 +253,13 @@ namespace JM.UI.Client.Pages.CustomerDetails
                 return;
             }
 
-            // duplicate soft-warning
+            // duplicate soft-warning: the user already confirmed at form open that this
+            // mobile may hold multiple customers, so do not ask a second time.
             if (Customer.Id == 0)
             {
                 var existing = await _serviceUnitOfWork.CustomerDetailsService.GetCustomersByMobile(Customer.Phone);
                 var dup = existing.Any(c => c.Name.Equals(Customer.Name, StringComparison.OrdinalIgnoreCase));
-                if (dup)
-                {
-                    var confirmed = await DialogService.Confirm("A profile with this mobile and name already exists. Create another one anyway?", "Duplicate",
-                        new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
-                    if (confirmed != true) return;
-                    Customer.IsForceAdd = true;
-                }
+                if (dup) Customer.IsForceAdd = true;
             }
 
             // remarks (admin): append to Remarks column (simplest: prepend new entries)
