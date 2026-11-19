@@ -31,5 +31,6 @@ namespace JM.UI.Entities.Model.CustomerDetails
         public string? DefaultAddressType { get; set; }
         public string Status { get; set; } = "Active";
         public string? Remarks { get; set; }
+        public int? UpdateBy { get; set; }
     }
 }

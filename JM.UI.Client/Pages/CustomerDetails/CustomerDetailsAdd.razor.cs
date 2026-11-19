@@ -271,6 +271,9 @@ namespace JM.UI.Client.Pages.CustomerDetails
                 PendingRemarks.Clear();
             }
 
+            if (Customer.Id > 0 && CurrentUserId > 0)
+                Customer.UpdateBy = CurrentUserId;
+
             IsProcessing = true;
             try
             {
