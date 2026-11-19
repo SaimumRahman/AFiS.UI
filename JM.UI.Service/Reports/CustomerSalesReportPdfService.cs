@@ -449,7 +449,7 @@ public class CustomerSalesReportPdfService
                     ?? new List<CustomerWiseSalesDetailDTO>();
 
         const float widthMm = 80f;
-        float heightMm = 84f + (lines.Count * 7f);
+        float heightMm = 100f + (lines.Count * 8f);
 
         return Document.Create(container =>
         {
@@ -460,18 +460,18 @@ public class CustomerSalesReportPdfService
                 page.MarginRight(3, Unit.Millimetre);
                 page.MarginTop(4, Unit.Millimetre);
                 page.MarginBottom(4, Unit.Millimetre);
-                page.DefaultTextStyle(x => x.FontSize(7.5f).FontFamily("Arial"));
+                page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
 
                 page.Content().Column(col =>
                 {
-                    col.Item().AlignCenter().Text(companyName).Bold().FontSize(12);
+                    col.Item().AlignCenter().Text(companyName).Bold().FontSize(14);
                     col.Item().AlignCenter()
                        .Text(string.IsNullOrWhiteSpace(invoice?.StoreName) ? "Head Office" : invoice.StoreName)
-                       .FontSize(7.5f).FontColor(GreyDarken1);
+                       .FontSize(9).FontColor(GreyDarken1);
                     col.Item().PaddingTop(2).AlignCenter()
                        .Text(invoice?.StatusText == "Regular Purchase" ? "SALES RECEIPT" : "SALES / EXCHANGE RECEIPT")
-                       .Bold().FontSize(9);
-                    col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Black);
+                       .Bold().FontSize(11);
+                    col.Item().PaddingVertical(2).LineHorizontal(0.6f).LineColor(Black);
 
                     ReceiptInfoRow(col, "Invoice:", invoice?.InvoiceNo ?? "-");
                     ReceiptInfoRow(col, "Date:", invoice != null ? invoice.SaleDate.ToString("dd-MMM-yyyy hh:mm tt") : "-");
@@ -491,30 +491,30 @@ public class CustomerSalesReportPdfService
                             c.ConstantColumn(19, Unit.Millimetre);     // Amount
                         });
 
-                        table.Cell().Text("Item").Bold().FontSize(6.5f).FontColor(GreyDarken1);
-                        table.Cell().AlignRight().Text("Qty").Bold().FontSize(6.5f).FontColor(GreyDarken1);
-                        table.Cell().AlignRight().Text("Rate").Bold().FontSize(6.5f).FontColor(GreyDarken1);
-                        table.Cell().AlignRight().Text("Amount").Bold().FontSize(6.5f).FontColor(GreyDarken1);
+                        table.Cell().Text("Item").Bold().FontSize(8).FontColor(GreyDarken1);
+                        table.Cell().AlignRight().Text("Qty").Bold().FontSize(8).FontColor(GreyDarken1);
+                        table.Cell().AlignRight().Text("Rate").Bold().FontSize(8).FontColor(GreyDarken1);
+                        table.Cell().AlignRight().Text("Amount").Bold().FontSize(8).FontColor(GreyDarken1);
 
                         foreach (var line in lines)
                         {
                             table.Cell().PaddingTop(2).Text(text =>
                             {
-                                text.DefaultTextStyle(x => x.FontSize(7));
+                                text.DefaultTextStyle(x => x.FontSize(8.5f));
                                 text.Span(string.IsNullOrWhiteSpace(line.ItemName) ? "-" : line.ItemName);
                                 if (!string.IsNullOrWhiteSpace(line.Barcode))
                                 {
                                     text.Span("\n");
-                                    text.Span(line.Barcode).FontSize(6).FontColor(GreyDarken1);
+                                    text.Span(line.Barcode).FontSize(7.5f).FontColor(GreyDarken1);
                                 }
                             });
 
                             table.Cell().PaddingTop(2).AlignRight()
-                                 .Text(line.Quantity.ToString("N2", CultureInfo.InvariantCulture)).FontSize(7);
+                                 .Text(line.Quantity.ToString("N2", CultureInfo.InvariantCulture)).FontSize(8.5f);
                             table.Cell().PaddingTop(2).AlignRight()
-                                 .Text(FormatAmount(line.Rate)).FontSize(7);
+                                 .Text(FormatAmount(line.Rate)).FontSize(8.5f);
                             table.Cell().PaddingTop(2).AlignRight()
-                                 .Text(FormatAmount(line.LineNet)).FontSize(7);
+                                 .Text(FormatAmount(line.LineNet)).FontSize(8.5f);
                         }
                     });
 
@@ -528,27 +528,27 @@ public class CustomerSalesReportPdfService
 
                     col.Item().PaddingTop(1).Row(row =>
                     {
-                        row.RelativeItem().Text("NET PAYABLE").Bold().FontSize(9);
+                        row.RelativeItem().Text("NET PAYABLE").Bold().FontSize(10.5f);
                         row.ConstantItem(26, Unit.Millimetre).AlignRight()
-                           .Text(FormatMoney(invoice?.InvoiceNet ?? 0)).Bold().FontSize(9);
+                           .Text(FormatMoney(invoice?.InvoiceNet ?? 0)).Bold().FontSize(10.5f);
                     });
 
                     ReceiptTotalRow(col, "Paid:", invoice?.NetPaid ?? 0);
                     ReceiptTotalRow(col, "Due:", invoice?.Due ?? 0);
 
-                    col.Item().PaddingVertical(2).LineHorizontal(0.4f).LineColor(GreyMedium);
+                    col.Item().PaddingVertical(2).LineHorizontal(0.6f).LineColor(GreyMedium);
 
                     col.Item().AlignCenter()
                        .Text("Thank you for shopping with Asia Fashion")
-                       .FontSize(7).FontColor(GreyDarken1);
+                       .FontSize(8.5f).FontColor(GreyDarken1);
 
                     col.Item().PaddingTop(2).AlignCenter()
                        .Text($"Printed by: {(string.IsNullOrWhiteSpace(printedBy) ? "-" : printedBy)}")
-                       .FontSize(6.5f).FontColor(GreyDarken1);
+                       .FontSize(7.5f).FontColor(GreyDarken1);
 
                     col.Item().AlignCenter()
                        .Text($"Print Date: {DateTime.Now:dd-MMM-yyyy hh.mmtt}")
-                       .FontSize(6.5f).FontColor(GreyDarken1);
+                       .FontSize(7.5f).FontColor(GreyDarken1);
                 });
             });
         });
@@ -558,8 +558,8 @@ public class CustomerSalesReportPdfService
     {
         col.Item().Row(row =>
         {
-            row.ConstantItem(18, Unit.Millimetre).Text(label).FontSize(7).FontColor(GreyDarken1).Bold();
-            row.RelativeItem().Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontSize(7);
+            row.ConstantItem(18, Unit.Millimetre).Text(label).FontSize(8.5f).FontColor(GreyDarken1).Bold();
+            row.RelativeItem().Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontSize(8.5f);
         });
     }
 
@@ -567,8 +567,8 @@ public class CustomerSalesReportPdfService
     {
         col.Item().PaddingTop(1).Row(row =>
         {
-            row.RelativeItem().AlignRight().Text(label).FontSize(7).FontColor(GreyDarken1);
-            row.ConstantItem(26, Unit.Millimetre).AlignRight().Text(FormatAmount(value)).FontSize(7);
+            row.RelativeItem().AlignRight().Text(label).FontSize(8.5f).FontColor(GreyDarken1);
+            row.ConstantItem(26, Unit.Millimetre).AlignRight().Text(FormatAmount(value)).FontSize(8.5f);
         });
     }
 

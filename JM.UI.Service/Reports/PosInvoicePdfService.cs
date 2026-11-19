@@ -22,7 +22,24 @@ public class PosInvoicePdfService
         string companyVat = "",
         string servedBy = "",
         string terms = "",
-        IReadOnlyDictionary<int, string>? paymentTypeNames = null)
+        IReadOnlyDictionary<int, string>? paymentTypeNames = null,
+        string branchName = "")
+        => BuildDocument(sale, companyName, companyAddress, companyContact, companyVat,
+                          servedBy, terms, paymentTypeNames, branchName).GeneratePdf();
+
+    /// <summary>
+    /// Builds the invoice document (useful for previews/tests as well as PDF output).
+    /// </summary>
+    public Document BuildDocument(
+        SaleMasterDTO sale,
+        string companyName = "ASIA FASHION",
+        string companyAddress = "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
+        string companyContact = "",
+        string companyVat = "",
+        string servedBy = "",
+        string terms = "",
+        IReadOnlyDictionary<int, string>? paymentTypeNames = null,
+        string branchName = "")
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -37,13 +54,15 @@ public class PosInvoicePdfService
             var normalized = terms.Replace("\r\n", "\n").Replace('\r', '\n');
             var lineCount = 0;
             foreach (var rawLine in normalized.Split('\n'))
-                lineCount += Math.Max(1, (int)Math.Ceiling(rawLine.Length / 46.0));
-            termsHeightMm = 11f + (lineCount * 2.4f);
+                lineCount += Math.Max(1, (int)Math.Ceiling(rawLine.Length / 42.0));
+            termsHeightMm = 15f + (lineCount * 3.9f);
         }
 
-        float heightMm = 120f + (itemCount * 6f) + termsHeightMm;
+        // Height sized to the measured content plus a small safety margin so the
+        // larger text is never clipped on the fixed-size thermal page.
+        float heightMm = 122f + (itemCount * 8.5f) + termsHeightMm;
         var paymentCount = sale.PaymentTransactions?.Count ?? 0;
-        heightMm += paymentCount * 4f;
+        heightMm += paymentCount * 5.2f;
 
         var document = Document.Create(container =>
         {
@@ -54,25 +73,26 @@ public class PosInvoicePdfService
                 page.MarginRight(3, Unit.Millimetre);
                 page.MarginTop(4, Unit.Millimetre);
                 page.MarginBottom(4, Unit.Millimetre);
-                page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
+                page.DefaultTextStyle(x => x.FontSize(9.5f).FontFamily("Arial").LineHeight(1.25f));
 
                 page.Content().Column(col =>
                 {
                     bool isBookingDoc = sale.IsBooking == true
     || (!string.IsNullOrWhiteSpace(sale.InvoiceNo)
         && sale.InvoiceNo.StartsWith("BK-", StringComparison.OrdinalIgnoreCase));
-ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBookingDoc);
+ComposeHeader(col, companyName, branchName, companyAddress, companyContact, companyVat, isBookingDoc);
                     ComposeInfo(col, sale, servedBy);
                     ComposeItems(col, sale);
-                    ComposePayments(col, sale, paymentTypeNames);
                     ComposeTotals(col, sale, paymentTypeNames);
+                    // Payment breakdown sits after the Net Payable block and before the terms.
+                    ComposePayments(col, sale, paymentTypeNames);
                     ComposeTerms(col, terms);
                     ComposeFooter(col);
                 });
             });
         });
 
-        return document.GeneratePdf();
+        return document;
     }
 
     // ── 1. Company details ────────────────────────────────────────────────
@@ -80,22 +100,26 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
     private static void ComposeHeader(
         ColumnDescriptor col,
         string companyName,
+        string branchName,
         string companyAddress,
         string companyContact,
         string companyVat,
         bool isBooking = false)
     {
-        col.Item().AlignCenter().Text(companyName).Bold().FontSize(13);
+        col.Item().AlignCenter().Text(companyName).Bold().FontSize(15);
+        // Branch name sits directly under the company name in normal (non-bold) weight.
+        if (!string.IsNullOrWhiteSpace(branchName))
+            col.Item().AlignCenter().Text(branchName).FontSize(10);
         if (!string.IsNullOrWhiteSpace(companyAddress))
-            col.Item().AlignCenter().Text(companyAddress).FontSize(7.5f);
+            col.Item().AlignCenter().Text(companyAddress).FontSize(9);
         if (!string.IsNullOrWhiteSpace(companyContact))
-            col.Item().AlignCenter().Text(companyContact).FontSize(7.5f);
+            col.Item().AlignCenter().Text(companyContact).FontSize(9);
         if (!string.IsNullOrWhiteSpace(companyVat))
-            col.Item().AlignCenter().Text($"VAT Reg No: {companyVat}").FontSize(7.5f);
+            col.Item().AlignCenter().Text($"VAT Reg No: {companyVat}").FontSize(9);
 
         var invoiceHeading = isBooking ? "BOOKING INVOICE" : "SALES INVOICE";
-        col.Item().PaddingTop(2).AlignCenter().Text(invoiceHeading).Bold().FontSize(10);
-        col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingTop(3).AlignCenter().Text(invoiceHeading).Bold().FontSize(12);
+        col.Item().PaddingVertical(2).LineHorizontal(0.6f).LineColor(Black);
     }
 
     // ── 2. Invoice No / Served by / Date / Customer ───────────────────────
@@ -106,8 +130,8 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         {
             col.Item().Row(row =>
             {
-                row.ConstantItem(34).Text(label).Bold().FontSize(7.5f).FontColor(GreyDark);
-                row.RelativeItem().Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontSize(7.5f);
+                row.ConstantItem(66).Text(label).Bold().FontSize(9).FontColor(GreyDark);
+                row.RelativeItem().Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontSize(9.5f);
             });
         }
 
@@ -117,7 +141,7 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         InfoRow("Customer:", sale.CustomerName ?? "");
         InfoRow("Mobile:", sale.CustomerPhone ?? "");
 
-        col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingVertical(2).LineHorizontal(0.6f).LineColor(Black);
     }
 
     // ── 3. Items table (Barcode / Qty / Rate / Amount) ────────────────────
@@ -130,15 +154,15 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
             {
                 c.RelativeColumn(3);
                 c.ConstantColumn(22);
-                c.ConstantColumn(48);
-                c.ConstantColumn(48);
+                c.ConstantColumn(50);
+                c.ConstantColumn(52);
             });
 
             // Header
-            table.Cell().BorderBottom(0.5f).BorderColor(Black).Padding(1).Text("Item").Bold().FontSize(7);
-            table.Cell().BorderBottom(0.5f).BorderColor(Black).Padding(1).AlignRight().Text("Qty").Bold().FontSize(7);
-            table.Cell().BorderBottom(0.5f).BorderColor(Black).Padding(1).AlignRight().Text("Rate").Bold().FontSize(7);
-            table.Cell().BorderBottom(0.5f).BorderColor(Black).Padding(1).AlignRight().Text("Amount").Bold().FontSize(7);
+            table.Cell().BorderBottom(0.6f).BorderColor(Black).Padding(1).Text("Item").Bold().FontSize(9);
+            table.Cell().BorderBottom(0.6f).BorderColor(Black).Padding(1).AlignRight().Text("Qty").Bold().FontSize(9);
+            table.Cell().BorderBottom(0.6f).BorderColor(Black).Padding(1).AlignRight().Text("Rate").Bold().FontSize(9);
+            table.Cell().BorderBottom(0.6f).BorderColor(Black).Padding(1).AlignRight().Text("Amount").Bold().FontSize(9);
 
             foreach (var item in sale.SaleDetails ?? new List<SaleDetailDTO>())
             {
@@ -147,18 +171,18 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
 
                 table.Cell().Padding(1).Column(c =>
                 {
-                    c.Item().Text(barcode).FontSize(7);
+                    c.Item().Text(barcode).FontSize(9);
                     if (!string.IsNullOrWhiteSpace(name) && !string.Equals(name, barcode, StringComparison.OrdinalIgnoreCase))
-                        c.Item().Text(name.Length > 28 ? name[..28] + ".." : name).FontSize(6.5f).FontColor(GreyMedium);
+                        c.Item().Text(name.Length > 20 ? name[..20] + ".." : name).FontSize(8).FontColor(GreyDark);
                 });
 
-                table.Cell().Padding(1).AlignRight().Text($"{item.Qty:0.##}").FontSize(7);
-                table.Cell().Padding(1).AlignRight().Text($"{item.UnitPrice:N2}").FontSize(7);
-                table.Cell().Padding(1).AlignRight().Text($"{item.TotalAmount:N2}").FontSize(7);
+                table.Cell().Padding(1).AlignRight().Text($"{item.Qty:0.##}").FontSize(9);
+                table.Cell().Padding(1).AlignRight().Text($"{item.UnitPrice:N2}").FontSize(9);
+                table.Cell().Padding(1).AlignRight().Text($"{item.TotalAmount:N2}").FontSize(9);
             }
         });
 
-        col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingVertical(2).LineHorizontal(0.6f).LineColor(Black);
     }
 
     // ── 4 & 5. Discount / VAT / Net Amount / Net Payable / Paid / Due ─────
@@ -177,8 +201,8 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         {
             col.Item().Row(row =>
             {
-                var labelText = row.RelativeItem().Text(label).FontSize(8).FontColor(GreyDark);
-                var valueText = row.ConstantItem(62).AlignRight().Text(value).FontSize(8);
+                var labelText = row.RelativeItem().Text(label).FontSize(9.5f).FontColor(GreyDark);
+                var valueText = row.ConstantItem(66).AlignRight().Text(value).FontSize(9.5f);
                 if (bold)
                 {
                     labelText.Bold().FontColor(Black);
@@ -196,8 +220,8 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
             if (!string.IsNullOrWhiteSpace(sale.ReturnInvoiceNo))
                 col.Item().Row(row =>
                 {
-                    row.RelativeItem().Text("  Exchanged Against").FontSize(7).FontColor(GreyMedium);
-                    row.ConstantItem(62).AlignRight().Text(sale.ReturnInvoiceNo).FontSize(7).FontColor(GreyMedium);
+                    row.RelativeItem().Text("  Exchanged Against").FontSize(8.5f).FontColor(GreyMedium);
+                    row.ConstantItem(66).AlignRight().Text(sale.ReturnInvoiceNo).FontSize(8.5f).FontColor(GreyMedium);
                 });
         }
         TotalRow("VAT", $"{vat:N2}");
@@ -216,8 +240,8 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         var payments = sale.PaymentTransactions;
         if (payments == null || payments.Count == 0) return;
 
-        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Black);
-        col.Item().PaddingTop(2).Text("Payments").Bold().FontSize(8).FontColor(GreyDark);
+        col.Item().PaddingTop(2).LineHorizontal(0.6f).LineColor(Black);
+        col.Item().PaddingTop(2).Text("Payments").Bold().FontSize(9.5f).FontColor(GreyDark);
 
         foreach (var p in payments)
         {
@@ -232,8 +256,8 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
             var refNo = string.IsNullOrWhiteSpace(p.TransactionNo) ? "" : $" ({p.TransactionNo})";
             col.Item().Row(row =>
             {
-                row.RelativeItem().Text($"{name}{refNo}").FontSize(7.5f);
-                row.ConstantItem(62).AlignRight().Text($"{(p.PaidAmount ?? 0):N2}").FontSize(7.5f);
+                row.RelativeItem().Text($"{name}{refNo}").FontSize(9);
+                row.ConstantItem(66).AlignRight().Text($"{(p.PaidAmount ?? 0):N2}").FontSize(9);
             });
         }
 
@@ -244,16 +268,16 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         {
             col.Item().Row(row =>
             {
-                row.RelativeItem().Text("Cash Tendered").FontSize(7.5f);
-                row.ConstantItem(62).AlignRight().Text($"{tendered:N2}").FontSize(7.5f);
+                row.RelativeItem().Text("Cash Tendered").FontSize(9);
+                row.ConstantItem(66).AlignRight().Text($"{tendered:N2}").FontSize(9);
             });
         }
         if (balance > 0)
         {
             col.Item().Row(row =>
             {
-                row.RelativeItem().Text("Balance (returned)").FontSize(7.5f);
-                row.ConstantItem(62).AlignRight().Text($"{balance:N2}").FontSize(7.5f);
+                row.RelativeItem().Text("Balance (returned)").FontSize(9);
+                row.ConstantItem(66).AlignRight().Text($"{balance:N2}").FontSize(9);
             });
         }
 
@@ -261,11 +285,11 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         var totalPaid = sale.TotalPaid > 0 ? sale.TotalPaid : payments.Sum(p => p.PaidAmount ?? 0);
         col.Item().PaddingTop(1).Row(row =>
         {
-            row.RelativeItem().Text("Total Paid").FontSize(7.5f).Bold();
-            row.ConstantItem(62).AlignRight().Text($"{totalPaid:N2}").FontSize(7.5f).Bold();
+            row.RelativeItem().Text("Total Paid").FontSize(9.5f).Bold();
+            row.ConstantItem(66).AlignRight().Text($"{totalPaid:N2}").FontSize(9.5f).Bold();
         });
 
-        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(Black);
+        col.Item().PaddingTop(2).LineHorizontal(0.6f).LineColor(Black);
     }
 
     private static void ComposeTerms(ColumnDescriptor col, string terms)
@@ -273,14 +297,14 @@ ComposeHeader(col, companyName, companyAddress, companyContact, companyVat, isBo
         if (string.IsNullOrWhiteSpace(terms))
             return;
 
-        col.Item().PaddingTop(3).LineHorizontal(0.5f).LineColor(Black);
-        col.Item().PaddingTop(2).Text("Terms & Conditions").Bold().FontSize(7.5f);
-        col.Item().Text(terms).FontSize(6.5f).FontColor(GreyDark);
+        col.Item().PaddingTop(3).LineHorizontal(0.6f).LineColor(Black);
+        col.Item().PaddingTop(2).Text("Terms & Conditions").Bold().FontSize(9);
+        col.Item().Text(terms).FontSize(8.5f).FontColor(GreyDark);
     }
 
     private static void ComposeFooter(ColumnDescriptor col)
     {
-        col.Item().PaddingTop(6).AlignCenter().Text("*** Thank You ***").FontSize(8);
-        col.Item().AlignCenter().Text("Powered by AFiS ERP").FontSize(6.5f).FontColor(GreyMedium);
+        col.Item().PaddingTop(6).AlignCenter().Text("*** Thank You ***").FontSize(9.5f);
+        col.Item().AlignCenter().Text("Powered by AFiS ERP").FontSize(8).FontColor(GreyMedium);
     }
 }

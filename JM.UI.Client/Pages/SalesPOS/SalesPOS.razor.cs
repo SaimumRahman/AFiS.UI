@@ -1544,13 +1544,14 @@ namespace JM.UI.Client.Pages.SalesPOS
 
                 var pdfBytes = PosInvoicePdfService.GeneratePosInvoice(
                     sale,
-                    companyName: store?.Name ?? "ASIA FASHION",
+                    companyName: "ASIA FASHION",
                     companyAddress: store?.Address ?? "HOSSAIN PLAZA (1ST FLOOR), BANDARTILA, CHATTOGRAM",
                     companyContact: string.Join(" | ", new[] { store?.Contact, store?.Email }.Where(x => !string.IsNullOrWhiteSpace(x))),
                     companyVat: store?.VAT ?? "",
                     servedBy: $"{(sale.CreatedBy?.ToString() ?? "User")}",
                     terms: store?.TermsOfService ?? "",
-                    paymentTypeNames: paymentTypeNames);
+                    paymentTypeNames: paymentTypeNames,
+                    branchName: store?.Name ?? "");
 
                 var prefix = (sale.IsBooking == true || (sale.InvoiceNo?.StartsWith("BK-") ?? false)) ? "Booking" : "Invoice";
 var fileName = $"{prefix}_{sale.InvoiceNo}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
