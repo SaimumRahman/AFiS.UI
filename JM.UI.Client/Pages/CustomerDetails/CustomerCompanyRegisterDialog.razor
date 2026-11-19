@@ -1,5 +1,4 @@
 @using JM.UI.Entities.Model.CustomerDetails
-@using JM.UI.Entities.Model.MembershipType
 @using JM.UI.Service.UnitOfWork
 @inject DialogService DialogService
 
@@ -12,15 +11,6 @@
         <RadzenLabel Text="Company Code *" />
         <RadzenTextBox @bind-Value="Company.Code" Style="width:100%" MaxLength="6" />
         <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">2 to 6 letters or numbers, stored in capitals, must be unique.</RadzenText>
-    </RadzenStack>
-    <RadzenStack Gap="0.25rem">
-        <RadzenLabel Text="Discount Category" />
-        <RadzenDropDown @bind-Value="Company.DefaultCategoryId"
-                        Data="@MembershipTypes"
-                        TextProperty="Name"
-                        ValueProperty="Id"
-                        AllowClear="true"
-                        Style="width:100%" />
     </RadzenStack>
     <RadzenStack Gap="0.25rem">
         <RadzenLabel Text="Special Note" />
@@ -42,7 +32,6 @@
 
 @code {
     [Parameter] public CustomerCompanyDTO Company { get; set; } = new();
-    [Parameter] public List<MembershipTypeDTO> MembershipTypes { get; set; } = new();
 
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
