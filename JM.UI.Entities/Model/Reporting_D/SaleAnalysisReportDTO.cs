@@ -28,6 +28,7 @@ namespace JM.UI.Entities.Model.Reporting_D
 
         public decimal SalePrice { get; set; }
 
+        public decimal QtyPurchased { get; set; }
         public decimal QtySold { get; set; }
         public decimal Revenue { get; set; }
 

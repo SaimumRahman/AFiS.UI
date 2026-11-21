@@ -4,6 +4,7 @@ using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.SubGroups;
 using JM.UI.Entities.Model.ItemOrigin;
 using JM.UI.Entities.Model.Colors;
+using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.ItemCatalogue;
 using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
@@ -47,6 +48,8 @@ public partial class SaleAnalysisReportComponent : PosComponentBase
     protected int? SelectedColorId { get; set; }
     protected List<ItemCatalogueDTO> Catalogues { get; set; } = new();
     protected int? SelectedCatalogueId { get; set; }
+    protected List<DesignModelDTO> Designs { get; set; } = new();
+    protected int? SelectedDesignId { get; set; }
 
     protected string ProductTerm { get; set; } = string.Empty;
     protected string FeaturesTerm { get; set; } = string.Empty;
@@ -68,6 +71,7 @@ public partial class SaleAnalysisReportComponent : PosComponentBase
         await TokenService.InitializeTokenAsync();
         CurrentUserId = await GetLocalStorageInt("UserId");
         UserStoreId = await GetLocalStorageInt("StoreId");
+        try { var r = await _localStorage.GetAsync<string>("UserName"); if (r.Success && !string.IsNullOrWhiteSpace(r.Value)) CurrentUserName = r.Value; } catch { }
 
         CanSelectAnyStore = CurrentUserId == 1;
         if (!CanSelectAnyStore)
@@ -134,6 +138,11 @@ public partial class SaleAnalysisReportComponent : PosComponentBase
             Catalogues = (await _serviceUnitOfWork.ItemCatalogueService.GetItemCatalogues()).ToList();
         }
         catch { Catalogues = new List<ItemCatalogueDTO>(); }
+        try
+        {
+            Designs = (await _serviceUnitOfWork.DesignService.GetDesigns()).ToList();
+        }
+        catch { Designs = new List<DesignModelDTO>(); }
     }
 
     protected void ToggleStore(int storeId, bool isChecked)
@@ -173,7 +182,7 @@ public partial class SaleAnalysisReportComponent : PosComponentBase
             var storeIds = string.Join(",", SelectedStoreIds);
             Report = await _serviceUnitOfWork.ReportingService.GetSaleAnalysis(
                 FromDate, ToDate, storeIds,
-                SelectedGroupId, SelectedSubGroupId, null,
+                SelectedGroupId, SelectedSubGroupId, SelectedDesignId,
                 SelectedOriginId, SelectedColorId, SelectedCatalogueId,
                 string.IsNullOrWhiteSpace(FeaturesTerm) ? null : FeaturesTerm,
                 string.IsNullOrWhiteSpace(ProductTerm) ? null : ProductTerm,
@@ -199,9 +208,8 @@ public partial class SaleAnalysisReportComponent : PosComponentBase
         IsPrinting = true;
         try
         {
-            var pdfBytes = PdfService.Generate(Report, CurrentUserName);
-            var base64 = Convert.ToBase64String(pdfBytes);
-            await JS.InvokeVoidAsync("downloadFileFromBase64", "SaleAnalysisReport.pdf", base64, "application/pdf");
+            var pdfBytes = PdfService.Generate(Report ?? new SaleAnalysisReportDTO(), CurrentUserName ?? "User");
+            await JS.InvokeVoidAsync("downloadFileFromBytes", "SaleAnalysisReport.pdf", "application/pdf", pdfBytes);
         }
         catch (Exception ex)
         {

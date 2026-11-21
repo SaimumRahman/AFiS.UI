@@ -72,8 +72,8 @@
                     <RadzenTextBox @bind-Value="FeaturesTerm" Style="width:100%" />
                 </RadzenColumn>
                 <RadzenColumn Size="6" SizeMD="2">
-                    <RadzenLabel Text="Product" Style="font-size:11px;" />
-                    <RadzenTextBox @bind-Value="ProductTerm" Style="width:100%" />
+                    <RadzenLabel Text="Product (Design)" Style="font-size:11px;" />
+                    <RadzenDropDown @bind-Value="SelectedDesignId" Data="@Designs" TextProperty="Name" ValueProperty="Id" AllowClear="true" Style="width:100%" />
                 </RadzenColumn>
                 <RadzenColumn Size="3" SizeMD="1">
                     <RadzenLabel Text="Min Price" Style="font-size:11px;" />
@@ -110,34 +110,22 @@
         <RadzenCard>
             <RadzenDataGrid Data="@Report.Rows" TItem="SaleAnalysisRowDTO" AllowPaging="true" PageSize="25" AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Advanced" Density="Density.Compact">
                 <Columns>
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Title="Class" Width="70px" TextAlign="TextAlign.Center">
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Title="Remarks" Width="80px" TextAlign="TextAlign.Center">
                         <Template Context="r">
                             <span style="@ClassBadge(r.Classification);padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;">@r.Classification</span>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Barcode" Title="Barcode" Width="110px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="ItemName" Title="Item" Width="180px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="ItemName" Title="ItemName" Width="180px" />
                     <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="GroupName" Title="Group" Width="110px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SubGroupName" Title="Sub-group" Width="110px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Origin" Title="Origin" Width="90px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Catalogue" Title="Catalogue" Width="110px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Color" Title="Color" Width="90px" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SalePrice" Title="Sale Price" Width="90px" TextAlign="TextAlign.Right">
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SubGroupName" Title="Product" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Catalogue" Title="Subproduct" Width="110px" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="SalePrice" Title="SalePrice" Width="90px" TextAlign="TextAlign.Right">
                         <Template Context="r">@r.SalePrice.ToString("N2")</Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="QtySold" Title="Qty Sold" Width="80px" TextAlign="TextAlign.Right" />
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="Revenue" Title="Revenue (BDT)" Width="110px" TextAlign="TextAlign.Right">
-                        <Template Context="r">@r.Revenue.ToString("N2")</Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="CurrentStock" Title="Stock" Width="70px" TextAlign="TextAlign.Right" />
-                    @foreach (var st in Report.Stores)
-                    {
-                        <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Title="@st.Name" Width="70px" TextAlign="TextAlign.Right">
-                            <Template Context="r">
-                                @(r.BranchQtys.FirstOrDefault(b => b.StoreId == st.Id)?.Qty.ToString("N0") ?? "0")
-                            </Template>
-                        </RadzenDataGridColumn>
-                    }
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="QtyPurchased" Title="Total Purchase QTY" Width="100px" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="QtySold" Title="Total Sold QTY" Width="100px" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="SaleAnalysisRowDTO" Property="CurrentStock" Title="Total Balance QTY" Width="100px" TextAlign="TextAlign.Right" />
                 </Columns>
             </RadzenDataGrid>
         </RadzenCard>
