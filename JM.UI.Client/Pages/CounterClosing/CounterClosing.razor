@@ -29,6 +29,9 @@
                                   Click="@OpenCounterManagement" />
                     <RadzenButton Icon="refresh" Text="Refresh" ButtonStyle="ButtonStyle.Light"
                                   Click="@RefreshClick" />
+                    <RadzenButton Icon="picture_as_pdf" Text="Download PDF" ButtonStyle="ButtonStyle.Success"
+                                  Disabled="@(Preview == null)" IsBusy="@IsPrinting"
+                                  Click="@PrintReport" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>

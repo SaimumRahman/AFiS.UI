@@ -1,8 +1,10 @@
 using JM.UI.Entities.Model.CounterClosing;
 using JM.UI.Entities.Model.Stores;
+using JM.UI.Service.Reports;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 using System;
@@ -16,6 +18,8 @@ namespace JM.UI.Client.Pages.CounterClosing
     public partial class CounterClosingComponent : PosComponentBase, IDisposable
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
+        [Inject] public CounterClosingReportPdfService PdfService { get; set; } = default!;
+        [Inject] public IJSRuntime JS { get; set; } = default!;
 
         protected RadzenDataGrid<CounterClosingSummaryRowDTO> TransactionsGrid = default!;
         protected RadzenDataGrid<CounterClosingDTO> HistoryGrid = default!;
@@ -587,5 +591,22 @@ namespace JM.UI.Client.Pages.CounterClosing
             public decimal? Amount { get; set; }
             public string? Reason { get; set; }
         }
-    }
+    protected bool IsPrinting { get; set; }
+
+    protected async Task PrintReport()
+    {
+        if (Preview == null) { notificationService.Notify(NotificationSeverity.Warning, "No Data", "Load a day first."); return; }
+        IsPrinting = true;
+        StateHasChanged();
+        try
+        {
+            var pdfBytes = PdfService.Generate(Preview, CurrentUserName ?? "User");
+            await JS.InvokeVoidAsync("downloadFileFromBytes", "DayClosingReport.pdf", "application/pdf", pdfBytes);
+        }
+        catch (Exception ex)
+        {
+            notificationService.Notify(NotificationSeverity.Error, "Error", "PDF generation failed: " + ex.Message);
+        }
+        finally { IsPrinting = false; StateHasChanged(); }
+    }    }
 }

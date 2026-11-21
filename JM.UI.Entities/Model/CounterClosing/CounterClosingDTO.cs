@@ -71,6 +71,23 @@ namespace JM.UI.Entities.Model.CounterClosing
         public decimal Cash { get; set; }
     }
 
+    public class CounterSalesmanSummaryDTO
+    {
+        public string Salesman { get; set; } = string.Empty;
+        public decimal Total { get; set; }
+        public decimal Discount { get; set; }
+        public decimal Net { get; set; }
+        public bool NoSale { get; set; }
+    }
+
+    public class CounterExpenseRowDTO
+    {
+        public string VoucherNo { get; set; } = string.Empty;
+        public string LedgerName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+    }
+
     public class CounterCashMovementDTO
     {
         public string Direction { get; set; } = "OUT"; // IN / OUT
@@ -126,6 +143,8 @@ namespace JM.UI.Entities.Model.CounterClosing
         public List<CounterPaymentSummaryDTO> CashOutSummary { get; set; } = new();
         public List<CounterTransactionDTO> Transactions { get; set; } = new();
         public List<CounterClosingSummaryRowDTO> SummaryRows { get; set; } = new();
+        public List<CounterSalesmanSummaryDTO> SalesmanSummary { get; set; } = new();
+        public List<CounterExpenseRowDTO> Expenses { get; set; } = new();
         public List<CounterCashMovementDTO> CashMovements { get; set; } = new();
     }
 

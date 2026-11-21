@@ -63,6 +63,7 @@ builder.Services.AddScoped<PurchaseDetailReportService>();
 builder.Services.AddScoped<SalesmanWiseDetailedReportService>();
 builder.Services.AddScoped<SalesComparisonReportService>();
 builder.Services.AddScoped<SalesBookingReportPdfService>();
+builder.Services.AddScoped<CounterClosingReportPdfService>();
 builder.Services.AddScoped<CollectionSummaryReportPdfService>();
 builder.Services.AddScoped<StockAgingReportPdfService>();
 builder.Services.AddScoped<SaleAnalysisReportPdfService>();
