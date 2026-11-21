@@ -19,10 +19,12 @@ namespace JM.UI.Service.Todo
 
         public Task<TodoDashboardDTO> GetDashboard(
             int? status, int? flag, string? search, bool mineOnly,
-            bool overdueOnly, bool dueTodayOnly, int page, int pageSize)
-            => _repository.GetDashboard(status, flag, search, mineOnly, overdueOnly, dueTodayOnly, page, pageSize);
+            bool overdueOnly, bool dueTodayOnly, int page, int pageSize, int? storeId = null)
+            => _repository.GetDashboard(status, flag, search, mineOnly, overdueOnly, dueTodayOnly, page, pageSize, storeId);
 
         public Task<TodoTaskDetailDTO?> GetTask(int taskId) => _repository.GetTask(taskId);
+
+        public Task<TodoReadStateDTO> MarkRead(int taskId) => _repository.MarkRead(taskId);
 
         public Task<TodoResultDTO> CreateTask(TodoTaskSaveDTO dto) => _repository.CreateTask(dto);
 
@@ -41,8 +43,8 @@ namespace JM.UI.Service.Todo
         public Task<TodoPagedDTO<TodoDeletedTaskDTO>> GetDeleted(int page, int pageSize)
             => _repository.GetDeleted(page, pageSize);
 
-        public Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize)
-            => _repository.GetActivity(userId, page, pageSize);
+        public Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize, string? action = null)
+            => _repository.GetActivity(userId, page, pageSize, action);
 
         public Task LogSignIn() => _repository.LogSignIn();
     }

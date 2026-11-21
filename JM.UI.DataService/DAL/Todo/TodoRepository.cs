@@ -55,7 +55,7 @@ namespace JM.UI.DataService.DAL.Todo
 
         public async Task<TodoDashboardDTO> GetDashboard(
             int? status, int? flag, string? search, bool mineOnly,
-            bool overdueOnly, bool dueTodayOnly, int page, int pageSize)
+            bool overdueOnly, bool dueTodayOnly, int page, int pageSize, int? storeId = null)
         {
             try
             {
@@ -67,6 +67,7 @@ namespace JM.UI.DataService.DAL.Todo
                 q.Add($"mineOnly={mineOnly.ToString().ToLowerInvariant()}");
                 q.Add($"overdueOnly={overdueOnly.ToString().ToLowerInvariant()}");
                 q.Add($"dueTodayOnly={dueTodayOnly.ToString().ToLowerInvariant()}");
+                if (storeId.HasValue) q.Add($"storeId={storeId.Value}");
                 q.Add($"page={page}");
                 q.Add($"pageSize={pageSize}");
                 url += "?" + string.Join("&", q);
@@ -99,8 +100,23 @@ namespace JM.UI.DataService.DAL.Todo
             }
         }
 
-        public async Task<TodoPagedDTO<TodoDeletedTaskDTO>> GetDeleted(int page, int pageSize)
+        public async Task<TodoReadStateDTO> MarkRead(int taskId)
         {
+            try
+            {
+                var client = GetAuthenticatedClient("MainApi");
+                var response = await client.PostAsync($"api/Todo/read/{taskId}", null);
+                var result = await response.Content.ReadFromJsonAsync<TodoReadStateDTO>();
+                return result ?? new TodoReadStateDTO { Success = response.IsSuccessStatusCode };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking To-Do task {TaskId} as read", taskId);
+                return new TodoReadStateDTO { Success = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<TodoPagedDTO<TodoDeletedTaskDTO>> GetDeleted(int page, int pageSize)        {
             try
             {
                 var client = GetAuthenticatedClient("MainApi");
@@ -116,12 +132,13 @@ namespace JM.UI.DataService.DAL.Todo
             }
         }
 
-        public async Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize)
+        public async Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize, string? action = null)
         {
             try
             {
                 var url = $"api/Todo/activity?page={page}&pageSize={pageSize}";
                 if (userId.HasValue) url += $"&userId={userId.Value}";
+                if (!string.IsNullOrWhiteSpace(action)) url += $"&action={Uri.EscapeDataString(action)}";
 
                 var client = GetAuthenticatedClient("MainApi");
                 var response = await client.GetAsync(url);

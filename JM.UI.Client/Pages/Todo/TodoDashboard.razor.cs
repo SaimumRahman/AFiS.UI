@@ -33,6 +33,7 @@ public partial class TodoDashboardComponent : PosComponentBase
     protected string SearchText { get; set; } = string.Empty;
     protected int? StatusFilter { get; set; }
     protected int? FlagFilter { get; set; }
+    protected int? BranchFilter { get; set; }
     protected bool MineOnly { get; set; }
     protected bool OverdueOnly { get; set; }
     protected bool DueTodayOnly { get; set; }
@@ -53,10 +54,18 @@ public partial class TodoDashboardComponent : PosComponentBase
     // ── Activity log (Admin) ──
     protected List<TodoActivityLogDTO> ActivityItems { get; set; } = new();
     protected int? ActivityUserId { get; set; }
+    protected string ActivityAction { get; set; } = "all";
     protected int ActivityPage { get; set; } = 1;
     protected int ActivityTotalCount { get; set; }
     protected int ActivityTotalPages { get; set; }
     protected bool ActivityLoading { get; set; }
+
+    protected List<ActivityActionOption> ActivityActionOptions { get; } = new()
+    {
+        new ActivityActionOption { Value = "all", Text = "All activity" },
+        new ActivityActionOption { Value = "signin", Text = "Sign-in log only" },
+        new ActivityActionOption { Value = "update", Text = "Updates only" }
+    };
 
     // ── Misc ──
     protected bool IsLoading { get; set; }
@@ -95,7 +104,8 @@ public partial class TodoDashboardComponent : PosComponentBase
         {
             var search = string.IsNullOrWhiteSpace(SearchText) ? null : SearchText.Trim();
             Dashboard = await _serviceUnitOfWork.TodoService.GetDashboard(
-                StatusFilter, FlagFilter, search, MineOnly, OverdueOnly, DueTodayOnly, PageNumber, PageSize);
+                StatusFilter, FlagFilter, search, MineOnly, OverdueOnly, DueTodayOnly,
+                PageNumber, PageSize, BranchFilter);
         }
         catch (Exception ex)
         {
@@ -137,7 +147,8 @@ public partial class TodoDashboardComponent : PosComponentBase
         ActivityLoading = true;
         try
         {
-            var page = await _serviceUnitOfWork.TodoService.GetActivity(ActivityUserId, ActivityPage, 50);
+            var page = await _serviceUnitOfWork.TodoService.GetActivity(
+                ActivityUserId, ActivityPage, 50, ActivityAction);
             ActivityItems = page.Items ?? new();
             ActivityTotalCount = page.TotalCount;
             ActivityTotalPages = page.TotalPages;
@@ -166,6 +177,7 @@ public partial class TodoDashboardComponent : PosComponentBase
         SearchText = string.Empty;
         StatusFilter = null;
         FlagFilter = null;
+        BranchFilter = null;
         MineOnly = false;
         OverdueOnly = false;
         DueTodayOnly = false;
@@ -242,7 +254,6 @@ public partial class TodoDashboardComponent : PosComponentBase
         ActivityPage = 1;
         await LoadActivity();
     }
-
     protected async Task GoToActivityPage(int page)
     {
         ActivityPage = page < 1 ? 1 : page;
@@ -278,7 +289,7 @@ public partial class TodoDashboardComponent : PosComponentBase
 
     protected async Task OpenTask(TodoTaskListItemDTO task)
     {
-        var changed = await dialogService.OpenAsync<TodoDetailDialog>(
+        await dialogService.OpenAsync<TodoDetailDialog>(
             "Task Details",
             new Dictionary<string, object>
             {
@@ -293,10 +304,9 @@ public partial class TodoDashboardComponent : PosComponentBase
                 ShowClose = true
             });
 
-        if (changed is bool ok && ok)
-        {
-            await ReloadCurrentView();
-        }
+        // Always reload: opening a task writes a read receipt, so the NEW badge has
+        // to disappear even when nothing else in the dialog changed.
+        await ReloadCurrentView();
     }
 
     protected async Task QuickReopen(TodoTaskListItemDTO task)
@@ -313,9 +323,29 @@ public partial class TodoDashboardComponent : PosComponentBase
         }
     }
 
-    protected async Task Restore(TodoDeletedTaskDTO row)
+    /// <summary>
+    /// Read-only preview of a deleted task, straight from the archive (the task
+    /// itself stays deleted — nothing is restored by viewing it).
+    /// </summary>
+    protected async Task ViewDeleted(TodoDeletedTaskDTO row)
     {
-        var confirmed = await dialogService.Confirm(
+        await dialogService.OpenAsync<TodoDeletedViewDialog>(
+            "Deleted task — read only",
+            new Dictionary<string, object>
+            {
+                { nameof(TodoDeletedViewDialog.Task), row }
+            },
+            new DialogOptions
+            {
+                Width = "760px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = true
+            });
+    }
+
+    protected async Task Restore(TodoDeletedTaskDTO row)
+    {        var confirmed = await dialogService.Confirm(
             $"Restore \"{row.Title}\" back to the task list?", "Restore task",
             new ConfirmOptions { OkButtonText = "Restore", CancelButtonText = "Cancel" });
 
@@ -398,6 +428,12 @@ public partial class TodoDashboardComponent : PosComponentBase
     protected class StatusOption
     {
         public int? Value { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+
+    protected class ActivityActionOption
+    {
+        public string Value { get; set; } = "all";
         public string Text { get; set; } = string.Empty;
     }
 }

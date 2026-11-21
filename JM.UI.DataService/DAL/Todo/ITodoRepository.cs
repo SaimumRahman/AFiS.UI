@@ -11,9 +11,11 @@ namespace JM.UI.DataService.DAL.Todo
 
         Task<TodoDashboardDTO> GetDashboard(
             int? status, int? flag, string? search, bool mineOnly,
-            bool overdueOnly, bool dueTodayOnly, int page, int pageSize);
+            bool overdueOnly, bool dueTodayOnly, int page, int pageSize, int? storeId = null);
 
         Task<TodoTaskDetailDTO?> GetTask(int taskId);
+
+        Task<TodoReadStateDTO> MarkRead(int taskId);
 
         Task<TodoResultDTO> CreateTask(TodoTaskSaveDTO dto);
         Task<TodoResultDTO> UpdateTask(TodoTaskSaveDTO dto);
@@ -24,7 +26,7 @@ namespace JM.UI.DataService.DAL.Todo
         Task<TodoResultDTO> RestoreTask(int deletedTaskId);
 
         Task<TodoPagedDTO<TodoDeletedTaskDTO>> GetDeleted(int page, int pageSize);
-        Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize);
+        Task<TodoPagedDTO<TodoActivityLogDTO>> GetActivity(int? userId, int page, int pageSize, string? action = null);
 
         Task LogSignIn();
     }

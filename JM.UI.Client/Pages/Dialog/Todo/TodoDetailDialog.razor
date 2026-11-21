@@ -78,6 +78,20 @@
     .tvd-error { font-size: 12px; color: #dc3545; font-weight: 600; }
     .tvd-empty { font-size: 12px; color: #6c7480; font-style: italic; }
     .tvd-history-row { font-size: 12px; color: #495057; padding: 4px 0; border-bottom: 1px dashed #e9ecef; }
+
+    .tvd-read {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 1px;
+        font-size: 12px;
+        padding: 5px 9px;
+        border-radius: 8px;
+        background: #eef7fb;
+        border: 1px solid #cde6f0;
+        color: #12586f;
+    }
+
+    .tvd-read-meta { font-size: 10.5px; color: #6c7480; }
 </style>
 
 <div class="tvd-wrap">
@@ -182,6 +196,34 @@
                     }
                 </div>
             </div>
+        </div>
+
+        <!-- ── Read receipts ── -->
+        <div>
+            <div class="tvd-section-title">
+                <RadzenIcon Icon="drafts" /> Read by
+                <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#6c7480;font-size:11px;">
+                    (@(Detail.ReadBy?.Count ?? 0) user(s) opened this task)
+                </span>
+            </div>
+            @if (Detail.ReadBy == null || Detail.ReadBy.Count == 0)
+            {
+                <div class="tvd-empty">Nobody has opened this task yet.</div>
+            }
+            else
+            {
+                <div class="tvd-chips">
+                    @foreach (var read in Detail.ReadBy)
+                    {
+                        <span class="tvd-read" title="User #@read.UserId">
+                            <TodoPersonLabel Name="@read.UserName"
+                                             Designation="@read.DesignationName"
+                                             Branch="@read.BranchName" />
+                            <span class="tvd-read-meta">#@read.UserId · @Format(read.ReadAtLocal)</span>
+                        </span>
+                    }
+                </div>
+            }
         </div>
 
         <!-- ── Post an update ── -->
@@ -309,6 +351,19 @@
             }
 
             Detail = detail;
+
+            // Opening the task writes the caller's read receipt (once). Failure here
+            // must never stop the task from opening, so it is best-effort.
+            try
+            {
+                var read = await _serviceUnitOfWork.TodoService.MarkRead(TaskId);
+                if (read != null && read.Success)
+                {
+                    Detail.ReadBy = read.ReadBy ?? new List<TodoReadReceiptDTO>();
+                    Detail.Task.IsNew = false;
+                }
+            }
+            catch { /* read tracking is not worth blocking the dialog */ }
         }
         catch (Exception ex)
         {

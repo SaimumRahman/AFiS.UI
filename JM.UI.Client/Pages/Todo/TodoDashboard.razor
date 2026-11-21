@@ -202,6 +202,28 @@
 
     .td-meta-overdue { color: #dc3545; font-weight: 600; }
 
+    /* ── NEW tag ── */
+    .td-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #fff;
+        background: #dc3545;
+        border-radius: 4px;
+        padding: 2px 7px;
+        box-shadow: 0 1px 3px rgba(220,53,69,.35);
+        animation: td-new-pulse 1.6s ease-in-out infinite;
+    }
+
+    @@keyframes td-new-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .68; }
+    }
+
     .td-actions {
         display: flex;
         flex-direction: column;
@@ -312,6 +334,14 @@
                             Placeholder="All priorities" Style="width:100%"
                             Change="@((object v) => ApplyFilters())" />
         </div>
+
+        <div class="td-field">
+            <label>Branch</label>
+            <RadzenDropDown @bind-Value="BranchFilter" TValue="int?" Data="@Lookups.Stores"
+                            TextProperty="Name" ValueProperty="Id" AllowClear="true"
+                            Placeholder="All branches" Style="width:100%"
+                            Change="@((object v) => ApplyFilters())" />
+        </div>
 @* 
         <div class="td-checks">
             <RadzenCheckBox @bind-Value="MineOnly" TValue="bool" Text="My tasks"
@@ -375,6 +405,10 @@
                     <div class="td-stripe @StripeClass(task.Flag)"></div>
                     <div class="td-body">
                         <div class="td-head">
+                            @if (task.IsNew)
+                            {
+                                <span class="td-new" title="You have not opened this task yet">New</span>
+                            }
                             <span class="td-name @(task.Status == 1 ? "td-name-done" : "")">@task.Title</span>
                             <RadzenBadge Text="@task.FlagName" BadgeStyle="@FlagBadgeStyle(task.Flag)" />
                             @if (task.IsPrivate)
@@ -506,13 +540,17 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="" Width="110px" Sortable="false" Filterable="false">
+                    <RadzenDataGridColumn TItem="TodoDeletedTaskDTO" Title="" Width="190px" Sortable="false" Filterable="false">
                         <Template Context="row">
-                            @if (!row.IsRestored)
-                            {
-                                <RadzenButton Icon="restore" Text="Restore" ButtonStyle="ButtonStyle.Primary"
-                                              Size="ButtonSize.Small" Click="@(() => Restore(row))" />
-                            }
+                            <div style="display:flex;gap:6px;">
+                                <RadzenButton Icon="visibility" Text="View" ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small" Click="@(() => ViewDeleted(row))" />
+                                @if (!row.IsRestored)
+                                {
+                                    <RadzenButton Icon="restore" Text="Restore" ButtonStyle="ButtonStyle.Primary"
+                                                  Size="ButtonSize.Small" Click="@(() => Restore(row))" />
+                                }
+                            </div>
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -538,6 +576,13 @@
             </div>
 
             <div class="td-filters" style="margin-bottom:12px;">
+                <div class="td-field">
+                    <label>Log type</label>
+                    <RadzenDropDown @bind-Value="ActivityAction" TValue="string" Data="@ActivityActionOptions"
+                                    TextProperty="Text" ValueProperty="Value" AllowClear="false"
+                                    Style="width:200px;"
+                                    Change="@((object v) => ApplyActivityFilter())" />
+                </div>
                 <div class="td-field">
                     <label>User</label>
                     <RadzenDropDown @bind-Value="ActivityUserId" TValue="int?" Data="@Lookups.Users"

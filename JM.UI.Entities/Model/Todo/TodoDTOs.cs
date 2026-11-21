@@ -64,6 +64,12 @@ namespace JM.UI.Entities.Model.Todo
         public bool CanEdit { get; set; }
         public bool CanSeeEditHistory { get; set; }
 
+        /// <summary>True until the caller opens the task (the NEW badge).</summary>
+        public bool IsNew { get; set; }
+
+        /// <summary>Number of users who have opened the task.</summary>
+        public int ReadCount { get; set; }
+
         // Bangladesh wall-clock values computed by the API payload (the server
         // always sends the *AtLocal fields), with a local fallback so a missing
         // field never renders as year 1.
@@ -139,6 +145,26 @@ namespace JM.UI.Entities.Model.Todo
         public List<TodoEditLogDTO> EditHistory { get; set; } = new();
         public bool CanEdit { get; set; }
         public bool CanSeeEditHistory { get; set; }
+        public List<TodoReadReceiptDTO> ReadBy { get; set; } = new();
+    }
+
+    public class TodoReadReceiptDTO
+    {
+        public int UserId { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string DesignationName { get; set; } = string.Empty;
+        public string BranchName { get; set; } = string.Empty;
+        public DateTime ReadAtUtc { get; set; }
+        public DateTime ReadAtLocal { get; set; }
+    }
+
+    public class TodoReadStateDTO
+    {
+        public bool Success { get; set; }
+        public bool Forbidden { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public bool IsNew { get; set; }
+        public List<TodoReadReceiptDTO> ReadBy { get; set; } = new();
     }
 
     public class TodoActivityLogDTO

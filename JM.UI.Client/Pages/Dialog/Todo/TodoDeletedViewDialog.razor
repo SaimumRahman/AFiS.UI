@@ -1,0 +1,303 @@
+@using JM.UI.Entities.Model.Todo
+@using System.Text.Json
+@inject DialogService DialogService
+
+@*
+    Read-only preview of an archived (deleted) task.
+
+    The task is shown exactly as it was when it was deleted — nothing is restored,
+    nothing is written. The item lines under "Updates" and "Edit history" come from
+    the snapshot JSON captured at delete time, so later changes cannot leak in.
+*@
+
+<style>
+    .tdv-wrap { display: flex; flex-direction: column; gap: 14px; }
+
+    .tdv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .tdv-title { font-size: 1.1rem; font-weight: 700; color: #212529; overflow-wrap: anywhere; }
+
+    .tdv-banner {
+        display: flex; align-items: center; gap: 8px;
+        background: #fff8e1; border: 1px solid #ffe0a3; color: #7a5200;
+        border-radius: 8px; padding: 8px 12px; font-size: 12px;
+    }
+
+    .tdv-details {
+        font-size: 13px; color: #495057; white-space: pre-wrap; overflow-wrap: anywhere;
+        background: #fbfcfd; border: 1px solid #e3e7ec; border-radius: 8px; padding: 10px 12px;
+    }
+
+    .tdv-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px 18px; border-top: 1px dashed #e3e7ec; border-bottom: 1px dashed #e3e7ec;
+        padding: 12px 0;
+    }
+
+    .tdv-label {
+        display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .05em; color: #6c7480;
+    }
+
+    .tdv-value { font-size: 13px; color: #212529; overflow-wrap: anywhere; }
+
+    .tdv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tdv-chip {
+        font-size: 11px; padding: 2px 8px; border-radius: 10px;
+        background: #eef2f7; border: 1px solid #dbe2ec; color: #33415c;
+    }
+
+    .tdv-section-title {
+        font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+        color: #33415c; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    }
+
+    .tdv-timeline { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+
+    .tdv-entry {
+        border-left: 3px solid #cbd5e1; background: #fbfcfd; border-radius: 0 6px 6px 0;
+        padding: 8px 10px;
+    }
+
+    .tdv-entry-head { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #6c7480; }
+    .tdv-entry-user { font-weight: 700; color: #33415c; }
+    .tdv-entry-text { font-size: 13px; color: #212529; margin-top: 3px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .tdv-history-row { font-size: 12px; color: #495057; padding: 4px 0; border-bottom: 1px dashed #e9ecef; }
+
+    .tdv-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e3e7ec; padding-top: 12px; }
+    .tdv-empty { font-size: 12px; color: #6c7480; font-style: italic; }
+</style>
+
+<div class="tdv-wrap">
+    @if (Task == null)
+    {
+        <div class="tdv-empty">No task selected.</div>
+    }
+    else
+    {
+        <div class="tdv-banner">
+            <RadzenIcon Icon="lock_outline" />
+            Read-only archive copy. Viewing does not restore the task — use Restore for that.
+        </div>
+
+        <div class="tdv-head">
+            <span class="tdv-title">@Task.Title</span>
+            <RadzenBadge Text="@Task.FlagName" BadgeStyle="@FlagBadgeStyle(Task.Flag)" />
+            @if (Task.IsPrivate)
+            {
+                <RadzenBadge Text="Private" BadgeStyle="BadgeStyle.Light" />
+            }
+            @if (Task.IsRestored)
+            {
+                <RadzenBadge Text="Restored" BadgeStyle="BadgeStyle.Success" />
+            }
+            else
+            {
+                <RadzenBadge Text="Deleted" BadgeStyle="BadgeStyle.Danger" />
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Task.Details))
+        {
+            <div class="tdv-details">@Task.Details</div>
+        }
+        else
+        {
+            <div class="tdv-empty">No details were written for this task.</div>
+        }
+
+        <div class="tdv-grid">
+            <div>
+                <span class="tdv-label">Priority</span>
+                <span class="tdv-value">@Task.FlagName</span>
+            </div>
+            <div>
+                <span class="tdv-label">Status when deleted</span>
+                <span class="tdv-value">@(Task.Status == 1 ? "Completed" : "Open")</span>
+            </div>
+            <div>
+                <span class="tdv-label">Due (BD time)</span>
+                <span class="tdv-value">@(Task.DueAtLocal.HasValue ? Task.DueAtLocal.Value.ToString("dd MMM yyyy, hh:mm tt") : "No due date")</span>
+            </div>
+            <div>
+                <span class="tdv-label">Created by</span>
+                <span class="tdv-value">@Task.CreatedByName<br /><small>@Format(Task.CreatedAtLocal)</small></span>
+            </div>
+            <div>
+                <span class="tdv-label">Deleted by</span>
+                <span class="tdv-value">@Task.DeletedByName<br /><small>@Format(Task.DeletedAtLocal)</small></span>
+            </div>
+            @if (Task.IsRestored && Task.RestoredAtLocal.HasValue)
+            {
+                <div>
+                    <span class="tdv-label">Restored at</span>
+                    <span class="tdv-value">@Format(Task.RestoredAtLocal)</span>
+                </div>
+            }
+            <div>
+                <span class="tdv-label">Original task #</span>
+                <span class="tdv-value">@Task.OriginalTaskId</span>
+            </div>
+            <div>
+                <span class="tdv-label">Audience</span>
+                <span class="tdv-value">@(string.IsNullOrWhiteSpace(Task.AudienceText) ? "-" : Task.AudienceText)</span>
+            </div>
+        </div>
+
+        <div>
+            <div class="tdv-section-title"><RadzenIcon Icon="forum" /> Updates at the time of deletion</div>
+            @if (Snapshot == null)
+            {
+                <div class="tdv-empty">No snapshot was captured for this task.</div>
+            }
+            else if (Snapshot.Updates.Count == 0)
+            {
+                <div class="tdv-empty">No updates were posted on this task.</div>
+            }
+            else
+            {
+                <div class="tdv-timeline">
+                    @foreach (var update in Snapshot.Updates)
+                    {
+                        <div class="tdv-entry">
+                            <div class="tdv-entry-head">
+                                <span class="tdv-entry-user">@update.UserName</span>
+                                <span>@Format(update.AtLocal)</span>
+                            </div>
+                            <div class="tdv-entry-text">@update.Remarks</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Snapshot != null && Snapshot.EditHistory.Count > 0)
+        {
+            <div>
+                <div class="tdv-section-title"><RadzenIcon Icon="manage_history" /> Edit history at the time of deletion</div>
+                @foreach (var edit in Snapshot.EditHistory)
+                {
+                    <div class="tdv-history-row">
+                        <b>@edit.UserName</b> changed <b>@edit.FieldName</b>
+                        from “@edit.OldValue” to “@edit.NewValue”
+                        <span style="color:#6c7480;">· @Format(edit.AtLocal)</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="tdv-actions">
+            <RadzenButton Icon="close" Text="Close" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close(false))" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public TodoDeletedTaskDTO? Task { get; set; }
+
+    private SnapshotModel? Snapshot { get; set; }
+
+    protected override void OnInitialized() => Snapshot = SnapshotModel.Parse(Task?.SnapshotJson);
+
+    private static BadgeStyle FlagBadgeStyle(int flag) => flag switch
+    {
+        3 => BadgeStyle.Danger,
+        2 => BadgeStyle.Warning,
+        _ => BadgeStyle.Light
+    };
+
+    private static string Format(DateTime local)
+        => local == default ? "-" : local.ToString("dd MMM yyyy, hh:mm tt");
+
+    private static string Format(DateTime? local)
+        => local.HasValue ? Format(local.Value) : "-";
+
+    // ── snapshot reader ──────────────────────────────────────────────────────
+    // The API stores { Task, Audience, Updates, EditHistory } as JSON at delete
+    // time. Only the two collections are read here; everything else comes from
+    // the deleted-task row itself.
+
+    public class SnapshotModel
+    {
+        public List<SnapshotUpdate> Updates { get; } = new();
+        public List<SnapshotEdit> EditHistory { get; } = new();
+
+        public static SnapshotModel? Parse(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return null;
+
+            try
+            {
+                var model = new SnapshotModel();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("Updates", out var updates) && updates.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in updates.EnumerateArray())
+                    {
+                        model.Updates.Add(new SnapshotUpdate
+                        {
+                            UserName = Str(item, "UserName"),
+                            Remarks = Str(item, "Remarks"),
+                            AtLocal = BdTime(Str(item, "CreatedAtUtc"))
+                        });
+                    }
+                }
+
+                if (root.TryGetProperty("EditHistory", out var edits) && edits.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in edits.EnumerateArray())
+                    {
+                        model.EditHistory.Add(new SnapshotEdit
+                        {
+                            UserName = Str(item, "UserName"),
+                            FieldName = Str(item, "FieldName"),
+                            OldValue = Str(item, "OldValue"),
+                            NewValue = Str(item, "NewValue"),
+                            AtLocal = BdTime(Str(item, "CreatedAtUtc"))
+                        });
+                    }
+                }
+
+                return model;
+            }
+            catch
+            {
+                // A malformed snapshot must not break the preview.
+                return null;
+            }
+        }
+
+        private static string Str(JsonElement element, string name)
+            => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+                ? (value.GetString() ?? string.Empty)
+                : string.Empty;
+
+        /// <summary>UTC ISO string → Bangladesh wall-clock time.</summary>
+        private static DateTime BdTime(string utc)
+        {
+            if (string.IsNullOrWhiteSpace(utc)) return default;
+            return DateTime.TryParse(utc, null,
+                System.Globalization.DateTimeStyles.RoundtripKind, out var parsed)
+                ? parsed.ToUniversalTime().AddHours(6)
+                : default;
+        }
+    }
+
+    public class SnapshotUpdate
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
+        public DateTime AtLocal { get; set; }
+    }
+
+    public class SnapshotEdit
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string FieldName { get; set; } = string.Empty;
+        public string OldValue { get; set; } = string.Empty;
+        public string NewValue { get; set; } = string.Empty;
+        public DateTime AtLocal { get; set; }
+    }
+}
