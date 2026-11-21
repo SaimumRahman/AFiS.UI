@@ -194,58 +194,61 @@
             </RadzenRow>
         </RadzenCard>
 
-        <!-- ══════════════════════ TRANSACTIONS ══════════════════════ -->
+        <!-- ══════════════════════ SUMMARY (per cashier) ══════════════════════ -->
         <RadzenCard class="mb-4">
             <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="mb-2">
                 <RadzenColumn Size="12" SizeMD="6">
-                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Transactions</RadzenText>
-                </RadzenColumn>
-                <RadzenColumn Size="12" SizeMD="4">
-                    <RadzenTextBox @bind-Value="SearchText" Placeholder="Filter invoice / customer / method / status"
-                                   Style="width:100%" />
+                    <RadzenText TextStyle="TextStyle.H6" class="mb-0">Summary (per cashier)</RadzenText>
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenDataGrid @ref="TransactionsGrid"
-                            Data="@Transactions"
-                            TItem="CounterTransactionDTO"
-                            AllowFiltering="true"
+                            Data="@SummaryRows"
+                            TItem="CounterClosingSummaryRowDTO"
                             AllowColumnResize="true"
                             AllowAlternatingRows="true"
                             AllowPaging="true"
                             AllowSorting="true"
                             PageSize="15"
-                            FilterMode="FilterMode.Advanced"
                             ShowPagingSummary="true"
                             IsLoading="@IsLoading"
                             GridLines="DataGridGridLines.Both"
                             Density="Density.Compact">
 
                 <Columns>
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="CreatedDate" Title="Time"
-                                          Width="130px" FormatString="{0:dd-MMM HH:mm}" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="InvoiceNo" Title="Invoice" Width="150px" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Title="Type" Width="100px" Filterable="false">
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="ServedBy" Title="Served by" Width="120px" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="BusinessDate" Title="Date"
+                                          Width="110px" FormatString="{0:dd-MMM-yyyy}" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="CashierName" Title="Cashier Name" Width="150px" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="PosSale" Title="POS Sale"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="Booking" Title="Booking"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="Discount" Title="Discount"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}">
                         <Template Context="row">
-                            <span style="color:@TransactionTypeColor(row.TransactionType); font-weight:600;">@row.TransactionType</span>
+                            <span style="color:#c62828; font-weight:600;">@row.Discount.ToString("N2")</span>
                         </Template>
                     </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="CustomerName" Title="Customer" Width="150px" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="PaymentMethod" Title="Payment" Width="150px" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="TotalBill" Title="Bill"
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="NetTotal" Title="NET Total"
                                           Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="PaidAmount" Title="Paid"
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="Mfs" Title="MFS"
                                           Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
-
-                    <RadzenDataGridColumn TItem="CounterTransactionDTO" Property="Status" Title="Status" Width="110px" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="BankPos" Title="BANKPOS"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
+                    <RadzenDataGridColumn TItem="CounterClosingSummaryRowDTO" Property="Cash" Title="CASH"
+                                          Width="110px" TextAlign="TextAlign.Right" FormatString="{0:N2}" />
                 </Columns>
             </RadzenDataGrid>
+
+            @if (Preview?.SummaryRows != null && Preview.SummaryRows.Count > 0)
+            {
+                <div style="margin-top:8px; padding:8px 12px; border-top:2px solid var(--rz-base-500); font-weight:600;">
+                    <RadzenRow JustifyContent="JustifyContent.End" Gap="1rem">
+                        <span>Total: POS @SummaryTotalPos.ToString("N2") · Booking @SummaryTotalBooking.ToString("N2") · Discount @SummaryTotalDiscount.ToString("N2") · NET @SummaryTotalNet.ToString("N2") · MFS @SummaryTotalMfs.ToString("N2") · BANKPOS @SummaryTotalBankPos.ToString("N2") · CASH @SummaryTotalCash.ToString("N2")</span>
+                    </RadzenRow>
+                </div>
+            }
         </RadzenCard>
 
         <!-- ══════════════════════ CASH RECONCILIATION ══════════════════════ -->

@@ -56,6 +56,21 @@ namespace JM.UI.Entities.Model.CounterClosing
         public string? CustomerName { get; set; }
     }
 
+    /// <summary>One cashier row in the counter-closing summary table.</summary>
+    public class CounterClosingSummaryRowDTO
+    {
+        public string ServedBy { get; set; } = string.Empty;
+        public DateTime BusinessDate { get; set; }
+        public string CashierName { get; set; } = string.Empty;
+        public decimal PosSale { get; set; }
+        public decimal Booking { get; set; }
+        public decimal Discount { get; set; }
+        public decimal NetTotal { get; set; }
+        public decimal Mfs { get; set; }
+        public decimal BankPos { get; set; }
+        public decimal Cash { get; set; }
+    }
+
     public class CounterCashMovementDTO
     {
         public string Direction { get; set; } = "OUT"; // IN / OUT
@@ -110,6 +125,7 @@ namespace JM.UI.Entities.Model.CounterClosing
         public List<CounterPaymentSummaryDTO> PaymentSummary { get; set; } = new();
         public List<CounterPaymentSummaryDTO> CashOutSummary { get; set; } = new();
         public List<CounterTransactionDTO> Transactions { get; set; } = new();
+        public List<CounterClosingSummaryRowDTO> SummaryRows { get; set; } = new();
         public List<CounterCashMovementDTO> CashMovements { get; set; } = new();
     }
 

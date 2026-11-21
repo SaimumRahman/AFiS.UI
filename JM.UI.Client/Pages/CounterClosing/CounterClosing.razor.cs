@@ -17,7 +17,7 @@ namespace JM.UI.Client.Pages.CounterClosing
     {
         [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
 
-        protected RadzenDataGrid<CounterTransactionDTO> TransactionsGrid = default!;
+        protected RadzenDataGrid<CounterClosingSummaryRowDTO> TransactionsGrid = default!;
         protected RadzenDataGrid<CounterClosingDTO> HistoryGrid = default!;
 
         protected List<StoreDTO> Stores = new();
@@ -62,23 +62,16 @@ namespace JM.UI.Client.Pages.CounterClosing
 
         protected decimal PaymentTotal => Preview?.PaymentSummary?.Sum(p => p.Amount) ?? 0;
 
-        protected List<CounterTransactionDTO> Transactions
-        {
-            get
-            {
-                var all = Preview?.Transactions ?? new List<CounterTransactionDTO>();
-                if (string.IsNullOrWhiteSpace(SearchText))
-                    return all;
+        protected List<CounterClosingSummaryRowDTO> SummaryRows
+            => Preview?.SummaryRows ?? new List<CounterClosingSummaryRowDTO>();
 
-                var term = SearchText.Trim();
-                return all.Where(t =>
-                        (t.InvoiceNo?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                        || (t.CustomerName?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                        || (t.PaymentMethod?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                        || (t.Status?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false))
-                    .ToList();
-            }
-        }
+        protected decimal SummaryTotalPos => SummaryRows.Sum(r => r.PosSale);
+        protected decimal SummaryTotalBooking => SummaryRows.Sum(r => r.Booking);
+        protected decimal SummaryTotalDiscount => SummaryRows.Sum(r => r.Discount);
+        protected decimal SummaryTotalNet => SummaryRows.Sum(r => r.NetTotal);
+        protected decimal SummaryTotalMfs => SummaryRows.Sum(r => r.Mfs);
+        protected decimal SummaryTotalBankPos => SummaryRows.Sum(r => r.BankPos);
+        protected decimal SummaryTotalCash => SummaryRows.Sum(r => r.Cash);
 
         /* ── Lifecycle ───────────────────────────────────────────────────────── */
 
