@@ -209,6 +209,16 @@ namespace JM.UI.Client.Pages.Items
             {
                 var file = e.File;
                 if (file == null) return;
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+                var ext = System.IO.Path.GetExtension(file.Name ?? string.Empty).ToLowerInvariant();
+                if (!allowedExtensions.Contains(ext) || !allowedContentTypes.Contains((file.ContentType ?? string.Empty).ToLowerInvariant()))
+                {
+                    notificationService.Notify(NotificationSeverity.Warning, "Invalid File", "Only JPG, JPEG, PNG and WEBP images are allowed.");
+                    return;
+                }
+
                 using var stream = file.OpenReadStream(5 * 1024 * 1024);
                 using var ms = new MemoryStream();
                 await stream.CopyToAsync(ms);

@@ -78,7 +78,7 @@
                         {
                             <img src="@GlobalImageBase64" alt="product" style="max-height:200px; border:1px solid #cbd5e1; border-radius:8px;" />
                         }
-                        <InputFile OnChange="@OnImageSelected" />
+                        <InputFile OnChange="@OnImageSelected" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
                         @if (!string.IsNullOrEmpty(GlobalImageBase64))
                         {
                             <RadzenButton Text="Remove" Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => GlobalImageBase64 = null)" />

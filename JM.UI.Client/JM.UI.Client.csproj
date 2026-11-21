@@ -6,6 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>cf316844-9d34-42f9-a2a7-72a167736c64</UserSecretsId>
 	  <SelfContained>true</SelfContained>
+    <!--
+      .NET 10 injects a "Blazor Hot Reload browser tools" JS module into every web
+      project. It is build-only, so a published site never serves it and the browser
+      console reports: "The following scoped css bundles do not have matching
+      endpoints: _framework/Microsoft.NET.Sdk.BlazorWeb.HotReload#[.{fingerprint}]!.lib.module.js".
+      This site is deployed by copying DLLs and restarted app pools (no browser hot
+      reload), so the browser-tools asset is switched off. Normal C# hot reload and
+      DevTools are unaffected.
+    -->
+    <EnableHotReloadInRuntimeConfigDevFile>false</EnableHotReloadInRuntimeConfigDevFile>
   </PropertyGroup>
 
   <ItemGroup>
