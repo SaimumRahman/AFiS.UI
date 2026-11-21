@@ -44,10 +44,10 @@
                         Density="Density.Compact">
 
             <Columns>
-                <!-- ID -->
-                <RadzenDataGridColumn TItem="CustomerDetailsDTO" Visible="false" Property="Id" Title="ID" Width="80px" Frozen="true" TextAlign="TextAlign.Center">
+                <!-- Customer Id -->
+                <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Id" Title="Customer Id" Width="150px" Frozen="true" TextAlign="TextAlign.Center">
                     <Template Context="item">
-                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"#{item.Id}")" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@($"CUS-{(item.CreatedDate.HasValue ? item.CreatedDate.Value.Year : DateTime.Now.Year)}-{item.Id}")" />
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -64,11 +64,11 @@
                 </RadzenDataGridColumn>
 
                 <!-- Email -->
-                <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Email" Title="Email" Width="220px">
+                @* <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Email" Title="Email" Width="220px">
                     <Template Context="item">
                         @(string.IsNullOrWhiteSpace(item.Email) ? "N/A" : item.Email)
                     </Template>
-                </RadzenDataGridColumn>
+                </RadzenDataGridColumn> *@
 
                 <!-- Phone -->
                 <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Phone" Title="Phone" Width="150px" TextAlign="TextAlign.Center">
@@ -78,13 +78,13 @@
                 </RadzenDataGridColumn>
 
                 <!-- Address -->
-                <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Address" Title="Address" Width="200px">
+              @*   <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="Address" Title="Address" Width="200px">
                     <Template Context="item">
                         <div title="@item.Address">
                             @(string.IsNullOrWhiteSpace(item.Address) ? "N/A" : Truncate(item.Address, 40))
                         </div>
                     </Template>
-                </RadzenDataGridColumn>
+                </RadzenDataGridColumn> *@
 
                 <!-- Member Type ID -->
                 <RadzenDataGridColumn TItem="CustomerDetailsDTO" Property="MemberTypeId" Title="Member Type" Width="130px" TextAlign="TextAlign.Center">
@@ -120,6 +120,13 @@
                 <RadzenDataGridColumn TItem="CustomerDetailsDTO" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Filterable="false" Sortable="false">
                     <Template Context="item">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            <RadzenButton Icon="visibility"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Size="ButtonSize.Small"
+                                          Variant="Variant.Flat"
+                                          Click="@(() => ViewCustomer(item))"
+                                          MouseEnter="@(args => ShowTooltip(args, "View Customer"))" />
+
                             <RadzenButton Icon="edit"
                                           ButtonStyle="ButtonStyle.Info"
                                           Size="ButtonSize.Small"

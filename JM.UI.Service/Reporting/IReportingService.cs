@@ -42,6 +42,7 @@ namespace JM.UI.Service.Reporting
             string? salesmanName = null,
             int? servedByUserId = null);
         Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null);
+        Task<SalesBookingEditResultDTO> UpdateSalesBooking(SalesBookingEditRequestDTO dto);
         Task<CollectionSummaryReportDTO> GetCollectionSummary(
             DateTime? fromDate,
             DateTime? toDate,

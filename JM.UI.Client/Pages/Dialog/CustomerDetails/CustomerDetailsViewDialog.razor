@@ -1,0 +1,84 @@
+@using JM.UI.Entities.Model.CustomerDetails
+@inject DialogService DialogService
+
+<style>
+    .cv-wrap { display:flex; flex-direction:column; gap:14px; }
+    .cv-head { display:flex; align-items:center; gap:12px; }
+    .cv-name { font-size:1.2rem; font-weight:700; color:#212529; }
+    .cv-id { font-size:11px; color:#6c7480; }
+    .cv-section { font-size:12px; font-weight:700; text-transform:uppercase; color:#33415c; margin:8px 0 4px; border-bottom:1px solid #e3e7ec; padding-bottom:4px; }
+    .cv-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:8px 16px; }
+    .cv-row { display:flex; flex-direction:column; }
+    .cv-label { font-size:10px; font-weight:700; text-transform:uppercase; color:#6c7480; }
+    .cv-value { font-size:13px; color:#212529; overflow-wrap:anywhere; }
+    .cv-chip { display:inline-block; font-size:11px; padding:2px 8px; border-radius:10px; background:#eef2f7; border:1px solid #dbe2ec; color:#33415c; margin:2px; }
+    .cv-actions { display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e3e7ec; padding-top:12px; }
+</style>
+
+<div class="cv-wrap">
+    @if (Customer == null)
+    {
+        <div style="color:#6c7480;">No customer selected.</div>
+    }
+    else
+    {
+        <div class="cv-head">
+            <RadzenIcon Icon="person" Style="font-size:2.2rem; color:var(--rz-primary);" />
+            <div>
+                <div class="cv-name">@Customer.Name</div>
+                <div class="cv-id">CUS-@((Customer.CreatedDate.HasValue ? Customer.CreatedDate.Value.Year : DateTime.Now.Year))-@Customer.Id</div>
+            </div>
+            <RadzenBadge Text="@Customer.Status" BadgeStyle="@(Customer.Status == "Active" ? BadgeStyle.Success : BadgeStyle.Light)" Style="margin-left:auto;" />
+        </div>
+
+        <div class="cv-section">Contact</div>
+        <div class="cv-grid">
+            <div class="cv-row"><span class="cv-label">Phone</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.Phone) ? "N/A" : Customer.Phone)</span></div>
+            <div class="cv-row"><span class="cv-label">WhatsApp</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.WhatsApp) ? "N/A" : Customer.WhatsApp)</span></div>
+            <div class="cv-row"><span class="cv-label">Email</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.Email) ? "N/A" : Customer.Email)</span></div>
+        </div>
+
+        <div class="cv-section">Personal</div>
+        <div class="cv-grid">
+            <div class="cv-row"><span class="cv-label">Date of Birth</span><span class="cv-value">@(Customer.DateOfBirth.HasValue ? Customer.DateOfBirth.Value.ToString("dd-MMM-yyyy") : "N/A")</span></div>
+            <div class="cv-row"><span class="cv-label">Anniversary</span><span class="cv-value">@(Customer.Anniversary.HasValue ? Customer.Anniversary.Value.ToString("dd-MMM-yyyy") : "N/A")</span></div>
+            <div class="cv-row"><span class="cv-label">Designation</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.Designation) ? "N/A" : Customer.Designation)</span></div>
+            <div class="cv-row"><span class="cv-label">Employee Id</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.EmployeeId) ? "N/A" : Customer.EmployeeId)</span></div>
+        </div>
+
+        <div class="cv-section">Addresses</div>
+        <div class="cv-grid">
+            <div class="cv-row"><span class="cv-label">Home</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.AddressHome) ? "N/A" : Customer.AddressHome)</span></div>
+            <div class="cv-row"><span class="cv-label">Office</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.AddressOffice) ? "N/A" : Customer.AddressOffice)</span></div>
+            <div class="cv-row"><span class="cv-label">Other</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.AddressOther) ? "N/A" : Customer.AddressOther)</span></div>
+            <div class="cv-row"><span class="cv-label">Default Address</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.DefaultAddressType) ? "N/A" : Customer.DefaultAddressType)</span></div>
+        </div>
+
+        <div class="cv-section">Company & Membership</div>
+        <div class="cv-grid">
+            <div class="cv-row"><span class="cv-label">Company</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.CompanyName) ? "N/A" : Customer.CompanyName) @(string.IsNullOrWhiteSpace(Customer.CompanyCode) ? "" : $"({Customer.CompanyCode})")</span></div>
+            <div class="cv-row"><span class="cv-label">Member Type</span><span class="cv-value">@(string.IsNullOrWhiteSpace(Customer.MembershipType) ? "N/A" : Customer.MembershipType)</span></div>
+            <div class="cv-row"><span class="cv-label">Discount Rate</span><span class="cv-value">@(Customer.DiscountRate.HasValue ? Customer.DiscountRate.Value.ToString() : "N/A")</span></div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Customer.Remarks))
+        {
+            <div class="cv-section">Remarks</div>
+            <div class="cv-value">@Customer.Remarks</div>
+        }
+
+        <div class="cv-section">Audit</div>
+        <div class="cv-grid">
+            <div class="cv-row"><span class="cv-label">Created</span><span class="cv-value">@(Customer.CreatedDate.HasValue ? Customer.CreatedDate.Value.ToString("dd-MMM-yyyy HH:mm") : "N/A")</span></div>
+            <div class="cv-row"><span class="cv-label">Last Modified</span><span class="cv-value">@(Customer.LastModifiedDate != default ? Customer.LastModifiedDate.ToString("dd-MMM-yyyy HH:mm") : "N/A")</span></div>
+        </div>
+
+        <div class="cv-actions">
+            <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close(false))" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public CustomerDetailsDTO? Customer { get; set; }
+}

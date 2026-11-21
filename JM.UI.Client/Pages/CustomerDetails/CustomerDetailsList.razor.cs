@@ -1,3 +1,4 @@
+using JM.UI.Client.Pages.Dialog.CustomerDetails;
 using JM.UI.Entities.Model.CustomerDetails;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
@@ -72,6 +73,23 @@ namespace JM.UI.Client.Pages.CustomerDetails
         protected void EditCustomer(CustomerDetailsDTO customer)
         {
             NavigationManager.NavigateTo($"/CustomerDetailsAdd/{customer.Id}");
+        }
+
+        protected async Task ViewCustomer(CustomerDetailsDTO customer)
+        {
+            await dialogService.OpenAsync<CustomerDetailsViewDialog>(
+                "Customer Details",
+                new Dictionary<string, object>
+                {
+                    { "Customer", customer }
+                },
+                new DialogOptions
+                {
+                    Width = "720px",
+                    Resizable = true,
+                    Draggable = true,
+                    ShowClose = true
+                });
         }
 
         protected async Task DeleteCustomer(CustomerDetailsDTO customer)

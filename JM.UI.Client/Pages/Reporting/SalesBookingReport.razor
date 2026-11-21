@@ -180,6 +180,10 @@
                                 <tr>
                                     <td class="center">
                                         <span class="sb-inv">@inv.InvoiceNo</span>
+                                        @if (CanSelectAnyStore || inv.CreatedDate.Date == DateTime.Today)
+                                        {
+                                            <button class="sb-edit" @onclick="@(() => OpenEditDialog(inv))" title="Edit">✎</button>
+                                        }
                                         <span class="sb-muted">@inv.CreatedDate.ToString("dd MMM yyyy")</span><br />
                                         <span class="sb-muted">@inv.CreatedDate.ToString("HH:mm")</span>
                                         @if (!string.IsNullOrWhiteSpace(inv.ReturnInvoiceNo))
@@ -273,6 +277,10 @@
                                 <tr>
                                     <td class="center">
                                         <span class="sb-bk">@bk.BookingNo</span>
+                                        @if (CanSelectAnyStore || bk.CreatedDate.Date == DateTime.Today)
+                                        {
+                                            <button class="sb-edit" @onclick="@(() => OpenEditDialog(bk))" title="Edit">✎</button>
+                                        }
                                         <span class="sb-muted">@bk.CreatedDate.ToString("dd MMM yyyy")</span><br />
                                         <span class="sb-muted">@bk.CreatedDate.ToString("HH:mm")</span>
                                     </td>

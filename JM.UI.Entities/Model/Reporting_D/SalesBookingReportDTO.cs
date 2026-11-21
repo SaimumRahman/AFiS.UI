@@ -6,8 +6,10 @@ namespace JM.UI.Entities.Model.Reporting_D
     public class SalesBookingLineDTO
     {
         public int KeyId { get; set; }
+        public int LineId { get; set; }
         public string Barcode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
+        public int SalesPersonId { get; set; }
         public string SalesPersonName { get; set; } = string.Empty;
         public string UomName { get; set; } = string.Empty;
         public decimal Qty { get; set; }
@@ -18,9 +20,40 @@ namespace JM.UI.Entities.Model.Reporting_D
         public string ReturnRefNo { get; set; } = string.Empty;
     }
 
+    public class SalesBookingLineEditDTO
+    {
+        public int LineId { get; set; }
+        public int SalesPersonId { get; set; }
+        public string SalesPersonName { get; set; } = string.Empty;
+    }
+
+    public class SalesBookingPaymentEditDTO
+    {
+        public int PayTranId { get; set; }
+        public int TransactionTypeId { get; set; }
+    }
+
+    public class SalesBookingEditRequestDTO
+    {
+        public string Type { get; set; } = "Sale";
+        public int Id { get; set; }
+        public int StoreId { get; set; }
+        public List<SalesBookingLineEditDTO> Lines { get; set; } = new();
+        public List<SalesBookingPaymentEditDTO> Payments { get; set; } = new();
+    }
+
+    public class SalesBookingEditResultDTO
+    {
+        public bool Success { get; set; }
+        public bool Forbidden { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
     public class SalesBookingPaymentDTO
     {
         public int KeyId { get; set; }
+        public int PayTranId { get; set; }
+        public int TransactionTypeId { get; set; }
         public decimal Amount { get; set; }
         public string PaymentMethod { get; set; } = string.Empty;
         public string PaymentType { get; set; } = "Cash";

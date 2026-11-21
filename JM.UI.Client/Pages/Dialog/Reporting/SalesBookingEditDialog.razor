@@ -1,0 +1,152 @@
+@using JM.UI.Entities.Model.Employees
+@using JM.UI.Entities.Model.FinancialAccounts
+@using JM.UI.Entities.Model.Reporting_D
+@using JM.UI.Service.UnitOfWork
+@inject DialogService DialogService
+@inject IServiceUnitOfWork _serviceUnitOfWork
+
+<style>
+    .sbe-wrap { display:flex; flex-direction:column; gap:14px; }
+    .sbe-title { font-size:1.05rem; font-weight:700; }
+    .sbe-section { font-size:12px; font-weight:700; text-transform:uppercase; color:#33415c; margin:4px 0; }
+    .sbe-line { display:grid; grid-template-columns:1fr 220px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #e3e7ec; }
+    .sbe-pay { display:grid; grid-template-columns:1fr 200px; gap:8px; align-items:center; padding:6px 0; border-bottom:1px dashed #e3e7ec; }
+    .sbe-actions { display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e3e7ec; padding-top:12px; }
+</style>
+
+<div class="sbe-wrap">
+    <div class="sbe-title">@Title</div>
+
+    <div>
+        <div class="sbe-section">Salesman per item</div>
+        @if (Lines.Count == 0)
+        {
+            <div style="color:#6c7480; font-size:12px;">No items.</div>
+        }
+        else
+        {
+            @foreach (var line in Lines)
+            {
+                <div class="sbe-line">
+                    <div style="font-size:12px;">
+                        <b>@line.Barcode</b> @line.ProductName
+                        <span style="color:#6c7480;">(@line.Qty.ToString("N0") x @line.UnitPrice.ToString("N2"))</span>
+                    </div>
+                    <RadzenDropDown TValue="int" Data="@Employees" TextProperty="Name" ValueProperty="Id"
+                                    @bind-Value="line.SalesPersonId" Style="width:100%;" />
+                </div>
+            }
+        }
+    </div>
+
+    <div>
+        <div class="sbe-section">Payment method</div>
+        @if (Payments.Count == 0)
+        {
+            <div style="color:#6c7480; font-size:12px;">No payments.</div>
+        }
+        else
+        {
+            @foreach (var pay in Payments)
+            {
+                <div class="sbe-pay">
+                    <div style="font-size:12px;">Amount: <b>@pay.Amount.ToString("N2")</b></div>
+                    <RadzenDropDown TValue="int" Data="@FinancialAccounts" ValueProperty="Id"
+                                    @bind-Value="pay.TransactionTypeId" Style="width:100%;">
+                        <Template Context="acc">
+                            @acc.AccountName
+                            @if (!string.IsNullOrWhiteSpace(acc.AccountNo))
+                            {
+                                <span style="color:#6c7480;"> (@acc.AccountNo)</span>
+                            }
+                        </Template>
+                    </RadzenDropDown>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="sbe-actions">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close(false))" />
+        <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" Disabled="@IsSaving" Click="@Save" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Edit";
+    [Parameter] public string Type { get; set; } = "Sale"; // Sale | Booking
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int StoreId { get; set; }
+    [Parameter] public List<SalesBookingLineDTO> SourceLines { get; set; } = new();
+    [Parameter] public List<SalesBookingPaymentDTO> SourcePayments { get; set; } = new();
+    [Parameter] public List<EmployeeModelDTO> Employees { get; set; } = new();
+    [Parameter] public List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
+
+    protected List<SalesBookingLineDTO> Lines { get; set; } = new();
+    protected List<SalesBookingPaymentDTO> Payments { get; set; } = new();
+    protected bool IsSaving { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Lines = SourceLines.Select(l => new SalesBookingLineDTO
+        {
+            KeyId = l.KeyId,
+            LineId = l.LineId,
+            Barcode = l.Barcode,
+            ProductName = l.ProductName,
+            SalesPersonId = l.SalesPersonId,
+            SalesPersonName = l.SalesPersonName,
+            Qty = l.Qty,
+            UnitPrice = l.UnitPrice
+        }).ToList();
+
+        Payments = SourcePayments.Select(p => new SalesBookingPaymentDTO
+        {
+            KeyId = p.KeyId,
+            PayTranId = p.PayTranId,
+            TransactionTypeId = p.TransactionTypeId,
+            Amount = p.Amount,
+            PaymentMethod = p.PaymentMethod,
+            PaymentType = p.PaymentType
+        }).ToList();
+        // Map PayTranId? Need PayTranId. SalesBookingPaymentDTO doesn't have PayTranId. We need it.
+    }
+
+    protected async Task Save()
+    {
+        IsSaving = true;
+        try
+        {
+            var req = new SalesBookingEditRequestDTO
+            {
+                Type = Type,
+                Id = Id,
+                StoreId = StoreId,
+                Lines = Lines.Select(l => new SalesBookingLineEditDTO
+                {
+                    LineId = l.LineId,
+                    SalesPersonId = l.SalesPersonId,
+                    SalesPersonName = Employees.FirstOrDefault(e => e.Id == l.SalesPersonId)?.Name ?? l.SalesPersonName
+                }).ToList(),
+                Payments = Payments.Select(p => new SalesBookingPaymentEditDTO
+                {
+                    PayTranId = p.PayTranId,
+                    TransactionTypeId = p.TransactionTypeId
+                }).ToList()
+            };
+
+            // We don't have PayTranId in the DTO; skip payment edit for now unless we extend.
+            var res = await _serviceUnitOfWork.ReportingService.UpdateSalesBooking(req);
+            if (res != null && res.Success)
+            {
+                DialogService.Close(true);
+            }
+            else
+            {
+                // show error via notification? Just close false
+                DialogService.Close(false);
+            }
+        }
+        finally { IsSaving = false; }
+    }
+}

@@ -83,6 +83,9 @@ namespace JM.UI.Service.Reporting
         public async Task<IEnumerable<SalesBookingUserDTO>> GetSalesBookingUsers(int? storeId = null)
             => await _repositoryUnitOfWork.ReportingRepository.GetSalesBookingUsers(storeId);
 
+        public async Task<SalesBookingEditResultDTO> UpdateSalesBooking(SalesBookingEditRequestDTO dto)
+            => await _repositoryUnitOfWork.ReportingRepository.UpdateSalesBooking(dto);
+
         public async Task<CollectionSummaryReportDTO> GetCollectionSummary(DateTime? fromDate, DateTime? toDate, int? storeId = null, string? sourceType = null, string? channel = null, string? search = null)
             => await _repositoryUnitOfWork.ReportingRepository.GetCollectionSummary(fromDate, toDate, storeId, sourceType, channel, search);
         public async Task<IEnumerable<SalesmanWiseSummaryDTO>> GetSalesmanWiseSummary(DateTime? fromDate, DateTime? toDate)

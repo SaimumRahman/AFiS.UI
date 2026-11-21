@@ -430,6 +430,22 @@ namespace JM.UI.DataService.DAL.Reporting
                 throw new Exception("Failed to fetch served-by users: " + ex.Message, ex);
             }
         }
+        public async Task<SalesBookingEditResultDTO> UpdateSalesBooking(SalesBookingEditRequestDTO dto)
+        {
+            try
+            {
+                var client = GetAuthenticatedClient("MainApi");
+                var response = await client.PostAsJsonAsync("api/SalesBooking/update", dto);
+                var result = await response.Content.ReadFromJsonAsync<SalesBookingEditResultDTO>();
+                return result ?? new SalesBookingEditResultDTO { Success = response.IsSuccessStatusCode, Message = response.ReasonPhrase ?? "" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating sales/booking from report");
+                return new SalesBookingEditResultDTO { Success = false, Message = ex.Message };
+            }
+        }
+
 
         public async Task<IEnumerable<SalesmanWiseDetailedDTO>> GetSalesmanWiseDetailed(
             DateTime? fromDate, DateTime? toDate, int? storeId = null, string? salesmanName = null)

@@ -1,7 +1,9 @@
 using JM.UI.Entities.Model.Designs;
 using JM.UI.Entities.Model.Employees;
+using JM.UI.Entities.Model.FinancialAccounts;
 using JM.UI.Entities.Model.Groups;
 using JM.UI.Entities.Model.ItemCatalogue;
+using JM.UI.Client.Pages.Dialog.Reporting;
 using JM.UI.Entities.Model.Reporting_D;
 using JM.UI.Entities.Model.Stores;
 using JM.UI.Entities.Model.SubGroups;
@@ -24,6 +26,7 @@ public partial class SalesBookingReportComponent : PosComponentBase
     [Inject] public IServiceUnitOfWork _serviceUnitOfWork { get; set; } = default!;
     [Inject] public SalesBookingReportPdfService SalesBookingReportPdfService { get; set; } = default!;
     [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public DialogService DialogService { get; set; } = default!;
 
     [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
@@ -47,6 +50,7 @@ public partial class SalesBookingReportComponent : PosComponentBase
     protected int? SelectedCatalogueId { get; set; }
 
     protected List<EmployeeModelDTO> Employees { get; set; } = new();
+    protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
     protected string? SelectedSalesmanName { get; set; }
 
     protected List<SalesBookingUserDTO> Users { get; set; } = new();
@@ -108,6 +112,7 @@ public partial class SalesBookingReportComponent : PosComponentBase
         await Task.WhenAll(LoadGroups(), LoadSubGroups(), LoadDesigns(), LoadCatalogues());
         await LoadServedByUsers();
         await LoadEmployees();
+        await LoadFinancialAccounts();
 
         if (!CanSelectAnyStore)
             SelectedStoreId = UserStoreId > 0 ? UserStoreId : Stores.FirstOrDefault()?.Id;
@@ -192,6 +197,63 @@ public partial class SalesBookingReportComponent : PosComponentBase
                 Employees = (await _serviceUnitOfWork.EmployeeService.GetEmployees())?.ToList() ?? new();
         }
         catch { Employees = new(); }
+    }
+
+    protected async Task LoadFinancialAccounts()
+    {
+        try
+        {
+            var storeId = SelectedStoreId ?? (UserStoreId > 0 ? UserStoreId : (int?)null);
+            FinancialAccounts = (await _serviceUnitOfWork.FinancialAccountsService.GetFinancialAccountsForDropdown(storeId))?.ToList() ?? new();
+        }
+        catch { FinancialAccounts = new(); }
+    }
+
+    protected async Task OpenEditDialog(SalesBookingInvoiceDTO inv)
+    {
+        if (!CanSelectAnyStore && inv.CreatedDate.Date != DateTime.Today)
+        {
+            // toast
+            return;
+        }
+        await DialogService.OpenAsync<SalesBookingEditDialog>(
+            "Edit Invoice",
+            new Dictionary<string, object>
+            {
+                { "Title", $"Edit {inv.InvoiceNo}" },
+                { "Type", "Sale" },
+                { "Id", inv.SaleMasterId },
+                { "StoreId", inv.StoreId },
+                { "SourceLines", inv.Lines },
+                { "SourcePayments", inv.Payments },
+                { "Employees", Employees },
+                { "FinancialAccounts", FinancialAccounts }
+            },
+            new DialogOptions { Width = "640px", Resizable = true, Draggable = true, ShowClose = true });
+        await Generate();
+    }
+
+    protected async Task OpenEditDialog(SalesBookingBookingDTO bk)
+    {
+        if (!CanSelectAnyStore && bk.CreatedDate.Date != DateTime.Today)
+        {
+            return;
+        }
+        await DialogService.OpenAsync<SalesBookingEditDialog>(
+            "Edit Booking",
+            new Dictionary<string, object>
+            {
+                { "Title", $"Edit {bk.BookingNo}" },
+                { "Type", "Booking" },
+                { "Id", bk.BookingMasterId },
+                { "StoreId", bk.StoreId },
+                { "SourceLines", bk.Lines },
+                { "SourcePayments", bk.Payments },
+                { "Employees", Employees },
+                { "FinancialAccounts", FinancialAccounts }
+            },
+            new DialogOptions { Width = "640px", Resizable = true, Draggable = true, ShowClose = true });
+        await Generate();
     }
 
     protected async Task LoadServedByUsers()
