@@ -46,6 +46,51 @@
     </div>
 </RadzenCard>
 
+<!-- Petty Cash Refill Card -->
+<RadzenCard class="p-3 mb-3">
+    <RadzenText TextStyle="TextStyle.H6">Transfer Cash to Petty Cash</RadzenText>
+    <RadzenText TextStyle="TextStyle.Caption" Style="color:#64748b" class="mb-3">
+        Top up Petty Cash from Branch Cash up to the configured limit.
+    </RadzenText>
+    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+        <div style="min-width:220px">
+            <label class="rz-mb-1 d-block">Branch</label>
+            <RadzenDropDown @bind-Value="RefillStoreId"
+                            Data="@Stores"
+                            TextProperty="Name"
+                            ValueProperty="Id"
+                            Style="width:100%"
+                            Change="@(async (object _) => await OnRefillStoreChanged())" />
+        </div>
+        <div style="min-width:160px">
+            <label class="rz-mb-1 d-block">Available Cash in Hand</label>
+            <div style="padding:8px 12px;border:1px solid var(--rz-border);border-radius:4px;font-weight:700">@CashBalance.ToString("N2")</div>
+        </div>
+        <div style="min-width:160px">
+            <label class="rz-mb-1 d-block">Current Petty Cash</label>
+            <div style="padding:8px 12px;border:1px solid var(--rz-border);border-radius:4px;font-weight:700">@PettyBalance.ToString("N2")</div>
+        </div>
+        <div style="min-width:120px">
+            <label class="rz-mb-1 d-block">Cap</label>
+            <div style="padding:8px 12px;border:1px solid var(--rz-border);border-radius:4px;font-weight:700">@(PettyCap > 0 ? PettyCap.ToString("N2") : "No cap")</div>
+        </div>
+        <div style="min-width:160px">
+            <label class="rz-mb-1 d-block">Transfer Amount (BDT)</label>
+            <RadzenNumeric @bind-Value="RefillAmount" Min="0" Style="width:100%" />
+        </div>
+        <div style="min-width:200px;flex:1">
+            <label class="rz-mb-1 d-block">Remarks</label>
+            <RadzenTextBox @bind-Value="RefillRemarks" Placeholder="Petty cash top-up" Style="width:100%" />
+        </div>
+        <RadzenButton Text="Transfer to Petty Cash"
+                      Icon="swap_vert"
+                      ButtonStyle="ButtonStyle.Success"
+                      Disabled="@IsRefilling"
+                      IsBusy="@IsRefilling"
+                      Click="@RefillPettyCash" />
+    </div>
+</RadzenCard>
+
 <!-- Grid Card -->
 <RadzenCard class="p-3">
     @if (IsLoading)

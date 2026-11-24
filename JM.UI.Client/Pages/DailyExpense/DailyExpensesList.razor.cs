@@ -3,6 +3,7 @@ using JM.UI.Client.Pages.Dialog.DailyExpense;
 using JM.UI.Entities.Model.DailyExpense;
 using JM.UI.Entities.Model.FinancialAccounts;
 using JM.UI.Entities.Model.Stores;
+using JM.UI.Entities.Model.Treasury;
 using JM.UI.Service.UnitOfWork;
 using JM.UIWeb.CustomBase;
 using Microsoft.AspNetCore.Components;
@@ -29,6 +30,15 @@ namespace JM.UI.Client.Pages.DailyExpense
         protected int UserId { get; set; }
         protected bool IsLoading { get; set; }
 
+        // ── Petty cash refill ────────────────────────────────────────────────
+        protected int RefillStoreId { get; set; }
+        protected decimal RefillAmount { get; set; }
+        protected string RefillRemarks { get; set; } = string.Empty;
+        protected bool IsRefilling { get; set; }
+        protected decimal CashBalance { get; set; }
+        protected decimal PettyBalance { get; set; }
+        protected decimal PettyCap { get; set; }
+
         protected decimal TotalAmount => Expenses.Sum(x => x.Amount);
 
         protected override async Task OnInitializedAsync()
@@ -36,6 +46,11 @@ namespace JM.UI.Client.Pages.DailyExpense
             await TokenService.InitializeTokenAsync();
             UserId = await GetLocalStorageInt("UserId");
             await LoadLookups();
+
+            RefillStoreId = await GetLocalStorageInt("StoreId");
+            if (RefillStoreId <= 0) RefillStoreId = Stores.FirstOrDefault()?.Id ?? 0;
+            await LoadRefillBalances();
+
             await LoadExpenses();
         }
 
@@ -85,6 +100,80 @@ namespace JM.UI.Client.Pages.DailyExpense
             finally
             {
                 IsLoading = false;
+                StateHasChanged();
+            }
+        }
+
+        private async Task LoadRefillBalances()
+        {
+            if (RefillStoreId <= 0)
+            {
+                CashBalance = 0; PettyBalance = 0; PettyCap = 0;
+                return;
+            }
+            try
+            {
+                var drawer = await _serviceUnitOfWork.DailyExpenseService.GetAvailableCash(RefillStoreId, 0, isPettyCash: false);
+                var petty = await _serviceUnitOfWork.DailyExpenseService.GetAvailableCash(RefillStoreId, 0, isPettyCash: true);
+                CashBalance = drawer?.AvailableCash ?? 0m;
+                PettyBalance = petty?.AvailableCash ?? 0m;
+                PettyCap = Stores.FirstOrDefault(s => s.Id == RefillStoreId)?.PettyCashLimit ?? 0m;
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            }
+        }
+
+        protected async Task OnRefillStoreChanged()
+        {
+            await LoadRefillBalances();
+        }
+
+        protected async Task RefillPettyCash()
+        {
+            if (RefillStoreId <= 0 || RefillAmount <= 0)
+            {
+                notificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a branch and enter a transfer amount.");
+                return;
+            }
+            if (PettyCap > 0 && PettyBalance + RefillAmount > PettyCap)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Validation",
+                    $"Cannot exceed the petty cash cap of {PettyCap:N2} (current {PettyBalance:N2}).");
+                return;
+            }
+            IsRefilling = true;
+            try
+            {
+                var req = new PettyCashRefillRequestDTO
+                {
+                    StoreId = RefillStoreId,
+                    UserId = UserId,
+                    Amount = RefillAmount,
+                    Remarks = RefillRemarks,
+                    EntryDate = DateTime.Now
+                };
+                var res = await _serviceUnitOfWork.TreasuryService.RefillPettyCashAsync(req);
+                if (res.Success)
+                {
+                    notificationService.Notify(NotificationSeverity.Success, "Transferred", res.Message);
+                    RefillAmount = 0;
+                    RefillRemarks = string.Empty;
+                    await LoadRefillBalances();
+                }
+                else
+                {
+                    notificationService.Notify(NotificationSeverity.Error, "Failed", res.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                notificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+            }
+            finally
+            {
+                IsRefilling = false;
                 StateHasChanged();
             }
         }

@@ -47,72 +47,114 @@
 
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack>
-                        <RadzenFormField Text="Payment Mode" Variant="Variant.Outlined">
-                            <RadzenDropDown Data="@PaymentModes" TextProperty="Label" ValueProperty="Value" @bind-Value="@PaymentMode" Name="PaymentMode" Change="@OnModeChanged" />
-                        </RadzenFormField>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="mb-1">
+                            <RadzenButton Text="Single Payment" ButtonStyle="@(IsSplit ? ButtonStyle.Light : ButtonStyle.Primary)" Size="ButtonSize.Small" Click="@(() => ToggleSplit(false))" />
+                            <RadzenButton Text="Split Payment" ButtonStyle="@(IsSplit ? ButtonStyle.Primary : ButtonStyle.Light)" Size="ButtonSize.Small" Click="@(() => ToggleSplit(true))" />
+                        </RadzenStack>
 
-                        @if (PaymentMode == "Cash")
+                        @if (!IsSplit)
                         {
-                            <RadzenFormField Text="Cash Ledger" Variant="Variant.Outlined">
-                                <RadzenDropDown Data="@CashLedgers" TextProperty="CashDisplay" ValueProperty="LedgerCode"
-                                                @bind-Value="@SelectedCashLedgerCode" Name="CashLedger" Change="@OnCashLedgerChanged" />
+                            <RadzenFormField Text="Payment Mode" Variant="Variant.Outlined">
+                                <RadzenDropDown Data="@PaymentModes" TextProperty="Label" ValueProperty="Value" @bind-Value="@PaymentMode" Name="PaymentMode" Change="@OnModeChanged" />
                             </RadzenFormField>
-                            @if (!IsLoadingSources && CashLedgers.Count == 0)
+
+                            @if (PaymentMode == "Cash")
                             {
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
-                                    No active cash ledger was found for this branch.
+                                <RadzenFormField Text="Cash Ledger" Variant="Variant.Outlined">
+                                    <RadzenDropDown Data="@CashLedgers" TextProperty="CashDisplay" ValueProperty="LedgerCode"
+                                                    @bind-Value="@SelectedCashLedgerCode" Name="CashLedger" Change="@OnCashLedgerChanged" />
+                                </RadzenFormField>
+                                @if (!IsLoadingSources && CashLedgers.Count == 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
+                                        No active cash ledger was found for this branch.
+                                    </RadzenText>
+                                }
+                            }
+                            else
+                            {
+                                <RadzenFormField Text="@(PaymentMode == "Cheque" ? "Bank Account" : "Financial Account")" Variant="Variant.Outlined">
+                                    <RadzenDropDownDataGrid TValue="int?" @bind-Value="SelectedFinancialAccountId"
+                                                            Data="@FinancialAccounts"
+                                                            TextProperty="DisplayName"
+                                                            ValueProperty="FinancialAccountId"
+                                                            Change="@OnFinancialAccountChanged"
+                                                            Placeholder="Select financial account"
+                                                            AllowFiltering="true" AllowFilteringByAllStringColumns="true"
+                                                            FilterOperator="StringFilterOperator.Contains"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                            AllowClear="true" Style="width:100%"
+                                                            EmptyText="No financial account with a ledger is set up for this store.">
+                                        <Columns>
+                                            <RadzenDropDownDataGridColumn Property="DisplayName" Title="MFS / Bank" Width="160px" />
+                                            <RadzenDropDownDataGridColumn Property="AccountNo" Title="Account No" Width="150px" />
+                                            <RadzenDropDownDataGridColumn Property="StoreName" Title="Store" Width="140px" />
+                                            <RadzenDropDownDataGridColumn Property="BalanceDisplay" Title="Balance" Width="110px" />
+                                        </Columns>
+                                    </RadzenDropDownDataGrid>
+                                </RadzenFormField>
+
+                                @if (!IsLoadingSources && FinancialAccounts.Count == 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
+                                        No financial account with a ledger is set up
+                                        @(IsSystemGroupUser ? "yet." : "for this store.") Cash is available until one is configured.
+                                    </RadzenText>
+                                }
+
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">
+                                    Posts to ledger: <strong>@SelectedLedgerText</strong>
                                 </RadzenText>
+
+                                <RadzenFormField Text="Transaction No" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@PaymentModel.TransactionNo" Name="TransactionNo" />
+                                </RadzenFormField>
+                            }
+
+                            @if (PaymentMode == "Cheque")
+                            {
+                                <RadzenFormField Text="Cheque No" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@PaymentModel.ChequeNo" Name="ChequeNo" />
+                                </RadzenFormField>
+
+                                <RadzenFormField Text="Cheque Date" Variant="Variant.Outlined">
+                                    <RadzenDatePicker @bind-Value="@PaymentModel.ChequeDate" Name="ChequeDate" DateFormat="d" />
+                                </RadzenFormField>
                             }
                         }
                         else
                         {
-                            <RadzenFormField Text="@(PaymentMode == "Cheque" ? "Bank Account" : "Financial Account")" Variant="Variant.Outlined">
-                                <RadzenDropDownDataGrid TValue="int?" @bind-Value="SelectedFinancialAccountId"
-                                                        Data="@FinancialAccounts"
-                                                        TextProperty="DisplayName"
-                                                        ValueProperty="FinancialAccountId"
-                                                        Change="@OnFinancialAccountChanged"
-                                                        Placeholder="Select financial account"
-                                                        AllowFiltering="true" AllowFilteringByAllStringColumns="true"
-                                                        FilterOperator="StringFilterOperator.Contains"
-                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                        AllowClear="true" Style="width:100%"
-                                                        EmptyText="No financial account with a ledger is set up for this store.">
-                                    <Columns>
-                                        <RadzenDropDownDataGridColumn Property="DisplayName" Title="MFS / Bank" Width="160px" />
-                                        <RadzenDropDownDataGridColumn Property="AccountNo" Title="Account No" Width="150px" />
-                                        <RadzenDropDownDataGridColumn Property="StoreName" Title="Store" Width="140px" />
-                                        <RadzenDropDownDataGridColumn Property="BalanceDisplay" Title="Balance" Width="110px" />
-                                    </Columns>
-                                </RadzenDropDownDataGrid>
-                            </RadzenFormField>
-
-                            @if (!IsLoadingSources && FinancialAccounts.Count == 0)
-                            {
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
-                                    No financial account with a ledger is set up
-                                    @(IsSystemGroupUser ? "yet." : "for this store.") Cash is available until one is configured.
-                                </RadzenText>
-                            }
-
                             <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">
-                                Posts to ledger: <strong>@SelectedLedgerText</strong>
+                                Split payment methods (Cash / Petty / Bank). Total is the payment amount.
                             </RadzenText>
 
-                            <RadzenFormField Text="Transaction No" Variant="Variant.Outlined">
-                                <RadzenTextBox @bind-Value="@PaymentModel.TransactionNo" Name="TransactionNo" />
-                            </RadzenFormField>
-                        }
+                            @foreach (var (leg, idx) in SplitLegs.Select((s, i) => (s, i)))
+                            {
+                                <RadzenRow Gap="0.5rem">
+                                    <RadzenColumn Size="7">
+                                        <RadzenFormField Text="@(idx == 0 ? "Source" : "")" Variant="Variant.Outlined">
+                                            <RadzenDropDown Data="@SplitSources" TextProperty="Display" ValueProperty="Key"
+                                                            @bind-Value="leg.SourceKey" Style="width:100%" AllowFiltering="true" />
+                                        </RadzenFormField>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Avail: @BalanceOfSource(leg.SourceKey).ToString("N2")</RadzenText>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4">
+                                        <RadzenFormField Text="@(idx == 0 ? "Amount" : "")" Variant="Variant.Outlined">
+                                            <RadzenNumeric @bind-Value="leg.Amount" Min="0" Style="width:100%" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="1">
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => RemoveSplitLeg(idx))" Style="margin-top:28px;" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            }
 
-                        @if (PaymentMode == "Cheque")
-                        {
-                            <RadzenFormField Text="Cheque No" Variant="Variant.Outlined">
-                                <RadzenTextBox @bind-Value="@PaymentModel.ChequeNo" Name="ChequeNo" />
-                            </RadzenFormField>
+                            <RadzenButton Text="+ Add Method" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@AddSplitLeg" />
 
-                            <RadzenFormField Text="Cheque Date" Variant="Variant.Outlined">
-                                <RadzenDatePicker @bind-Value="@PaymentModel.ChequeDate" Name="ChequeDate" DateFormat="d" />
-                            </RadzenFormField>
+                            <div class="mt-2" style="border-radius:6px;padding:10px 12px;background:@(SplitHasInvalidBalance ? "#fdecea" : "#e8f5e9");color:@(SplitHasInvalidBalance ? "#b71c1c" : "#1b5e20");">
+                                <div>Total Split Amount: <strong>@SplitTotal.ToString("N2")</strong></div>
+                                <div>@SplitStatus</div>
+                            </div>
                         }
 
                         <RadzenFormField Text="Reference No" Variant="Variant.Outlined">

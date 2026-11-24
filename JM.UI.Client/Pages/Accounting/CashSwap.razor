@@ -1,0 +1,69 @@
+@page "/CashSwap"
+@using JM.UI.Entities.Model.Treasury
+@attribute [Authorize]
+@inherits CashSwapComponent
+
+<PageTitle>Cash Swap</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">Cash Swap Between Branches</RadzenText>
+
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="From Branch" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@Stores" TextProperty="Name" ValueProperty="Id" @bind-Value="FromStoreId" Change="@OnFromStoreChanged" Style="width:100%" AllowFiltering="true" />
+                </RadzenFormField>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color:#15803d">Cash in hand: <strong>@FromBalance.ToString("N2")</strong></RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="To Branch" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@Stores" TextProperty="Name" ValueProperty="Id" @bind-Value="ToStoreId" Style="width:100%" AllowFiltering="true" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Amount (BDT)" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="Amount" Min="0" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Remarks" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="Remarks" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+            <RadzenButton Text="Send Cash (In Transit)" Icon="send" ButtonStyle="ButtonStyle.Primary" Disabled="@IsSending" IsBusy="@IsSending" Click="@Send" />
+        </RadzenStack>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Pending / In Transit</RadzenText>
+        <RadzenDataGrid Data="@Swaps.Where(s => s.Status == "IN_TRANSIT").ToList()" TItem="CashSwapRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="SwapNo" Title="Swap No" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="FromBranchCode" Title="From" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="ToBranchCode" Title="To" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="Amount" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="SentDate" Title="Sent" FormatString="{0:dd-MMM-yyyy HH:mm}" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Title="Action">
+                    <Template Context="r">
+                        <RadzenButton Text="Accept" Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Click="@(() => Receive(r))" />
+                        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => Cancel(r))" Class="ml-1" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Activity Log</RadzenText>
+        <RadzenDataGrid Data="@Swaps" TItem="CashSwapRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="SwapNo" Title="Swap No" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="FromBranchCode" Title="From" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="ToBranchCode" Title="To" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="Amount" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="Status" Title="Status" />
+                <RadzenDataGridColumn TItem="CashSwapRowDTO" Property="SentDate" Title="Sent" FormatString="{0:dd-MMM-yyyy HH:mm}" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

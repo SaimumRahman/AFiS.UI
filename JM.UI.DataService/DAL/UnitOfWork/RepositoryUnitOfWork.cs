@@ -25,6 +25,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.DailyExpense;
+using JM.UI.DataService.DAL.Treasury;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -142,6 +143,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         public ISaleRepository SaleRepository { get; }
         public IReportingRepository ReportingRepository { get; }
         public IDailyExpenseRepository DailyExpenseRepository { get; }
+        public ITreasuryRepository TreasuryRepository { get; }
         public ICounterClosingRepository CounterClosingRepository { get; }
         public ISmsSettingsRepository SmsSettingsRepository { get; }
         public ISmsLogRepository SmsLogRepository { get; }
@@ -212,6 +214,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
             SaleRepository = new SaleRepository(factory, tokenProvider, loggerFactory.CreateLogger<SaleRepository>());
             ReportingRepository = new ReportingRepository(factory, tokenProvider, loggerFactory.CreateLogger<ReportingRepository>());
             DailyExpenseRepository = new DailyExpenseRepository(factory, tokenProvider, loggerFactory.CreateLogger<DailyExpenseRepository>());
+            TreasuryRepository = new TreasuryRepository(factory, tokenProvider, loggerFactory.CreateLogger<TreasuryRepository>());
             CounterClosingRepository = new CounterClosingRepository(factory, tokenProvider, loggerFactory.CreateLogger<CounterClosingRepository>());
             SmsSettingsRepository = new SmsSettingsRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsSettingsRepository>());
             SmsLogRepository = new SmsLogRepository(factory, tokenProvider, loggerFactory.CreateLogger<SmsLogRepository>());

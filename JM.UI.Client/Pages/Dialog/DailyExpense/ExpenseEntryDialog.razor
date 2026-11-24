@@ -124,22 +124,30 @@
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Paid From" />
-                    <div style="display:flex;gap:8px;align-items:center">
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                         <RadzenButton Text="Cash"
                                       ButtonSize="ButtonSize.Small"
-                                      ButtonStyle="@(IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                                      Click="@(() => SetPaidFrom(true))" />
-                        @* <RadzenButton Text="Bank / MFS"
+                                      ButtonStyle="@(PaidFrom == "Cash" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                      Click="@(() => SetPaidFrom("Cash"))" />
+                        <RadzenButton Text="Petty Cash"
                                       ButtonSize="ButtonSize.Small"
-                                      ButtonStyle="@(!IsCash ? ButtonStyle.Primary : ButtonStyle.Secondary)"
-                                      Click="@(() => SetPaidFrom(false))" /> *@
+                                      ButtonStyle="@(PaidFrom == "Petty" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                      Click="@(() => SetPaidFrom("Petty"))" />
+                        <RadzenButton Text="Bank / MFS"
+                                      ButtonSize="ButtonSize.Small"
+                                      ButtonStyle="@(PaidFrom == "Bank" ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                      Click="@(() => SetPaidFrom("Bank"))" />
                     </div>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenLabel Text="Account" Component="FinancialAccountId" />
-                    @if (IsCash)
+                    @if (PaidFrom == "Cash")
                     {
-                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;color:var(--rz-text-secondary);background:var(--rz-base-200)">Cash</div>
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;color:var(--rz-text-secondary);background:var(--rz-base-200)">Cash (branch drawer)</div>
+                    }
+                    else if (PaidFrom == "Petty")
+                    {
+                        <div style="padding:9px 12px;border:1px solid var(--rz-border);border-radius:4px;color:var(--rz-text-secondary);background:var(--rz-base-200)">Petty Cash</div>
                     }
                     else
                     {
@@ -212,7 +220,7 @@
                     <RadzenTextBox @bind-Value="Expense.ReceiptBillNo" Placeholder="Optional supplier / receipt no" Style="width:100%" MaxLength="50" />
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeMD="6">
-                    @if (!IsCash)
+                    @if (PaidFrom == "Bank")
                     {
                         <RadzenLabel Text="Reference No" Component="ReferenceNo" />
                         <RadzenTextBox @bind-Value="Expense.ReferenceNo" Placeholder="Bank / MFS transaction no" Style="width:100%" MaxLength="50" />
@@ -261,8 +269,8 @@
     protected List<StoreDTO> Stores { get; set; } = new();
     protected List<FinancialAccountDropdownDTO> FinancialAccounts { get; set; } = new();
     protected List<AccountNode> ExpenseAccountTree { get; set; } = new();
-    protected bool IsCash { get; set; } = true;
-    protected bool IsPettyCash { get; set; } = false;
+    protected string PaidFrom { get; set; } = "Cash";
+    protected bool IsPettyCash => PaidFrom == "Petty";
     protected bool IsProcessing { get; set; }
 
     protected ElementReference expenseAccountTrigger;
@@ -331,7 +339,7 @@
                 }
 
                 Expense = existing;
-                SetPaidFrom(!(existing.FinancialAccountId.HasValue && existing.FinancialAccountId.Value > 0));
+                SetPaidFrom(existing.FinancialAccountId.HasValue && existing.FinancialAccountId.Value > 0 ? "Bank" : "Cash");
 
                 ExpenseAccountText = existing.LedgerAccountId.HasValue
                     ? (string.IsNullOrWhiteSpace(existing.LedgerAccountCode)
@@ -362,10 +370,17 @@
         }
     }
 
-    protected void SetPaidFrom(bool cash)
+    protected void SetPaidFrom(string mode)
     {
-        IsCash = cash;
-        if (cash) Expense.FinancialAccountId = null;
+        PaidFrom = mode;
+        if (mode == "Cash" || mode == "Petty")
+            Expense.FinancialAccountId = null;
+        if (mode == "Petty" && SelectedStore != null && SelectedStore.PettyCashLedgerAccountId.HasValue)
+        {
+            // resolve code via chart of accounts not available here; leave PaymentLedgerCode to be set on save
+        }
+        if (mode == "Cash")
+            Expense.PaymentLedgerCode = null; // poster defaults to 111001
     }
 
     private static List<AccountNode> BuildExpenseTree(List<ChartOfAccountDTO> accounts)
@@ -470,7 +485,7 @@
             return;
         }
 
-        if (!IsCash && (!Expense.FinancialAccountId.HasValue || Expense.FinancialAccountId.Value <= 0))
+        if (PaidFrom == "Bank" && (!Expense.FinancialAccountId.HasValue || Expense.FinancialAccountId.Value <= 0))
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Validation", "Select a bank / MFS account.");
             return;
@@ -482,8 +497,7 @@
         // enforce here.
         Expense.CreatedBy = UserId;
         Expense.UpdatedBy = IsEditMode ? (int?)UserId : null;
-        Expense.FinancialAccountId = null;
-        Expense.IsPettyCash = IsPettyCash;
+        Expense.IsPettyCash = PaidFrom == "Petty";
 
         // Available-cash (ledger × cost center) hard limit.
         if (Expense.StoreId > 0 && Expense.LedgerAccountId.HasValue && Expense.LedgerAccountId.Value > 0)

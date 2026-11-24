@@ -1,0 +1,98 @@
+@page "/ContraEntry"
+@using JM.UI.Entities.Model.Treasury
+@attribute [Authorize]
+@inherits ContraEntryComponent
+
+<PageTitle>Contra Entry</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">Contra Entry</RadzenText>
+
+        @if (!string.IsNullOrWhiteSpace(Message))
+        {
+            <div class="mb-3" style="color:#c62828;padding:8px;background:#fdecea;border-radius:6px;">@Message</div>
+        }
+
+        <RadzenFormField Text="Contra Type" Variant="Variant.Outlined">
+            <RadzenDropDown Data="@ContraTypeOptions" TextProperty="Label" ValueProperty="Value" @bind-Value="ContraType" Change="@OnContraTypeChanged" Style="width:100%" />
+        </RadzenFormField>
+
+        <RadzenRow Gap="1rem" class="mt-2">
+            @if (ContraType == "BANK_TO_BANK")
+            {
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Sending Bank" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@BankAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="FromLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(FromLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Receiving Bank" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@BankAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="ToLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(ToLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+            }
+            else if (ContraType == "CASH_TO_BANK")
+            {
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="From (Cash Ledger)" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@CashAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="FromLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(FromLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="To (Bank Account)" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@BankAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="ToLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(ToLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+            }
+            else
+            {
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="From (Bank Account)" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@BankAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="FromLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(FromLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="To (Cash Ledger)" Variant="Variant.Outlined">
+                        <RadzenDropDown Data="@CashAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode" @bind-Value="ToLedgerCode" Style="width:100%" AllowFiltering="true" />
+                    </RadzenFormField>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#555">Available: <strong>@BalanceOf(ToLedgerCode).ToString("N2")</strong></RadzenText>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+
+        <RadzenRow Gap="1rem" class="mt-2">
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenFormField Text="Amount" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="Amount" Min="0" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="8">
+                <RadzenFormField Text="Remarks" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="Remarks" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+            <RadzenButton Text="Post Contra" Icon="save" ButtonStyle="ButtonStyle.Primary" Disabled="@IsPosting" IsBusy="@IsPosting" Click="@Post" />
+        </RadzenStack>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Recent Contra (last 7 days)</RadzenText>
+        <RadzenDataGrid Data="@Recent" TItem="ContraListRowDTO" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="VoucherNo" Title="Voucher" />
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="EntryDate" Title="Date" FormatString="{0:dd-MMM-yyyy}" />
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="BranchCode" Title="Branch" />
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="Narration" Title="Narration" />
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="TotalDebit" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="ContraListRowDTO" Property="Status" Title="Status" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

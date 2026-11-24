@@ -36,6 +36,7 @@ namespace JM.UI.Entities.Model.DailyExpense
 
         // Payment source for the available-cash check: true = petty cash
         // (funded balance), false = shop drawer cash.
+        public string? PaymentLedgerCode { get; set; }
         public bool IsPettyCash { get; set; }
     }
 

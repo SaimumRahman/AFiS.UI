@@ -1,0 +1,100 @@
+@page "/PosSettlement"
+@using JM.UI.Entities.Model.Treasury
+@attribute [Authorize]
+@inherits PosSettlementComponent
+
+<PageTitle>POS / MFS Settlement</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">POS / MFS Settlement to Bank</RadzenText>
+
+        <RadzenRow Gap="1rem" class="mb-3">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="From" Variant="Variant.Outlined">
+                    <RadzenDatePicker @bind-Value="FromDate" DateFormat="d" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="To" Variant="Variant.Outlined">
+                    <RadzenDatePicker @bind-Value="ToDate" DateFormat="d" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenButton Text="Load" Icon="refresh" ButtonStyle="ButtonStyle.Light" Click="@Load" Style="margin-top:28px;" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mb-2">Pending (@Pending.Count)</RadzenText>
+        <RadzenDataGrid Data="@Pending" TItem="SettlementPendingRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Property="InvoiceNo" Title="Invoice" />
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Property="TransactionDate" Title="Date" FormatString="{0:dd-MMM-yyyy}" />
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Property="BranchName" Title="Branch" />
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Property="Channel" Title="Channel" />
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Property="Amount" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="SettlementPendingRowDTO" Title="Action">
+                    <Template Context="r">
+                        <RadzenButton Text="Transfer" Icon="swap_horiz" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenModal(r))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Settled History</RadzenText>
+        <RadzenDataGrid Data="@History" TItem="SettlementHistoryRowDTO" AllowPaging="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="InvoiceNo" Title="Invoice" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="TransactionDate" Title="Date" FormatString="{0:dd-MMM-yyyy}" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="BranchCode" Title="Branch" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="Channel" Title="Channel" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="SettlementAmount" Title="Settlement" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="TransferAmount" Title="Transfer" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="CommissionAmount" Title="Commission" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="SettlementHistoryRowDTO" Property="Status" Title="Status" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+
+    @if (ShowModal && Active != null)
+    {
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:20px;max-width:520px;width:90%;">
+                <RadzenText TextStyle="TextStyle.H5" class="mb-3">Transfer POS / MFS to Bank</RadzenText>
+                <div class="mb-2"><strong>@Active.InvoiceNo</strong> • @Active.TransactionDate.ToString("dd-MMM-yyyy") • @Active.BranchName • @Active.Channel</div>
+                <div class="mb-3">Settlement Amount (fixed): <strong>@SettlementAmount.ToString("N2")</strong></div>
+
+                <RadzenFormField Text="Payment Receiving Bank" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@BankAccounts" TextProperty="AccountName" ValueProperty="Id"
+                                    @bind-Value="ReceivingFinancialAccountId" Style="width:100%" AllowFiltering="true"
+                                    Placeholder="Select receiving bank account" />
+                </RadzenFormField>
+                @if (BankAccounts.Count == 0)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:#b26a00">
+                        No bank financial account is configured — add one with a ledger (114001–114003) first.
+                    </RadzenText>
+                }
+                <RadzenFormField Text="Commission Ledger" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@CommissionLedgers" TextProperty="Name" ValueProperty="Code"
+                                    @bind-Value="CommissionLedgerCode" Style="width:100%" AllowFiltering="true" />
+                </RadzenFormField>
+                <RadzenFormField Text="Transfer Amount" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="TransferAmount" Min="0" Step="0.01" Style="width:100%" Change="@((decimal _) => OnTransferInput())" />
+                </RadzenFormField>
+                <RadzenFormField Text="Commission" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="CommissionAmount" Min="0" Step="0.01" Style="width:100%" Change="@((decimal _) => OnCommissionInput())" />
+                </RadzenFormField>
+
+                <div class="mt-2" style="color:@(IsValid?"#1b5e20":"#b71c1c");">
+                    @(IsValid ? "Matched" : "Mismatch: Transfer + Commission must equal Settlement Amount")
+                </div>
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseModal" />
+                    <RadzenButton Text="Confirm Transfer" ButtonStyle="ButtonStyle.Primary" Disabled="@(!IsValid || IsSaving)" IsBusy="@IsSaving" Click="@Confirm" />
+                </RadzenStack>
+            </div>
+        </div>
+    }
+</RadzenContent>

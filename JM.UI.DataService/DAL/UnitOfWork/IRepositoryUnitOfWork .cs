@@ -25,6 +25,7 @@ using JM.UI.DataService.DAL.Groups;
 using JM.UI.DataService.DAL.CustomerDetails;
 using JM.UI.DataService.DAL.Coupon;
 using JM.UI.DataService.DAL.DailyExpense;
+using JM.UI.DataService.DAL.Treasury;
 using JM.UI.DataService.DAL.Discount;
 using JM.UI.DataService.DAL.ItemBrand;
 using JM.UI.DataService.DAL.ItemCalalogue;
@@ -134,6 +135,7 @@ namespace JM.UI.DataService.DAL.UnitOfWork
         ISaleRepository SaleRepository { get; }
         IReportingRepository ReportingRepository { get; }
         IDailyExpenseRepository DailyExpenseRepository { get; }
+        ITreasuryRepository TreasuryRepository { get; }
         ICounterClosingRepository CounterClosingRepository { get; }
         ISmsSettingsRepository SmsSettingsRepository { get; }
         ISmsLogRepository SmsLogRepository { get; }

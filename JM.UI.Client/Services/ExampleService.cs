@@ -492,6 +492,42 @@ namespace JM.UI.Client.Services
                         Title       = "Manual Journal",
                         Description = "Enter, post and reverse balanced double-entry journals (JRN) by hand",
                         Tags        = new[] { "journal", "voucher", "ledger", "finance", "accounting", "manual", "jrn" }
+                    },
+                    new Example
+                    {
+                        Name        = "Contra Entry",
+                        Path        = "/ContraEntry",
+                        Icon        = "\ue8b0",
+                        Title       = "Contra Entry",
+                        Description = "Transfer Cash to Bank, Bank to Cash, or Bank to Bank between ledgers",
+                        Tags        = new[] { "contra", "cash", "bank", "transfer", "accounting" }
+                    },
+                    new Example
+                    {
+                        Name        = "POS / MFS Settlement",
+                        Path        = "/PosSettlement",
+                        Icon        = "\ue8b0",
+                        Title       = "POS / MFS Settlement",
+                        Description = "Settle POS and MFS transactions to bank with commission split",
+                        Tags        = new[] { "pos", "mfs", "settlement", "bank", "commission" }
+                    },
+                    new Example
+                    {
+                        Name        = "Cash Swap",
+                        Path        = "/CashSwap",
+                        Icon        = "\ue8b0",
+                        Title       = "Cash Swap",
+                        Description = "Send cash between branches in transit until receiver accepts",
+                        Tags        = new[] { "cash", "swap", "branch", "transfer" }
+                    },
+                    new Example
+                    {
+                        Name        = "Branch Loan",
+                        Path        = "/BranchLoan",
+                        Icon        = "\ue8b0",
+                        Title       = "Branch Loan",
+                        Description = "Issue temporary inter-branch loans with accept and repay",
+                        Tags        = new[] { "loan", "branch", "inter-branch" }
                     }
                 }
             },

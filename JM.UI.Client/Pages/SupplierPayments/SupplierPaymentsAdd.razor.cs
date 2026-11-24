@@ -34,6 +34,26 @@ namespace JM.UI.Client.Pages.SupplierPayments
         protected int CurrentStoreId { get; set; }
         protected bool CanSelectAnyStore { get; set; }
 
+        // ── Split payment (Cash + Petty + Bank/MFS legs) ─────────────────────
+        protected bool IsSplit { get; set; }
+        protected List<SplitPaymentLeg> SplitLegs { get; set; } = new();
+        protected List<SplitSourceOption> SplitSources { get; set; } = new();
+
+        public sealed class SplitPaymentLeg
+        {
+            public string SourceKey { get; set; } = string.Empty;
+            public decimal Amount { get; set; }
+        }
+
+        public sealed class SplitSourceOption
+        {
+            public string Key { get; set; } = string.Empty;
+            public string Display { get; set; } = string.Empty;
+            public string LedgerCode { get; set; } = string.Empty;
+            public int? FinancialAccountId { get; set; }
+            public decimal Balance { get; set; }
+        }
+
         protected List<PaymentModeOption> PaymentModes { get; } = new()
         {
             new("Cash", "Cash"),
@@ -73,15 +93,20 @@ namespace JM.UI.Client.Pages.SupplierPayments
             ? "-"
             : $"{SelectedSource.LedgerName} ({SelectedSource.LedgerCode})";
 
-        protected bool CanSave =>
-            !IsSaving
-            && PaymentModel.SupplierId > 0
-            && PaymentModel.StoreId > 0
-            && PaymentModel.PaymentAmount > 0
-            && SelectedSource != null
-            && (PaymentMode != "Cheque"
-                || (!string.IsNullOrWhiteSpace(PaymentModel.ChequeNo) && PaymentModel.ChequeDate.HasValue))
-            && (IsPostDatedCheque || !IsInsufficient);
+        protected bool CanSave => IsSplit
+            ? !IsSaving
+                && PaymentModel.SupplierId > 0
+                && PaymentModel.StoreId > 0
+                && SplitTotal > 0
+                && !SplitHasInvalidBalance
+            : !IsSaving
+                && PaymentModel.SupplierId > 0
+                && PaymentModel.StoreId > 0
+                && PaymentModel.PaymentAmount > 0
+                && SelectedSource != null
+                && (PaymentMode != "Cheque"
+                    || (!string.IsNullOrWhiteSpace(PaymentModel.ChequeNo) && PaymentModel.ChequeDate.HasValue))
+                && (IsPostDatedCheque || !IsInsufficient);
 
         protected override async Task OnInitializedAsync()
         {
@@ -184,6 +209,7 @@ namespace JM.UI.Client.Pages.SupplierPayments
             {
                 PaymentSources = await _serviceUnitOfWork.SupplierPaymentService
                     .GetPaymentSources(PaymentModel.StoreId);
+                BuildSplitSources();
             }
             catch (Exception ex)
             {
@@ -292,15 +318,84 @@ namespace JM.UI.Client.Pages.SupplierPayments
             StateHasChanged();
         }
 
+        // ── Split payment helpers ────────────────────────────────────────────
+        protected decimal SplitTotal => SplitLegs.Sum(x => x.Amount);
+
+        protected bool SplitHasInvalidBalance => SplitLegs.Any(leg =>
+        {
+            var opt = SplitSources.FirstOrDefault(s => s.Key == leg.SourceKey);
+            return opt != null && leg.Amount > opt.Balance;
+        });
+
+        protected string SplitStatus =>
+            SplitHasInvalidBalance
+                ? "One or more split methods exceed available balance"
+                : "All payment method balances valid";
+
+        protected void ToggleSplit(bool split)
+        {
+            IsSplit = split;
+            if (split && SplitLegs.Count == 0)
+                SplitLegs.Add(new SplitPaymentLeg { SourceKey = SplitSources.FirstOrDefault()?.Key ?? string.Empty, Amount = 0 });
+            StateHasChanged();
+        }
+
+        protected void AddSplitLeg()
+        {
+            SplitLegs.Add(new SplitPaymentLeg { SourceKey = SplitSources.FirstOrDefault()?.Key ?? string.Empty, Amount = 0 });
+        }
+
+        protected void RemoveSplitLeg(int idx)
+        {
+            if (SplitLegs.Count > 1) SplitLegs.RemoveAt(idx);
+        }
+
+        protected decimal BalanceOfSource(string key)
+            => SplitSources.FirstOrDefault(s => s.Key == key)?.Balance ?? 0m;
+
+        private void BuildSplitSources()
+        {
+            var list = new List<SplitSourceOption>();
+            foreach (var c in CashLedgers)
+                list.Add(new SplitSourceOption
+                {
+                    Key = "cash:" + c.LedgerCode,
+                    Display = c.CashDisplay,
+                    LedgerCode = c.LedgerCode ?? string.Empty,
+                    Balance = c.Balance
+                });
+            foreach (var f in FinancialAccounts)
+                list.Add(new SplitSourceOption
+                {
+                    Key = "fa:" + f.FinancialAccountId,
+                    Display = string.IsNullOrWhiteSpace(f.AccountNo) ? f.DisplayName : $"{f.DisplayName} ({f.AccountNo})",
+                    LedgerCode = f.LedgerCode ?? string.Empty,
+                    FinancialAccountId = f.FinancialAccountId,
+                    Balance = f.Balance
+                });
+            SplitSources = list;
+
+            // Keep each existing leg pointing at a valid source.
+            foreach (var leg in SplitLegs)
+            {
+                if (SplitSources.All(s => s.Key != leg.SourceKey))
+                    leg.SourceKey = SplitSources.FirstOrDefault()?.Key ?? string.Empty;
+            }
+        }
+
         protected async Task SavePayment(SupplierPaymentDTO payment)
         {
             if (!CanSave)
             {
                 notificationService.Notify(Radzen.NotificationSeverity.Warning,
                     "Incomplete payment",
-                    IsInsufficient
-                        ? $"Insufficient balance in the selected account. Available {AvailableBalance:N2}."
-                        : "Select a supplier, store, payment source and a valid amount.");
+                    IsSplit
+                        ? (SplitHasInvalidBalance
+                            ? "One or more split legs exceed the available balance."
+                            : "Select a supplier, store and at least one split leg with an amount.")
+                        : (IsInsufficient
+                            ? $"Insufficient balance in the selected account. Available {AvailableBalance:N2}."
+                            : "Select a supplier, store, payment source and a valid amount."));
                 return;
             }
 
@@ -308,24 +403,53 @@ namespace JM.UI.Client.Pages.SupplierPayments
             {
                 IsSaving = true;
 
-                payment.PaymentMethod = PaymentMode;
-                payment.FinancialAccountId = PaymentMode == "Cash" ? null : SelectedFinancialAccountId;
-                payment.PaymentLedgerCode = PaymentMode == "Cash"
-                    ? SelectedCashLedgerCode
-                    : SelectedSource?.LedgerCode;
-
-                // BankId is derived server-side from the selected financial account, so a
-                // stale value from a previous mode can never redirect the ledger.
-                payment.BankId = null;
-
-                if (PaymentMode != "Cheque")
+                if (IsSplit)
                 {
+                    payment.PaymentMethod = "Split";
+                    payment.PaymentAmount = SplitTotal;
+                    payment.FinancialAccountId = null;
+                    payment.PaymentLedgerCode = null;
+                    payment.BankId = null;
                     payment.ChequeNo = null;
                     payment.ChequeDate = null;
-                }
-
-                if (PaymentMode == "Cash")
                     payment.TransactionNo = null;
+                    payment.PaymentLines = SplitLegs
+                        .Where(leg => leg.Amount > 0)
+                        .Select(leg =>
+                        {
+                            var opt = SplitSources.FirstOrDefault(s => s.Key == leg.SourceKey);
+                            return new SupplierPaymentLineDTO
+                            {
+                                FinancialAccountId = opt?.FinancialAccountId,
+                                LedgerCode = opt?.LedgerCode,
+                                Amount = leg.Amount
+                            };
+                        })
+                        .ToList();
+                }
+                else
+                {
+                    payment.PaymentMethod = PaymentMode;
+                    payment.FinancialAccountId = PaymentMode == "Cash" ? null : SelectedFinancialAccountId;
+                    payment.PaymentLedgerCode = PaymentMode == "Cash"
+                        ? SelectedCashLedgerCode
+                        : SelectedSource?.LedgerCode;
+
+                    // BankId is derived server-side from the selected financial account, so a
+                    // stale value from a previous mode can never redirect the ledger.
+                    payment.BankId = null;
+
+                    if (PaymentMode != "Cheque")
+                    {
+                        payment.ChequeNo = null;
+                        payment.ChequeDate = null;
+                    }
+
+                    if (PaymentMode == "Cash")
+                        payment.TransactionNo = null;
+
+                    payment.PaymentLines = new List<SupplierPaymentLineDTO>();
+                }
 
                 if (string.IsNullOrWhiteSpace(payment.UserName))
                 {

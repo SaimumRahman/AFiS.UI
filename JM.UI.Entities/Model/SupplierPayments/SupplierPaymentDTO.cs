@@ -41,5 +41,17 @@ namespace JM.UI.Entities.Model.SupplierPayments
         public string? LedgerName { get; set; }
         public string? PaymentSourceName { get; set; }
         public bool IsPostDatedCheque { get; set; }
+
+        /// <summary>Split payment legs. When more than one leg is supplied the
+        /// payment is split across several cash/bank ledgers.</summary>
+        public List<SupplierPaymentLineDTO> PaymentLines { get; set; } = new();
+    }
+
+    public class SupplierPaymentLineDTO
+    {
+        public int? FinancialAccountId { get; set; }
+        public string? LedgerCode { get; set; }
+        public decimal Amount { get; set; }
+        public string? TransactionNo { get; set; }
     }
 }

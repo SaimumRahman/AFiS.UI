@@ -51,7 +51,7 @@
             {
                 <div class="sbe-pay">
                     <div style="font-size:12px;">Amount: <b>@pay.Amount.ToString("N2")</b></div>
-                    <RadzenDropDown TValue="int" Data="@FinancialAccounts" ValueProperty="Id"
+                    <RadzenDropDown TValue="int" Data="@PaymentMethodOptions" ValueProperty="Id"
                                     @bind-Value="pay.TransactionTypeId" Style="width:100%;">
                         <Template Context="acc">
                             @acc.AccountName
@@ -65,6 +65,11 @@
             }
         }
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div style="color:#c62828; font-size:12px; padding:6px 8px; background:#fdecea; border-radius:6px;">@ErrorMessage</div>
+    }
 
     <div class="sbe-actions">
         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close(false))" />
@@ -85,6 +90,20 @@
     protected List<SalesBookingLineDTO> Lines { get; set; } = new();
     protected List<SalesBookingPaymentDTO> Payments { get; set; } = new();
     protected bool IsSaving { get; set; }
+    protected string? ErrorMessage { get; set; }
+
+    protected List<FinancialAccountDropdownDTO> PaymentMethodOptions
+    {
+        get
+        {
+            var list = new List<FinancialAccountDropdownDTO>
+            {
+                new FinancialAccountDropdownDTO { Id = 0, AccountName = "Cash", AccountNo = "" }
+            };
+            list.AddRange(FinancialAccounts ?? new List<FinancialAccountDropdownDTO>());
+            return list;
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -115,6 +134,7 @@
     protected async Task Save()
     {
         IsSaving = true;
+        ErrorMessage = null;
         try
         {
             var req = new SalesBookingEditRequestDTO
@@ -143,9 +163,12 @@
             }
             else
             {
-                // show error via notification? Just close false
-                DialogService.Close(false);
+                ErrorMessage = (res != null && !string.IsNullOrWhiteSpace(res.Message)) ? res.Message : "Save failed.";
             }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
         }
         finally { IsSaving = false; }
     }

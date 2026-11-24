@@ -1,0 +1,124 @@
+@page "/BranchLoan"
+@using JM.UI.Entities.Model.Treasury
+@attribute [Authorize]
+@inherits BranchLoanComponent
+
+<PageTitle>Branch Loan</PageTitle>
+
+<RadzenContent Container="main" class="p-4">
+    <RadzenCard>
+        <RadzenText TextStyle="TextStyle.H4" class="mb-4">Issue Temporary Inter-Branch Loan</RadzenText>
+
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Sender Branch" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@Stores" TextProperty="Name" ValueProperty="Id" @bind-Value="SenderStoreId" Change="@OnSenderStoreChanged" Style="width:100%" AllowFiltering="true" />
+                </RadzenFormField>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color:#15803d">Cash in hand: <strong>@SenderBalance.ToString("N2")</strong></RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Receiver Branch" Variant="Variant.Outlined">
+                    <RadzenDropDown Data="@Stores" TextProperty="Name" ValueProperty="Id" @bind-Value="ReceiverStoreId" Style="width:100%" AllowFiltering="true" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Amount (BDT)" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="Amount" Min="0" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenFormField Text="Remarks" Variant="Variant.Outlined">
+                    <RadzenTextBox @bind-Value="Remarks" Style="width:100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+            <RadzenButton Text="Send Loan Request" Icon="send" ButtonStyle="ButtonStyle.Primary" Disabled="@IsSending" IsBusy="@IsSending" Click="@Send" />
+        </RadzenStack>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Pending Acceptance</RadzenText>
+        <RadzenDataGrid Data="@Loans.Where(l => l.Status == "PENDING").ToList()" TItem="BranchLoanRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="LoanNo" Title="Loan No" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="SenderBranchCode" Title="Sender" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="ReceiverBranchCode" Title="Receiver" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="Amount" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Title="Action">
+                    <Template Context="r">
+                        <RadzenButton Text="Accept" Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Click="@(() => Accept(r))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Accepted Loans</RadzenText>
+        <RadzenDataGrid Data="@Loans.Where(l => l.Status == "ACCEPTED").ToList()" TItem="BranchLoanRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="LoanNo" Title="Loan No" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="SenderBranchCode" Title="Sender" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="ReceiverBranchCode" Title="Receiver" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="Amount" Title="Original" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Property="RemainingAmount" Title="Remaining" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="BranchLoanRowDTO" Title="Action">
+                    <Template Context="r">
+                        <RadzenButton Text="Repay" Icon="payment" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenRepay(r))" />
+                        <RadzenButton Text="Reverse" Icon="undo" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => Reverse(r))" Class="ml-1" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        @if (ShowRepay && RepayTarget != null)
+        {
+            <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
+                <div style="background:#fff;border-radius:12px;padding:20px;max-width:600px;width:90%;">
+                    <RadzenText TextStyle="TextStyle.H5" class="mb-3">Repay Loan — @RepayTarget.LoanNo</RadzenText>
+                    <div class="mb-2">Remaining: <strong>@RepayTarget.RemainingAmount.ToString("N2")</strong></div>
+
+                    @foreach (var (split, idx) in RepaySplits.Select((s, i) => (s, i)))
+                    {
+                        <RadzenRow Gap="0.5rem" class="mb-2">
+                            <RadzenColumn Size="7">
+                                <RadzenFormField Text="Source Ledger" Variant="Variant.Outlined">
+                                    <RadzenDropDown Data="@RepaySourceAccounts" TextProperty="LedgerName" ValueProperty="LedgerCode"
+                                                    @bind-Value="split.SourceLedgerCode" Style="width:100%" AllowFiltering="true" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="4">
+                                <RadzenFormField Text="Amount" Variant="Variant.Outlined">
+                                    <RadzenNumeric @bind-Value="split.Amount" Min="0" Style="width:100%" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="1">
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => RemoveRepaySplit(idx))" Style="margin-top:28px;" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+
+                    <RadzenButton Text="+ Split Source" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@AddRepaySplit" />
+
+                    <div class="mt-2">Repaying now: <strong>@RepayTotal.ToString("N2")</strong></div>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" class="mt-4">
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseRepay" />
+                        <RadzenButton Text="Confirm Repayment" ButtonStyle="ButtonStyle.Primary" Click="@SubmitRepay" />
+                    </RadzenStack>
+                </div>
+            </div>
+        }
+
+        <RadzenText TextStyle="TextStyle.H6" class="mt-6 mb-2">Loan Audit Log</RadzenText>
+        <RadzenDataGrid Data="@Audit" TItem="BranchLoanAuditRowDTO" AllowPaging="true" PageSize="15">
+            <Columns>
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="Ts" Title="When" FormatString="{0:dd-MMM-yyyy HH:mm}" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="Action" Title="Action" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="LoanNo" Title="Loan No" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="Sender" Title="Sender" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="Receiver" Title="Receiver" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="Amount" Title="Amount" FormatString="{0:N2}" />
+                <RadzenDataGridColumn TItem="BranchLoanAuditRowDTO" Property="By" Title="By" />
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</RadzenContent>

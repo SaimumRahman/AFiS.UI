@@ -436,8 +436,13 @@ namespace JM.UI.DataService.DAL.Reporting
             {
                 var client = GetAuthenticatedClient("MainApi");
                 var response = await client.PostAsJsonAsync("api/SalesBooking/update", dto);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    return new SalesBookingEditResultDTO { Success = false, Message = string.IsNullOrWhiteSpace(err) ? (response.ReasonPhrase ?? "Request failed") : err };
+                }
                 var result = await response.Content.ReadFromJsonAsync<SalesBookingEditResultDTO>();
-                return result ?? new SalesBookingEditResultDTO { Success = response.IsSuccessStatusCode, Message = response.ReasonPhrase ?? "" };
+                return result ?? new SalesBookingEditResultDTO { Success = true, Message = "Updated." };
             }
             catch (Exception ex)
             {

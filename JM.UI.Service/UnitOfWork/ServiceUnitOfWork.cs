@@ -26,6 +26,7 @@ using JM.UI.Service.Groups;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.DailyExpense;
+using JM.UI.Service.Treasury;
 using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Sms;
 using JM.UI.Service.Audit;
@@ -126,6 +127,7 @@ namespace JM.UI.Service.UnitOfWork
         public ISaleService SaleService { get; private set; }
         public IReportingService ReportingService { get; private set; }
         public IDailyExpenseService DailyExpenseService { get; private set; }
+        public ITreasuryService TreasuryService { get; private set; }
         public ICounterClosingService CounterClosingService { get; private set; }
         public ISmsSettingsService SmsSettingsService { get; private set; }
         public ISmsLogService SmsLogService { get; private set; }
@@ -191,6 +193,7 @@ namespace JM.UI.Service.UnitOfWork
             SaleService = new SaleService(_repoUow);
             ReportingService = new ReportingService(_repoUow);
             DailyExpenseService = new DailyExpenseService(_repoUow);
+            TreasuryService = new TreasuryService(_repoUow.TreasuryRepository);
             CounterClosingService = new CounterClosingService(_repoUow);
             SmsSettingsService = new SmsSettingsService(_repoUow);
             SmsLogService = new SmsLogService(_repoUow);
