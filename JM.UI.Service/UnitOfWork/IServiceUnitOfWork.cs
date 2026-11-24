@@ -26,6 +26,7 @@ using JM.UI.Service.CustomerDetails;
 using JM.UI.Service.Coupon;
 using JM.UI.Service.DailyExpense;
 using JM.UI.Service.Treasury;
+using JM.UI.Service.Dashboard;
 using JM.UI.Service.CounterClosing;
 using JM.UI.Service.Sms;
 using JM.UI.Service.Audit;
@@ -138,6 +139,7 @@ namespace JM.UI.Service.UnitOfWork
         IReportingService ReportingService { get; }
         IDailyExpenseService DailyExpenseService { get; }
         ITreasuryService TreasuryService { get; }
+        IDashboardService DashboardService { get; }
         ICounterClosingService CounterClosingService { get; }
         ISmsSettingsService SmsSettingsService { get; }
         ISmsLogService SmsLogService { get; }

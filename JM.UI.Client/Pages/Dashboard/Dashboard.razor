@@ -1,0 +1,252 @@
+@page "/Dashboard"
+@using JM.UI.Entities.Model.Dashboard
+@using JM.UI.Entities.Model.Stores
+@using JM.UI.Entities.Model.Todo
+@attribute [Authorize]
+@inherits DashboardComponent
+
+<PageTitle>Dashboard</PageTitle>
+
+<style>
+    .adash { background:#F4F2EE; color:#1B1F24; font-family:'Inter',system-ui,sans-serif; font-variant-numeric:tabular-nums; padding:20px 24px; }
+    .adash * { box-sizing:border-box; }
+    .adash .card { background:#fff; border:1px solid #E3DFD7; border-radius:12px; }
+    .adash .lbl { font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#5B636D; }
+    .adash .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; white-space:nowrap; }
+    .adash .p-ok { background:#DDF0E6; color:#17573B; }
+    .adash .p-warn { background:#FBEBC8; color:#6E4A00; }
+    .adash .p-bad { background:#F9DADA; color:#8E1B1B; }
+    .adash .p-info { background:#DCE8F4; color:#234B72; }
+    .adash .p-mute { background:#ECEAE5; color:#454C55; }
+    .adash .t-up { color:#17573B; }
+    .adash .t-down { color:#8E1B1B; }
+    .adash .t-mute { color:#5B636D; }
+    .adash table { width:100%; border-collapse:collapse; font-size:13px; }
+    .adash th { text-align:left; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#5B636D; padding:8px 12px; border-bottom:1px solid #E3DFD7; white-space:nowrap; }
+    .adash td { padding:10px 12px; border-bottom:1px solid #EFEBE4; }
+    .adash th.r, .adash td.r { text-align:right; }
+    .adash .mixbar { display:flex; gap:2px; height:16px; border-radius:999px; overflow:hidden; }
+    .adash .dot { width:12px; height:12px; border-radius:3px; display:inline-block; }
+    .adash .todo-card { border:1px solid #E3DFD7; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+</style>
+
+<div class="adash">
+    @if (Loading)
+    {
+        <div style="display:flex;justify-content:center;padding:80px 0;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        </div>
+    }
+    else
+    {
+        <!-- Topbar -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;">
+            <div>
+                <h1 style="margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em">Dashboard</h1>
+                <span style="font-size:14px;color:#5B636D">@CurrentDateLabel · Management view · @(SelectedStoreId == null ? "all branches" : Stores.FirstOrDefault(s => s.Id == SelectedStoreId)?.Name)</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+                <RadzenDropDown @bind-Value="SelectedStoreId" Data="@Stores" TextProperty="Name" ValueProperty="Id"
+                                AllowClear="true" Placeholder="All branches" Style="min-width:200px"
+                                Change="@OnBranchChanged" />
+                <div style="display:flex;border:1px solid #CFC9BE;border-radius:8px;overflow:hidden;background:#fff">
+                    <RadzenButton Text="Today" ButtonStyle="@(Period == "Today" ? ButtonStyle.Dark : ButtonStyle.Light)" Size="ButtonSize.Medium" Click="@(() => OnPeriodChanged("Today"))" Style="border:0;border-radius:0" />
+                    <RadzenButton Text="7 days" ButtonStyle="@(Period == "7d" ? ButtonStyle.Dark : ButtonStyle.Light)" Size="ButtonSize.Medium" Click="@(() => OnPeriodChanged("7d"))" Style="border:0;border-radius:0" />
+                    <RadzenButton Text="Month" ButtonStyle="@(Period == "Month" ? ButtonStyle.Dark : ButtonStyle.Light)" Size="ButtonSize.Medium" Click="@(() => OnPeriodChanged("Month"))" Style="border:0;border-radius:0" />
+                </div>
+            </div>
+        </div>
+
+        <div style="height:20px"></div>
+
+        <!-- KPI strip -->
+        <div style="display:flex;flex-wrap:wrap;gap:14px">
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Net sales</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Fmt(Data.NetSales)</span>
+                <span class="t-mute" style="font-size:13px;font-weight:500">@BranchCount branches</span>
+            </div>
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Discount given</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Fmt(Data.Discount)</span>
+                <span class="t-mute" style="font-size:13px;font-weight:500">@Pct(Data.Discount, Gross) of gross sales</span>
+            </div>
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Invoices / bookings</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Data.Invoices / @Data.Bookings</span>
+                <span class="t-mute" style="font-size:13px;font-weight:500">Avg. ticket @AvgTicket</span>
+            </div>
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Expenses (cash)</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Fmt(Data.Expenses)</span>
+                <span class="t-mute" style="font-size:13px;font-weight:500">@Pct(Data.Expenses, Data.NetSales) of net sales</span>
+            </div>
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Closing cash</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Fmt(Data.ClosingCash)</span>
+                <span class="t-mute" style="font-size:13px;font-weight:500">After expenses</span>
+            </div>
+            <div class="card" style="flex:1 1 190px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span class="lbl">Awaiting approval</span>
+                <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@(Data.ApprovalsClosing + Data.ApprovalsAudit + Data.ApprovalsDiscount)</span>
+                <span class="t-down" style="font-size:13px;font-weight:500">@Data.ApprovalsClosing closing · @Data.ApprovalsAudit audit · @Data.ApprovalsDiscount discount</span>
+            </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <!-- Trend + payment mix -->
+        <div style="display:flex;flex-wrap:wrap;gap:14px">
+            <section class="card" style="flex:2 1 420px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+                    <h2 style="margin:0;font-size:16px;font-weight:600">Net sales, last 7 days</h2>
+                    <span style="font-size:13px;color:#5B636D">@(SelectedStoreId == null ? "All branches" : Stores.FirstOrDefault(s => s.Id == SelectedStoreId)?.Name) · ৳ in lakh</span>
+                </div>
+                <svg viewBox="0 0 640 240" width="100%" style="display:block;height:auto" role="img" aria-label="Net sales per day">
+                    <g stroke="#E3DFD7" stroke-width="1"><line x1="50" y1="35" x2="620" y2="35"></line><line x1="50" y1="90" x2="620" y2="90"></line><line x1="50" y1="145" x2="620" y2="145"></line><line x1="50" y1="200" x2="620" y2="200"></line></g>
+                    <g font-size="12" fill="#5B636D" font-family="Inter, system-ui, sans-serif">
+                        @TrendXLabels()
+                    </g>
+                    <polyline points="@TrendPoints" fill="none" stroke="#9A6B2F" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                    @for (var i = 0; i < TrendPlot.Count; i++)
+                    {
+                        var p = TrendPlot[i];
+                        <circle cx="@p.X.ToString("0")" cy="@p.Y.ToString("0")" r="4" fill="#fff" stroke="#9A6B2F" stroke-width="2"></circle>
+                    }
+                </svg>
+            </section>
+
+            <section class="card" style="flex:1 1 280px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+                <h2 style="margin:0;font-size:16px;font-weight:600">Payment mix</h2>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:26px;font-weight:700;letter-spacing:-.01em">@Fmt(Data.PaymentMix.Total)</span>
+                    <span style="font-size:13px;color:#5B636D">Net sales incl. booking advances</span>
+                </div>
+                <div class="mixbar">
+                    <div style="flex:@CashPct;background:#1F3A5A"></div>
+                    <div style="flex:@MfsPct;background:#B8802F"></div>
+                    <div style="flex:@BankPct;background:#AEB8C4"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span class="dot" style="background:#1F3A5A"></span><span style="flex:1">Cash</span><span style="font-weight:600">@Fmt(Data.PaymentMix.Cash)</span><span style="width:44px;text-align:right;color:#5B636D">@Pct(Data.PaymentMix.Cash, Data.PaymentMix.Total)</span></div>
+                    <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span class="dot" style="background:#B8802F"></span><span style="flex:1">MFS</span><span style="font-weight:600">@Fmt(Data.PaymentMix.Mfs)</span><span style="width:44px;text-align:right;color:#5B636D">@Pct(Data.PaymentMix.Mfs, Data.PaymentMix.Total)</span></div>
+                    <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span class="dot" style="background:#AEB8C4"></span><span style="flex:1">Bank POS</span><span style="font-weight:600">@Fmt(Data.PaymentMix.Bank)</span><span style="width:44px;text-align:right;color:#5B636D">@Pct(Data.PaymentMix.Bank, Data.PaymentMix.Total)</span></div>
+                </div>
+            </section>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <!-- Branch performance -->
+        <section class="card" style="padding:18px 8px 8px;display:flex;flex-direction:column;gap:12px;min-width:0">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:0 12px">
+                <h2 style="margin:0;font-size:16px;font-weight:600">Branch performance today</h2>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    @if (!string.IsNullOrEmpty(Data.TopSellingBranch)) { <span class="pill p-ok" style="font-size:13px;padding:4px 12px">Top selling · @Data.TopSellingBranch</span> }
+                    @if (!string.IsNullOrEmpty(Data.TopExpenseBranch)) { <span class="pill p-warn" style="font-size:13px;padding:4px 12px">Top expense · @Data.TopExpenseBranch</span> }
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table style="min-width:780px">
+                    <thead><tr><th>Branch</th><th class="r">Net sales</th><th class="r">Share</th><th class="r">Discount</th><th class="r">Expenses</th><th class="r">Closing cash</th><th>Day closing</th></tr></thead>
+                    <tbody>
+                        @foreach (var b in Data.Branches)
+                        {
+                            <tr>
+                                <td style="font-weight:600">@b.Name.Trim()</td>
+                                <td class="r">@Fmt(b.Net)</td>
+                                <td class="r" style="color:#5B636D">@Pct(b.Net, TotalBranchNet)</td>
+                                <td class="r">@Fmt(b.Discount)</td>
+                                <td class="r">@Fmt(b.Expenses)</td>
+                                <td class="r">@Fmt(b.ClosingCash)</td>
+                                <td><span class="pill @StatusClass(b.Status)">@b.Status</span></td>
+                            </tr>
+                        }
+                        <tr style="font-weight:700;background:#FAF8F4">
+                            <td>All branches</td>
+                            <td class="r">@Fmt(Data.NetSales)</td>
+                            <td class="r">100%</td>
+                            <td class="r">@Fmt(Data.Discount)</td>
+                            <td class="r">@Fmt(Data.Expenses)</td>
+                            <td class="r">@Fmt(Data.ClosingCash)</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div style="height:14px"></div>
+
+        <!-- Top performers -->
+        <div style="display:flex;flex-wrap:wrap;gap:14px">
+            <section class="card" style="flex:1 1 340px;min-width:0;padding:18px 8px 8px">
+                <h2 style="margin:0 0 10px;padding:0 12px;font-size:16px;font-weight:600">Top 5 salesmen</h2>
+                <div style="overflow-x:auto"><table style="min-width:320px">
+                    <thead><tr><th>#</th><th>Name (Branch)</th><th class="r">Inv.</th><th class="r">Net sale</th></tr></thead>
+                    <tbody>
+                        @foreach (var s in Data.Salesmen)
+                        {
+                            <tr><td style="color:#5B636D">@s.Rank</td><td style="font-weight:600">@s.Who</td><td class="r">@s.Inv</td><td class="r">@Fmt(s.Amt)</td></tr>
+                        }
+                        @if (Data.Salesmen.Count == 0) { <tr><td colspan="4" style="color:#5B636D">No sales yet</td></tr> }
+                    </tbody>
+                </table></div>
+            </section>
+            <section class="card" style="flex:1 1 340px;min-width:0;padding:18px 8px 8px">
+                <h2 style="margin:0 0 10px;padding:0 12px;font-size:16px;font-weight:600">Top 5 cashiers</h2>
+                <div style="overflow-x:auto"><table style="min-width:320px">
+                    <thead><tr><th>#</th><th>Name (Branch)</th><th class="r">Inv.</th><th class="r">Cash</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Data.Cashiers)
+                        {
+                            <tr><td style="color:#5B636D">@c.Rank</td><td style="font-weight:600">@c.Who</td><td class="r">@c.Inv</td><td class="r">@Fmt(c.Amt)</td></tr>
+                        }
+                        @if (Data.Cashiers.Count == 0) { <tr><td colspan="4" style="color:#5B636D">No cashiers yet</td></tr> }
+                    </tbody>
+                </table></div>
+            </section>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <!-- Inventory low stock -->
+        <section class="card" style="flex:1 1 300px;min-width:0;padding:18px 8px 8px">
+            <h3 style="margin:0 0 10px;padding:0 12px;font-size:15px;font-weight:600">Low stock alerts</h3>
+            @foreach (var l in Data.LowStock)
+            {
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #EFEBE4;font-size:13px">
+                    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600">@l.Item</span><span style="font-size:12px;color:#5B636D">@l.Branch</span></div>
+                    <span class="pill p-bad">@((int)l.Left) left</span>
+                </div>
+            }
+            @if (Data.LowStock.Count == 0) { <div style="padding:12px;color:#5B636D;font-size:13px">No low-stock items.</div> }
+        </section>
+
+        <div style="height:20px"></div>
+
+        <!-- To-Do panel -->
+        <section class="card" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                <h2 style="margin:0;font-size:18px;font-weight:700">To-Do</h2>
+                <a href="/TodoDashboard" style="text-decoration:none;font-size:13px;font-weight:600;color:#7A5420">View all @TodoTotal</a>
+            </div>
+            <div style="font-size:12px;color:#5B636D">Shown to every employee: you see tasks for you, your group or your branch. Admin sees all, including personal tasks.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+                @foreach (var t in TodoItems)
+                {
+                    <div class="todo-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                            <span class="pill @FlagClass(t.FlagName)">@t.FlagName</span>
+                            <span style="font-size:12px;color:#5B636D">@TodoDue(t)</span>
+                        </div>
+                        <div style="font-size:14px;font-weight:600;line-height:1.35">@t.Title</div>
+                        <div style="font-size:12px;color:#5B636D;display:flex;flex-wrap:wrap;gap:2px 12px"><span>@TodoScope(t)</span><span>@t.CreatedByName</span></div>
+                        @if (t.UpdateCount > 0) { <div style="font-size:12px;color:#5B636D">@t.UpdateCount update@(t.UpdateCount == 1 ? "" : "s")</div> }
+                    </div>
+                }
+                @if (TodoItems.Count == 0) { <div style="font-size:13px;color:#5B636D">No open tasks.</div> }
+            </div>
+        </section>
+    }
+</div>

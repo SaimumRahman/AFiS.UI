@@ -14,6 +14,15 @@ namespace JM.UI.Client.Services
                 Path = "/",
                 Icon = "\ue88a"
             },
+            new Example
+            {
+                Name        = "Admin MD Dashboard",
+                Path        = "/AdminDashboard",
+                Icon        = "\ue88a",
+                Title       = "Admin MD Dashboard",
+                Description = "Managing Director's management overview across all branches",
+                Tags        = new[] { "dashboard", "admin", "md", "management", "sales", "closing" }
+            },
 
            
             // ─────────────────────────────────────────
